@@ -1,0 +1,153 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Prevent white flash on load - CRITICAL */
+* {
+  background-color: inherit;
+}
+
+html {
+  background-color: #0f172a !important;
+  color: white;
+}
+
+body {
+  background-color: #0f172a !important;
+  margin: 0;
+  padding: 0;
+  color: white;
+  overflow: hidden; /* Prevent flash during load */
+}
+
+#root {
+  background-color: #0f172a !important;
+  min-height: 100vh;
+  color: white;
+}
+
+/* Ensure all components inherit dark background */
+.min-h-screen {
+  background-color: #0f172a !important;
+}
+
+/* Ensure no black backgrounds on gradient elements */
+.bg-gradient-to-br {
+  background-color: transparent !important;
+}
+
+/* Remove any potential black outlines or shadows */
+.rounded-2xl, .rounded-xl, .rounded-lg {
+  box-shadow: none !important;
+  outline: none !important;
+  border: none !important;
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(51, 65, 85, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.6);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.8);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.6) rgba(51, 65, 85, 0.3);
+}
+
+/* Mobile touch improvements */
+@media (max-width: 768px) {
+  /* Make the pricing page scrollable on mobile */
+  html, body, #root {
+    min-height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  } 
+  
+  /* Fix scrolling issues */
+  .min-h-screen {
+    min-height: 100svh;
+    overflow-y: auto;
+  }
+  
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  input, button, select, textarea {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+  
+  .floating-panel-container {
+    touch-action: none; /* Prevents scrolling when interacting with floating panel */
+  }
+  
+  /* Ensure floating panel stays on top */
+  #floating-panel {
+    z-index: 9999 !important;
+    position: fixed !important;
+  }
+  
+  /* Improve tap targets */
+  button, 
+  [role="button"],
+  a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Fix iOS input styling */
+  input, 
+  textarea {
+    -webkit-appearance: none;
+    border-radius: 8px;
+  }
+  
+  /* Prevent pull-to-refresh */
+  html, body {
+    overscroll-behavior-y: contain;
+  }
+  
+  /* Improve scrolling */
+  .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Floating panel styles */
+.floating-panel-container {
+  z-index: 9999;
+  position: fixed !important; 
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  touch-action: none;
+  /* Critical CSS to ensure panel stays on top of all windows */
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  
+  /* Additional styles to ensure visibility */
+  isolation: isolate;
+  contain: layout;
+}
+
+/* Ensure the floating panel is always visible */
+#floating-panel {
+  z-index: 9999 !important;
+  position: fixed !important;
+}

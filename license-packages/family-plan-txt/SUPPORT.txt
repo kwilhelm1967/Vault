@@ -1,0 +1,155 @@
+# 📞 Local Password Vault - Family Plan Support Guide
+
+## Priority Support Options
+
+### Priority Support (Included with Family Plan)
+- **Priority Email**: priority@LocalPasswordVault.com
+- **Response Time**: Within 24 hours (7 days a week)
+- **Knowledge Base**: [LocalPasswordVault.com/kb](https://LocalPasswordVault.com/kb)
+- **Community Forum**: [community.LocalPasswordVault.com](https://community.LocalPasswordVault.com)
+- **Priority Forum Badge**: Faster community responses
+
+## Common Issues & Solutions
+
+### Installation & Activation
+
+#### Multiple Device Activation
+- Your Family Plan includes 3 license keys
+- Use a different key for each device
+- If you need more than 3 devices, consider upgrading to Business Plan
+
+#### License Already Activated
+- Each license key can only be used on one device
+- If you're replacing a device, deactivate the old one first
+- Contact priority support if you've lost access to the old device
+
+### Cloud Sync Issues
+
+#### Sync Not Working
+- Verify internet connection on all devices
+- Check that Cloud Sync is enabled in Settings
+- Ensure you're using the same sync account on all devices
+- Try signing out and back into your sync account
+
+#### Sync Conflicts
+- If multiple devices modified the same entry, a conflict may occur
+- The app will prompt you to choose which version to keep
+- You can also merge changes manually
+- Regular syncing reduces the chance of conflicts
+
+### Family Sharing
+
+#### Can't See Shared Passwords
+- Verify the password was shared with the correct email address
+- Check that the recipient has accepted the sharing invitation
+- Ensure both users have Cloud Sync enabled
+- Try re-sharing the password
+
+#### Sharing Permission Issues
+- Verify the correct permission level was assigned (view-only or edit)
+- The owner can modify permissions at any time
+- Recipients cannot share passwords further unless given permission
+- Contact priority support if permissions aren't working correctly
+
+### Multi-Device Management
+
+#### Device Limit Reached
+- The Family Plan supports up to 3 devices
+- Deactivate unused devices to free up licenses
+- Consider upgrading to Business Plan for more devices
+
+#### Deactivating Old Devices
+1. On the old device, go to Settings > License
+2. Click "Deactivate License"
+3. Confirm deactivation
+4. The license can now be used on another device
+
+## Family-Specific Support
+
+### Managing Family Access
+- Each family member should have their own master password
+- The account owner can manage sharing permissions
+- Consider what passwords should be shared vs. private
+- Set up appropriate categories for shared passwords
+
+### Teaching Password Security
+- Show family members how to use the password generator
+- Explain the importance of unique passwords
+- Demonstrate how to use the floating panel
+- Set up regular security check-ins
+
+### Child Safety Features
+- Create appropriate categories for children
+- Share only age-appropriate accounts
+- Consider view-only permissions for younger users
+- Use the activity logs to monitor usage
+
+## How to Get Priority Support
+
+### Before Contacting Support
+1. Check the Knowledge Base for solutions
+2. Search the Community Forum for similar issues
+3. Try the troubleshooting steps in this guide
+4. Restart the application and your devices
+
+### When Contacting Priority Support
+Please include:
+- Your license key
+- Device information (OS, version)
+- Application version
+- Detailed description of the issue
+- Steps to reproduce the problem
+- Any error messages (screenshots if possible)
+- Which family members/devices are affected
+
+### Priority Support Process
+1. Email priority@LocalPasswordVault.com
+2. Include all relevant information
+3. Receive a priority support ticket number
+4. Support will respond within 24 hours
+5. Follow up on the same email thread
+
+## Self-Help Resources
+
+### Knowledge Base
+Our Knowledge Base contains articles on:
+- Family-specific setup guides
+- Cloud sync tutorials
+- Sharing best practices
+- Multi-device management
+- Security for families
+
+Visit: [LocalPasswordVault.com/kb](https://LocalPasswordVault.com/kb)
+
+### Video Tutorials
+Watch step-by-step tutorials on:
+- Setting up family sharing
+- Managing multiple devices
+- Using cloud sync effectively
+- Security for different age groups
+- Password sharing best practices
+
+Visit: [LocalPasswordVault.com/tutorials](https://LocalPasswordVault.com/tutorials)
+
+### Community Forum
+Connect with other families to:
+- Share tips and tricks
+- Get help from the community
+- Suggest new features
+- Report bugs
+- Share your experience
+
+Visit: [community.LocalPasswordVault.com](https://community.LocalPasswordVault.com)
+
+## Upgrading Support
+
+Need support for more devices or business features?
+
+Consider upgrading to:
+- **Business Plan**: Enterprise support with 4-hour response time, phone support, and 10+ devices
+
+Visit [LocalPasswordVault.com/upgrade](https://LocalPasswordVault.com/upgrade) to learn more.
+
+---
+
+© 2025 Local Password Vault | [LocalPasswordVault.com](https://LocalPasswordVault.com)

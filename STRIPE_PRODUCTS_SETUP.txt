@@ -1,0 +1,55 @@
+# STRIPE PRODUCTS SETUP FOR ONE-TIME PURCHASES
+
+## Your developer needs to create these EXACT products in Stripe Dashboard
+
+### Go to Stripe Dashboard → Products → Create Product
+
+PRODUCT 1: Single User License
+Name: "Local Password Vault - Single User"
+Description: "Single device license with complete source code"
+Price: $29.00 (one-time payment, NOT recurring)
+Metadata:
+  Key: product_id
+  Value: prod_single_user
+
+PRODUCT 2: Family Plan License  
+Name: "Local Password Vault - Family Plan"
+Description: "3 device licenses with family sharing"
+Price: $49.00 (one-time payment, NOT recurring)
+Metadata:
+  Key: product_id
+  Value: prod_family_plan
+
+PRODUCT 3: Pro License
+Name: "Local Password Vault - Pro"
+Description: "6 device licenses with advanced features"
+Price: $68.00 (one-time payment, NOT recurring)
+Metadata:
+  Key: product_id
+  Value: prod_pro_license
+
+PRODUCT 4: Business Plan License
+Name: "Local Password Vault - Business Plan"
+Description: "10+ device licenses with enterprise features"
+Price: $99.00 (one-time payment, NOT recurring)
+Metadata:
+  Key: product_id
+  Value: prod_business_plan
+
+## IMPORTANT NOTES FOR YOUR DEVELOPER
+
+1. These are ONE-TIME payments, NOT subscriptions
+2. No trial period in Stripe (trial is built into the software)
+3. Customer pays once and owns forever
+4. The metadata product_id MUST match exactly what's in the webhook code
+
+## WEBHOOK SETUP
+
+Go to Stripe Dashboard → Developers → Webhooks → Add Endpoint
+
+Endpoint URL: https://your-render-url.onrender.com/webhook/stripe
+
+Events to send:
+- checkout.session.completed (when customer completes purchase)
+
+That's it! Only one webhook event needed for one-time purchases.

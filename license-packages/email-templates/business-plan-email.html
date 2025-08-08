@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Local Password Vault Business Plan License</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        .content {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .license-key {
+            background: #1e293b;
+            color: #06b6d4;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 18px;
+            text-align: center;
+            margin: 10px 0;
+            letter-spacing: 2px;
+        }
+        .button {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 20px 0;
+        }
+        .button:hover {
+            background: #059669;
+        }
+        .footer {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-top: 30px;
+        }
+        .divider {
+            border-top: 1px solid #e5e7eb;
+            margin: 25px 0;
+        }
+        .feature-list {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .feature-list ul {
+            margin: 10px 0;
+            padding-left: 25px;
+        }
+        .feature-list li {
+            margin-bottom: 8px;
+        }
+        .license-keys {
+            margin: 20px 0;
+        }
+        .license-label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #059669;
+        }
+        .admin-note {
+            background: #ecfdf5;
+            border-left: 4px solid #10b981;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table, th, td {
+            border: 1px solid #e5e7eb;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f1f5f9;
+        }
+        .download-section {
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        .download-title {
+            color: #059669;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        .download-button {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 5px 5px 5px 0;
+        }
+        .download-button:hover {
+            background: #059669;
+        }
+        .enterprise-section {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        .enterprise-title {
+            color: #0284c7;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Your Local Password Vault Business Plan</h1>
+            <p>Thank you for your purchase!</p>
+        </div>
+        <div class="content">
+            <h2>Your Business Plan License</h2>
+            <p>Dear {{CUSTOMER_NAME}},</p>
+            <p>Thank you for purchasing the Local Password Vault Business Plan! Your enterprise-grade password management solution is ready to deploy. Below you'll find your license keys, download links, and next steps.</p>
+            
+            <div class="admin-note">
+                <strong>Important:</strong> The first license key is your Administrator license. Use this key to set up the Admin Dashboard and manage your organization.
+            </div>
+            
+            <h3>Your License Keys:</h3>
+            <div class="license-keys">
+                <p class="license-label">Administrator License:</p>
+                <div class="license-key">{{ADMIN_LICENSE_KEY}}</div>
+                
+                <p class="license-label">User Licenses ({{LICENSE_COUNT}}):</p>
+                <table>
+                    <tr>
+                        <th>#</th>
+                        <th>License Key</th>
+                    </tr>
+                    {{LICENSE_TABLE}}
+                </table>
+            </div>
+            
+            <p><strong>Note:</strong> Additional licenses can be managed through your Admin Dashboard.</p>
+            
+            <p><strong>Purchase Details:</strong></p>
+            <ul>
+                <li><strong>License Type:</strong> Business Plan</li>
+                <li><strong>Devices:</strong> {{LICENSE_COUNT}} licenses</li>
+                <li><strong>Purchase Date:</strong> {{PURCHASE_DATE}}</li>
+                <li><strong>Order Number:</strong> {{ORDER_NUMBER}}</li>
+                <li><strong>Account Manager:</strong> {{ACCOUNT_MANAGER}}</li>
+            </ul>
+            
+            <div class="download-section">
+                <h3 class="download-title">Download Options</h3>
+                
+                <h4>Individual Installers:</h4>
+                <div>
+                    <a href="https://LocalPasswordVault.com/download/windows" class="download-button">Windows</a>
+                    <a href="https://LocalPasswordVault.com/download/macos" class="download-button">macOS</a>
+                    <a href="https://LocalPasswordVault.com/download/linux" class="download-button">Linux</a>
+                </div>
+                
+                <h4 style="margin-top: 20px;">Enterprise Deployment Packages:</h4>
+                <div>
+                    <a href="https://LocalPasswordVault.com/enterprise/download/windows-msi" class="download-button">Windows MSI</a>
+                    <a href="https://LocalPasswordVault.com/enterprise/download/macos-pkg" class="download-button">macOS PKG</a>
+                    <a href="https://LocalPasswordVault.com/enterprise/download/linux-deb" class="download-button">Linux DEB</a>
+                </div>
+                
+                <p style="margin-top: 15px; font-size: 14px; color: #059669;">
+                    <strong>Important:</strong> After downloading, you'll need to activate using the Administrator license key first, then distribute the user licenses to your team.
+                </p>
+            </div>
+            
+            <div class="divider"></div>
+            
+            <h3>Your Business Plan Includes:</h3>
+            <div class="feature-list">
+                <ul>
+                    <li><strong>10+ Device Licenses</strong> - Scale across your organization</li>
+                    <li><strong>Team Management</strong> - Manage users and access</li>
+                    <li><strong>Admin Dashboard</strong> - Monitor usage and security</li>
+                    <li><strong>Enterprise Support</strong> - 4-hour response time</li>
+                    <li><strong>Secure Sharing</strong> - Share passwords without cloud</li>
+                    <li><strong>Role-Based Access</strong> - Control who sees what</li>
+                    <li><strong>Audit Logging</strong> - Track password access</li>
+                    <li><strong>Compliance Reports</strong> - For security audits</li>
+                </ul>
+            </div>
+            
+            <div class="divider"></div>
+            
+            <h3>Next Steps:</h3>
+            <ol>
+                <li><strong>Set Up Admin Account</strong>
+                    <ul>
+                        <li>Install on your administrator device</li>
+                        <li>Activate using the Administrator License Key</li>
+                        <li>Create your admin master password</li>
+                        <li>Access the Admin Dashboard</li>
+                    </ul>
+                </li>
+                <li><strong>Configure Your Organization</strong>
+                    <ul>
+                        <li>Set up your organization profile</li>
+                        <li>Configure security policies</li>
+                        <li>Create teams and roles</li>
+                        <li>Set up sync infrastructure</li>
+                    </ul>
+                </li>
+                <li><strong>Deploy to Your Team</strong>
+                    <ul>
+                        <li>Choose your deployment method</li>
+                        <li>Distribute license keys</li>
+                        <li>Provide training resources</li>
+                        <li>Monitor adoption</li>
+                    </ul>
+                </li>
+            </ol>
+            
+            <div class="enterprise-section">
+                <h3 class="enterprise-title">Enterprise Support</h3>
+                <p>As a Business Plan customer, you have access to enterprise-level support:</p>
+                <ul>
+                    <li><strong>Enterprise Email:</strong> <a href="mailto:enterprise@LocalPasswordVault.com">enterprise@LocalPasswordVault.com</a></li>
+                    <li><strong>Phone Support:</strong> +1-555-123-4567 (Business hours)</li>
+                    <li><strong>Emergency Support:</strong> +1-555-987-6543 (24/7 for critical issues)</li>
+                    <li><strong>Response Time:</strong> Within 4 hours</li>
+                    <li><strong>Admin Portal:</strong> <a href="https://admin.LocalPasswordVault.com">admin.LocalPasswordVault.com</a></li>
+                    <li><strong>Documentation:</strong> <a href="https://LocalPasswordVault.com/enterprise/docs">Enterprise Documentation</a></li>
+                </ul>
+            </div>
+            
+            <div class="divider"></div>
+            
+            <h3>Additional Resources:</h3>
+            <ul>
+                <li><a href="https://LocalPasswordVault.com/enterprise/deployment-guide">Deployment Guide</a></li>
+                <li><a href="https://LocalPasswordVault.com/enterprise/admin-guide">Administrator Guide</a></li>
+                <li><a href="https://LocalPasswordVault.com/enterprise/security">Security Whitepaper</a></li>
+                <li><a href="https://LocalPasswordVault.com/enterprise/training">Training Resources</a></li>
+                <li><a href="https://LocalPasswordVault.com/enterprise/api-docs">API Documentation</a></li>
+            </ul>
+            
+            <p>Your dedicated account manager will be in touch within 1 business day to assist with your deployment and answer any questions.</p>
+            
+            <p>Thank you for choosing Local Password Vault for your organization's password security needs!</p>
+            
+            <p>Sincerely,<br>
+            The Local Password Vault Enterprise Team</p>
+        </div>
+        <div class="footer">
+            <p>© 2025 Local Password Vault | <a href="https://LocalPasswordVault.com">LocalPasswordVault.com</a></p>
+            <p>This email contains your license information. Please keep it for your records.</p>
+        </div>
+    </div>
+</body>
+</html>

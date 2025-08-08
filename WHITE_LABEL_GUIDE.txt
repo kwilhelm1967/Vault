@@ -1,0 +1,280 @@
+# 🏷️ Local Password Vault - White Label Guide
+
+This guide provides detailed instructions for white-labeling Local Password Vault for your partners or clients.
+
+## 🎯 White Labeling Overview
+
+White labeling allows you to rebrand Local Password Vault with your partner's branding, including:
+- Company name and logo
+- Color scheme and styling
+- Contact information and URLs
+- Custom documentation
+- Unique license keys
+
+## 🛠️ White Labeling Process
+
+### 1. Project Setup
+
+```bash
+# Clone the original repository
+git clone <repository-url> partner-name-password-vault
+
+# Enter the project directory
+cd partner-name-password-vault
+
+# Install dependencies
+npm install
+```
+
+### 2. Branding Customization
+
+#### Update Application Name
+Edit `package.json`:
+```json
+{
+  "name": "partner-name-password-vault",
+  "productName": "Partner Name Password Vault",
+  "description": "Professional offline password manager with local encryption and modern UI"
+}
+```
+
+#### Update Electron Builder Configuration
+Edit `electron-builder.json`:
+```json
+{
+  "appId": "com.partnername.passwordvault",
+  "productName": "Partner Name Password Vault",
+  "directories": {
+    "output": "release"
+  }
+}
+```
+
+### 3. Visual Branding
+
+#### Replace Logo
+1. Create a new SVG logo and save it as `public/vault-icon.svg`
+2. Update favicon in `index.html`
+
+#### Update Color Scheme
+Edit `src/index.css` to add custom colors:
+```css
+:root {
+  --partner-primary: #3b82f6; /* Replace with partner's primary color */
+  --partner-secondary: #8b5cf6; /* Replace with partner's secondary color */
+  --partner-accent: #10b981; /* Replace with partner's accent color */
+}
+```
+
+#### Customize UI Components
+Edit key components to use the partner's colors:
+
+1. Update `src/components/LoginScreen.tsx`:
+```tsx
+<div className="w-16 h-16 bg-gradient-to-br from-[var(--partner-primary)] to-[var(--partner-secondary)] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-2xl">
+  <Lock className="w-8 h-8 text-white" />
+</div>
+```
+
+2. Update `src/components/MainVault.tsx` and other components similarly.
+
+### 4. Text and Content Customization
+
+#### Update Application Title
+Edit `index.html`:
+```html
+<title>Partner Name Password Vault</title>
+```
+
+#### Update Company References
+Search and replace all instances of "Local Password Vault" and "LocalPasswordVault.com" with your partner's name and website.
+
+Use the provided search script:
+```bash
+node search-vault-names.cjs
+```
+
+This will find all instances that need to be replaced.
+
+### 5. Documentation Customization
+
+#### Update README
+Edit `README.txt` with partner's information:
+```md
+# 🔐 Partner Name Password Vault
+
+A professional-grade, offline-first password management application built with React, TypeScript, and Electron. Prioritizes security, privacy, and local operation with zero cloud dependencies.
+
+## 🌟 Live Demo
+
+**Try it now:** [https://partner-demo-url.com](https://partner-demo-url.com)  
+**Official Website**: [PartnerWebsite.com](https://PartnerWebsite.com) | **Contact**: support@PartnerWebsite.com
+```
+
+#### Update License Documentation
+Edit files in `license-packages/` to replace company information:
+- `license-packages/single-user/README.txt`
+- `license-packages/family-plan/README.txt`
+- `license-packages/business-plan/README.txt`
+
+#### Update Email Templates
+Edit email templates in `license-packages/email-templates/` to include partner branding:
+- `single-user-email.html`
+- `family-plan-email.html`
+- `business-plan-email.html`
+
+### 6. License Key Customization
+
+#### Configure License Generator
+Edit `license-generator/index.html` to update branding and contact information.
+
+#### Create Partner-Specific License Keys
+Use the license generator to create unique license keys for the partner's customers.
+
+### 7. Environment Configuration
+
+#### Create Partner-Specific Environment Files
+```bash
+# Create partner-specific environment files
+cp .env.prod.example .env.partner.prod
+cp .env.test.example .env.partner.test
+```
+
+Edit `.env.partner.prod` and `.env.partner.test` with partner-specific values.
+
+### 8. Build Configuration
+
+#### Add Partner-Specific Build Scripts
+Edit `package.json`:
+```json
+"scripts": {
+  "build:partner": "vite build --mode partner",
+  "dist:partner": "npm run build:partner && electron-builder --publish=never"
+}
+```
+
+### 9. Building White-Labeled Applications
+
+#### Build for Web
+```bash
+npm run build:partner
+```
+
+#### Build for Desktop
+```bash
+npm run dist:partner
+```
+
+### 10. Distribution Package Creation
+
+#### Create Partner-Specific Packages
+```bash
+# Create directory structure
+mkdir -p dist-packages/partner-name
+
+# Copy application files
+cp -r release/* dist-packages/partner-name/
+
+# Copy customized documentation
+cp -r license-packages/* dist-packages/partner-name/
+cp README.txt dist-packages/partner-name/
+
+# Create ZIP archive
+cd dist-packages
+zip -r partner-name-password-vault.zip partner-name
+cd ..
+```
+
+## 🎨 Customization Checklist
+
+### Visual Branding
+- [ ] Logo and favicon
+- [ ] Color scheme
+- [ ] UI components
+- [ ] Application icons
+
+### Text and Content
+- [ ] Application name
+- [ ] Company references
+- [ ] Contact information
+- [ ] Website URLs
+
+### Documentation
+- [ ] README and guides
+- [ ] License documentation
+- [ ] Email templates
+- [ ] Support information
+
+### Technical Configuration
+- [ ] Package name and description
+- [ ] Application ID
+- [ ] Build configuration
+- [ ] Environment variables
+
+### Legal and Compliance
+- [ ] Terms of service
+- [ ] Privacy policy
+- [ ] License agreements
+- [ ] Support policies
+
+## 🔄 Maintenance and Updates
+
+### Version Synchronization
+When updating the core application:
+1. Pull the latest changes from the main repository
+2. Apply white-label customizations again
+3. Test thoroughly
+4. Build and distribute updated versions
+
+### Partner-Specific Features
+For partner-specific features:
+1. Create a feature branch
+2. Implement the custom features
+3. Test with partner branding
+4. Build partner-specific version
+
+### Update Distribution
+1. Notify partners of updates
+2. Provide updated builds
+3. Document changes and new features
+4. Update documentation as needed
+
+## 📊 Analytics and Tracking
+
+### Separate Analytics
+1. Create partner-specific analytics accounts
+2. Update analytics configuration in environment files
+3. Provide separate dashboards for each partner
+4. Segment data by partner
+
+### License Tracking
+1. Track license keys by partner
+2. Monitor usage patterns
+3. Generate partner-specific reports
+4. Share relevant metrics with partners
+
+## 🤝 Partner Support
+
+### Customized Support
+1. Create partner-specific support email addresses
+2. Set up separate support channels
+3. Provide partner-branded support materials
+4. Train support team on partner requirements
+
+### Documentation
+1. Create partner-specific knowledge base
+2. Customize support articles
+3. Provide partner-branded tutorials
+4. Update documentation with partner terminology
+
+## 🚀 White Label Success Tips
+
+1. **Maintain Brand Consistency**: Ensure all elements consistently reflect the partner's brand
+2. **Quality Assurance**: Test thoroughly with partner branding
+3. **Documentation**: Provide comprehensive white-labeled documentation
+4. **Support**: Offer white-labeled support options
+5. **Updates**: Establish a clear process for updates and maintenance
+6. **Legal**: Ensure all legal documents are properly customized
+7. **Training**: Provide training for partner's team
+
+By following this white label guide, you can create professional, branded versions of Local Password Vault for your partners or clients.
