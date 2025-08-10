@@ -1,0 +1,61 @@
+# How to Download Local Password Vault
+
+## Option 1: Download the ZIP File
+
+1. Look for the "Download ZIP" button in the top-right corner of the interface
+2. Click the button to download the complete project as a ZIP file
+3. Save the file to your computer
+4. Extract the ZIP file using Windows Explorer or a tool like 7-Zip
+
+## Option 2: Manual Download (If Option 1 Doesn't Work)
+
+If you don't see a download button, follow these steps:
+
+1. Open Command Prompt on your Windows PC:
+   - Press `Win + R` on your keyboard
+   - Type `cmd` and press Enter
+
+2. Navigate to where you want to save the files:
+   ```
+   cd C:\Users\YourUsername\Downloads
+   ```
+   (Replace "YourUsername" with your actual Windows username)
+
+3. Create a new folder for the project:
+   ```
+   mkdir LocalPasswordVault
+   cd LocalPasswordVault
+   ```
+
+4. Download the project files one by one using the following commands:
+   ```
+   curl -o package.json https://raw.githubusercontent.com/username/local-password-vault/main/package.json
+   curl -o vite.config.ts https://raw.githubusercontent.com/username/local-password-vault/main/vite.config.ts
+   ```
+   (Note: You would need to replace with the actual repository URL)
+
+## Option 3: Clone with Git (For Developers)
+
+If you have Git installed:
+
+1. Open Command Prompt
+2. Navigate to where you want to save the project
+3. Run:
+   ```
+   git clone https://github.com/username/local-password-vault.git
+   cd local-password-vault
+   ```
+
+## After Downloading
+
+Once you have the files:
+
+1. Install Node.js from https://nodejs.org/ (LTS version)
+2. Open Command Prompt in the project folder
+3. Run:
+   ```
+   npm install
+   npm run dev
+   ```
+
+Need help? Contact support@localpasswordvault.com

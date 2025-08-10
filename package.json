@@ -1,0 +1,79 @@
+{
+  "name": "local-password-vault",
+  "private": true,
+  "version": "1.2.0",
+  "type": "commonjs",
+  "main": "server-api-examples/license-server.js",
+  "description": "Professional offline password manager with local encryption and modern UI",
+  "keywords": [
+    "password-manager",
+    "security",
+    "encryption",
+    "offline",
+    "privacy",
+    "desktop"
+  ],
+  "author": "Local Password Vault Team",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/local-password-vault"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/local-password-vault/issues"
+  },
+  "homepage": "https://localpasswordvault.com",
+  "scripts": {
+    "dev": "vite",
+    "start:test": "vite --mode test",
+    "start": "node server-api-examples/license-server.js",
+    "build": "vite build && electron-builder",
+    "build-only": "vite build",
+    "build:prod": "vite build --mode production",
+    "electron": "wait-on tcp:5173 && electron .",
+    "electron-dev": "concurrently \"npm run dev\" \"npm run electron\"",
+    "electron-test": "concurrently \"npm run start:test\" \"npm run electron\"",
+    "electron-pack": "electron-builder",
+    "dist": "npm run build-only && electron-builder --publish=never",
+    "dist:prod": "npm run build:prod && electron-builder --publish=never",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@stripe/react-stripe-js": "^3.7.0",
+    "@stripe/stripe-js": "^7.4.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "electron-positioner": "^4.1.0",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
+    "lucide-react": "^0.344.0",
+    "nodemailer": "^6.9.9",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "stripe": "^18.3.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.9.1",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "archiver": "^7.0.1",
+    "autoprefixer": "^10.4.18",
+    "concurrently": "^8.2.2",
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3",
+    "eslint": "^9.9.1",
+    "eslint-plugin-react-hooks": "^5.1.0-rc.0",
+    "eslint-plugin-react-refresh": "^0.4.11",
+    "globals": "^15.9.0",
+    "javascript-obfuscator": "^4.0.2",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.5.3",
+    "typescript-eslint": "^8.3.0",
+    "vite": "^5.4.2",
+    "vite-plugin-obfuscator": "^1.0.3",
+    "wait-on": "^7.2.0"
+  }
+}

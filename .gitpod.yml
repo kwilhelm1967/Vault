@@ -1,0 +1,27 @@
+tasks:
+  - init: npm install
+    command: npm run dev
+
+ports:
+  - port: 5173
+    onOpen: open-preview
+    visibility: public
+    name: Vite Dev Server
+    description: Local Password Vault Development Server
+
+vscode:
+  extensions:
+    - dbaeumer.vscode-eslint
+    - esbenp.prettier-vscode
+    - bradlc.vscode-tailwindcss
+    - ms-vscode.vscode-typescript-next
+
+github:
+  prebuilds:
+    master: true
+    branches: false
+    pullRequests: true
+    pullRequestsFromForks: false
+    addCheck: true
+    addComment: true
+    addBadge: true

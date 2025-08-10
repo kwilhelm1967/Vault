@@ -1,0 +1,305 @@
+# 🧪 Local Password Vault - Testing Instructions
+
+This document provides step-by-step instructions for testing Local Password Vault.
+
+## 🚀 Getting Started with Testing
+
+### Prerequisites
+- Node.js v18 or higher
+- npm or yarn
+- Modern web browser (Chrome, Firefox, Safari, or Edge)
+
+### Setting Up the Test Environment
+
+1. **Clone or download the repository**
+   ```bash
+   git clone <repository-url>
+   cd local-password-vault
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Create test environment file**
+   ```bash
+   cp .env.test.example .env.test
+   ```
+
+4. **Start the application in test mode**
+   ```bash
+   npm run start:test
+   ```
+
+## 🔑 Test License Keys
+
+The application includes pre-configured test license keys that will be displayed when running in test mode. These keys have a 120-day expiration period and are for testing purposes only.
+
+### Single User Licenses
+- RNKJ-XTPB-LFGM-QVWC3
+- HZXD-YVGP-QNMK-JBSF7
+- TPWL-QVNM-KZXD-JBGF5
+- ABCD-EFGH-IJKL-MNOP1
+- QRST-UVWX-YZAB-CDEF2
+- GHIJ-KLMN-OPQR-STUV3
+
+### Family Plan Licenses
+- GFTP-QVNM-KZXD-JBSF9
+- KZXD-JBSF-GFTP-QVNM3
+- QVNM-KZXD-JBSF-GFTP1
+- WXYZ-ABCD-EFGH-IJKL4
+- MNOP-QRST-UVWX-YZAB5
+- CDEF-GHIJ-KLMN-OPQR6
+
+### Business Plan Licenses
+- JBSF-GFTP-QVNM-KZXD7
+- QVNM-KZXD-JBSF-GFTP5
+- KZXD-JBSF-GFTP-QVNM9
+- STUV-WXYZ-ABCD-EFGH7
+- IJKL-MNOP-QRST-UVWX8
+- YZAB-CDEF-GHIJ-KLMN9
+
+## 🧪 Test Scenarios
+
+### 1. Initial Setup and Login
+
+#### Test Case 1.1: First-time Setup
+1. Start the application in test mode
+2. You should see the license activation screen
+3. Click "Continue Trial" to proceed with the trial
+4. Accept the EULA
+5. Create a master password
+6. Verify you can access the main vault
+
+#### Test Case 1.2: License Activation
+1. Start the application in test mode
+2. Enter one of the test license keys
+3. Click "Activate License"
+4. Accept the EULA
+5. Create a master password
+6. Verify you can access the main vault
+
+#### Test Case 1.3: Login with Existing Master Password
+1. Lock the vault (click the lock icon)
+2. Enter your master password
+3. Verify you can access the main vault
+
+### 2. Password Management
+
+#### Test Case 2.1: Add New Password
+1. Click "Add Password"
+2. Fill in the form with test data:
+   - Account Name: "Test Gmail"
+   - Username: "test@example.com"
+   - Password: Use the generate button or enter "TestPassword123!"
+   - Category: Select any category
+   - Notes: "This is a test account"
+3. Click "Add Password"
+4. Verify the new entry appears in the vault
+
+#### Test Case 2.2: Edit Password
+1. Find the password entry you created
+2. Click the edit icon
+3. Modify some fields
+4. Click "Update Password"
+5. Verify the changes are saved
+
+#### Test Case 2.3: Delete Password
+1. Find a password entry
+2. Click the delete icon
+3. Confirm deletion
+4. Verify the entry is removed
+
+#### Test Case 2.4: Search Passwords
+1. Add several password entries with different account names
+2. Use the search box to search for a specific entry
+3. Verify only matching entries are displayed
+
+#### Test Case 2.5: Filter by Category
+1. Add passwords in different categories
+2. Select a category from the dropdown
+3. Verify only passwords in that category are displayed
+
+### 3. Floating Panel
+
+#### Test Case 3.1: Minimize to Floating Panel
+1. Click the minimize button in the main vault
+2. Verify the floating panel appears
+3. Check that you can drag it around the screen
+
+#### Test Case 3.2: Use Floating Panel Features
+1. Search for a password in the floating panel
+2. Copy username and password
+3. Add a new password from the floating panel
+4. Lock the vault from the floating panel
+
+#### Test Case 3.3: Maximize from Floating Panel
+1. Click the maximize button in the floating panel
+2. Verify the main vault appears
+
+### 4. Import/Export
+
+#### Test Case 4.1: Export Vault
+1. Click the export button
+2. Verify a JSON file is downloaded
+3. Check that the file contains your password entries
+
+#### Test Case 4.2: Import Vault
+1. Create a new password entry
+2. Export the vault
+3. Delete the entry
+4. Import the exported file
+5. Verify the deleted entry is restored
+
+### 5. Security Features
+
+#### Test Case 5.1: Auto-Lock
+1. Leave the application idle for 15 minutes
+2. Verify it automatically locks
+3. Enter your master password to unlock
+
+#### Test Case 5.2: Password Visibility
+1. Find a password entry
+2. Click the eye icon to show the password
+3. Verify the password becomes visible
+4. Verify it automatically hides after 10 seconds (in floating panel)
+
+#### Test Case 5.3: Clipboard Clearing
+1. Copy a password to clipboard
+2. Wait 30 seconds
+3. Try pasting the password
+4. Verify the clipboard has been cleared
+
+### 6. License Features
+
+#### Test Case 6.1: Single User Features
+1. Activate a Single User license
+2. Verify you can add unlimited passwords
+3. Verify import/export functionality
+4. Verify floating panel access
+
+#### Test Case 6.2: Pro Features
+1. Activate a Pro license
+2. Verify all Single User features
+3. Verify you can use on multiple devices (up to 6)
+4. Verify priority support access
+
+#### Test Case 6.2: Family Plan Features
+1. Activate a Family Plan license
+2. Verify all Single User features
+3. Verify you can use on multiple devices (simulate by clearing localStorage and activating again)
+
+#### Test Case 6.3: Business Plan Features
+1. Activate a Business Plan license
+2. Verify all Family Plan features
+3. Verify business-specific features
+
+### 7. Edge Cases
+
+#### Test Case 7.1: Invalid License Key
+1. Enter an invalid license key
+2. Verify appropriate error message
+
+#### Test Case 7.2: Expired License
+1. Modify the system date to simulate license expiration
+2. Restart the application
+3. Verify appropriate handling of expired license
+
+#### Test Case 7.3: Reset Vault
+1. Go to the "Danger Zone" section
+2. Click "Reset Vault"
+3. Type "RESET VAULT" to confirm
+4. Verify all passwords are deleted
+
+## 📱 Cross-Platform Testing
+
+### Web Application
+1. Test in Chrome, Firefox, Safari, and Edge
+2. Test responsive design on different screen sizes
+3. Verify all features work in the web version
+
+### Desktop Application
+1. Test on Windows, macOS, and Linux
+2. Verify native features (clipboard, auto-start, etc.)
+3. Test installation and updates
+
+## 🔍 Performance Testing
+
+### Large Vault Testing
+1. Create a script to generate 1000+ password entries
+2. Import the large vault
+3. Test search and filtering performance
+4. Test floating panel with large data set
+
+### Memory Usage
+1. Monitor memory usage during extended use
+2. Check for memory leaks
+3. Verify performance with large vaults
+
+## 🛡️ Security Testing
+
+### Encryption Testing
+1. Examine localStorage to verify data is encrypted
+2. Attempt to access data with incorrect master password
+3. Verify encryption/decryption works correctly
+
+### License Validation
+1. Test hardware fingerprinting
+2. Attempt to use same license on different devices
+3. Test license transfer process
+
+## 📝 Test Reporting
+
+### Bug Reporting Format
+When reporting bugs, include:
+1. Test case ID and description
+2. Steps to reproduce
+3. Expected behavior
+4. Actual behavior
+5. Environment details (OS, browser, version)
+6. Screenshots or recordings (if applicable)
+
+### Feature Testing Checklist
+- [ ] All features work as expected
+- [ ] UI is responsive and visually consistent
+- [ ] Performance is acceptable
+- [ ] Security features function correctly
+- [ ] Cross-platform compatibility is maintained
+
+## 🔄 Continuous Testing
+
+### Automated Testing
+1. Run unit tests: `npm test`
+2. Run integration tests: `npm run test:integration`
+3. Verify all tests pass
+
+### Manual Testing Cycle
+1. Test after each significant change
+2. Perform full regression testing before releases
+3. Test on all supported platforms
+4. Verify backward compatibility
+
+## 🚀 Test Deployment
+
+### Web Deployment Testing
+1. Build for production: `npm run build:prod`
+2. Deploy to test server
+3. Verify all features work in production build
+
+### Desktop Deployment Testing
+1. Build for all platforms: `npm run dist`
+2. Test installation on each platform
+3. Verify auto-update functionality
+4. Test uninstallation process
+
+## 🎯 Final Verification
+
+Before completing testing:
+1. Verify all test cases pass
+2. Check for any regression issues
+3. Ensure performance is acceptable
+4. Confirm security features work correctly
+5. Validate cross-platform compatibility
+
+By following these testing instructions, you'll ensure Local Password Vault functions correctly across all platforms and use cases.

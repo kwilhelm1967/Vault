@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: local-password-vault-license-server
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: https://localpasswordvault.com,https://www.localpasswordvault.com
+      - key: NODE_ENV
+        value: production

@@ -1,0 +1,406 @@
+# 🔑 Local Password Vault - License Key Management Guide
+
+This guide provides detailed instructions for managing license keys for Local Password Vault.
+
+## 🎯 License Key System Overview
+
+The Local Password Vault license key system includes:
+- Secure license key generation
+- Hardware-bound activation
+- License tier management (Single, Family, Business)
+- Anti-piracy protection
+- Customer management
+
+## 🛠️ License Generator Tool
+
+### Setup and Installation
+
+1. **Access the License Generator**:
+   - Open `license-generator/index.html` in a web browser
+   - Or host it on a secure server for remote access
+
+2. **Configure License Generator**:
+   - Update company information
+   - Configure license tiers and pricing
+   - Set up email integration (optional)
+
+### Generating License Keys
+
+#### Manual Generation
+1. Open the license generator
+2. Select license type (Pro, Family, Business)
+3. Enter quantity and customer details
+4. Click "Generate License Keys"
+5. Copy or export the generated keys
+
+#### Automated Generation via API
+Use the provided API examples in `server-api-examples/license-server.js`:
+
+```javascript
+// Example: Generate license key programmatically
+function generateLicenseKey() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    
+    // Generate 15 random characters
+    for (let i = 0; i < 15; i++) {
+        if (i > 0 && i % 4 === 0) {
+            result += '-';
+        }
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    
+    // Add checksum
+    let checksum = 0;
+    const cleanKey = result.replace(/-/g, '');
+    for (let i = 0; i < cleanKey.length; i++) {
+        checksum += cleanKey.charCodeAt(i);
+    }
+    result += (checksum % 36).toString(36).toUpperCase();
+    
+    return result;
+}
+```
+
+### License Key Format
+
+The license key format is:
+```
+XXXX-XXXX-XXXX-XXXX
+```
+
+Where:
+- X is an alphanumeric character (A-Z, 0-9)
+- The last character is a checksum
+- Total length is 19 characters (16 characters + 3 dashes)
+
+### License Key Validation
+
+License keys are validated using:
+1. Format validation (XXXX-XXXX-XXXX-XXXX pattern)
+2. Checksum verification
+3. Hardware fingerprint binding
+4. Status check (active, revoked, expired)
+
+## 📊 License Management
+
+### Customer Database
+
+Maintain a database of license keys with:
+- License key
+- Customer information (name, email)
+- License type (Single, Family, Business)
+- Status (active, revoked, expired)
+- Activation date
+- Hardware ID (when activated)
+- Notes
+
+### License Status Management
+
+#### Activating Licenses
+When a customer activates a license:
+1. Verify license key format and checksum
+2. Check if license is already activated
+3. Generate hardware fingerprint
+4. Bind license to hardware
+5. Record activation date and hardware ID
+
+#### Revoking Licenses
+To revoke a license:
+1. Find the license in your database
+2. Change status to "revoked"
+3. Clear hardware binding
+4. Notify customer (optional)
+
+#### Transferring Licenses
+To transfer a license to a new device:
+1. Verify customer identity
+2. Revoke license from old device
+3. Allow activation on new device
+4. Update hardware binding
+5. Record transfer in database
+
+### Bulk License Management
+
+For business customers:
+1. Generate multiple license keys at once
+2. Track usage and activations
+3. Provide admin dashboard for license management
+4. Allow license reassignment within organization
+
+## 🔒 Security Measures
+
+### Anti-Piracy Protection
+
+The license system includes:
+1. Hardware fingerprinting
+2. Checksum validation
+3. Activation limits
+4. Suspicious activity monitoring
+5. License binding verification
+
+### Hardware Fingerprinting
+
+Hardware fingerprints are generated using:
+- Screen resolution and color depth
+- Timezone and language settings
+- Platform and user agent information
+- WebGL renderer capabilities
+- CPU cores and memory information
+- Font rendering metrics
+
+### Preventing License Sharing
+
+To prevent unauthorized sharing:
+1. Bind licenses to specific hardware
+2. Limit activation attempts
+3. Monitor for suspicious patterns
+4. Implement grace period for hardware changes
+5. Track activation history
+
+## 📧 License Delivery
+
+### Email Delivery
+
+Use the provided email templates:
+1. Customize templates with your branding
+2. Insert license key(s) and customer information
+3. Include download links and instructions
+4. Send immediately after purchase
+
+Example integration with email service:
+```javascript
+async function sendLicenseEmail(email, licenseKey, licenseType) {
+    // Load appropriate template based on license type
+    const template = await loadEmailTemplate(licenseType);
+    
+    // Replace placeholders
+    const emailContent = template
+        .replace('{{LICENSE_KEY}}', licenseKey)
+        .replace('{{CUSTOMER_NAME}}', customerName)
+        .replace('{{PURCHASE_DATE}}', new Date().toLocaleDateString());
+    
+    // Send email
+    await emailService.send({
+        to: email,
+        subject: `Your ${licenseType} License Key`,
+        html: emailContent
+    });
+}
+```
+
+### Customer Portal (Optional)
+
+Create a customer portal where users can:
+1. View their license keys
+2. Download the application
+3. Manage their licenses
+4. Access support resources
+
+## 💳 Payment Integration
+
+### Stripe Integration
+
+Use the provided Stripe integration example:
+```javascript
+// Webhook handler for Stripe payments
+app.post('/webhook/stripe', express.raw({type: 'application/json'}), async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    let event;
+
+    try {
+        event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    } catch (err) {
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+        const customerEmail = session.customer_details.email;
+        const productId = session.metadata.product_id;
+        
+        // Generate license key
+        const licenseKey = generateLicenseKey();
+        
+        // Save to database
+        await saveLicense({
+            key: licenseKey,
+            email: customerEmail,
+            type: productId,
+            status: 'active',
+            price: session.amount_total / 100,
+            orderId: session.id
+        });
+        
+        // Send email with license key
+        await sendLicenseEmail(customerEmail, licenseKey);
+    }
+
+    res.json({received: true});
+});
+```
+
+### PayPal Integration
+
+Use the provided PayPal integration example:
+```javascript
+// PayPal webhook handler
+app.post('/webhook/paypal', express.json(), async (req, res) => {
+    const event = req.body;
+    
+    if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
+        const capture = event.resource;
+        const customId = capture.custom_id; // Contains product info
+        const payerEmail = capture.payer.email_address;
+        
+        // Parse product info from custom_id
+        const [productType, quantity] = customId.split('_');
+        
+        // Generate licenses
+        const licenses = [];
+        for (let i = 0; i < parseInt(quantity); i++) {
+            licenses.push({
+                key: generateLicenseKey(),
+                type: productType,
+                email: payerEmail,
+                createdAt: new Date(),
+                status: 'active',
+                paymentId: capture.id
+            });
+        }
+        
+        await saveLicensesToDatabase(licenses);
+        await sendLicenseEmail(payerEmail, licenses, productType);
+    }
+    
+    res.status(200).send('OK');
+});
+```
+
+## 📊 Reporting and Analytics
+
+### License Usage Reports
+
+Generate reports on:
+1. Total licenses issued
+2. Activation rates
+3. License types distribution
+4. Geographic distribution
+5. Revenue by license type
+
+### Customer Analytics
+
+Track and analyze:
+1. Conversion rates
+2. Customer acquisition channels
+3. Upgrade patterns
+4. Support ticket frequency
+5. Customer lifetime value
+
+## 🔄 License Server Setup (Optional)
+
+### Server Requirements
+- Node.js v18 or higher
+- Database (PostgreSQL, MySQL, or SQLite)
+- HTTPS support
+- Rate limiting and security measures
+
+### Installation
+```bash
+# Clone the server examples
+git clone <repository-url>/server-api-examples license-server
+
+# Enter directory
+cd license-server
+
+# Install dependencies
+npm install
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your settings
+
+# Start server
+npm start
+```
+
+### API Endpoints
+
+The license server provides these endpoints:
+- `/api/validate-license` - Validate license keys
+- `/api/activate-license` - Activate new licenses
+- `/api/transfer-license` - Transfer to new hardware
+- `/api/analytics` - Usage analytics
+- `/api/report-suspicious-activity` - Security reporting
+
+### Database Setup
+
+Use the provided schema in `supabase/migrations/20250705180134_copper_silence.sql` to set up your database.
+
+## 🔍 Troubleshooting
+
+### Common Issues
+
+#### Invalid License Format
+- Verify the license key follows the XXXX-XXXX-XXXX-XXXX format
+- Check for typos or missing characters
+- Ensure the checksum is valid
+
+#### License Already Activated
+- Verify if the license is bound to another device
+- Check activation history
+- Consider allowing a transfer if legitimate
+
+#### Activation Failures
+- Check internet connectivity
+- Verify server is operational
+- Ensure hardware fingerprinting is working
+- Check for security software interference
+
+### Customer Support Procedures
+
+1. **License Verification**:
+   - Ask for license key and purchase email
+   - Verify in your database
+   - Check activation status
+
+2. **License Recovery**:
+   - Verify customer identity
+   - Generate new license if needed
+   - Revoke old license if compromised
+
+3. **License Transfer**:
+   - Verify legitimate hardware change
+   - Revoke old hardware binding
+   - Allow activation on new hardware
+
+## 🚀 Scaling Your License System
+
+### High Volume Management
+For managing thousands of licenses:
+1. Implement database sharding
+2. Set up caching for license validation
+3. Create admin tools for bulk operations
+4. Automate common support tasks
+5. Implement analytics for trend monitoring
+
+### Enterprise License Management
+For enterprise customers:
+1. Create admin dashboard for license management
+2. Implement role-based access control
+3. Provide usage reports and analytics
+4. Support bulk license operations
+5. Offer custom deployment options
+
+## 📝 License Management Best Practices
+
+1. **Regular Backups**: Back up your license database regularly
+2. **Secure Storage**: Encrypt sensitive customer information
+3. **Audit Trail**: Maintain logs of all license operations
+4. **Expiration Notices**: Send reminders before licenses expire
+5. **Fraud Monitoring**: Watch for suspicious activation patterns
+6. **Customer Communication**: Keep customers informed about license status
+7. **Documentation**: Maintain clear documentation of your license system
+8. **Compliance**: Ensure compliance with relevant regulations
+
+By following this license key management guide, you'll have a robust system for generating, distributing, and managing licenses for Local Password Vault.

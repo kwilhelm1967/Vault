@@ -1,0 +1,69 @@
+# Setting up AWS Cloud9 for Secure Vendor Access
+
+## Prerequisites
+- AWS Account
+- IAM permissions to create and manage Cloud9 environments
+
+## Setup Steps
+
+1. Create a new IAM role for vendors with restricted permissions:
+   - Allow Cloud9 access
+   - Deny S3 file download permissions
+   - Deny CodeCommit clone permissions
+   - Allow only web preview access
+
+2. Create a Cloud9 environment:
+   - Navigate to AWS Cloud9 console
+   - Click "Create environment"
+   - Name: "LocalPasswordVault-VendorEnv"
+   - Environment type: "New EC2 instance"
+   - Instance type: t3.small (recommended)
+   - Platform: Amazon Linux 2
+   - Timeout: 30 minutes (adjustable)
+   - Network settings: Use your VPC with restricted outbound access
+
+3. Configure environment access:
+   - Under "Access settings" choose "AWS Systems Manager (SSM)"
+   - This prevents direct SSH access to the underlying instance
+
+4. Set up environment restrictions:
+   - Disable AWS temporary credentials
+   - Enable IP-based access restrictions
+   - Configure CloudTrail logging for all actions
+
+5. Share with vendors:
+   - Use AWS IAM Identity Center for vendor authentication
+   - Grant the restricted IAM role to vendors
+   - Share the Cloud9 environment URL
+
+## Post-Setup Configuration
+
+Once the environment is created:
+
+1. Clone the repository (as admin)
+2. Run the following commands to set up the environment:
+
+```bash
+npm install
+npm run build
+```
+
+3. Configure Git to prevent code exfiltration:
+```bash
+git config --global user.name "Vendor"
+git config --global user.email "vendor@example.com"
+git config --global --add safe.directory /environment/project-path
+```
+
+4. Set up file system restrictions:
+```bash
+sudo chown -R ec2-user:ec2-user /environment
+sudo chmod -R 750 /environment
+```
+
+5. Install monitoring tools:
+```bash
+sudo yum install -y auditd
+sudo service auditd start
+sudo auditctl -w /environment -p rwxa
+```
