@@ -10,20 +10,27 @@ interface Environment {
 }
 
 // Get environment variables with fallbacks
-const getEnvVar = (key: string, defaultValue: string = ''): string => {
+const getEnvVar = (key: string, defaultValue: string = ""): string => {
   return import.meta.env[key] || defaultValue;
 };
 
 // Create environment configuration
 export const environment: Environment = {
-  isProduction: getEnvVar('VITE_APP_MODE') === 'production',
-  isTest: getEnvVar('VITE_APP_MODE') === 'test',
-  isTrialVersion: getEnvVar('VITE_TRIAL_MODE') === 'true',
-  appVersion: getEnvVar('VITE_APP_VERSION', '1.2.0'),
-  stripePublishableKey: getEnvVar('VITE_STRIPE_PUBLISHABLE_KEY', 'pk_test_TYooMQauvdEDq54NiTphI7jx'),
-  licenseServerUrl: getEnvVar('VITE_LICENSE_SERVER_URL', 'http://localhost:3001'),
-  analyticsEnabled: getEnvVar('VITE_ANALYTICS_ENABLED', 'false') === 'true'
+  isProduction: getEnvVar("VITE_APP_MODE") === "production",
+  isTest: getEnvVar("VITE_APP_MODE") === "test",
+  isTrialVersion: getEnvVar("VITE_TRIAL_MODE") === "true",
+  appVersion: getEnvVar("VITE_APP_VERSION", "1.2.0"),
+  stripePublishableKey: getEnvVar(
+    "VITE_STRIPE_PUBLISHABLE_KEY",
+    "pk_test_TYooMQauvdEDq54NiTphI7jx"
+  ),
+  licenseServerUrl: getEnvVar(
+    "VITE_LICENSE_SERVER_URL",
+    "http://localhost:3001"
+  ),
+  analyticsEnabled: getEnvVar("VITE_ANALYTICS_ENABLED", "false") === "true",
 };
+
 
 // Feature flags based on environment
 export const features = {
@@ -37,11 +44,11 @@ export const features = {
   maxDevicesPerLicense: {
     single: 1,
     family: 3,
-    business: 10
-  }
+    business: 10,
+  },
 };
 
 export default {
   environment,
-  features
+  features,
 };

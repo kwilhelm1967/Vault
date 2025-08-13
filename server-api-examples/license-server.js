@@ -9,6 +9,8 @@ import stripe from "stripe";
 import dotenv from "dotenv";
 import DownloadHandler from "./download-handler.js";
 import EmailService from "./email-templates.js";
+import supabase from "./supabase.js";
+import { saveLicensesToDatabase } from "./database.js";
 
 dotenv.config();
 
@@ -17,6 +19,8 @@ const stripeClient = stripe(process.env.STRIPE_SECRET_KEY);
 const downloadHandler = new DownloadHandler();
 
 const emailService = new EmailService();
+
+console.log(supabase, "supabase");
 
 // Security middleware
 app.use(helmet());
@@ -198,6 +202,10 @@ app.post(
     ) {
       const session = event.data.object;
 
+      console.log(session, "payment info");
+
+      const paymentId = session.payment_intent;
+
       // Retrieve the product id using session line items
       const sessionWithLineItems =
         await stripeClient.checkout.sessions.retrieve(session.id, {
@@ -262,15 +270,24 @@ app.post(
         );
 
         // In a real implementation, save to database
-        // await saveLicensesToDatabase(licenses, customerEmail, licenseType, session.id);
+        await saveLicensesToDatabase(
+          licenses,
+          customerEmail,
+          licenseType,
+          session.id,
+          "active",
+          paymentId
+        );
 
         // In a real implementation, send email with license keys
-        await emailService.sendLicenseEmail(
+        /*
+        await emailService.sendWelcomeEmail(
           customerEmail,
           licenses,
           licenseType,
           downloadInfo
         );
+        */
 
         // For now, just log the licenses
         console.log("Generated licenses:", licenses);
@@ -554,7 +571,20 @@ app.post("/api/validate-license", licenseLimiter, async (req, res) => {
     }
 
     // Check if license exists
-    const license = licenses.get(licenseKey);
+    const { data: license, error } = await supabase
+      .from("licenses")
+      .select("*")
+      .eq("license_key", licenseKey)
+      .single();
+
+    if (error) {
+      console.error("License retrieval error:", error);
+      return res.status(500).json({
+        valid: false,
+        error: "Internal server error",
+      });
+    }
+
     if (!license) {
       suspiciousActivities.push({
         type: "license_not_found",
@@ -655,11 +685,24 @@ app.post("/api/validate-license", licenseLimiter, async (req, res) => {
 // License activation endpoint (for new purchases)
 app.post("/api/activate-license", licenseLimiter, async (req, res) => {
   try {
-    const { licenseKey, customerEmail, hardwareId } = req.body;
+    const { licenseKey, hardwareId } = req.body;
     const clientIP = req.ip || req.connection.remoteAddress;
 
     // Check if license exists and is unactivated
-    const license = licenses.get(licenseKey);
+    const { data: license, error } = await supabase
+      .from("licenses")
+      .select("*")
+      .eq("license_key", licenseKey)
+      .single();
+
+    if (error) {
+      console.error("License retrieval error:", error);
+      return res.status(500).json({
+        success: false,
+        error: error.message,
+      });
+    }
+
     if (!license) {
       return res.status(404).json({
         success: false,
@@ -667,18 +710,30 @@ app.post("/api/activate-license", licenseLimiter, async (req, res) => {
       });
     }
 
-    if (license.hardwareId) {
+    if (license.hardware_id && license.hardware_id !== hardwareId) {
       return res.status(409).json({
         success: false,
         error: "License already activated",
       });
     }
 
-    // Activate license
-    license.hardwareId = hardwareId;
-    license.activatedAt = Date.now();
-    license.activationCount = 1;
-    license.customerEmail = customerEmail;
+    // Update the activated license
+    const { data: updatedLicense, error: updateError } = await supabase
+      .from("licenses")
+      .update({
+        hardware_id: hardwareId,
+        activated_at: new Date().toISOString(),
+      })
+      .eq("license_key", licenseKey)
+      .select()
+      .single();
+
+    if (updateError) {
+      return res.status(updateError.status || 500).json({
+        success: false,
+        error: updateError.message,
+      });
+    }
 
     // Log activation
     usageLog.push({
@@ -692,8 +747,8 @@ app.post("/api/activate-license", licenseLimiter, async (req, res) => {
     res.json({
       success: true,
       licenseData: {
-        type: license.type,
-        activatedAt: license.activatedAt,
+        type: updatedLicense.license_type,
+        activatedAt: updatedLicense.activated_at,
       },
     });
   } catch (error) {

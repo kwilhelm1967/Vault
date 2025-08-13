@@ -9,7 +9,7 @@
 CREATE TABLE licenses (
     id SERIAL PRIMARY KEY,
     license_key VARCHAR(19) UNIQUE NOT NULL,
-    license_type VARCHAR(20) NOT NULL CHECK (license_type IN ('pro', 'family', 'business')),
+    license_type VARCHAR(20) NOT NULL CHECK (license_type IN ('pro', 'family', 'business', 'single')),
     customer_email VARCHAR(255),
     customer_name VARCHAR(255),
     price DECIMAL(10,2),

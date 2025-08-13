@@ -204,7 +204,7 @@ export const DownloadPage: React.FC = () => {
         {/* Footer */}
         <div className="text-center mt-8 pt-8 border-t border-slate-700">
           <p className="text-xs text-slate-500">
-            Secure • Private • Offline • Professional Password Management
+            Secure • Private • Offline • Local Password Management
           </p>
           <p className="text-xs text-slate-600 mt-2">
             © 2025 Local Password Vault | <a href="https://LocalPasswordVault.com" className="text-blue-400 hover:text-blue-300">LocalPasswordVault.com</a>
