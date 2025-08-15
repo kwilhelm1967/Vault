@@ -224,19 +224,23 @@ app.post(
       let quantity = 1;
 
       switch (productId) {
+        case "prod_Sf9ECSYYWb9O9N":
+          licenseType = "single";
+          quantity = 1;
+          break;
         case "prod_Sofb9khTHtbJsQ":
           licenseType = "single";
           quantity = 1;
           break;
-        case "prod_family_plan":
+        case "prod_Sf9HiDE4eqPoCE":
           licenseType = "family";
           quantity = 3;
           break;
-        case "prod_pro_license":
+        case "prod_SfoSPqyGwHMeZp":
           licenseType = "pro";
           quantity = 1;
           break;
-        case "prod_business_plan":
+        case "prod_Sf9IHRQdNePn0J":
           licenseType = "business";
           quantity = 10;
           break;
