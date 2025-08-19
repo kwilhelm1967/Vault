@@ -1,712 +1,379 @@
 #!/bin/bash
 
-# AlmaLinux 9.6 Deployment Script for Local Password Vault License Server
-# Comprehensive deployment with error handling and rollback capabilities
-# Compatible with AlmaLinux 9.6 (Sage Margay)
+# Unified Deployment Script (Local + Remote) for Local Password Vault License Server
+# - One file to upload app files, provision server (AlmaLinux 9.x), configure Apache+SSL,
+#   install Node/PM2, and start the service.
+# - Run on your Mac: it will upload itself and the app to the server, then run remotely.
+# - Run on the server as root: it will perform provisioning/startup directly.
 
-# Exit on error, undefined variables, and pipe failures
 set -euo pipefail
-
-# Enable debug mode if DEBUG=1
 [[ "${DEBUG:-0}" == "1" ]] && set -x
 
-echo "🚀 Starting Local Password Vault License Server Deployment for AlmaLinux 9.6..."
-
-# Colors for output
 readonly RED='\033[0;31m'
 readonly GREEN='\033[0;32m'
 readonly YELLOW='\033[1;33m'
 readonly BLUE='\033[0;34m'
 readonly PURPLE='\033[0;35m'
-readonly CYAN='\033[0;36m'
-readonly NC='\033[0m' # No Color
+readonly NC='\033[0m'
 
-# Configuration
-readonly APP_USER="passwordvault"
-readonly APP_DIR="/var/www/server.localpasswordvault.com"
-readonly DOMAIN="server.localpasswordvault.com"
-readonly NODE_PORT="3001"
-readonly BACKUP_DIR="/root/deployment-backup-$(date +%Y%m%d_%H%M%S)"
-readonly LOG_FILE="/var/log/passwordvault-deployment.log"
-readonly REQUIRED_MEMORY_MB=1024
-readonly REQUIRED_DISK_GB=5
+print() { echo -e "$1"; }
+info() { print "${BLUE}[INFO]${NC} $1"; }
+ok() { print "${GREEN}[SUCCESS]${NC} $1"; }
+warn() { print "${YELLOW}[WARNING]${NC} $1"; }
+err() { print "${RED}[ERROR]${NC} $1"; }
 
-# Global variables for rollback
-APACHE_INSTALLED=false
-PM2_INSTALLED=false
-USER_CREATED=false
-DIRECTORIES_CREATED=false
-FIREWALL_CONFIGURED=false
+# Defaults (overridable via flags)
+APP_USER="passwordvault"
+DOMAIN="server.localpasswordvault.com"
+NODE_PORT="3001"
+EMAIL=""
+APP_NAME="license-server"
+APP_ROOT="/var/www" # final path becomes /var/www/${DOMAIN}
+REMOTE_SCRIPT_PATH="/root/deploy.sh"
+REMOTE_APP_TAR="/tmp/${APP_NAME}-$(date +%Y%m%d_%H%M%S).tar.gz"
+LOG_FILE="/var/log/passwordvault-deployment.log"
+# Clean previous deployment by default unless --no-clean is passed
+CLEAN=1
+
+# State flags
 APACHE_CONFIGURED=false
+PM2_INSTALLED=false
 
-# Logging function
-log() {
-    local level="$1"
-    shift
-    local message="$*"
-    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    echo -e "[$timestamp] [$level] $message" | tee -a "$LOG_FILE"
+usage() {
+    cat <<USAGE
+Usage:
+    Local (on macOS):
+        ./deploy.sh --local --server root@IP --domain ${DOMAIN} [--email you@example.com]
+
+    Remote (on server as root):
+        ./deploy.sh --remote --domain ${DOMAIN} --app-user ${APP_USER} --app-tar /tmp/app.tar.gz [--email you@example.com]
+
+Options:
+    --server <user@host>   SSH target, e.g. root@96.126.126.18
+    --domain <fqdn>        FQDN to configure (default: ${DOMAIN})
+    --app-user <name>      System user to run app (default: ${APP_USER})
+    --email <email>        Email for Let's Encrypt (optional, recommended)
+    --no-ssl               Skip SSL certificate issuance
+    --no-clean             Do not remove previous app/PM2/Apache/logrotate before provisioning
+    --debug                Verbose debug output
+    -h, --help             Show help
+USAGE
 }
 
-# Function to print colored output
-print_status() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-    log "INFO" "$1"
+command_exists() { command -v "$1" >/dev/null 2>&1; }
+
+make_tarball() {
+    local src_dir="$1"
+    local dest_tar="$2"
+    info "Creating app archive from: $src_dir"
+    tar -czf "$dest_tar" \
+        --exclude node_modules \
+        --exclude .git \
+        -C "$src_dir" .
+    ok "Created: $dest_tar"
 }
 
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-    log "SUCCESS" "$1"
+push_files_remote() {
+    local server="$1"; local local_tar="$2"; local remote_tar="$3"; local script_path="$4"
+    info "Uploading app archive to $server:$remote_tar"
+    scp "$local_tar" "$server:$remote_tar"
+    ok "Archive uploaded"
+    info "Uploading deploy script to $server:$script_path"
+    scp "$0" "$server:$script_path"
+    ok "Script uploaded"
 }
 
-print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-    log "WARNING" "$1"
+run_remote() {
+    local server="$1"; shift
+    local remote_cmd=("bash" "$REMOTE_SCRIPT_PATH" "--remote" "$@")
+    info "Starting remote deployment on $server"
+    ssh "$server" "${remote_cmd[*]}"
 }
 
-print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-    log "ERROR" "$1"
+# ===================== Remote functions (server) =====================
+
+log_remote() {
+    # Ensure log exists
+    touch "$LOG_FILE"; chmod 644 "$LOG_FILE"
+    echo -e "[$(date '+%F %T')] $*" | tee -a "$LOG_FILE"
 }
 
-print_debug() {
-    if [[ "${DEBUG:-0}" == "1" ]]; then
-        echo -e "${PURPLE}[DEBUG]${NC} $1"
-        log "DEBUG" "$1"
-    fi
+install_dnf_pkgs() {
+    local pkgs=("$@")
+    dnf install -y "${pkgs[@]}" 2>&1 | tee -a "$LOG_FILE"
 }
 
-# Error handler function
-error_handler() {
-    local line_no=$1
-    local error_code=$2
-    print_error "Script failed at line $line_no with exit code $error_code"
-    print_error "Starting rollback process..."
-    rollback_deployment
-    exit $error_code
-}
-
-# Set error trap
-trap 'error_handler ${LINENO} $?' ERR
-
-# Rollback function
-rollback_deployment() {
-    print_warning "Performing rollback of deployment changes..."
-    
-    # Stop and remove PM2 processes
-    if [[ "$PM2_INSTALLED" == "true" ]]; then
-        print_status "Rolling back PM2 installation..."
-        sudo -u "$APP_USER" pm2 delete all 2>/dev/null || true
-        sudo -u "$APP_USER" pm2 kill 2>/dev/null || true
-        npm uninstall -g pm2 2>/dev/null || true
-    fi
-    
-    # Remove Apache configuration
-    if [[ "$APACHE_CONFIGURED" == "true" ]]; then
-        print_status "Rolling back Apache configuration..."
-        sudo systemctl stop httpd 2>/dev/null || true
-        sudo rm -f "/etc/httpd/conf.d/$DOMAIN.conf" 2>/dev/null || true
-    fi
-    
-    # Remove application directories
-    if [[ "$DIRECTORIES_CREATED" == "true" ]]; then
-        print_status "Rolling back directory creation..."
-        sudo rm -rf "$APP_DIR" 2>/dev/null || true
-    fi
-    
-    # Remove user (optional, commented out for safety)
-    # if [[ "$USER_CREATED" == "true" ]]; then
-    #     sudo userdel -r "$APP_USER" 2>/dev/null || true
-    # fi
-    
-    # Restore backup if exists
-    if [[ -d "$BACKUP_DIR" ]]; then
-        print_status "Backup available at: $BACKUP_DIR"
-    fi
-    
-    print_warning "Rollback completed. Please review the system state."
-}
-
-# System requirements check
-check_system_requirements() {
-    print_status "Checking system requirements..."
-    
-    # Check if running as root
-    if [[ $EUID -ne 0 ]]; then
-        print_error "This script must be run as root (sudo ./deploy.sh)"
-        exit 1
-    fi
-    
-    # Check OS compatibility
-    if [[ ! -f /etc/os-release ]]; then
-        print_error "Cannot determine OS version"
-        exit 1
-    fi
-    
-    source /etc/os-release
-    if [[ "$ID" != "almalinux" ]] || [[ ! "$VERSION_ID" =~ ^9\. ]]; then
-        print_warning "This script is optimized for AlmaLinux 9.x. Current OS: $PRETTY_NAME"
-        read -p "Continue anyway? (y/N): " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            exit 1
-        fi
+check_system() {
+    [[ $EUID -eq 0 ]] || { err "Run as root on the server"; exit 1; }
+    source /etc/os-release || { err "Cannot read /etc/os-release"; exit 1; }
+    if [[ "$ID" != "almalinux" || ! "$VERSION_ID" =~ ^9\. ]]; then
+        warn "Optimized for AlmaLinux 9.x. Detected: $PRETTY_NAME"
     else
-        print_success "Detected compatible OS: $PRETTY_NAME"
+        ok "Detected AlmaLinux 9.x"
     fi
-    
-    # Check available memory
-    local available_memory_mb=$(free -m | awk 'NR==2{print $7}')
-    if [[ $available_memory_mb -lt $REQUIRED_MEMORY_MB ]]; then
-        print_warning "Available memory (${available_memory_mb}MB) is below recommended (${REQUIRED_MEMORY_MB}MB)"
-    fi
-    
-    # Check available disk space
-    local available_disk_gb=$(df / | awk 'NR==2{print int($4/1024/1024)}')
-    if [[ $available_disk_gb -lt $REQUIRED_DISK_GB ]]; then
-        print_error "Insufficient disk space. Available: ${available_disk_gb}GB, Required: ${REQUIRED_DISK_GB}GB"
-        exit 1
-    fi
-    
-    print_success "System requirements check passed"
 }
 
-# Create backup
-create_backup() {
-    print_status "Creating backup directory..."
-    mkdir -p "$BACKUP_DIR"
-    
-    # Backup existing configurations
-    if [[ -f "/etc/httpd/conf.d/$DOMAIN.conf" ]]; then
-        cp "/etc/httpd/conf.d/$DOMAIN.conf" "$BACKUP_DIR/" 2>/dev/null || true
-    fi
-    
-    if [[ -d "$APP_DIR" ]]; then
-        cp -r "$APP_DIR" "$BACKUP_DIR/" 2>/dev/null || true
-    fi
-    
-    print_success "Backup created at: $BACKUP_DIR"
-}
-
-# Function to check if command exists
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
-}
-
-# Function to wait for service to be ready
-wait_for_service() {
-    local service_name="$1"
-    local max_attempts=30
-    local attempt=0
-    
-    print_status "Waiting for $service_name to be ready..."
-    
-    while [[ $attempt -lt $max_attempts ]]; do
-        if sudo systemctl is-active --quiet "$service_name"; then
-            print_success "$service_name is ready"
-            return 0
-        fi
-        
-        ((attempt++))
-        print_debug "Attempt $attempt/$max_attempts for $service_name"
-        sleep 2
-    done
-    
-    print_error "$service_name failed to start within expected time"
-    return 1
-}
-
-# Function to verify port availability
-check_port_availability() {
-    local port="$1"
-    if ss -tuln | grep -q ":$port "; then
-        print_error "Port $port is already in use"
-        ss -tuln | grep ":$port "
-        return 1
-    fi
-    print_success "Port $port is available"
-    return 0
-}
-
-# Package installation with retry logic
-install_packages() {
-    local packages=("$@")
-    local max_retries=3
-    local retry=0
-    
-    print_status "Installing packages: ${packages[*]}"
-    
-    while [[ $retry -lt $max_retries ]]; do
-        if sudo dnf install -y "${packages[@]}" 2>&1 | tee -a "$LOG_FILE"; then
-            print_success "Packages installed successfully"
-            return 0
-        fi
-        
-        ((retry++))
-        print_warning "Package installation attempt $retry failed. Retrying..."
-        sleep 5
-        
-        # Clean cache and try again
-        sudo dnf clean all
-    done
-    
-    print_error "Failed to install packages after $max_retries attempts"
-    return 1
-}
-
-# Main deployment function
-main_deployment() {
-    print_status "Starting main deployment process..."
-    
-    # System checks
-    check_system_requirements
-    create_backup
-    
-    # Check port availability
-    check_port_availability "$NODE_PORT"
-    
-    print_status "Updating system packages..."
-    sudo dnf update -y | tee -a "$LOG_FILE"
-    
-    print_status "Installing EPEL repository..."
-    install_packages epel-release
-    
-    print_status "Installing base packages..."
-    install_packages httpd firewalld python3-certbot-apache
-    
-    # Handle Node.js installation separately to avoid conflicts
-    setup_nodejs
-    
-    print_status "Installing PM2 globally..."
-    if npm install -g pm2 2>&1 | tee -a "$LOG_FILE"; then
-        PM2_INSTALLED=true
-        print_success "PM2 installed successfully"
+setup_node() {
+    info "Installing Node.js (16.x preferred for compatibility)"
+    dnf remove -y nodejs npm nodejs-npm nsolid >/dev/null 2>&1 || true
+    dnf clean all
+    dnf module reset -y nodejs >/dev/null 2>&1 || true
+    if dnf module install -y nodejs:16/common; then
+        ok "Installed Node.js $(node -v)"
     else
-        print_error "Failed to install PM2"
-        return 1
+        warn "Fallback to dnf install nodejs npm"
+        install_dnf_pkgs nodejs npm
     fi
-    
-    print_status "Setting up Certbot..."
-    setup_certbot
-    
-    print_status "Configuring services..."
-    configure_services
-    
-    print_status "Creating application user and directories..."
-    setup_application_user
-    
-    print_status "Configuring firewall..."
-    configure_firewall
-    
-    print_status "Configuring SELinux..."
-    configure_selinux
-    
-    print_status "Setting up Apache virtual host..."
-    setup_apache_virtualhost
-    
-    print_status "Setting up log rotation..."
-    setup_log_rotation
-    
-    print_success "Deployment completed successfully!"
-    display_next_steps
+    node -v && npm -v || { err "Node/npm not available"; exit 1; }
 }
 
-# Setup Node.js with system compatibility
-setup_nodejs() {
-    print_status "Setting up Node.js compatible with system requirements..."
-    
-    # Check if Node.js is already installed and compatible
-    if command_exists node; then
-        local current_version=$(node --version 2>/dev/null | sed 's/v//' | cut -d. -f1 || echo "0")
-        print_status "Current Node.js version: v$(node --version 2>/dev/null || echo 'none')"
-        
-        # Check if npm works with current Node.js
-        if command_exists npm && npm --version >/dev/null 2>&1; then
-            print_success "Node.js and npm are already installed and working"
-            return 0
-        fi
-    fi
-    
-    # Clean up any conflicting packages
-    print_status "Cleaning up conflicting Node.js packages..."
-    sudo dnf remove -y nodejs npm nodejs-npm nsolid 2>/dev/null || true
-    sudo dnf clean all
-    
-    # Install Node.js 16.x to match system npm requirements
-    print_status "Installing Node.js 16.x to match system requirements..."
-    
-    # Reset nodejs module
-    sudo dnf module reset nodejs -y 2>/dev/null || true
-    
-    # Install Node.js 16 from system repository (matches npm requirement)
-    if sudo dnf module install nodejs:16/common -y; then
-        # Verify installation
-        if command_exists node && command_exists npm; then
-            local version=$(node --version)
-            print_success "Node.js $version installed from system repository"
-            
-            # Verify npm works
-            if npm --version >/dev/null 2>&1; then
-                print_success "npm is working correctly with Node.js $version"
-                return 0
-            fi
-        fi
-    fi
-    
-    # Fallback: Try installing just the base packages
-    print_warning "Trying alternative installation method..."
-    if sudo dnf install -y nodejs npm; then
-        if command_exists node && command_exists npm && npm --version >/dev/null 2>&1; then
-            local version=$(node --version)
-            print_success "Node.js $version and npm installed successfully"
-            return 0
-        fi
-    fi
-    
-    print_error "Failed to install compatible Node.js version"
-    return 1
-}
-# Setup Certbot
 setup_certbot() {
+    install_dnf_pkgs epel-release
     if ! command_exists certbot; then
-        print_status "Installing Certbot for AlmaLinux..."
-        
-        # For AlmaLinux/RHEL, use EPEL repository instead of snap
-        # Install certbot from EPEL
-        if sudo dnf install -y certbot python3-certbot-apache; then
-            print_success "Certbot installed successfully from EPEL repository"
-        else
-            print_warning "EPEL installation failed, trying alternative method..."
-            
-            # Alternative: Install from pip
-            if command_exists python3; then
-                print_status "Installing Certbot via pip3..."
-                sudo dnf install -y python3-pip
-                sudo pip3 install certbot certbot-apache
-                
-                # Create symlink if needed
-                if [[ ! -f /usr/bin/certbot ]] && [[ -f /usr/local/bin/certbot ]]; then
-                    sudo ln -sf /usr/local/bin/certbot /usr/bin/certbot
-                fi
-                
-                if command_exists certbot; then
-                    print_success "Certbot installed via pip3"
-                else
-                    print_error "Failed to install Certbot via pip3"
-                    return 1
-                fi
-            else
-                print_error "Python3 not available, cannot install Certbot"
-                return 1
-            fi
+        info "Installing Certbot"
+        install_dnf_pkgs certbot python3-certbot-apache || true
+        if ! command_exists certbot; then
+            err "Certbot not installed. You can install later: dnf install certbot python3-certbot-apache"; return 1
         fi
-    else
-        print_success "Certbot already installed"
     fi
+    ok "Certbot ready"
 }
 
-# Configure services
 configure_services() {
-    print_status "Enabling and starting services..."
-    
-    # Apache
-    sudo systemctl enable httpd
-    if sudo systemctl start httpd; then
-        APACHE_INSTALLED=true
-        wait_for_service httpd
-    else
-        print_error "Failed to start Apache"
-        return 1
-    fi
-    
-    # Firewall
-    sudo systemctl enable firewalld
-    sudo systemctl start firewalld || print_warning "Firewalld may already be running"
-    
-    print_success "Services configured successfully"
+    systemctl enable httpd
+    systemctl start httpd
+    systemctl enable firewalld || true
+    systemctl start firewalld || true
 }
 
-# Setup application user
-setup_application_user() {
-    # Create user if doesn't exist
-    if ! id "$APP_USER" &>/dev/null; then
-        print_status "Creating application user: $APP_USER"
-        sudo adduser "$APP_USER"
-        USER_CREATED=true
-        print_success "User $APP_USER created"
-    else
-        print_success "User $APP_USER already exists"
-    fi
-    
-    # Create directories
-    print_status "Creating application directories..."
-    sudo mkdir -p "$APP_DIR/license-server"
-    sudo mkdir -p "$APP_DIR/logs"
-    sudo mkdir -p "/home/$APP_USER"
-    
-    # Set permissions
-    sudo chown -R "$APP_USER:$APP_USER" "$APP_DIR"
-    sudo chown -R "$APP_USER:$APP_USER" "/home/$APP_USER"
-    DIRECTORIES_CREATED=true
-    
-    print_success "Application directories created"
-}
-
-# Configure firewall
 configure_firewall() {
-    print_status "Configuring firewall rules..."
-    
-    # Allow HTTP and HTTPS
-    sudo firewall-cmd --permanent --add-service=http
-    sudo firewall-cmd --permanent --add-service=https
-    
-    # Allow SSH (important!)
-    sudo firewall-cmd --permanent --add-service=ssh
-    
-    # Allow Node.js port (internal only)
-    sudo firewall-cmd --permanent --add-port="$NODE_PORT/tcp" --zone=internal
-    
-    # Reload firewall
-    sudo firewall-cmd --reload
-    FIREWALL_CONFIGURED=true
-    
-    # Display current rules
-    print_status "Current firewall rules:"
-    sudo firewall-cmd --list-all | tee -a "$LOG_FILE"
-    
-    print_success "Firewall configured successfully"
+    firewall-cmd --permanent --add-service=http || true
+    firewall-cmd --permanent --add-service=https || true
+    firewall-cmd --permanent --add-service=ssh || true
+    firewall-cmd --permanent --add-port="${NODE_PORT}/tcp" --zone=internal || true
+    firewall-cmd --reload || true
 }
 
-# Configure SELinux
 configure_selinux() {
     if command_exists getenforce && [[ "$(getenforce)" != "Disabled" ]]; then
-        print_status "Configuring SELinux for Apache proxy..."
-        
-        # Allow Apache to make network connections
-        sudo setsebool -P httpd_can_network_connect 1
-        
-        # Allow Apache to connect to Node.js port
+        setsebool -P httpd_can_network_connect 1 || true
         if command_exists semanage; then
-            sudo semanage port -a -t http_port_t -p tcp "$NODE_PORT" 2>/dev/null || \
-            sudo semanage port -m -t http_port_t -p tcp "$NODE_PORT" 2>/dev/null || true
+            semanage port -a -t http_port_t -p tcp "$NODE_PORT" 2>/dev/null || \
+            semanage port -m -t http_port_t -p tcp "$NODE_PORT" 2>/dev/null || true
         else
-            print_warning "semanage not found. Installing policycoreutils-python-utils..."
-            install_packages policycoreutils-python-utils
-            sudo semanage port -a -t http_port_t -p tcp "$NODE_PORT" 2>/dev/null || \
-            sudo semanage port -m -t http_port_t -p tcp "$NODE_PORT" 2>/dev/null || true
+            install_dnf_pkgs policycoreutils-python-utils
+            semanage port -a -t http_port_t -p tcp "$NODE_PORT" 2>/dev/null || \
+            semanage port -m -t http_port_t -p tcp "$NODE_PORT" 2>/dev/null || true
         fi
-        
-        # Set proper SELinux context for application directory
-        sudo restorecon -R "$APP_DIR" 2>/dev/null || true
-        
-        print_success "SELinux configured for Apache proxy"
-    else
-        print_warning "SELinux is disabled or not available"
     fi
 }
 
-# Setup Apache virtual host
-setup_apache_virtualhost() {
-    local config_file="/etc/httpd/conf.d/$DOMAIN.conf"
-    
-    print_status "Creating Apache virtual host configuration..."
-    
-    sudo tee "$config_file" > /dev/null << 'EOF'
-# HTTP Virtual Host (redirects to HTTPS)
+create_app_user_and_dirs() {
+    id "$APP_USER" &>/dev/null || adduser "$APP_USER"
+    APP_DIR="${APP_ROOT}/${DOMAIN}"
+    mkdir -p "$APP_DIR/license-server" "$APP_DIR/logs"
+    chown -R "$APP_USER:$APP_USER" "$APP_DIR"
+}
+
+write_apache_vhost() {
+    local conf="/etc/httpd/conf.d/${DOMAIN}.conf"
+    info "Writing Apache vhost: $conf"
+    cat > "$conf" <<EOF
+# Auto-generated by deploy.sh
 <VirtualHost *:80>
-    ServerName server.localpasswordvault.com
-    ServerAlias www.server.localpasswordvault.com
-    
-    # Redirect all HTTP traffic to HTTPS
-    Redirect permanent / https://server.localpasswordvault.com/
-    
-    # Log files
-    ErrorLog /var/log/httpd/server.localpasswordvault.com_error.log
-    CustomLog /var/log/httpd/server.localpasswordvault.com_access.log combined
+    ServerName ${DOMAIN}
+    Redirect permanent / https://${DOMAIN}/
+    ErrorLog /var/log/httpd/${DOMAIN}_error.log
+    CustomLog /var/log/httpd/${DOMAIN}_access.log combined
 </VirtualHost>
 
-# HTTPS Virtual Host
 <VirtualHost *:443>
-    ServerName server.localpasswordvault.com
-    ServerAlias www.server.localpasswordvault.com
-    
-    # SSL Configuration (will be added by Certbot)
-    
-    # Security Headers
+    ServerName ${DOMAIN}
+    # SSL managed by Certbot
+
     Header always set X-Frame-Options "SAMEORIGIN"
     Header always set X-Content-Type-Options "nosniff"
     Header always set X-XSS-Protection "1; mode=block"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
     Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
-    
-    # Proxy configuration
+
     ProxyPreserveHost On
     ProxyRequests Off
-    
-    # Main proxy to Node.js application
-    ProxyPass / http://127.0.0.1:3001/
-    ProxyPassReverse / http://127.0.0.1:3001/
-    
-    # Handle WebSocket connections
+    ProxyPass / http://127.0.0.1:${NODE_PORT}/
+    ProxyPassReverse / http://127.0.0.1:${NODE_PORT}/
+
     RewriteEngine On
     RewriteCond %{HTTP:Upgrade} websocket [NC]
     RewriteCond %{HTTP:Connection} upgrade [NC]
-    RewriteRule ^/?(.*) "ws://127.0.0.1:3001/$1" [P,L]
-    
-    # Pass real IP to Node.js application
-    ProxyPreserveHost On
-    ProxyAddHeaders On
+    RewriteRule ^/?(.*) ws://127.0.0.1:${NODE_PORT}/$1 [P,L]
+
     RequestHeader set "X-Forwarded-Proto" "https"
     RequestHeader set "X-Forwarded-Port" "443"
-    
-    # Logging
-    ErrorLog /var/log/httpd/server.localpasswordvault.com_ssl_error.log
-    CustomLog /var/log/httpd/server.localpasswordvault.com_ssl_access.log combined
-    
-    # Compression
-    <IfModule mod_deflate.c>
-        <Location />
-            SetOutputFilter DEFLATE
-            SetEnvIfNoCase Request_URI \
-                \.(?:gif|jpe?g|png)$ no-gzip dont-vary
-            SetEnvIfNoCase Request_URI \
-                \.(?:exe|t?gz|zip|bz2|sit|rar)$ no-gzip dont-vary
-        </Location>
-    </IfModule>
+
+    ErrorLog /var/log/httpd/${DOMAIN}_ssl_error.log
+    CustomLog /var/log/httpd/${DOMAIN}_ssl_access.log combined
 </VirtualHost>
 EOF
-    
+    apachectl configtest
+    systemctl restart httpd
     APACHE_CONFIGURED=true
-    
-    # Test Apache configuration
-    if sudo httpd -t; then
-        print_success "Apache configuration is valid"
-        
-        # Restart Apache
-        sudo systemctl restart httpd
-        wait_for_service httpd
-        print_success "Apache restarted successfully"
-    else
-        print_error "Apache configuration test failed"
-        return 1
-    fi
 }
 
-# Setup log rotation
-setup_log_rotation() {
-    print_status "Setting up log rotation..."
-    
-    sudo tee /etc/logrotate.d/license-server > /dev/null << 'EOF'
-/var/www/server.localpasswordvault.com/license-server/logs/*.log {
+write_logrotate() {
+    cat > /etc/logrotate.d/${APP_NAME} <<EOF
+${APP_ROOT}/${DOMAIN}/${APP_NAME}/logs/*.log {
     daily
     missingok
     rotate 30
     compress
     delaycompress
     notifempty
-    create 644 passwordvault passwordvault
-    postrotate
-        sudo -u passwordvault pm2 reload license-server 2>/dev/null || true
-    endscript
-}
-
-/var/log/passwordvault-deployment.log {
-    weekly
-    missingok
-    rotate 12
-    compress
-    delaycompress
-    notifempty
-    create 644 root root
+    create 644 ${APP_USER} ${APP_USER}
 }
 EOF
-    
-    print_success "Log rotation configured"
 }
 
-# Display next steps
-display_next_steps() {
-    print_success "🎉 Deployment completed successfully!"
-    echo
-    print_status "Next steps to complete the setup:"
-    echo
-    echo "1. Upload your application files:"
-    echo "   scp -r /path/to/server-api-examples/* root@your-server:/var/www/server.localpasswordvault.com/license-server/"
-    echo
-    echo "2. Set proper ownership:"
-    echo "   sudo chown -R passwordvault:passwordvault /var/www/server.localpasswordvault.com/"
-    echo
-    echo "3. Install Node.js dependencies:"
-    echo "   cd /var/www/server.localpasswordvault.com/license-server"
-    echo "   sudo -u passwordvault npm install"
-    echo
-    echo "4. Create and configure .env file:"
-    echo "   sudo -u passwordvault nano /var/www/server.localpasswordvault.com/license-server/.env"
-    echo
-    echo "5. Create PM2 ecosystem file:"
-    echo "   sudo -u passwordvault nano /var/www/server.localpasswordvault.com/license-server/ecosystem.config.js"
-    echo
-    echo "6. Start the application:"
-    echo "   sudo -u passwordvault pm2 start ecosystem.config.js"
-    echo "   sudo -u passwordvault pm2 save"
-    echo "   sudo pm2 startup systemd -u passwordvault --hp /home/passwordvault"
-    echo
-    echo "7. Get SSL certificate:"
-    echo "   sudo certbot --apache -d server.localpasswordvault.com"
-    echo
-    print_status "Useful commands:"
-    echo "- Check system status: systemctl status httpd"
-    echo "- Check application logs: sudo -u passwordvault pm2 logs"
-    echo "- Check Apache logs: sudo tail -f /var/log/httpd/server.localpasswordvault.com_*"
-    echo "- Check deployment logs: sudo tail -f $LOG_FILE"
-    echo
-    print_warning "Backup created at: $BACKUP_DIR"
-    echo
+extract_app_and_install() {
+    APP_DIR="${APP_ROOT}/${DOMAIN}"
+    info "Extracting app to ${APP_DIR}/${APP_NAME}"
+    mkdir -p "${APP_DIR}/${APP_NAME}"
+    tar -xzf "$APP_TAR" -C "${APP_DIR}/${APP_NAME}"
+    chown -R "$APP_USER:$APP_USER" "$APP_DIR"
+    info "Installing npm dependencies"
+    sudo -u "$APP_USER" bash -lc "cd '${APP_DIR}/${APP_NAME}' && npm ci || npm install"
 }
 
-# Cleanup function for normal exit
-cleanup() {
-    print_status "Cleaning up temporary files..."
-    # Add any cleanup tasks here
-    print_success "Cleanup completed"
+preclean_remote() {
+    if [[ "${CLEAN:-1}" -eq 1 ]]; then
+        info "Cleaning previous deployment artifacts (PM2/app/Apache/logrotate)"
+        APP_DIR="${APP_ROOT}/${DOMAIN}"
+        if command_exists pm2 >/dev/null 2>&1; then
+            sudo -u "$APP_USER" pm2 delete "${APP_NAME}" 2>/dev/null || true
+        fi
+        rm -rf "${APP_DIR}/${APP_NAME}" 2>/dev/null || true
+        if [[ -f "/etc/httpd/conf.d/${DOMAIN}.conf" ]]; then
+            rm -f "/etc/httpd/conf.d/${DOMAIN}.conf" 2>/dev/null || true
+            systemctl reload httpd || true
+        fi
+        rm -f "/etc/logrotate.d/${APP_NAME}" 2>/dev/null || true
+    else
+        warn "Skipping cleanup (--no-clean)"
+    fi
 }
 
-# Set cleanup trap for normal exit
-trap cleanup EXIT
-
-# Main execution
-main() {
-    # Create log file
-    sudo touch "$LOG_FILE"
-    sudo chmod 644 "$LOG_FILE"
-    
-    log "INFO" "Starting deployment script for AlmaLinux 9.6"
-    log "INFO" "Script executed by: $(whoami)"
-    log "INFO" "Script arguments: $*"
-    
-    # Parse command line arguments
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            --debug)
-                DEBUG=1
-                print_status "Debug mode enabled"
-                ;;
-            --help|-h)
-                echo "Usage: $0 [--debug] [--help]"
-                echo "  --debug    Enable debug output"
-                echo "  --help     Show this help message"
-                exit 0
-                ;;
-            *)
-                print_warning "Unknown option: $1"
-                ;;
-        esac
-        shift
-    done
-    
-    # Run main deployment
-    main_deployment
+write_pm2_config_and_start() {
+    APP_DIR="${APP_ROOT}/${DOMAIN}"
+    local eco="${APP_DIR}/${APP_NAME}/ecosystem.config.cjs"
+    info "Writing PM2 ecosystem: $eco"
+    cat > "$eco" <<EOF
+module.exports = {
+    apps: [
+        {
+            name: "${APP_NAME}",
+            script: "license-server.js",
+            cwd: "${APP_DIR}/${APP_NAME}",
+            instances: 2,
+            exec_mode: "cluster",
+            autorestart: true,
+            watch: false,
+            max_memory_restart: "1G",
+            env: { NODE_ENV: "production", PORT: ${NODE_PORT}, HOST: "0.0.0.0" },
+            error_file: "${APP_ROOT}/${DOMAIN}/logs/error.log",
+            out_file: "${APP_ROOT}/${DOMAIN}/logs/out.log",
+            merge_logs: true,
+            time: true
+        }
+    ]
+}
+EOF
+    if ! command_exists pm2; then npm i -g pm2 && PM2_INSTALLED=true; else PM2_INSTALLED=true; fi
+    sudo -u "$APP_USER" pm2 delete "${APP_NAME}" 2>/dev/null || true
+    sudo -u "$APP_USER" pm2 start "$eco"
+    sudo -u "$APP_USER" pm2 save
+    pm2 startup systemd -u "$APP_USER" --hp "/home/${APP_USER}" | bash || true
 }
 
-# Run main function with all arguments
-main "$@"
+obtain_ssl() {
+    [[ "${NO_SSL:-0}" == "1" ]] && { warn "Skipping SSL issuance"; return 0; }
+    [[ -z "${EMAIL}" ]] && { warn "No email provided. Skipping automatic SSL."; return 0; }
+    certbot --apache -d "$DOMAIN" -n --agree-tos -m "$EMAIL" || warn "Certbot run failed; you can retry later"
+}
+
+remote_main() {
+    log_remote "Starting remote deployment for ${DOMAIN}"
+    check_system
+    preclean_remote
+    install_dnf_pkgs httpd firewalld
+    setup_node
+    setup_certbot || true
+    configure_services
+    configure_firewall || true
+    configure_selinux || true
+    create_app_user_and_dirs
+    write_apache_vhost
+    write_logrotate || true
+    extract_app_and_install
+    write_pm2_config_and_start
+    obtain_ssl || true
+    ok "Deployment finished for https://${DOMAIN}"
+}
+
+# ===================== Argument parsing =====================
+
+MODE=""
+SERVER=""
+NO_SSL=0
+APP_TAR=""
+ CLEAN=1
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --local) MODE="local" ; shift ;;
+        --remote) MODE="remote" ; shift ;;
+        --server) SERVER="$2" ; shift 2 ;;
+        --domain) DOMAIN="$2" ; shift 2 ;;
+        --app-user) APP_USER="$2" ; shift 2 ;;
+        --email) EMAIL="$2" ; shift 2 ;;
+        --app-tar) APP_TAR="$2" ; shift 2 ;;
+        --no-ssl) NO_SSL=1 ; shift ;;
+    --no-clean) CLEAN=0 ; shift ;;
+        --debug) DEBUG=1 ; set -x ; shift ;;
+        -h|--help) usage ; exit 0 ;;
+        *) warn "Unknown option: $1" ; shift ;;
+    esac
+done
+
+# Auto-detect mode if not provided
+if [[ -z "$MODE" ]]; then
+    if [[ "${OSTYPE:-}" == darwin* ]]; then MODE="local"; else MODE="remote"; fi
+fi
+
+if [[ "$MODE" == "local" ]]; then
+    # Local workflow: tar app, upload tar + script, ssh run remote
+    [[ -n "$SERVER" ]] || { err "--server user@host required in local mode"; usage; exit 1; }
+    # Determine app root (this script is in server-api-examples/deployment)
+    SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+    LOCAL_APP_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+    [[ -d "$LOCAL_APP_DIR" ]] || { err "App directory not found: $LOCAL_APP_DIR"; exit 1; }
+
+    LOCAL_TAR="/tmp/${APP_NAME}-$(date +%Y%m%d_%H%M%S).tar.gz"
+    make_tarball "$LOCAL_APP_DIR" "$LOCAL_TAR"
+    push_files_remote "$SERVER" "$LOCAL_TAR" "$REMOTE_APP_TAR" "$REMOTE_SCRIPT_PATH"
+    rm -f "$LOCAL_TAR"
+
+    # Run remote
+    run_remote "$SERVER" --domain "$DOMAIN" --app-user "$APP_USER" --app-tar "$REMOTE_APP_TAR" ${EMAIL:+--email "$EMAIL"} $([[ $NO_SSL -eq 1 ]] && echo --no-ssl || true) $([[ $CLEAN -eq 0 ]] && echo --no-clean || true)
+    exit 0
+fi
+
+if [[ "$MODE" == "remote" ]]; then
+    [[ $EUID -eq 0 ]] || { err "Run remote mode as root"; exit 1; }
+    [[ -n "$DOMAIN" ]] || { err "--domain required"; exit 1; }
+    [[ -n "$APP_USER" ]] || { err "--app-user required"; exit 1; }
+    [[ -n "$APP_TAR" ]] || { err "--app-tar required"; exit 1; }
+    remote_main
+    exit 0
+fi
+
+usage
+exit 1
