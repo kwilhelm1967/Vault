@@ -272,7 +272,7 @@ main_deployment() {
     install_packages epel-release
     
     print_status "Installing base packages..."
-    install_packages httpd snapd firewalld
+    install_packages httpd firewalld python3-certbot-apache
     
     # Handle Node.js installation separately to avoid conflicts
     setup_nodejs
@@ -366,28 +366,40 @@ setup_nodejs() {
     print_error "Failed to install compatible Node.js version"
     return 1
 }
+# Setup Certbot
+setup_certbot() {
     if ! command_exists certbot; then
-        print_status "Installing Certbot via snap..."
+        print_status "Installing Certbot for AlmaLinux..."
         
-        # Enable snapd
-        sudo systemctl enable --now snapd.socket
-        sudo ln -sf /var/lib/snapd/snap /snap 2>/dev/null || true
-        
-        # Wait for snapd to be ready
-        local attempts=0
-        while [[ $attempts -lt 30 ]]; do
-            if sudo snap install core 2>/dev/null; then
-                break
+        # For AlmaLinux/RHEL, use EPEL repository instead of snap
+        # Install certbot from EPEL
+        if sudo dnf install -y certbot python3-certbot-apache; then
+            print_success "Certbot installed successfully from EPEL repository"
+        else
+            print_warning "EPEL installation failed, trying alternative method..."
+            
+            # Alternative: Install from pip
+            if command_exists python3; then
+                print_status "Installing Certbot via pip3..."
+                sudo dnf install -y python3-pip
+                sudo pip3 install certbot certbot-apache
+                
+                # Create symlink if needed
+                if [[ ! -f /usr/bin/certbot ]] && [[ -f /usr/local/bin/certbot ]]; then
+                    sudo ln -sf /usr/local/bin/certbot /usr/bin/certbot
+                fi
+                
+                if command_exists certbot; then
+                    print_success "Certbot installed via pip3"
+                else
+                    print_error "Failed to install Certbot via pip3"
+                    return 1
+                fi
+            else
+                print_error "Python3 not available, cannot install Certbot"
+                return 1
             fi
-            ((attempts++))
-            sleep 2
-        done
-        
-        sudo snap refresh core
-        sudo snap install --classic certbot
-        sudo ln -sf /snap/bin/certbot /usr/bin/certbot
-        
-        print_success "Certbot installed successfully"
+        fi
     else
         print_success "Certbot already installed"
     fi
@@ -410,10 +422,6 @@ configure_services() {
     # Firewall
     sudo systemctl enable firewalld
     sudo systemctl start firewalld || print_warning "Firewalld may already be running"
-    
-    # Snapd
-    sudo systemctl enable snapd
-    sudo systemctl start snapd || print_warning "Snapd may already be running"
     
     print_success "Services configured successfully"
 }
