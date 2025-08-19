@@ -1,190 +1,240 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Your Local Password Vault License</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            margin: 0;
-            padding: 0;
-            background-color: #f9f9f9;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .header {
-            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-            color: white;
-            padding: 30px;
-            text-align: center;
-            border-radius: 10px 10px 0 0;
-        }
-        .content {
-            background: #ffffff;
-            padding: 30px;
-            border-radius: 0 0 10px 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        .license-key {
-            background: #1e293b;
-            color: #06b6d4;
-            padding: 15px;
-            border-radius: 8px;
-            font-family: monospace;
-            font-size: 18px;
-            text-align: center;
-            margin: 20px 0;
-            letter-spacing: 2px;
-        }
-        .button {
-            display: inline-block;
-            background: #3b82f6;
-            color: white;
-            padding: 12px 24px;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: 600;
-            margin: 20px 0;
-        }
-        .button:hover {
-            background: #2563eb;
-        }
-        .footer {
-            text-align: center;
-            color: #666;
-            font-size: 14px;
-            margin-top: 30px;
-        }
-        .divider {
-            border-top: 1px solid #e5e7eb;
-            margin: 25px 0;
-        }
-        .feature-list {
-            background: #f1f5f9;
-            padding: 15px;
-            border-radius: 8px;
-        }
-        .feature-list ul {
-            margin: 10px 0;
-            padding-left: 25px;
-        }
-        .feature-list li {
-            margin-bottom: 8px;
-        }
-        .download-section {
-            background: #f0f9ff;
-            border: 1px solid #bae6fd;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 25px 0;
-        }
-        .download-title {
-            color: #0369a1;
-            font-weight: 600;
-            margin-bottom: 15px;
-        }
-        .download-button {
-            display: inline-block;
-            background: #0284c7;
-            color: white;
-            padding: 10px 20px;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: 600;
-            margin: 5px 5px 5px 0;
-        }
-        .download-button:hover {
-            background: #0369a1;
-        }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        margin: 0;
+        padding: 0;
+        background-color: #f9f9f9;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .header {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        color: white;
+        padding: 30px;
+        text-align: center;
+        border-radius: 10px 10px 0 0;
+      }
+      .content {
+        background: #ffffff;
+        padding: 30px;
+        border-radius: 0 0 10px 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .license-key {
+        background: #1e293b;
+        color: #06b6d4;
+        padding: 15px;
+        border-radius: 8px;
+        font-family: monospace;
+        font-size: 18px;
+        text-align: center;
+        margin: 20px 0;
+        letter-spacing: 2px;
+      }
+      .button {
+        display: inline-block;
+        background: #3b82f6;
+        color: white;
+        padding: 12px 24px;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 600;
+        margin: 20px 0;
+      }
+      .button:hover {
+        background: #2563eb;
+      }
+      .footer {
+        text-align: center;
+        color: #666;
+        font-size: 14px;
+        margin-top: 30px;
+      }
+      .divider {
+        border-top: 1px solid #e5e7eb;
+        margin: 25px 0;
+      }
+      .feature-list {
+        background: #f1f5f9;
+        padding: 15px;
+        border-radius: 8px;
+      }
+      .feature-list ul {
+        margin: 10px 0;
+        padding-left: 25px;
+      }
+      .feature-list li {
+        margin-bottom: 8px;
+      }
+      .download-section {
+        background: #f0f9ff;
+        border: 1px solid #bae6fd;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 25px 0;
+      }
+      .download-title {
+        color: #0369a1;
+        font-weight: 600;
+        margin-bottom: 15px;
+      }
+      .download-button {
+        display: inline-block;
+        background: #0284c7;
+        color: white;
+        padding: 10px 20px;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 600;
+        margin: 5px 5px 5px 0;
+      }
+      .download-button:hover {
+        background: #0369a1;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <div class="header">
-            <h1>🔐 Your Local Password Vault License</h1>
-            <p>Thank you for your purchase!</p>
+      <div class="header">
+        <h1>🔐 Your Local Password Vault License</h1>
+        <p>Thank you for your purchase!</p>
+      </div>
+      <div class="content">
+        <h2>Your Single User License</h2>
+        <p>Dear {{CUSTOMER_NAME}},</p>
+        <p>
+          Thank you for purchasing Local Password Vault! Your secure, offline
+          password management solution is ready to use. Below you'll find your
+          license key and download links.
+        </p>
+
+        <h3>Your License Key:</h3>
+        <div class="license-key">{{LICENSE_KEY}}</div>
+
+        <p><strong>Purchase Details:</strong></p>
+        <ul>
+          <li><strong>License Type:</strong> Single User</li>
+          <li><strong>Purchase Date:</strong> {{PURCHASE_DATE}}</li>
+          <li><strong>Order Number:</strong> {{ORDER_NUMBER}}</li>
+        </ul>
+
+        <div class="download-section">
+          <h3 class="download-title">Download Local Password Vault</h3>
+          <p>Click the link for your operating system:</p>
+          <div>
+            <a
+              href="https://LocalPasswordVault.com/download/windows"
+              class="download-button"
+              >Windows</a
+            >
+            <a
+              href="https://LocalPasswordVault.com/download/macos"
+              class="download-button"
+              >macOS</a
+            >
+            <a
+              href="https://LocalPasswordVault.com/download/linux"
+              class="download-button"
+              >Linux</a
+            >
+          </div>
+          <p style="margin-top: 15px; font-size: 14px; color: #0369a1">
+            <strong>Important:</strong> After downloading, you'll need to
+            activate your license using the key above.
+          </p>
         </div>
-        <div class="content">
-            <h2>Your Single User License</h2>
-            <p>Dear {{CUSTOMER_NAME}},</p>
-            <p>Thank you for purchasing Local Password Vault! Your secure, offline password management solution is ready to use. Below you'll find your license key and download links.</p>
-            
-            <h3>Your License Key:</h3>
-            <div class="license-key">{{LICENSE_KEY}}</div>
-            
-            <p><strong>Purchase Details:</strong></p>
-            <ul>
-                <li><strong>License Type:</strong> Single User</li>
-                <li><strong>Purchase Date:</strong> {{PURCHASE_DATE}}</li>
-                <li><strong>Order Number:</strong> {{ORDER_NUMBER}}</li>
-            </ul>
-            
-            <div class="download-section">
-                <h3 class="download-title">Download Local Password Vault</h3>
-                <p>Click the link for your operating system:</p>
-                <div>
-                    <a href="https://LocalPasswordVault.com/download/windows" class="download-button">Windows</a>
-                    <a href="https://LocalPasswordVault.com/download/macos" class="download-button">macOS</a>
-                    <a href="https://LocalPasswordVault.com/download/linux" class="download-button">Linux</a>
-                </div>
-                <p style="margin-top: 15px; font-size: 14px; color: #0369a1;">
-                    <strong>Important:</strong> After downloading, you'll need to activate your license using the key above.
-                </p>
-            </div>
-            
-            <div class="divider"></div>
-            
-            <h3>Your Single User License Includes:</h3>
-            <div class="feature-list">
-                <ul>
-                    <li><strong>Unlimited Passwords</strong> - Store as many passwords as you need</li>
-                    <li><strong>AES-256 Encryption</strong> - Military-grade local encryption</li>
-                    <li><strong>Floating Panel</strong> - Quick access mini-vault</li>
-                    <li><strong>Import/Export</strong> - Easily transfer your data</li>
-                    <li><strong>Password Generator</strong> - Create strong, unique passwords</li>
-                    <li><strong>1 Device License</strong> - Use on a single device</li>
-                </ul>
-            </div>
-            
-            <div class="divider"></div>
-            
-            <h3>How to Activate:</h3>
-            <ol>
-                <li>Download and install the application using the links above</li>
-                <li>Launch Local Password Vault</li>
-                <li>Enter your license key when prompted</li>
-                <li>Create your master password</li>
-                <li>Start adding your passwords!</li>
-            </ol>
-            
-            <div class="divider"></div>
-            
-            <h3>Need Help?</h3>
-            <p>Check out these resources:</p>
-            <ul>
-                <li><a href="https://LocalPasswordVault.com/docs">Documentation</a></li>
-                <li><a href="https://LocalPasswordVault.com/support">Support Center</a></li>
-                <li><a href="https://community.LocalPasswordVault.com">Community Forum</a></li>
-                <li>Email: <a href="mailto:support@LocalPasswordVault.com">support@LocalPasswordVault.com</a></li>
-            </ul>
-            
-            <p>We're here to help if you have any questions or need assistance.</p>
-            
-            <p>Thank you for choosing Local Password Vault for your password security needs!</p>
-            
-            <p>Sincerely,<br>
-            The Local Password Vault Team</p>
+
+        <div class="divider"></div>
+
+        <h3>Your Single User License Includes:</h3>
+        <div class="feature-list">
+          <ul>
+            <li>
+              <strong>Unlimited Passwords</strong> - Store as many passwords as
+              you need
+            </li>
+            <li>
+              <strong>AES-256 Encryption</strong> - Military-grade local
+              encryption
+            </li>
+            <li><strong>Floating Panel</strong> - Quick access mini-vault</li>
+            <li><strong>Export</strong> - Easily transfer your data</li>
+            <li>
+              <strong>Password Generator</strong> - Create strong, unique
+              passwords
+            </li>
+            <li><strong>1 Device License</strong> - Use on a single device</li>
+          </ul>
         </div>
-        <div class="footer">
-            <p>© 2025 Local Password Vault | <a href="https://LocalPasswordVault.com">LocalPasswordVault.com</a></p>
-            <p>This email contains your license information. Please keep it for your records.</p>
-        </div>
+
+        <div class="divider"></div>
+
+        <h3>How to Activate:</h3>
+        <ol>
+          <li>Download and install the application using the links above</li>
+          <li>Launch Local Password Vault</li>
+          <li>Enter your license key when prompted</li>
+          <li>Create your master password</li>
+          <li>Start adding your passwords!</li>
+        </ol>
+
+        <div class="divider"></div>
+
+        <h3>Need Help?</h3>
+        <p>Check out these resources:</p>
+        <ul>
+          <li>
+            <a href="https://LocalPasswordVault.com/docs">Documentation</a>
+          </li>
+          <li>
+            <a href="https://LocalPasswordVault.com/support">Support Center</a>
+          </li>
+          <li>
+            <a href="https://community.LocalPasswordVault.com"
+              >Community Forum</a
+            >
+          </li>
+          <li>
+            Email:
+            <a href="mailto:support@LocalPasswordVault.com"
+              >support@LocalPasswordVault.com</a
+            >
+          </li>
+        </ul>
+
+        <p>We're here to help if you have any questions or need assistance.</p>
+
+        <p>
+          Thank you for choosing Local Password Vault for your password security
+          needs!
+        </p>
+
+        <p>
+          Sincerely,<br />
+          The Local Password Vault Team
+        </p>
+      </div>
+      <div class="footer">
+        <p>
+          © 2025 Local Password Vault |
+          <a href="https://LocalPasswordVault.com">LocalPasswordVault.com</a>
+        </p>
+        <p>
+          This email contains your license information. Please keep it for your
+          records.
+        </p>
+      </div>
     </div>
-</body>
+  </body>
 </html>

@@ -4,6 +4,7 @@ import { LicenseScreen } from "./components/LicenseScreen";
 import { MainVault } from "./components/MainVault";
 import { FloatingPanel } from "./components/FloatingPanel";
 import { ElectronFloatingPanel } from "./components/ElectronFloatingPanel";
+import { FloatingButton } from "./components/FloatingButton";
 import { PasswordEntry, Category } from "./types";
 import { storageService } from "./utils/storage";
 import { passwordService } from "./utils/passwordService";
@@ -13,7 +14,6 @@ import { useElectron } from "./hooks/useElectron";
 import { LicenseKeyDisplay } from "./components/LicenseKeyDisplay";
 import { DownloadPage } from "./components/DownloadPage";
 import { TrialTestingTools } from "./components/TrialTestingTools";
-
 // FIXED CATEGORIES - NO DUPLICATES ALLOWED
 const FIXED_CATEGORIES: Category[] = [
   { id: "all", name: "All", color: "#3b82f6", icon: "Grid3X3" },
@@ -25,6 +25,8 @@ const FIXED_CATEGORIES: Category[] = [
     color: "#ef4444",
     icon: "Play",
   },
+  { id: "email", name: "Email", color: "#f43f5e", icon: "Mail" },
+  { id: "work", name: "Work", color: "#f43f5e", icon: "Briefcase" },
   { id: "business", name: "Business", color: "#8b5cf6", icon: "Briefcase" },
   { id: "other", name: "Other", color: "#6b7280", icon: "Folder" },
 ];
@@ -96,6 +98,7 @@ function App() {
 
   // Check if we're in floating panel mode (for Electron)
   const isFloatingMode = window.location.hash === "#floating";
+  const isFloatingButtonMode = window.location.hash === "#floating-button";
 
   // Load data from localStorage on initial load
   useEffect(() => {
@@ -153,6 +156,19 @@ function App() {
       document.removeEventListener("input", handleActivity);
     };
   }, [isLocked]);
+
+  // Ensure the floating panel is always on top when in floating mode
+  useEffect(() => {
+    if (isElectron && isFloatingMode) {
+      const setAlwaysOnTop = async () => {
+        if (window.electronAPI && window.electronAPI.setAlwaysOnTop) {
+          // Set to always be on top with highest priority
+          await window.electronAPI.setAlwaysOnTop(true);
+        }
+      };
+      setAlwaysOnTop();
+    }
+  }, [isElectron, isFloatingMode]);
 
   const handleLogin = async (password: string) => {
     try {
@@ -294,17 +310,6 @@ function App() {
 
   // If we're in Electron floating mode, show the floating panel
   if (isElectron && isFloatingMode) {
-    // Ensure the floating panel is always on top when in floating mode
-    useEffect(() => {
-      const setAlwaysOnTop = async () => {
-        if (window.electronAPI && window.electronAPI.setAlwaysOnTop) {
-          // Set to always be on top with highest priority
-          await window.electronAPI.setAlwaysOnTop(true);
-        }
-      };
-      setAlwaysOnTop();
-    }, []);
-
     return (
       <ElectronFloatingPanel
         entries={entries}
@@ -329,6 +334,11 @@ function App() {
         onExport={handleExport}
       />
     );
+  }
+
+  // If we're in Electron floating button mode, show the floating button
+  if (isElectron && isFloatingButtonMode) {
+    return <FloatingButton />;
   }
 
   if (!appStatus.canUseApp) {

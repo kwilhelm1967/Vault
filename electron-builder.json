@@ -29,13 +29,10 @@
       {
         "target": "nsis",
         "arch": ["x64"]
-      },
-      {
-        "target": "portable",
-        "arch": ["x64"]
       }
     ],
-    "icon": "assets/icons/icon.ico"
+    "icon": "assets/icons/icon.ico",
+    "requestedExecutionLevel": "asInvoker"
   },
   "linux": {
     "target": [
@@ -50,7 +47,14 @@
     "oneClick": false,
     "allowToChangeInstallationDirectory": true,
     "createDesktopShortcut": true,
-    "createStartMenuShortcut": true
+    "createStartMenuShortcut": true,
+    "perMachine": false,
+    "runAfterFinish": true,
+    "artifactName": "${productName} Setup ${version}.${ext}",
+    "installerIcon": "assets/icons/icon.ico",
+    "uninstallerIcon": "assets/icons/icon.ico",
+    "installerHeaderIcon": "assets/icons/icon.ico",
+    "deleteAppDataOnUninstall": false
   },
   "portable": {
     "artifactName": "LocalPasswordVault-${version}-Portable.exe"

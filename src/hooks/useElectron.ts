@@ -14,6 +14,13 @@ interface ElectronAPI {
   minimizeMainWindow: () => Promise<boolean>;
   hideMainWindow: () => Promise<boolean>;
   restoreMainWindow: () => Promise<boolean>;
+  // Floating button APIs
+  showFloatingButton: () => Promise<boolean>;
+  hideFloatingButton: () => Promise<boolean>;
+  isFloatingButtonOpen: () => Promise<boolean>;
+  toggleFloatingPanelFromButton: () => Promise<boolean>;
+  saveFloatingButtonPosition: (x: number, y: number) => Promise<boolean>;
+  moveFloatingButton: (x: number, y: number) => Promise<boolean>;
 }
 
 declare global {

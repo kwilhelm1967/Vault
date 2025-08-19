@@ -19,7 +19,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Window controls
   minimizeMainWindow: () => ipcRenderer.invoke('minimize-main-window'),
   hideMainWindow: () => ipcRenderer.invoke('hide-main-window'),
-  restoreMainWindow: () => ipcRenderer.invoke('restore-main-window')
+  restoreMainWindow: () => ipcRenderer.invoke('restore-main-window'),
+  
+  // Floating button controls
+  showFloatingButton: () => ipcRenderer.invoke('show-floating-button'),
+  hideFloatingButton: () => ipcRenderer.invoke('hide-floating-button'),
+  isFloatingButtonOpen: () => ipcRenderer.invoke('is-floating-button-open'),
+  toggleFloatingPanelFromButton: () => ipcRenderer.invoke('toggle-floating-panel-from-button'),
+  saveFloatingButtonPosition: (x, y) => ipcRenderer.invoke('save-floating-button-position', x, y),
+  moveFloatingButton: (x, y) => ipcRenderer.invoke('move-floating-button', x, y)
 });
 
 // Security: Remove any node globals in renderer

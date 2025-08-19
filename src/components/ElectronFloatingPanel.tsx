@@ -1,13 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Plus, Download, Lock, Maximize2, Trash2, Eye, EyeOff, Copy, Edit3, X, Star, StarOff, Clock } from 'lucide-react';
-import { PasswordEntry, Category } from '../types';
-import { CategoryIcon } from './CategoryIcon';
-import { EntryForm } from './EntryForm';
+import React, { useState, useEffect } from "react";
+import {
+  Search,
+  Plus,
+  Download,
+  Lock,
+  Maximize2,
+  Trash2,
+  Eye,
+  EyeOff,
+  Copy,
+  Edit3,
+  X,
+  Star,
+  StarOff,
+  Clock,
+} from "lucide-react";
+import { PasswordEntry, Category } from "../types";
+import { CategoryIcon } from "./CategoryIcon";
+import { EntryForm } from "./EntryForm";
 
 interface ElectronFloatingPanelProps {
   entries: PasswordEntry[];
   categories: Category[];
-  onAddEntry: (entry: Omit<PasswordEntry, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onAddEntry: (
+    entry: Omit<PasswordEntry, "id" | "createdAt" | "updatedAt">
+  ) => void;
   onUpdateEntry: (entry: PasswordEntry) => void;
   onDeleteEntry: (id: string) => void;
   onLock: () => void;
@@ -26,15 +43,18 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
   onUpdateEntry,
   onDeleteEntry,
   onLock,
+  onExport,
   searchTerm,
   onSearchChange,
   selectedCategory,
   onCategoryChange,
-  onMaximize
+  onMaximize,
 }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingEntry, setEditingEntry] = useState<PasswordEntry | null>(null);
-  const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(new Set());
+  const [visiblePasswords, setVisiblePasswords] = useState<Set<string>>(
+    new Set()
+  );
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [autoLockTime] = useState(15);
   const [timeRemaining, setTimeRemaining] = useState(autoLockTime * 60);
@@ -46,18 +66,22 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
       if (window.electronAPI && window.electronAPI.setAlwaysOnTop) {
         await window.electronAPI.setAlwaysOnTop(true);
       }
-      
+
       // Then load position if available
       if (window.electronAPI && window.electronAPI.getFloatingPanelPosition) {
         const position = await window.electronAPI.getFloatingPanelPosition();
-        if (position && typeof position.x === 'number' && typeof position.y === 'number') {
+        if (
+          position &&
+          typeof position.x === "number" &&
+          typeof position.y === "number"
+        ) {
           setPositionLoaded(true);
-          }
+        }
       }
     };
-    
+
     initializeFloatingPanel();
-    
+
     // Re-apply always-on-top periodically to ensure it stays on top
     const interval = setInterval(() => {
       try {
@@ -68,14 +92,14 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
         // Silent error handling
       }
     }, 500); // Check more frequently (every 500ms)
-    
+
     return () => clearInterval(interval);
   }, []);
-    
+
   // Auto-lock countdown
   useEffect(() => {
     const interval = setInterval(() => {
-      setTimeRemaining(prev => {
+      setTimeRemaining((prev) => {
         if (prev <= 1) {
           onLock();
           return 0;
@@ -93,49 +117,58 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
       setTimeRemaining(autoLockTime * 60);
     };
 
-    document.addEventListener('mousedown', resetTimer);
-    document.addEventListener('keydown', resetTimer);
+    document.addEventListener("mousedown", resetTimer);
+    document.addEventListener("keydown", resetTimer);
 
     return () => {
-      document.removeEventListener('mousedown', resetTimer);
-      document.removeEventListener('keydown', resetTimer);
+      document.removeEventListener("mousedown", resetTimer);
+      document.removeEventListener("keydown", resetTimer);
     };
   }, [autoLockTime]);
 
   // Load favorites from localStorage
   useEffect(() => {
-    const stored = localStorage.getItem('floating_panel_favorites');
+    const stored = localStorage.getItem("floating_panel_favorites");
     if (stored) {
       try {
         setFavorites(new Set(JSON.parse(stored)));
       } catch (error) {
-        console.error('Failed to parse favorites:', error);
+        console.error("Failed to parse favorites:", error);
       }
     }
   }, []);
 
   // Save favorites to localStorage
   useEffect(() => {
-    localStorage.setItem('floating_panel_favorites', JSON.stringify([...favorites]));
+    localStorage.setItem(
+      "floating_panel_favorites",
+      JSON.stringify([...favorites])
+    );
   }, [favorites]);
 
-  const filteredEntries = entries.filter(entry => {
-    const matchesSearch = entry.accountName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         entry.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (entry.notes || '').toLowerCase().includes(searchTerm.toLowerCase());
-    
+  const filteredEntries = entries.filter((entry) => {
+    const matchesSearch =
+      entry.accountName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      entry.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (entry.notes || "").toLowerCase().includes(searchTerm.toLowerCase());
+
     // If there's a search term, search across all categories
     // If no search term, filter by selected category
     if (searchTerm.trim()) {
       return matchesSearch;
     } else {
-      const matchesCategory = selectedCategory === 'all' || entry.category === selectedCategory;
+      const matchesCategory =
+        selectedCategory === "all" || entry.category === selectedCategory;
       return matchesCategory;
     }
   });
 
-  const favoriteEntries = filteredEntries.filter(entry => favorites.has(entry.id));
-  const regularEntries = filteredEntries.filter(entry => !favorites.has(entry.id));
+  const favoriteEntries = filteredEntries.filter((entry) =>
+    favorites.has(entry.id)
+  );
+  const regularEntries = filteredEntries.filter(
+    (entry) => !favorites.has(entry.id)
+  );
   const displayEntries = [...favoriteEntries, ...regularEntries];
 
   const togglePasswordVisibility = (entryId: string) => {
@@ -146,7 +179,7 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
       newVisible.add(entryId);
       // Auto-hide after 10 seconds
       setTimeout(() => {
-        setVisiblePasswords(prev => {
+        setVisiblePasswords((prev) => {
           const updated = new Set(prev);
           updated.delete(entryId);
           return updated;
@@ -161,10 +194,10 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
       await navigator.clipboard.writeText(text);
       // Auto-clear clipboard after 30 seconds for security
       setTimeout(() => {
-        navigator.clipboard.writeText('');
+        navigator.clipboard.writeText("");
       }, 30000);
     } catch (err) {
-      console.error('Failed to copy to clipboard:', err);
+      console.error("Failed to copy to clipboard:", err);
     }
   };
 
@@ -178,12 +211,16 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
     setFavorites(newFavorites);
   };
 
-  const handleAddEntry = (entryData: Omit<PasswordEntry, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleAddEntry = (
+    entryData: Omit<PasswordEntry, "id" | "createdAt" | "updatedAt">
+  ) => {
     onAddEntry(entryData);
     setShowAddForm(false);
   };
 
-  const handleUpdateEntry = (entryData: Omit<PasswordEntry, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleUpdateEntry = (
+    entryData: Omit<PasswordEntry, "id" | "createdAt" | "updatedAt">
+  ) => {
     if (editingEntry) {
       onUpdateEntry({ ...editingEntry, ...entryData, updatedAt: new Date() });
       setEditingEntry(null);
@@ -193,7 +230,7 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   const getProgressPercentage = () => {
@@ -201,47 +238,42 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col" style={{ zIndex: 9999, backgroundColor: '#0f172a' }}>
-      {/* Custom title bar for frameless window */}
-      <div className="bg-slate-800/50 border-b border-slate-700 p-3 flex items-center justify-between drag-region" style={{ WebkitAppRegion: 'drag' }}>
+    <div
+      className="h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col"
+      style={{ zIndex: 9999, backgroundColor: "#0f172a" }}
+    >
+      {/* Header with controls */}
+      <div className="bg-slate-800/50 border-b border-slate-700 p-3 flex items-center justify-between drag-region">
         <div className="flex items-center space-x-2">
           <Lock className="w-4 h-4 text-blue-400" />
           <span className="text-sm font-medium text-white">Password Vault</span>
         </div>
-        
-        <div className="flex items-center space-x-1" style={{ WebkitAppRegion: 'no-drag' }}>
+
+        <div className="flex items-center space-x-1 no-drag">
           {/* Auto-lock timer */}
           <div className="flex items-center space-x-1 text-xs text-slate-400">
             <Clock className="w-3 h-3" />
             <span>{formatTime(timeRemaining)}</span>
             <div className="w-8 h-1 bg-slate-700 rounded-full overflow-hidden">
-              <div 
+              <div
                 className="h-full bg-blue-500 transition-all duration-1000"
                 style={{ width: `${getProgressPercentage()}%` }}
               />
             </div>
           </div>
-          
+
           <button
             onClick={onMaximize}
-            className="p-1 text-slate-400 hover:text-white hover:bg-slate-700 rounded transition-all"
+            className="p-1 text-slate-400 hover:text-white hover:bg-slate-700 rounded transition-all no-drag"
             title="Maximize"
           >
             <Maximize2 className="w-3 h-3" />
-          </button>
-          
-          <button
-            onClick={() => window.close()}
-            className="p-1 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded transition-all"
-            title="Close"
-          >
-            <X className="w-3 h-3" />
           </button>
         </div>
       </div>
 
       {/* Search Bar */}
-      <div className="p-3 border-b border-slate-700">
+      <div className="p-3 border-b border-slate-700 no-drag">
         <div className="relative">
           <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-slate-400 w-3 h-3" />
           <input
@@ -249,12 +281,12 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
             placeholder="Quick search..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full pl-7 pr-3 py-1.5 bg-slate-800/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-all text-xs"
+            className="w-full pl-7 pr-3 py-1.5 bg-slate-800/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-all text-xs no-drag"
           />
           {searchTerm && (
             <button
-              onClick={() => onSearchChange('')}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+              onClick={() => onSearchChange("")}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white transition-colors no-drag"
               title="Clear search"
             >
               <X className="w-3 h-3" />
@@ -264,16 +296,16 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
       </div>
 
       {/* Category Quick Filters */}
-      <div className="p-2 border-b border-slate-700">
+      <div className="p-2 border-b border-slate-700 no-drag">
         <div className="flex space-x-1 overflow-x-auto">
-          {categories.slice(0, 6).map(category => (
+          {categories.slice(0, 6).map((category) => (
             <button
               key={category.id}
               onClick={() => onCategoryChange(category.id)}
-              className={`flex items-center space-x-1 px-2 py-1 rounded text-xs whitespace-nowrap transition-all ${
+              className={`flex items-center space-x-1 px-2 py-1 rounded text-xs whitespace-nowrap transition-all no-drag ${
                 selectedCategory === category.id
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50'
+                  ? "bg-blue-600 text-white"
+                  : "bg-slate-800/50 text-slate-300 hover:bg-slate-700/50"
               }`}
             >
               <CategoryIcon name={category.icon} size={12} />
@@ -284,17 +316,17 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
       </div>
 
       {/* Entries List */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto no-drag">
         {favoriteEntries.length > 0 && (
           <div className="p-2 border-b border-slate-700/50">
             <div className="text-xs text-slate-400 mb-2 flex items-center">
               <Star className="w-3 h-3 mr-1" />
               Favorites
             </div>
-            {favoriteEntries.slice(0, 5).map(entry => (
-              <EntryItem 
-                key={entry.id} 
-                entry={entry} 
+            {favoriteEntries.slice(0, 5).map((entry) => (
+              <EntryItem
+                key={entry.id}
+                entry={entry}
                 categories={categories}
                 visiblePasswords={visiblePasswords}
                 favorites={favorites}
@@ -307,12 +339,12 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
             ))}
           </div>
         )}
-        
+
         <div className="p-2">
-          {regularEntries.slice(0, 8).map(entry => (
-            <EntryItem 
-              key={entry.id} 
-              entry={entry} 
+          {regularEntries.slice(0, 8).map((entry) => (
+            <EntryItem
+              key={entry.id}
+              entry={entry}
               categories={categories}
               visiblePasswords={visiblePasswords}
               favorites={favorites}
@@ -323,7 +355,7 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
               onDelete={onDeleteEntry}
             />
           ))}
-          
+
           {displayEntries.length === 0 && (
             <div className="text-center py-6 text-slate-400">
               <Search className="w-6 h-6 mx-auto mb-2 opacity-50" />
@@ -334,28 +366,28 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
       </div>
 
       {/* Footer Actions */}
-      <div className="bg-slate-800/30 border-t border-slate-700 p-2 flex items-center justify-between">
+      <div className="bg-slate-800/30 border-t border-slate-700 p-2 flex items-center justify-between no-drag">
         <div className="flex items-center space-x-1">
           <button
             onClick={() => setShowAddForm(true)}
-            className="p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded transition-all"
+            className="p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded transition-all no-drag"
             title="Add Password"
           >
             <Plus className="w-3 h-3" />
           </button>
-          
+
           <button
             onClick={onExport}
-            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-700 rounded transition-all"
+            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-700 rounded transition-all no-drag"
             title="Export"
           >
             <Download className="w-3 h-3" />
           </button>
         </div>
-        
+
         <button
           onClick={onLock}
-          className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded transition-all"
+          className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded transition-all no-drag"
           title="Lock Vault"
         >
           <Lock className="w-3 h-3" />
@@ -374,10 +406,14 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
                 setShowAddForm(false);
                 setEditingEntry(null);
               }}
-              onDelete={editingEntry ? () => {
-                onDeleteEntry(editingEntry.id);
-                setEditingEntry(null);
-              } : undefined}
+              onDelete={
+                editingEntry
+                  ? () => {
+                      onDeleteEntry(editingEntry.id);
+                      setEditingEntry(null);
+                    }
+                  : undefined
+              }
             />
           </div>
         </div>
@@ -408,9 +444,9 @@ const EntryItem: React.FC<EntryItemProps> = ({
   onCopy,
   onToggleFavorite,
   onEdit,
-  onDelete
+  onDelete,
 }) => {
-  const category = categories.find(c => c.id === entry.category);
+  const category = categories.find((c) => c.id === entry.category);
   const isPasswordVisible = visiblePasswords.has(entry.id);
   const isFavorite = favorites.has(entry.id);
 
@@ -418,26 +454,34 @@ const EntryItem: React.FC<EntryItemProps> = ({
     <div className="bg-slate-800/30 rounded-lg p-2 mb-2 hover:bg-slate-700/30 transition-all group">
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center space-x-2 flex-1 min-w-0">
-          {category && <CategoryIcon name={category.icon} size={14} className="text-blue-400 flex-shrink-0" />}
+          {category && (
+            <CategoryIcon
+              name={category.icon}
+              size={14}
+              className="text-blue-400 flex-shrink-0"
+            />
+          )}
           <div className="min-w-0 flex-1">
             <h4 className="font-medium text-white truncate text-xs">
               {entry.accountName}
             </h4>
-            <p className="text-slate-400 truncate text-xs">
-              {entry.username}
-            </p>
+            <p className="text-slate-400 truncate text-xs">{entry.username}</p>
           </div>
         </div>
-        
+
         <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={() => onToggleFavorite(entry.id)}
             className="p-1 text-slate-400 hover:text-yellow-400 transition-colors"
             title={isFavorite ? "Remove from favorites" : "Add to favorites"}
           >
-            {isFavorite ? <Star className="w-3 h-3 fill-current" /> : <StarOff className="w-3 h-3" />}
+            {isFavorite ? (
+              <Star className="w-3 h-3 fill-current" />
+            ) : (
+              <StarOff className="w-3 h-3" />
+            )}
           </button>
-          
+
           <button
             onClick={() => onEdit(entry)}
             className="p-1 text-slate-400 hover:text-blue-400 transition-colors"
@@ -445,7 +489,7 @@ const EntryItem: React.FC<EntryItemProps> = ({
           >
             <Edit3 className="w-3 h-3" />
           </button>
-          
+
           <button
             onClick={() => onDelete(entry.id)}
             className="p-1 text-slate-400 hover:text-red-400 transition-colors"
@@ -455,20 +499,24 @@ const EntryItem: React.FC<EntryItemProps> = ({
           </button>
         </div>
       </div>
-      
+
       <div className="space-y-1">
         <div className="flex items-center justify-between">
           <span className="text-slate-400 text-xs">Password</span>
           <div className="flex items-center space-x-1">
             <span className="text-slate-300 font-mono text-xs">
-              {isPasswordVisible ? entry.password : '••••••••'}
+              {isPasswordVisible ? entry.password : "••••••••"}
             </span>
             <button
               onClick={() => onTogglePassword(entry.id)}
               className="p-0.5 text-slate-400 hover:text-white transition-colors"
               title={isPasswordVisible ? "Hide password" : "Show password"}
             >
-              {isPasswordVisible ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+              {isPasswordVisible ? (
+                <EyeOff className="w-3 h-3" />
+              ) : (
+                <Eye className="w-3 h-3" />
+              )}
             </button>
             <button
               onClick={() => onCopy(entry.password)}
@@ -479,7 +527,7 @@ const EntryItem: React.FC<EntryItemProps> = ({
             </button>
           </div>
         </div>
-        
+
         <div className="flex items-center justify-between">
           <span className="text-slate-400 text-xs">Username</span>
           <div className="flex items-center space-x-1">
@@ -495,19 +543,19 @@ const EntryItem: React.FC<EntryItemProps> = ({
             </button>
           </div>
         </div>
-        
+
         {entry.balance && (
           <div className="flex items-center justify-between">
             <span className="text-slate-400 text-xs">Account Details</span>
-            <span className="text-slate-300 font-mono text-xs">{entry.balance}</span>
+            <span className="text-slate-300 font-mono text-xs">
+              {entry.balance}
+            </span>
           </div>
         )}
-        
+
         {entry.notes && (
           <div className="pt-1 border-t border-slate-700/50">
-            <p className="text-slate-400 text-xs truncate">
-              {entry.notes}
-            </p>
+            <p className="text-slate-400 text-xs truncate">{entry.notes}</p>
           </div>
         )}
       </div>

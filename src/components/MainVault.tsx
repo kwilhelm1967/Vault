@@ -357,12 +357,12 @@ export const MainVault: React.FC<MainVaultProps> = ({
               <Search className="w-8 h-8 text-slate-400" />
             </div>
             <h3 className="text-lg font-medium text-white mb-2">
-              No passwords found
+              No accounts found
             </h3>
             <p className="text-slate-400 mb-6">
               {searchTerm || selectedCategory !== "all"
                 ? "Try adjusting your search or filter criteria"
-                : "Get started by adding your first password"}
+                : "Get started by adding your first account"}
             </p>
             {!searchTerm && selectedCategory === "all" && (
               <button

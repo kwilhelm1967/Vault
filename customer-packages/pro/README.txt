@@ -46,7 +46,7 @@ Repeat for devices 2-6 using their respective license keys.
 1. Install on each device (up to 6 total)
 2. Use the same license key for activation
 3. Create unique master passwords for each device (recommended)
-4. Import/export data between devices as needed
+4. Export data between devices as needed
 
 ## Features Included
 
@@ -54,7 +54,7 @@ Repeat for devices 2-6 using their respective license keys.
 ✅ **Unlimited Password Storage** - Store as many passwords as you need
 ✅ **AES-256 Encryption** - Military-grade local encryption
 ✅ **Floating Panel** - Quick access mini-vault
-✅ **Import/Export** - Transfer data from other password managers
+✅ **Export** - Transfer data from other password managers
 ✅ **Password Generator** - Create strong, unique passwords
 ✅ **Priority Support** - 24-hour response time
 ✅ **Advanced Security Features** - Enhanced protection

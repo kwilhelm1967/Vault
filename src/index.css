@@ -151,3 +151,36 @@ body {
   z-index: 9999 !important;
   position: fixed !important;
 }
+
+/* Electron drag region styles */
+.drag-region {
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+/* Floating button specific styles */
+.floating-button-container {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+/* Floating button animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.floating-hint {
+  animation: fadeIn 0.2s ease-out;
+}

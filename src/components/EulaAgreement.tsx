@@ -1,15 +1,24 @@
-import React, { useState } from 'react';
-import { CheckCircle, AlertCircle, Shield } from 'lucide-react';
+import React, { useState } from "react";
+import { CheckCircle, AlertCircle, Shield } from "lucide-react";
 
 interface EulaAgreementProps {
   onAccept: () => void;
   onDecline: () => void;
+  error: string | null;
 }
 
-export const EulaAgreement: React.FC<EulaAgreementProps> = ({ onAccept, onDecline }) => {
+export const EulaAgreement: React.FC<EulaAgreementProps> = ({
+  onAccept,
+  onDecline,
+  error,
+}) => {
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const [isAgreed, setIsAgreed] = useState(false);
-  const currentDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const currentDate = new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
@@ -24,24 +33,35 @@ export const EulaAgreement: React.FC<EulaAgreementProps> = ({ onAccept, onDeclin
         <div className="p-6 border-b border-slate-700 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Shield className="w-6 h-6 text-blue-400" />
-            <h2 className="text-xl font-semibold text-white">End User License Agreement</h2>
+            <h2 className="text-xl font-semibold text-white">
+              End User License Agreement
+            </h2>
           </div>
           <div className="text-sm text-slate-400">
             Effective Date: {currentDate}
           </div>
         </div>
-        
-        <div 
+
+        <div
           className="p-6 overflow-y-auto flex-1 text-slate-300 text-sm leading-relaxed"
           onScroll={handleScroll}
         >
           <p className="mb-4">
-            This End User License Agreement ("Agreement") is a legal contract between you ("You" or "User") and Local Password Vault, the owner and developer of Local Password Vault ("Software"). By installing, copying, or using the Software, you agree to the terms of this Agreement.
+            This End User License Agreement ("Agreement") is a legal contract
+            between you ("You" or "User") and Local Password Vault, the owner
+            and developer of Local Password Vault ("Software"). By installing,
+            copying, or using the Software, you agree to the terms of this
+            Agreement.
           </p>
-          
-          <h3 className="text-white font-semibold mt-6 mb-2">1. License Grant</h3>
+
+          <h3 className="text-white font-semibold mt-6 mb-2">
+            1. License Grant
+          </h3>
           <p className="mb-4">
-            Upon purchase, Local Password Vault grants you a limited, non-transferable, non-exclusive license to install and use the Software on the number of devices allowed by the license tier you purchased:
+            Upon purchase, Local Password Vault grants you a limited,
+            non-transferable, non-exclusive license to install and use the
+            Software on the number of devices allowed by the license tier you
+            purchased:
           </p>
           <ul className="list-disc pl-6 mb-4 space-y-1">
             <li>Single User License: 1 device</li>
@@ -49,15 +69,22 @@ export const EulaAgreement: React.FC<EulaAgreementProps> = ({ onAccept, onDeclin
             <li>Business License: up to 10 devices</li>
           </ul>
           <p className="mb-4">
-            This license is for personal or internal business use only. You may not redistribute, resell, rent, or sublicense the Software.
+            This license is for personal or internal business use only. You may
+            not redistribute, resell, rent, or sublicense the Software.
           </p>
-          
-          <h3 className="text-white font-semibold mt-6 mb-2">2. Hardware-Bound Licensing</h3>
+
+          <h3 className="text-white font-semibold mt-6 mb-2">
+            2. Hardware-Bound Licensing
+          </h3>
           <p className="mb-4">
-            Your license key is hardware-bound. Attempts to clone, spoof, or circumvent device checks will be considered a breach of this Agreement and may result in license termination.
+            Your license key is hardware-bound. Attempts to clone, spoof, or
+            circumvent device checks will be considered a breach of this
+            Agreement and may result in license termination.
           </p>
-          
-          <h3 className="text-white font-semibold mt-6 mb-2">3. Restrictions</h3>
+
+          <h3 className="text-white font-semibold mt-6 mb-2">
+            3. Restrictions
+          </h3>
           <p className="mb-2">You agree not to:</p>
           <ul className="list-disc pl-6 mb-4 space-y-1">
             <li>Reverse-engineer, decompile, or disassemble the Software</li>
@@ -65,48 +92,75 @@ export const EulaAgreement: React.FC<EulaAgreementProps> = ({ onAccept, onDeclin
             <li>Bypass or tamper with license validation mechanisms</li>
             <li>Use the Software in violation of any applicable law</li>
           </ul>
-          
-          <h3 className="text-white font-semibold mt-6 mb-2">4. No Cloud Connectivity</h3>
+
+          <h3 className="text-white font-semibold mt-6 mb-2">
+            4. No Cloud Connectivity
+          </h3>
           <p className="mb-4">
-            This Software is strictly offline and does not transmit or store your data on any external servers. All data is stored locally on your device.
+            This Software is strictly offline and does not transmit or store
+            your data on any external servers. All data is stored locally on
+            your device.
           </p>
-          
-          <h3 className="text-white font-semibold mt-6 mb-2">5. Disclaimer of Warranties</h3>
+
+          <h3 className="text-white font-semibold mt-6 mb-2">
+            5. Disclaimer of Warranties
+          </h3>
           <p className="mb-4">
-            The Software is provided "as is," without warranty of any kind. Local Password Vault disclaims all warranties, express or implied, including but not limited to merchantability and fitness for a particular purpose.
+            The Software is provided "as is," without warranty of any kind.
+            Local Password Vault disclaims all warranties, express or implied,
+            including but not limited to merchantability and fitness for a
+            particular purpose.
           </p>
-          
-          <h3 className="text-white font-semibold mt-6 mb-2">6. Limitation of Liability</h3>
+
+          <h3 className="text-white font-semibold mt-6 mb-2">
+            6. Limitation of Liability
+          </h3>
           <p className="mb-4">
-            To the maximum extent permitted by law, Local Password Vault shall not be liable for any indirect, incidental, special, or consequential damages, including but not limited to loss of data, passwords, business interruption, or financial loss.
+            To the maximum extent permitted by law, Local Password Vault shall
+            not be liable for any indirect, incidental, special, or
+            consequential damages, including but not limited to loss of data,
+            passwords, business interruption, or financial loss.
           </p>
-          
+
           <h3 className="text-white font-semibold mt-6 mb-2">7. Termination</h3>
           <p className="mb-4">
-            Violation of any term in this Agreement may result in immediate termination of your license, with no refund. Upon termination, you must delete all copies of the Software.
+            Violation of any term in this Agreement may result in immediate
+            termination of your license, with no refund. Upon termination, you
+            must delete all copies of the Software.
           </p>
-          
-          <h3 className="text-white font-semibold mt-6 mb-2">8. Governing Law</h3>
+
+          <h3 className="text-white font-semibold mt-6 mb-2">
+            8. Governing Law
+          </h3>
           <p className="mb-4">
-            This Agreement is governed by the laws of the State of Texas, United States, without regard to conflict of laws principles.
+            This Agreement is governed by the laws of the State of Texas, United
+            States, without regard to conflict of laws principles.
           </p>
-          
+
           <h3 className="text-white font-semibold mt-6 mb-2">Terms of Sale</h3>
           <ul className="list-disc pl-6 mb-4 space-y-1">
             <li>All purchases are final unless otherwise stated.</li>
-            <li>We offer a 7-day free trial. After this period, no refunds will be issued.</li>
+            <li>
+              We offer a 7-day free trial. After this period, no refunds will be
+              issued.
+            </li>
             <li>Prices are one-time unless explicitly marked as recurring.</li>
             <li>You are responsible for keeping your license key secure.</li>
           </ul>
-          
-          <h3 className="text-white font-semibold mt-6 mb-2">Privacy Statement</h3>
+
+          <h3 className="text-white font-semibold mt-6 mb-2">
+            Privacy Statement
+          </h3>
           <ul className="list-disc pl-6 mb-4 space-y-1">
             <li>This Software does not connect to the internet.</li>
-            <li>No user data, passwords, or vault contents are transmitted to Local Password Vault or third parties.</li>
+            <li>
+              No user data, passwords, or vault contents are transmitted to
+              Local Password Vault or third parties.
+            </li>
             <li>You are solely responsible for backing up your local data.</li>
           </ul>
         </div>
-        
+
         <div className="p-6 border-t border-slate-700 bg-slate-800/80">
           <div className="flex items-start mb-4">
             <div className="flex-shrink-0 mt-0.5">
@@ -118,18 +172,30 @@ export const EulaAgreement: React.FC<EulaAgreementProps> = ({ onAccept, onDeclin
                 className="w-4 h-4 rounded border-slate-600 text-blue-500 focus:ring-blue-500/30 bg-slate-700"
               />
             </div>
-            <label htmlFor="agree-checkbox" className="ml-3 text-sm text-slate-300">
+            <label
+              htmlFor="agree-checkbox"
+              className="ml-3 text-sm text-slate-300"
+            >
               I have read and agree to the End User License Agreement
             </label>
           </div>
-          
+
           {!hasScrolledToBottom && (
             <div className="mb-4 p-3 bg-amber-900/20 border border-amber-800/30 rounded-lg flex items-center space-x-2">
               <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0" />
-              <span className="text-amber-300 text-sm">Please scroll through the entire agreement before proceeding</span>
+              <span className="text-amber-300 text-sm">
+                Please scroll through the entire agreement before proceeding
+              </span>
             </div>
           )}
-          
+
+          {error && (
+            <div className="mb-4 p-3 bg-amber-900/20 border border-amber-800/30 rounded-lg flex items-center space-x-2">
+              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+              <span className="text-red-300 text-sm">{error}</span>
+            </div>
+          )}
+
           <div className="flex space-x-4">
             <button
               onClick={onDecline}
@@ -142,8 +208,8 @@ export const EulaAgreement: React.FC<EulaAgreementProps> = ({ onAccept, onDeclin
               disabled={!isAgreed || !hasScrolledToBottom}
               className={`flex-1 px-4 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2 ${
                 isAgreed && hasScrolledToBottom
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                  : 'bg-slate-600 text-slate-400 cursor-not-allowed'
+                  ? "bg-blue-600 hover:bg-blue-700 text-white"
+                  : "bg-slate-600 text-slate-400 cursor-not-allowed"
               }`}
             >
               <CheckCircle className="w-4 h-4" />

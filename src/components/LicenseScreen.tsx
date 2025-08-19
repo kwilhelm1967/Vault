@@ -17,7 +17,6 @@ import { analyticsService } from "../utils/analyticsService";
 import { licenseService } from "../utils/licenseService";
 import { EulaAgreement } from "./EulaAgreement";
 import { DownloadInstructions } from "./DownloadInstructions";
-import { PaymentScreen } from "./PaymentScreen";
 import { DownloadPage } from "./DownloadPage";
 
 interface LicenseScreenProps {
@@ -64,6 +63,13 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
       return;
     }
 
+    setShowEula(true);
+  };
+
+  const handleEulaAccept = async () => {
+    setIsActivating(true);
+    setError(null);
+
     setIsActivating(true);
     setError(null);
 
@@ -80,6 +86,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
         // Refresh app status
         setAppStatus(licenseService.getAppStatus());
         onLicenseValid();
+        setShowEula(false);
       } else {
         setError(result.error || "License activation failed");
         analyticsService.trackLicenseEvent(
@@ -101,44 +108,6 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
       );
     } finally {
       setIsActivating(false);
-    }
-  };
-
-  const handleEulaAccept = async () => {
-    setIsActivating(true);
-    setError(null);
-
-    try {
-      // In a real app, this would validate with a server
-      const result = { success: true };
-
-      if (result.success) {
-        analyticsService.trackLicenseEvent("license_activated", "pro");
-        onLicenseValid();
-      } else {
-        setError("License activation failed");
-        analyticsService.trackLicenseEvent(
-          "license_activation_failed",
-          undefined,
-          {
-            error: "Invalid license",
-            eulaAccepted: true,
-          }
-        );
-      }
-    } catch (error) {
-      setError("License activation failed. Please try again.");
-      analyticsService.trackLicenseEvent(
-        "license_activation_error",
-        undefined,
-        {
-          error: "Server error",
-          eulaAccepted: true,
-        }
-      );
-    } finally {
-      setIsActivating(false);
-      setShowEula(false);
     }
   };
 
@@ -246,6 +215,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
               ? handleTrialEulaAccept
               : handleEulaAccept
           }
+          error={error}
           onDecline={handleEulaDecline}
         />
       )}
@@ -261,7 +231,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
         />
       )}
 
-      {showPayment && (
+      {/* {showPayment && (
         <PaymentScreen
           onBack={() => {
             setShowPayment(false);
@@ -270,7 +240,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
           onPaymentComplete={handlePaymentComplete}
           selectedPlan={selectedPlan}
         />
-      )}
+      )} */}
 
       {showDownloadPage && (
         <div className="fixed inset-0 z-50 bg-slate-900/95 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
@@ -442,8 +412,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
                         </h3>
                         <ul className="space-y-1 text-sm text-slate-300">
                           <li>• Unlimited password storage</li>
-                          <li>• All premium features</li>
-                          <li>• Import/Export functionality</li>
+                          <li>• Export functionality</li>
                           <li>• Floating panel access</li>
                         </ul>
                       </div>
@@ -522,7 +491,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
                   </li>
                   <li className="flex items-center space-x-2 text-slate-300">
                     <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span>Import/Export data</span>
+                    <span>Export data</span>
                   </li>
                   <li className="flex items-center space-x-2 text-slate-300">
                     <CheckCircle className="w-4 h-4 text-green-400" />
@@ -618,7 +587,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
                   </li>
                   <li className="flex items-center space-x-2 text-slate-300">
                     <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span>Import/Export data</span>
+                    <span>Export data</span>
                   </li>
                   <li className="flex items-center space-x-2 text-slate-300">
                     <CheckCircle className="w-4 h-4 text-green-400" />

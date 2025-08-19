@@ -693,7 +693,7 @@ app.post("/api/activate-license", licenseLimiter, async (req, res) => {
       console.error("License retrieval error:", error);
       return res.status(500).json({
         success: false,
-        error: error.message,
+        error: "License not found",
       });
     }
 

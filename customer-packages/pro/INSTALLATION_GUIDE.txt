@@ -185,7 +185,7 @@ When replacing a device or reaching the 6-device limit:
 
 ### Multi-Device Sync Issues
 
-**Import/Export problems:**
+**Export problems:**
 - Check file format compatibility
 - Verify file isn't corrupted
 - Try smaller batch imports

@@ -49,7 +49,7 @@ Choose your operating system:
 ✅ **Unlimited Password Storage** - Store as many passwords as you need
 ✅ **AES-256 Encryption** - Military-grade local encryption
 ✅ **Floating Panel** - Quick access mini-vault
-✅ **Import/Export** - Transfer data from other password managers
+✅ **Export** - Transfer data from other password managers
 ✅ **Password Generator** - Create strong, unique passwords
 ✅ **Auto-Lock** - Automatic security after inactivity
 ✅ **Offline Operation** - No internet required
