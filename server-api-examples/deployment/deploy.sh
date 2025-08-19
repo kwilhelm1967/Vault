@@ -271,16 +271,11 @@ main_deployment() {
     print_status "Installing EPEL repository..."
     install_packages epel-release
     
-    print_status "Installing required packages..."
-    install_packages httpd nodejs npm snapd firewalld
+    print_status "Installing base packages..."
+    install_packages httpd snapd firewalld
     
-    # Install Node.js 18 if current version is not 18+
-    local node_version=$(node --version 2>/dev/null | sed 's/v//' | cut -d. -f1 || echo "0")
-    if [[ $node_version -lt 18 ]]; then
-        print_status "Installing Node.js 18..."
-        sudo dnf module reset nodejs -y
-        sudo dnf module install nodejs:18 -y
-    fi
+    # Handle Node.js installation separately to avoid conflicts
+    setup_nodejs
     
     print_status "Installing PM2 globally..."
     if npm install -g pm2 2>&1 | tee -a "$LOG_FILE"; then
@@ -316,8 +311,61 @@ main_deployment() {
     display_next_steps
 }
 
-# Setup Certbot
-setup_certbot() {
+# Setup Node.js with system compatibility
+setup_nodejs() {
+    print_status "Setting up Node.js compatible with system requirements..."
+    
+    # Check if Node.js is already installed and compatible
+    if command_exists node; then
+        local current_version=$(node --version 2>/dev/null | sed 's/v//' | cut -d. -f1 || echo "0")
+        print_status "Current Node.js version: v$(node --version 2>/dev/null || echo 'none')"
+        
+        # Check if npm works with current Node.js
+        if command_exists npm && npm --version >/dev/null 2>&1; then
+            print_success "Node.js and npm are already installed and working"
+            return 0
+        fi
+    fi
+    
+    # Clean up any conflicting packages
+    print_status "Cleaning up conflicting Node.js packages..."
+    sudo dnf remove -y nodejs npm nodejs-npm nsolid 2>/dev/null || true
+    sudo dnf clean all
+    
+    # Install Node.js 16.x to match system npm requirements
+    print_status "Installing Node.js 16.x to match system requirements..."
+    
+    # Reset nodejs module
+    sudo dnf module reset nodejs -y 2>/dev/null || true
+    
+    # Install Node.js 16 from system repository (matches npm requirement)
+    if sudo dnf module install nodejs:16/common -y; then
+        # Verify installation
+        if command_exists node && command_exists npm; then
+            local version=$(node --version)
+            print_success "Node.js $version installed from system repository"
+            
+            # Verify npm works
+            if npm --version >/dev/null 2>&1; then
+                print_success "npm is working correctly with Node.js $version"
+                return 0
+            fi
+        fi
+    fi
+    
+    # Fallback: Try installing just the base packages
+    print_warning "Trying alternative installation method..."
+    if sudo dnf install -y nodejs npm; then
+        if command_exists node && command_exists npm && npm --version >/dev/null 2>&1; then
+            local version=$(node --version)
+            print_success "Node.js $version and npm installed successfully"
+            return 0
+        fi
+    fi
+    
+    print_error "Failed to install compatible Node.js version"
+    return 1
+}
     if ! command_exists certbot; then
         print_status "Installing Certbot via snap..."
         
