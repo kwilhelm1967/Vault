@@ -29,7 +29,8 @@ print_error() {
 }
 
 # Configuration
-LOCAL_PATH="/Users/alokkaushik/Downloads/project 2/server-api-examples"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LOCAL_PATH="$(dirname "$SCRIPT_DIR")"
 REMOTE_PATH="/var/www/server.localpasswordvault.com/license-server"
 
 echo "📁 File Upload Helper for License Server"
