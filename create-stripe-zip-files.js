@@ -127,10 +127,10 @@ async function createAllZipFiles() {
           name: "LocalPasswordVault-Setup.exe",
           content: getExecutableContent("Windows Installer"),
         },
-        {
-          name: "LocalPasswordVault-Portable.exe",
-          content: getExecutableContent("Windows Portable"),
-        },
+        // {
+        //   name: "LocalPasswordVault-Portable.exe",
+        //   content: getExecutableContent("Windows Portable"),
+        // },
         {
           name: "LocalPasswordVault.dmg",
           content: getExecutableContent("macOS"),
