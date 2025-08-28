@@ -32,10 +32,11 @@ const FIXED_CATEGORIES: Category[] = [
 ];
 
 function App() {
-  const { isElectron } = useElectron();
+  const { isElectron, isVaultUnlocked } = useElectron();
   const [appStatus, setAppStatus] = useState(() =>
     licenseService.getAppStatus()
   );
+
   const [isLocked, setIsLocked] = useState(true);
   // Initialize state without triggering re-renders
   const [entries, setEntries] = useState<PasswordEntry[]>(() => []);
@@ -338,7 +339,7 @@ function App() {
   // If we're in Electron floating mode, show the floating panel
   if (isElectron && isFloatingMode) {
     // SECURITY FIX: Don't allow floating panel access when vault is locked
-    if (isLocked) {
+    if (!isVaultUnlocked) {
       return (
         <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
           <LoginScreen onLogin={handleLogin} />
@@ -374,7 +375,7 @@ function App() {
     );
   }
 
-  // If we're in Electron floating button mode, show the floating button
+  // // If we're in Electron floating button mode, show the floating button
   if (isElectron && isFloatingButtonMode) {
     return <FloatingButton />;
   }

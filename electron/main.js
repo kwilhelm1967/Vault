@@ -840,8 +840,8 @@ ipcMain.handle("save-floating-panel-position", (event, x, y) => {
 
 // Vault status handlers
 const vaultHandlers = {
-  'vault-unlocked': () => {
-    console.log('Vault unlocked');
+  "vault-unlocked": () => {
+    console.log("Vault unlocked");
     isVaultUnlocked = true;
     // Show floating button when vault is unlocked
     if (!floatingButton || floatingButton.isDestroyed()) {
@@ -849,8 +849,8 @@ const vaultHandlers = {
     }
     return true;
   },
-  'vault-locked': () => {
-    console.log('Vault locked');
+  "vault-locked": () => {
+    console.log("Vault locked");
     isVaultUnlocked = false;
     // Hide floating button when vault is locked
     if (floatingButton && !floatingButton.isDestroyed()) {
@@ -859,10 +859,13 @@ const vaultHandlers = {
     }
     return true;
   },
-  'is-vault-unlocked': () => {
-    console.log('Checking vault status:', isVaultUnlocked ? 'unlocked' : 'locked');
+  "is-vault-unlocked": () => {
+    console.log(
+      "Checking vault status:",
+      isVaultUnlocked ? "unlocked" : "locked"
+    );
     return isVaultUnlocked;
-  }
+  },
 };
 
 // Register vault status handlers
@@ -875,12 +878,12 @@ Object.entries(vaultHandlers).forEach(([event, handler]) => {
 });
 
 // Handle external URL opening
-ipcMain.handle('open-external', async (event, url) => {
+ipcMain.handle("open-external", async (event, url) => {
   try {
     await shell.openExternal(url);
     return true;
   } catch (error) {
-    console.error('Failed to open external URL:', error);
+    console.error("Failed to open external URL:", error);
     return false;
   }
 });
@@ -922,7 +925,9 @@ ipcMain.handle("toggle-floating-panel-from-button", async () => {
   try {
     // Check if we have a valid floating window that's visible
     const isWindowOpen =
-      floatingWindow && !floatingWindow.isDestroyed() && floatingWindow.isVisible();
+      floatingWindow &&
+      !floatingWindow.isDestroyed() &&
+      floatingWindow.isVisible();
 
     if (isWindowOpen) {
       // Close the existing window
@@ -1009,7 +1014,7 @@ ipcMain.handle("move-floating-button", (event, x, y) => {
 
 // Vault status handlers are now defined at the top of the file
 
-ipcMain.handle('show-main-window', () => {
+ipcMain.handle("show-main-window", () => {
   if (mainWindow) {
     if (mainWindow.isMinimized()) {
       mainWindow.restore();

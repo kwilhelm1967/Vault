@@ -40,6 +40,17 @@ contextBridge.exposeInMainWorld("electronAPI", {
   isVaultUnlocked: () => ipcRenderer.invoke("is-vault-unlocked"),
   showMainWindow: () => ipcRenderer.invoke("show-main-window"),
   openExternal: (url) => ipcRenderer.invoke("open-external", url),
+
+  // Vault status change listener
+  onVaultStatusChange: (callback) => {
+    // Remove any existing listeners to prevent duplicates
+    ipcRenderer.removeAllListeners("vault-status-changed");
+    // Add the new listener
+    ipcRenderer.on("vault-status-changed", callback);
+  },
+  removeVaultStatusListener: () => {
+    ipcRenderer.removeAllListeners("vault-status-changed");
+  },
 });
 
 // Security: Remove any node globals in renderer
