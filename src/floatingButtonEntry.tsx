@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client';
 import { FloatingButton } from './components/FloatingButton';
-import './index.css';
+import './floatingbutton.css';
 
 createRoot(document.getElementById('root')!).render(<FloatingButton />);

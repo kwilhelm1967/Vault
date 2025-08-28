@@ -217,7 +217,9 @@ export const FloatingButton: React.FC = () => {
       ref={buttonRef}
       className="fixed rounded-full z-[9999] bg-transparent w-12 h-12 flex items-center justify-center"
     >
-      <div className={`w-12 h-12 rounded-full flex overflow-hidden bg-blue-500`}>
+      <div
+        className={`w-12 h-12 rounded-full flex overflow-hidden bg-blue-500`}
+      >
         {/* Drag Handle */}
         <div
           ref={dragHandleRef}

@@ -428,37 +428,38 @@ const createFloatingButton = () => {
     const primaryDisplay = screen.getPrimaryDisplay();
     const { width, height } = primaryDisplay.workAreaSize;
 
-  // Button size - match Tailwind w-12 h-12 (48px)
-  const buttonSize = 48;
+    // Button size - match Tailwind w-12 h-12 (48px)
+    const buttonSize = 48;
 
-  // Determine button position (default to bottom-right corner)
-  const windowOptions = {
-    width: buttonSize,
-    height: buttonSize,
-    minWidth: buttonSize,
-    maxWidth: buttonSize,
-    minHeight: buttonSize,
-    maxHeight: buttonSize,
-    alwaysOnTop: true,
-    focusable: true,
-    skipTaskbar: true,
-    resizable: false,
-    minimizable: false,
-    maximizable: false,
-    closable: false,
-    frame: false,
-    transparent: true,
-    hasShadow: false,
-    movable: true, // Ensure window is movable
-    thickFrame: false, // Prevent Windows theme/border issues
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-      enableRemoteModule: false,
-      preload: path.join(__dirname, "preload.js"),
-    },
-    show: false,
-  };    // Add position if available, otherwise default to bottom-right corner
+    // Determine button position (default to bottom-right corner)
+    const windowOptions = {
+      width: buttonSize,
+      height: buttonSize,
+      minWidth: buttonSize,
+      maxWidth: buttonSize,
+      minHeight: buttonSize,
+      maxHeight: buttonSize,
+      alwaysOnTop: true,
+      focusable: true,
+      skipTaskbar: true,
+      resizable: false,
+      minimizable: false,
+      maximizable: false,
+      closable: false,
+      frame: false,
+      transparent: true,
+      hasShadow: false,
+      movable: true, // Ensure window is movable
+      backgroundColor: "#00000000",
+      thickFrame: false, // Prevent Windows theme/border issues
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+        enableRemoteModule: false,
+        preload: path.join(__dirname, "preload.js"),
+      },
+      show: false,
+    }; // Add position if available, otherwise default to bottom-right corner
     if (
       savedButtonPosition &&
       typeof savedButtonPosition.x === "number" &&
@@ -507,40 +508,46 @@ const createFloatingButton = () => {
       floatingButton.setHiddenInMissionControl(true);
     }
 
-  // Prevent flickering by showing only when ready
-  floatingButton.once("ready-to-show", () => {
-    // Force window bounds to prevent phantom resize bug on Windows
-    floatingButton.setBounds({ 
-      width: buttonSize, 
-      height: buttonSize,
-      x: floatingButton.getBounds().x,
-      y: floatingButton.getBounds().y
-    });
-    floatingButton.show();
-  });
-
-  // Load the floating button page
-  if (isDev) {
-    floatingButton.loadURL("http://localhost:5173/floating-button.html");
-  } else {
-    floatingButton.loadFile(
-      path.join(__dirname, "../dist/floating-button.html")
-    );
-  }
-
-  // Prevent any accidental resize operations (Windows protection)
-  floatingButton.on("resize", () => {
-    const currentBounds = floatingButton.getBounds();
-    if (currentBounds.width !== buttonSize || currentBounds.height !== buttonSize) {
-      console.log("Preventing button resize, restoring to", buttonSize + "x" + buttonSize);
+    // Prevent flickering by showing only when ready
+    floatingButton.once("ready-to-show", () => {
+      // Force window bounds to prevent phantom resize bug on Windows
       floatingButton.setBounds({
-        x: currentBounds.x,
-        y: currentBounds.y,
         width: buttonSize,
         height: buttonSize,
+        x: floatingButton.getBounds().x,
+        y: floatingButton.getBounds().y,
       });
+      floatingButton.show();
+    });
+
+    // Load the floating button page
+    if (isDev) {
+      floatingButton.loadURL("http://localhost:5173/floating-button.html");
+    } else {
+      floatingButton.loadFile(
+        path.join(__dirname, "../dist/floating-button.html")
+      );
     }
-  });
+
+    // Prevent any accidental resize operations (Windows protection)
+    floatingButton.on("resize", () => {
+      const currentBounds = floatingButton.getBounds();
+      if (
+        currentBounds.width !== buttonSize ||
+        currentBounds.height !== buttonSize
+      ) {
+        console.log(
+          "Preventing button resize, restoring to",
+          buttonSize + "x" + buttonSize
+        );
+        floatingButton.setBounds({
+          x: currentBounds.x,
+          y: currentBounds.y,
+          width: buttonSize,
+          height: buttonSize,
+        });
+      }
+    });
 
     // Handle window closed
     floatingButton.on("closed", () => {
