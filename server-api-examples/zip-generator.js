@@ -1,35 +1,35 @@
-import fs from 'fs';
-import path from 'path';
-import archiver from 'archiver';
+import fs from "fs";
+import path from "path";
+import archiver from "archiver";
 
 class PackageGenerator {
   constructor() {
     this.packageConfigs = {
-      'single-user': {
-        name: 'LocalPasswordVault-SingleUser',
-        description: 'Single User License Package',
-        files: this.getSingleUserFiles()
+      "single-user": {
+        name: "LocalPasswordVault",
+        description: "Single User License Package",
+        files: this.getUserFiles(),
       },
-      'family-plan': {
-        name: 'LocalPasswordVault-FamilyPlan', 
-        description: 'Family Plan License Package',
-        files: this.getFamilyPlanFiles()
+      "family-plan": {
+        name: "LocalPasswordVault",
+        description: "Family Plan License Package",
+        files: this.getUserFiles(),
       },
-      'pro': {
-        name: 'LocalPasswordVault-Pro',
-        description: 'Pro License Package', 
-        files: this.getProFiles()
+      pro: {
+        name: "LocalPasswordVault",
+        description: "Pro License Package",
+        files: this.getUserFiles(),
       },
-      'business-plan': {
-        name: 'LocalPasswordVault-BusinessPlan',
-        description: 'Business Plan License Package',
-        files: this.getBusinessPlanFiles()
-      }
+      "business-plan": {
+        name: "LocalPasswordVault",
+        description: "Business Plan License Package",
+        files: this.getUserFiles(),
+      },
     };
   }
 
   // Generate ZIP file for specific package type
-  async generatePackage(packageType, outputDir = './downloads') {
+  async generatePackage(packageType, outputDir = "./downloads") {
     const config = this.packageConfigs[packageType];
     if (!config) {
       throw new Error(`Unknown package type: ${packageType}`);
@@ -42,30 +42,30 @@ class PackageGenerator {
 
     const outputPath = path.join(outputDir, `${config.name}.zip`);
     const output = fs.createWriteStream(outputPath);
-    const archive = archiver('zip', { zlib: { level: 9 } });
+    const archive = archiver("zip", { zlib: { level: 9 } });
 
     return new Promise((resolve, reject) => {
-      output.on('close', () => {
+      output.on("close", () => {
         resolve({
           filePath: outputPath,
           fileName: `${config.name}.zip`,
           size: archive.pointer(),
-          description: config.description
+          description: config.description,
         });
       });
 
-      archive.on('error', reject);
+      archive.on("error", reject);
       archive.pipe(output);
 
       // Add files to archive
-      config.files.forEach(file => {
-        if (file.type === 'file') {
+      config.files.forEach((file) => {
+        if (file.type === "file") {
           if (fs.existsSync(file.source)) {
             archive.file(file.source, { name: file.destination });
           } else {
             console.warn(`File not found: ${file.source}`);
           }
-        } else if (file.type === 'content') {
+        } else if (file.type === "content") {
           archive.append(file.content, { name: file.destination });
         }
       });
@@ -75,17 +75,36 @@ class PackageGenerator {
   }
 
   // Single User package files - ONLY .exe files + docs
-  getSingleUserFiles() {
+  getUserFiles() {
     return [
       // All platform executables (NO source code)
-      { type: 'file', source: 'release/LocalPasswordVault-Setup.exe', destination: 'LocalPasswordVault-Setup.exe' },
-      { type: 'file', source: 'release/LocalPasswordVault-Portable.exe', destination: 'LocalPasswordVault-Portable.exe' },
-      { type: 'file', source: 'release/LocalPasswordVault.dmg', destination: 'LocalPasswordVault.dmg' },
-      { type: 'file', source: 'release/LocalPasswordVault.AppImage', destination: 'LocalPasswordVault.AppImage' },
-      
+      {
+        type: "file",
+        source: "release/LocalPasswordVault-Setup.exe",
+        destination: "LocalPasswordVault-Setup.exe",
+      },
+      {
+        type: "file",
+        source: "release/LocalPasswordVault.dmg",
+        destination: "LocalPasswordVault.dmg",
+      },
+      {
+        type: "file",
+        source: "release/LocalPasswordVault.AppImage",
+        destination: "LocalPasswordVault.AppImage",
+      },
+
       // Documentation only
-      { type: 'content', content: this.getReadme('single-user'), destination: 'README.txt' },
-      { type: 'content', content: this.getQuickStart('single-user'), destination: 'QUICK_START.txt' }
+      {
+        type: "content",
+        content: this.getReadme("single-user"),
+        destination: "README.txt",
+      },
+      {
+        type: "content",
+        content: this.getQuickStart("single-user"),
+        destination: "QUICK_START.txt",
+      },
     ];
   }
 
@@ -93,31 +112,88 @@ class PackageGenerator {
   getFamilyPlanFiles() {
     return [
       // All platform executables (NO source code)
-      { type: 'file', source: 'release/LocalPasswordVault-Setup.exe', destination: 'LocalPasswordVault-Setup.exe' },
-      { type: 'file', source: 'release/LocalPasswordVault-Portable.exe', destination: 'LocalPasswordVault-Portable.exe' },
-      { type: 'file', source: 'release/LocalPasswordVault.dmg', destination: 'LocalPasswordVault.dmg' },
-      { type: 'file', source: 'release/LocalPasswordVault.AppImage', destination: 'LocalPasswordVault.AppImage' },
-      
+      {
+        type: "file",
+        source: "release/LocalPasswordVault-Setup.exe",
+        destination: "LocalPasswordVault-Setup.exe",
+      },
+      {
+        type: "file",
+        source: "release/LocalPasswordVault-Portable.exe",
+        destination: "LocalPasswordVault-Portable.exe",
+      },
+      {
+        type: "file",
+        source: "release/LocalPasswordVault.dmg",
+        destination: "LocalPasswordVault.dmg",
+      },
+      {
+        type: "file",
+        source: "release/LocalPasswordVault.AppImage",
+        destination: "LocalPasswordVault.AppImage",
+      },
+
       // Family-specific documentation
-      { type: 'content', content: this.getReadme('family-plan'), destination: 'README.txt' },
-      { type: 'content', content: this.getQuickStart('family-plan'), destination: 'QUICK_START.txt' },
-      { type: 'content', content: this.getFamilySharingGuide(), destination: 'FAMILY_SHARING_GUIDE.txt' }
+      {
+        type: "content",
+        content: this.getReadme("family-plan"),
+        destination: "README.txt",
+      },
+      {
+        type: "content",
+        content: this.getQuickStart("family-plan"),
+        destination: "QUICK_START.txt",
+      },
+      {
+        type: "content",
+        content: this.getFamilySharingGuide(),
+        destination: "FAMILY_SHARING_GUIDE.txt",
+      },
     ];
   }
+  LocalPasswordVault;
 
   // Pro package files - ONLY .exe files + docs
   getProFiles() {
     return [
       // All platform executables (NO source code)
-      { type: 'file', source: 'release/LocalPasswordVault-Setup.exe', destination: 'LocalPasswordVault-Setup.exe' },
-      { type: 'file', source: 'release/LocalPasswordVault-Portable.exe', destination: 'LocalPasswordVault-Portable.exe' },
-      { type: 'file', source: 'release/LocalPasswordVault.dmg', destination: 'LocalPasswordVault.dmg' },
-      { type: 'file', source: 'release/LocalPasswordVault.AppImage', destination: 'LocalPasswordVault.AppImage' },
-      
+      {
+        type: "file",
+        source: "release/LocalPasswordVault-Setup.exe",
+        destination: "LocalPasswordVault-Setup.exe",
+      },
+      {
+        type: "file",
+        source: "release/LocalPasswordVault-Portable.exe",
+        destination: "LocalPasswordVault-Portable.exe",
+      },
+      {
+        type: "file",
+        source: "release/LocalPasswordVault.dmg",
+        destination: "LocalPasswordVault.dmg",
+      },
+      {
+        type: "file",
+        source: "release/LocalPasswordVault.AppImage",
+        destination: "LocalPasswordVault.AppImage",
+      },
+
       // Pro-specific documentation
-      { type: 'content', content: this.getReadme('pro'), destination: 'README.txt' },
-      { type: 'content', content: this.getQuickStart('pro'), destination: 'QUICK_START.txt' },
-      { type: 'content', content: this.getMultiDeviceGuide(), destination: 'MULTI_DEVICE_GUIDE.txt' }
+      {
+        type: "content",
+        content: this.getReadme("pro"),
+        destination: "README.txt",
+      },
+      {
+        type: "content",
+        content: this.getQuickStart("pro"),
+        destination: "QUICK_START.txt",
+      },
+      {
+        type: "content",
+        content: this.getMultiDeviceGuide(),
+        destination: "MULTI_DEVICE_GUIDE.txt",
+      },
     ];
   }
 
@@ -125,27 +201,74 @@ class PackageGenerator {
   getBusinessPlanFiles() {
     return [
       // All platform executables (NO source code)
-      { type: 'file', source: 'release/LocalPasswordVault-Setup.exe', destination: 'LocalPasswordVault-Setup.exe' },
-      { type: 'file', source: 'release/LocalPasswordVault-Portable.exe', destination: 'LocalPasswordVault-Portable.exe' },
-      { type: 'file', source: 'release/LocalPasswordVault.dmg', destination: 'LocalPasswordVault.dmg' },
-      { type: 'file', source: 'release/LocalPasswordVault.AppImage', destination: 'LocalPasswordVault.AppImage' },
-      
+      {
+        type: "file",
+        source: "release/LocalPasswordVault-Setup.exe",
+        destination: "LocalPasswordVault-Setup.exe",
+      },
+      {
+        type: "file",
+        source: "release/LocalPasswordVault-Portable.exe",
+        destination: "LocalPasswordVault-Portable.exe",
+      },
+      {
+        type: "file",
+        source: "release/LocalPasswordVault.dmg",
+        destination: "LocalPasswordVault.dmg",
+      },
+      {
+        type: "file",
+        source: "release/LocalPasswordVault.AppImage",
+        destination: "LocalPasswordVault.AppImage",
+      },
+
       // Pre-built license server files (NO source code)
-      { type: 'content', content: this.getLicenseServerExecutable(), destination: 'license-server/license-server.exe' },
-      { type: 'content', content: this.getLicenseServerConfig(), destination: 'license-server/config.json' },
-      { type: 'content', content: this.getLicenseServerReadme(), destination: 'license-server/README.txt' },
-      
+      {
+        type: "content",
+        content: this.getLicenseServerExecutable(),
+        destination: "license-server/license-server.exe",
+      },
+      {
+        type: "content",
+        content: this.getLicenseServerConfig(),
+        destination: "license-server/config.json",
+      },
+      {
+        type: "content",
+        content: this.getLicenseServerReadme(),
+        destination: "license-server/README.txt",
+      },
+
       // Business-specific documentation
-      { type: 'content', content: this.getReadme('business-plan'), destination: 'README.txt' },
-      { type: 'content', content: this.getQuickStart('business-plan'), destination: 'QUICK_START.txt' },
-      { type: 'content', content: this.getEnterpriseGuide(), destination: 'ENTERPRISE_DEPLOYMENT_GUIDE.txt' }
+      {
+        type: "content",
+        content: this.getReadme("business-plan"),
+        destination: "README.txt",
+      },
+      {
+        type: "content",
+        content: this.getQuickStart("business-plan"),
+        destination: "QUICK_START.txt",
+      },
+      {
+        type: "content",
+        content: this.getEnterpriseGuide(),
+        destination: "ENTERPRISE_DEPLOYMENT_GUIDE.txt",
+      },
     ];
   }
 
   // README for each tier
   getReadme(tier) {
+    const userCountBasedOnTier = {
+      "single-user": 1,
+      "family-plan": 3,
+      pro: 6,
+      "business-plan": 10,
+    }[tier];
+
     const readmes = {
-      'single-user': `# Local Password Vault - Single User
+      "single-user": `# Local Password Vault - Single User
 
 ## Quick Start
 1. Run LocalPasswordVault-Setup.exe (Windows) or LocalPasswordVault.dmg (Mac) or LocalPasswordVault.AppImage (Linux)
@@ -154,17 +277,12 @@ class PackageGenerator {
 4. Start using your password vault!
 
 ## Features
-- 1 device license
+- ${userCountBasedOnTier} device license
 - Unlimited passwords
 - Offline security
 - AES-256 encryption
-- Complete source code included
 
 ## What You Get
-- Complete React/TypeScript source code
-- Pre-built applications for convenience
-- All build tools and configuration
-- License generator tools
 - Full independence - no server dependency
 - Working password manager software
 - Pre-built applications for all platforms
@@ -173,125 +291,97 @@ class PackageGenerator {
 
 ## Support
 Email: support@LocalPasswordVault.com
-Response: 48 hours
 
 © 2025 Local Password Vault`,
 
-      'family-plan': `# Local Password Vault - Family Plan
+      "family-plan": `# Local Password Vault - Family Plan
 
 ## Quick Start
 1. Install on up to 3 devices using the provided installers
 2. Use a different license key for each device (3 keys provided)
 3. Create master passwords on each device
-4. Set up family sharing in Settings
 
 ## Features
 - 3 device licenses
-- Family password sharing
-- Priority support (24 hours)
 - All Single User features
-- Complete source code included
 
 ## What You Get
-- Complete React/TypeScript source code
-- Pre-built applications for convenience
-- All build tools and configuration
-- License generator tools
 - Full independence - no server dependency
 - Working password manager software
 - Pre-built applications for all platforms
-- Family sharing setup guides
 - Full independence - no server dependency
 
 ## Support
-Email: priority@LocalPasswordVault.com
-Response: 24 hours
+Email: support@LocalPasswordVault.com
 
 © 2025 Local Password Vault`,
 
-      'pro': `# Local Password Vault - Pro
+      pro: `# Local Password Vault - Pro
 
 ## Quick Start
 1. Install on up to 6 devices using the provided installers
 2. Use a different license key for each device (6 keys provided)
 3. Create master passwords on each device
-4. Sync data between devices using export/import
 
 ## Features
 - 6 device licenses
 - Advanced security features
-- Priority support (24 hours)
 - Multi-device management
-- Complete source code included
 
 ## What You Get
-- Complete React/TypeScript source code
-- Pre-built applications for convenience
-- All build tools and configuration
-- License generator tools
 - Full independence - no server dependency
 - Working password manager software
 - Pre-built applications for all platforms
-- Multi-device setup guides
 - Full independence - no server dependency
 
 ## Support
-Email: priority@LocalPasswordVault.com
-Response: 24 hours
+Email: support@LocalPasswordVault.com
 
 © 2025 Local Password Vault`,
 
-      'business-plan': `# Local Password Vault - Business Plan
+      "business-plan": `# Local Password Vault - Business Plan
 
 ## Quick Start
-1. Install on up to 10 devices using the provided installers
-2. Set up admin account with admin license key
-3. Configure team management and sharing
-4. Deploy across your organization
+1. Install on up to 6 devices using the provided installers
+2. Use a different license key for each device (6 keys provided)
+3. Create master passwords on each device
 
-OPTION 2 - Deploy License Server:
-1. Run license-server.exe on your server
-2. Deploy to your own server
-3. Manage licenses centrally
-4. Full enterprise control
 
 ## Features
 - 10 device licenses
-- Team management
-- Admin dashboard
-- Enterprise support (4 hours)
-- Complete source code included
-- License server source code included
-- License server included
 
 ## What You Get
-- Complete React/TypeScript source code
-- Complete license server source code
-- Pre-built applications for convenience
-- All build tools and configuration
-- License generator tools
 - Full independence - no server dependency
 - Working password manager software
 - Pre-built applications for all platforms
-- Pre-built license server
-- Enterprise deployment guides
-- Full independence - no server dependency
 
 ## Support
-Email: enterprise@LocalPasswordVault.com
-Phone: +1-555-123-4567
-Response: 4 hours
+Email: support@LocalPasswordVault.com
 
-© 2025 Local Password Vault`
+© 2025 Local Password Vault`,
     };
-    
-    return readmes[tier] || readmes['single-user'];
+
+    return readmes["single-user"];
   }
 
   // Quick start guide for each tier
   getQuickStart(tier) {
+    const userCountBasedOnTier = {
+      "single-user": 1,
+      "family-plan": 3,
+      pro: 6,
+      "business-plan": 10,
+    }[tier];
+
+    const userTierheading = {
+      "single-user": "Single User",
+      "family-plan": "Family Plan",
+      pro: "Pro Plan",
+      "business-plan": "Business Plan",
+    }[tier];
+
     const guides = {
-      'single-user': `# Single User Quick Start
+      "single-user": `# ${userTierheading} Quick Start
 
 ## Installation
 1. Windows: Run LocalPasswordVault-Setup.exe
@@ -305,31 +395,23 @@ Response: 4 hours
 4. Use the floating panel for quick access
 
 ## License
-- 1 license key provided
-- Use on 1 device only
+- ${userCountBasedOnTier} license key provided
+- Use on ${userCountBasedOnTier} device only
 
 Support: support@LocalPasswordVault.com`,
 
-      'family-plan': `# Family Plan Quick Start
+      "family-plan": `# Family Plan Quick Start
 
 ## Installation (3 Devices)
 1. Install on each device using the appropriate installer
 2. Use a different license key for each device
 3. Create master passwords on each device
 
-## Family Sharing
-1. Go to Settings > Family Sharing
-2. Generate sharing key on primary device
-3. Enter sharing key on other devices
-4. Select passwords to share
-
 ## License
 - 3 license keys provided
-- Use different key for each device
+- Use different key for each device`,
 
-Priority support: priority@LocalPasswordVault.com`,
-
-      'pro': `# Pro License Quick Start
+      pro: `# Pro License Quick Start
 
 ## Installation (6 Devices)
 1. Install on each device using the appropriate installer
@@ -338,8 +420,6 @@ Priority support: priority@LocalPasswordVault.com`,
 
 ## Multi-Device Sync
 1. Export vault from primary device
-2. Import on other devices
-3. Repeat as needed to keep devices in sync
 
 ## License
 - 1 license key provided
@@ -347,7 +427,7 @@ Priority support: priority@LocalPasswordVault.com`,
 
 Priority support: priority@LocalPasswordVault.com`,
 
-      'business-plan': `# Business Plan Quick Start
+      "business-plan": `# Business Plan Quick Start
 
 ## Admin Setup
 1. Install on admin device first
@@ -365,10 +445,10 @@ Priority support: priority@LocalPasswordVault.com`,
 - 1 admin key + 9 user keys
 
 Enterprise support: enterprise@LocalPasswordVault.com
-Phone: +1-555-123-4567`
+Phone: +1-555-123-4567`,
     };
-    
-    return guides[tier] || guides['single-user'];
+
+    return guides["single-user"];
   }
 
   // Additional content generators for specific packages
@@ -449,25 +529,29 @@ To run: ./license-server.exe --config license-server-config.json
   }
 
   getLicenseServerConfig() {
-    return JSON.stringify({
-      "server": {
-        "port": 3000,
-        "host": "0.0.0.0"
+    return JSON.stringify(
+      {
+        server: {
+          port: 3000,
+          host: "0.0.0.0",
+        },
+        database: {
+          type: "sqlite",
+          path: "./licenses.db",
+        },
+        security: {
+          enableRateLimit: true,
+          maxRequestsPerMinute: 100,
+        },
+        organization: {
+          name: "Your Organization",
+          maxLicenses: 10,
+          adminEmail: "admin@yourcompany.com",
+        },
       },
-      "database": {
-        "type": "sqlite",
-        "path": "./licenses.db"
-      },
-      "security": {
-        "enableRateLimit": true,
-        "maxRequestsPerMinute": 100
-      },
-      "organization": {
-        "name": "Your Organization",
-        "maxLicenses": 10,
-        "adminEmail": "admin@yourcompany.com"
-      }
-    }, null, 2);
+      null,
+      2
+    );
   }
 
   getLicenseServerReadme() {
