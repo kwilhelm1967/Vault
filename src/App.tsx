@@ -4,7 +4,6 @@ import { LicenseScreen } from "./components/LicenseScreen";
 import { MainVault } from "./components/MainVault";
 import { FloatingPanel } from "./components/FloatingPanel";
 import { ElectronFloatingPanel } from "./components/ElectronFloatingPanel";
-import { FloatingButton } from "./components/FloatingButton";
 import { PasswordEntry, Category } from "./types";
 import { storageService } from "./utils/storage";
 import { passwordService } from "./utils/passwordService";
@@ -336,6 +335,8 @@ function App() {
     }
   };
 
+  console.log(isVaultUnlocked, 'isVaultUnlocked');
+
   // If we're in Electron floating mode, show the floating panel
   if (isElectron && isFloatingMode) {
     // SECURITY FIX: Don't allow floating panel access when vault is locked
@@ -374,11 +375,6 @@ function App() {
       </div>
     );
   }
-
-  // // If we're in Electron floating button mode, show the floating button
-  // if (isElectron && isFloatingButtonMode) {
-  //   return <FloatingButton />;
-  // }
 
   if (!appStatus.canUseApp) {
     return (
