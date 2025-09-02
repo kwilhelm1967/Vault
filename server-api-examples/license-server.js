@@ -15,6 +15,9 @@ import { saveLicensesToDatabase } from "./database.js";
 dotenv.config();
 
 const app = express();
+// When running behind a proxy/load-balancer (e.g. nginx, Cloudflare), trust
+// the X-Forwarded-* headers so req.ip and rate-limit work correctly.
+app.set("trust proxy", true);
 const stripeClient = stripe(process.env.STRIPE_SECRET_KEY);
 const downloadHandler = new DownloadHandler();
 
@@ -498,6 +501,30 @@ function generateLicenseKey() {
 }
 
 app.use(express.json({ limit: "10mb" }));
+// Parse URL-encoded bodies with the same size limit to avoid oversized payloads
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
+
+// Basic header size/volume logging for debugging oversized header attacks or proxy issues
+app.use((req, res, next) => {
+  try {
+    // Log number of headers and total header size approximate
+    const headerCount = Object.keys(req.headers).length;
+    const totalHeaderSize = Object.entries(req.headers).reduce(
+      (acc, [k, v]) => {
+        const value = Array.isArray(v) ? v.join(",") : String(v || "");
+        return acc + k.length + value.length;
+      },
+      0
+    );
+    console.log(
+      `Request headers: count=${headerCount}, approxSize=${totalHeaderSize}`
+    );
+  } catch (err) {
+    // Avoid middleware crash
+    console.log("Header logging error", err && err.message);
+  }
+  next();
+});
 
 // In-memory storage (use a real database in production)
 const licenses = new Map();
