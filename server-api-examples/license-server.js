@@ -241,7 +241,7 @@ app.post(
           break;
         case "prod_SfoSPqyGwHMeZp":
           licenseType = "pro";
-          quantity = 1;
+          quantity = 6;
           break;
         case "prod_Sf9IHRQdNePn0J":
           licenseType = "business";

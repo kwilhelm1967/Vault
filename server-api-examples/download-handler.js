@@ -39,11 +39,14 @@ class DownloadHandler {
 
       const packageType = packageTypeMap[licenseType] || "single-user";
 
-      // Generate the package
-      const packageInfo = await this.packageGenerator.generatePackage(
-        packageType,
-        this.downloadDir
-      );
+      // We are not going to generate the package, as well already have it saved to downloads folder
+      const packageName = `LocalPasswordVault-${licenseType}.zip`;
+      const packageInfo = {
+        fileName: packageName,
+        filePath: path.join(this.downloadDir, packageName),
+        size: fs.statSync(path.join(this.downloadDir, packageName)).size,
+        description: `Download link for ${licenseType} license`,
+      };
 
       // Create download record
       const downloadRecord = {
@@ -96,6 +99,39 @@ class DownloadHandler {
 
         if (!token) {
           return res.status(400).json({ error: "Download token required" });
+        }
+
+        // Special-case: if token is the literal string 'trial', serve the
+        // prebuilt trial ZIP directly from the downloads folder without any
+        // verification or record updates.
+        if (token === "trial") {
+          const trialFileName = "LocalPasswordVault-trial.zip";
+          const trialFilePath = path.join(this.downloadDir, trialFileName);
+
+          if (!fs.existsSync(trialFilePath)) {
+            console.error(`Trial package not found at ${trialFilePath}`);
+            return res.status(404).json({ error: "Trial package not found" });
+          }
+
+          res.setHeader(
+            "Content-Disposition",
+            `attachment; filename="${trialFileName}"`
+          );
+          res.setHeader("Content-Type", "application/zip");
+          res.setHeader("Content-Length", fs.statSync(trialFilePath).size);
+
+          const trialStream = fs.createReadStream(trialFilePath);
+          trialStream.pipe(res);
+
+          trialStream.on("error", (error) => {
+            console.error("Error streaming trial file:", error);
+            if (!res.headersSent) {
+              res.status(500).json({ error: "Error downloading file" });
+            }
+          });
+
+          console.log(`Trial download served: ${trialFileName}`);
+          return;
         }
 
         // Verify and decode token
