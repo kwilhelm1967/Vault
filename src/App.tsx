@@ -208,6 +208,35 @@ function App() {
     }
   }, [isElectron, isFloatingMode]);
 
+  // Listen for vault status changes from Electron and sync with local state
+  useEffect(() => {
+    if (!isElectron || !window.electronAPI?.onVaultStatusChange) return;
+
+    const handleVaultStatusChange = (_event: any, unlocked: boolean) => {
+      console.log(
+        "Vault status changed from Electron:",
+        unlocked ? "unlocked" : "locked"
+      );
+      setIsLocked(!unlocked);
+
+      // If vault is locked, ensure we show main vault and hide floating panel
+      if (!unlocked) {
+        setShowMainVault(true);
+        setShowFloatingPanel(false);
+      }
+    };
+
+    // Set up the listener
+    window.electronAPI.onVaultStatusChange(handleVaultStatusChange);
+
+    // Cleanup listener on unmount
+    return () => {
+      if (window.electronAPI?.removeVaultStatusListener) {
+        window.electronAPI.removeVaultStatusListener();
+      }
+    };
+  }, [isElectron]);
+
   const handleLogin = async (password: string) => {
     try {
       // Check if this is the first time setup (no master password set)
@@ -243,15 +272,16 @@ function App() {
     }
   };
 
-  const handleLock = () => {
+  const handleLock = async () => {
+    // SECURITY: Notify Electron that vault is locked first
+    if (isElectron && window.electronAPI && window.electronAPI.vaultLocked) {
+      await window.electronAPI.vaultLocked();
+    }
+
+    // Update local state
     setIsLocked(true);
     setShowMainVault(true);
     setShowFloatingPanel(false);
-
-    // SECURITY: Notify Electron that vault is locked to hide floating button
-    if (isElectron && window.electronAPI && window.electronAPI.vaultLocked) {
-      window.electronAPI.vaultLocked();
-    }
   };
 
   // Toggle download page

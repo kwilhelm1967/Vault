@@ -1002,6 +1002,7 @@ const vaultHandlers = {
       mainWindow?.webContents.send("vault-status-changed", isVaultUnlocked);
       floatingWindow?.webContents.send("vault-status-changed", isVaultUnlocked);
       floatingButton?.webContents.send("vault-status-changed", isVaultUnlocked);
+
       // Hide floating button when vault is locked
       if (floatingButton) {
         try {
@@ -1020,6 +1021,15 @@ const vaultHandlers = {
         floatingWindow.close();
         floatingWindow = null;
       }
+
+      // Restore and show main window when vault is locked
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        console.log("Restoring main window for locked vault...");
+        mainWindow.restore();
+        mainWindow.show();
+        mainWindow.focus();
+      }
+
       return true;
     } catch (error) {
       console.error("Error handling vault lock:", error);

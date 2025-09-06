@@ -390,6 +390,14 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
           >
             <Download className="w-4 h-4" />
           </button>
+
+          <button
+            onClick={onLock}
+            className="p-2.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200 border border-slate-600/30 hover:border-red-500/30 no-drag"
+            title="Lock Vault"
+          >
+            <Lock className="w-4 h-4" />
+          </button>
         </div>
 
         <div className="text-xs text-slate-500 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700/30">
