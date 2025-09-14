@@ -178,6 +178,109 @@ app.get("/", (req, res) => {
   `);
 });
 
+// === Minimal admin auth helpers (no extra deps) ===
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "change-this-admin-pass";
+const ADMIN_COOKIE_NAME = "admin_auth";
+// Derive a stable token using the signing secret + password
+const ADMIN_AUTH_TOKEN = crypto
+  .createHmac(
+    "sha256",
+    (process.env.LICENSE_SIGNING_SECRET || "dev-secret") + "|admin"
+  )
+  .update(ADMIN_PASSWORD)
+  .digest("base64url");
+
+function getCookie(req, name) {
+  try {
+    const cookieHeader = req.headers.cookie || "";
+    const parts = cookieHeader.split(";");
+    for (const part of parts) {
+      const [k, v] = part.trim().split("=");
+      if (k === name) return decodeURIComponent(v || "");
+    }
+    return null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function isAdminAuthed(req) {
+  const token = getCookie(req, ADMIN_COOKIE_NAME);
+  return token === ADMIN_AUTH_TOKEN;
+}
+
+function setAdminCookie(res) {
+  const attrs = [
+    `${ADMIN_COOKIE_NAME}=${encodeURIComponent(ADMIN_AUTH_TOKEN)}`,
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Lax",
+  ];
+  // Only set Secure when behind https (cannot detect here reliably); leave off for dev.
+  res.setHeader("Set-Cookie", attrs.join("; "));
+}
+
+// === Admin UI (simple HTML) ===
+app.get("/admin", (req, res) => {
+  if (!isAdminAuthed(req)) {
+    res.send(`
+      <!DOCTYPE html>
+      <html><head><meta charset="utf-8"><title>Admin Login</title>
+      <style>body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;padding:2rem;}
+      form{max-width:420px;margin:auto;background:#fff;border-radius:8px;padding:1.5rem;box-shadow:0 2px 10px rgba(0,0,0,0.08)}
+      label{display:block;margin:.5rem 0 .25rem}
+      input,button,select{width:100%;padding:.6rem;border:1px solid #ddd;border-radius:6px}
+      button{background:#4CAF50;color:#fff;border-color:#4CAF50;margin-top:1rem;cursor:pointer}
+      </style></head><body>
+        <form method="POST" action="/admin/login">
+          <h2>Admin Login</h2>
+          <label>Password</label>
+          <input type="password" name="password" required />
+          <button type="submit">Login</button>
+        </form>
+      </body></html>
+    `);
+    return;
+  }
+  res.send(`
+    <!DOCTYPE html>
+    <html><head><meta charset="utf-8"><title>Create Licenses</title>
+    <style>body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;padding:2rem;}
+    form{max-width:520px;margin:auto;background:#fff;border-radius:8px;padding:1.5rem;box-shadow:0 2px 10px rgba(0,0,0,0.08)}
+    label{display:block;margin:.5rem 0 .25rem}
+    input,button,select{width:100%;padding:.6rem;border:1px solid #ddd;border-radius:6px}
+    button{background:#4CAF50;color:#fff;border-color:#4CAF50;margin-top:1rem;cursor:pointer}
+    .tip{color:#555;font-size:.9rem;margin:.5rem 0 1rem}
+    </style></head><body>
+      <form method="POST" action="/admin/create-license">
+        <h2>Create Licenses</h2>
+        <div class="tip">Default license type is <strong>single</strong>. You can change it below if needed.</div>
+        <label>Email</label>
+        <input type="email" name="email" placeholder="customer@example.com" required />
+        <label>Amount (number of licenses)</label>
+        <input type="number" name="amount" min="1" max="100" value="1" required />
+        <label>License Type (optional)</label>
+        <select name="licenseType">
+          <option value="single" selected>single</option>
+          <option value="family">family</option>
+          <option value="pro">pro</option>
+          <option value="business">business</option>
+        </select>
+        <button type="submit">Create & Send</button>
+      </form>
+    </body></html>
+  `);
+});
+
+app.post("/admin/login", express.urlencoded({ extended: true }), (req, res) => {
+  const { password } = req.body || {};
+  if (!password || password !== ADMIN_PASSWORD) {
+    return res.status(401).send("Invalid password");
+  }
+  setAdminCookie(res);
+  res.redirect("/admin");
+});
+
 // For Stripe webhook - needs raw body
 app.post(
   "/webhook/stripe",
@@ -390,6 +493,166 @@ app.post(
     }
 
     res.json({ received: true });
+  }
+);
+
+// license creation for admins (JSON API)
+app.post("/api/admin/create-license", async (req, res) => {
+  try {
+    if (!isAdminAuthed(req)) {
+      return res.status(401).json({ success: false, error: "Unauthorized" });
+    }
+
+    const { email, amount, licenseType } = req.body || {};
+    if (!email)
+      return res.status(400).json({ success: false, error: "Email required" });
+    const n = parseInt(amount, 10);
+    if (!n || n < 1 || n > 100) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Amount must be 1-100" });
+    }
+    const type = (licenseType || "single").toString();
+
+    const keys = [];
+    for (let i = 0; i < n; i++) {
+      keys.push(generateSecureLicenseKey(type, email));
+    }
+
+    // Persist to DB (associate with a synthetic order/payment)
+    const syntheticOrderId = `ADMIN-${Date.now()}`;
+    try {
+      await saveLicensesToDatabase(
+        keys,
+        email,
+        type,
+        syntheticOrderId,
+        "active",
+        null, // paymentId
+        "0.00", // amount
+        false // maintenance plan
+      );
+    } catch (dbErr) {
+      console.error("Admin saveLicensesToDatabase error:", dbErr);
+      // Continue; not fatal for emailing, but report
+    }
+
+    const downloadInfo = await downloadHandler.generateDownloadLink(
+      licenseType,
+      customerEmail,
+      session.id
+    );
+
+    // Send email with keys
+    try {
+      await emailService.sendWelcomeEmail(
+        email,
+        keys,
+        type,
+        downloadInfo,
+        false
+      );
+    } catch (mailErr) {
+      console.error("Admin sendWelcomeEmail error:", mailErr);
+      return res.status(500).json({
+        success: false,
+        error: "Failed to send email",
+        licenses: keys,
+        downloadUrl: downloadInfo.downloadUrl,
+      });
+    }
+
+    return res.json({
+      success: true,
+      licenses: keys,
+      downloadUrl: downloadInfo.downloadUrl,
+    });
+  } catch (err) {
+    console.error("Admin create-license error:", err);
+    return res
+      .status(500)
+      .json({ success: false, error: "Internal server error" });
+  }
+});
+
+// Admin HTML form submission endpoint (renders simple result page)
+app.post(
+  "/admin/create-license",
+  express.urlencoded({ extended: true }),
+  async (req, res) => {
+    try {
+      if (!isAdminAuthed(req)) {
+        return res.status(401).send("Unauthorized");
+      }
+      const { email, amount, licenseType } = req.body || {};
+      if (!email) return res.status(400).send("Email required");
+      const n = parseInt(amount, 10);
+      if (!n || n < 1 || n > 100)
+        return res.status(400).send("Amount must be 1-100");
+      const type = (licenseType || "single").toString();
+
+      const keys = [];
+      for (let i = 0; i < n; i++)
+        keys.push(generateSecureLicenseKey(type, email));
+
+      const syntheticOrderId = `ADMIN-${Date.now()}`;
+      try {
+        await saveLicensesToDatabase(
+          keys,
+          email,
+          type,
+          syntheticOrderId,
+          "active",
+          null,
+          "0.00",
+          false
+        );
+      } catch (_) {}
+      let downloadInfo = { downloadUrl: null };
+      try {
+        downloadInfo = await downloadHandler.generateDownloadLink(
+          type,
+          email,
+          syntheticOrderId
+        );
+      } catch (_) {}
+      try {
+        await emailService.sendWelcomeEmail(
+          email,
+          keys,
+          type,
+          downloadInfo,
+          false
+        );
+      } catch (_) {}
+
+      res.send(`
+      <!DOCTYPE html>
+      <html><head><meta charset="utf-8"><title>Licenses Created</title>
+      <style>body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;padding:2rem;}
+      .card{max-width:720px;margin:auto;background:#fff;border-radius:8px;padding:1.5rem;box-shadow:0 2px 10px rgba(0,0,0,0.08)}
+      code{background:#f5f5f5;padding:.2rem .4rem;border-radius:4px}
+      ul{line-height:1.6}
+      a.btn{display:inline-block;margin-top:1rem;background:#4CAF50;color:#fff;padding:.6rem .9rem;border-radius:6px;text-decoration:none}
+      </style></head><body>
+        <div class="card">
+          <h2>Success</h2>
+          <p>Created <strong>${n}</strong> <code>${type}</code> license(s) for <code>${email}</code>.</p>
+          ${
+            downloadInfo.downloadUrl
+              ? `<p>Download URL: <a href="${downloadInfo.downloadUrl}" target="_blank">${downloadInfo.downloadUrl}</a></p>`
+              : ""
+          }
+          <h3>Licenses</h3>
+          <ul>${keys.map((k) => `<li><code>${k}</code></li>`).join("")}</ul>
+          <a class="btn" href="/admin">Back</a>
+        </div>
+      </body></html>
+    `);
+    } catch (err) {
+      console.error("Admin HTML create-license error:", err);
+      res.status(500).send("Internal server error");
+    }
   }
 );
 
