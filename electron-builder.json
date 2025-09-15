@@ -54,7 +54,7 @@
     "installerIcon": "assets/icons/icon.ico",
     "uninstallerIcon": "assets/icons/icon.ico",
     "installerHeaderIcon": "assets/icons/icon.ico",
-    "deleteAppDataOnUninstall": false
+    "deleteAppDataOnUninstall": true
   },
   "portable": {
     "artifactName": "LocalPasswordVault-${version}-Portable.exe"

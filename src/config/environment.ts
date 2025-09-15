@@ -19,7 +19,7 @@ export const environment: Environment = {
   isProduction: getEnvVar("VITE_APP_MODE") === "production",
   isTest: getEnvVar("VITE_APP_MODE") === "test",
   isTrialVersion: getEnvVar("VITE_TRIAL_MODE") === "true",
-  appVersion: getEnvVar("VITE_APP_VERSION", "1.2.0"),
+  appVersion: getEnvVar("VITE_APP_VERSION", "1.0.0"),
   stripePublishableKey: getEnvVar(
     "VITE_STRIPE_PUBLISHABLE_KEY",
     "pk_test_TYooMQauvdEDq54NiTphI7jx"
