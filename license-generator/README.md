@@ -11,7 +11,7 @@ A complete offline licensing system for your Local Password Vault application. G
 - **Anti-piracy protection** - Hardware-bound license keys
 
 ### 💰 **Business Ready**
-- **Multiple license types** - Pro, Family Pack, Business
+- **Multiple license types** - Pro, Family, Pro, Business
 - **Revenue tracking** - Built-in sales statistics
 - **Customer management** - Email and order tracking
 - **Export capabilities** - CSV export for accounting
@@ -44,12 +44,6 @@ await sendLicenseEmail(customerEmail, licenseKey);
 ```
 
 ## 🎯 License Types & Pricing
-
-| License Type | Price | Features | Devices |
-|-------------|-------|----------|---------|
-| **Pro** | $29.99 | Unlimited passwords, Export/Import, Floating panel | 1 |
-| **Family Pack** | $49.99 | All Pro features | 3 |
-| **Business** | $99.99 | All features + Priority support | 10+ |
 
 ## 🔧 Integration Guide
 
@@ -212,18 +206,6 @@ DATABASE_URL=postgresql://user:pass@localhost/dbname
 - **Family tier** - $49.99 (3 devices, better value)
 - **Business tier** - $99.99 (enterprise features)
 
-### **Sales Funnel**
-1. **Free download** - Builds trust and user base
-2. **7-day trial** - Shows full value proposition
-3. **Natural limits** - Encourages upgrade at right time
-4. **Direct purchase** - Seamless buying experience
-
-### **Marketing Integration**
-- Track conversion rates by source
-- A/B test pricing and features
-- Monitor trial-to-paid conversion
-- Analyze customer lifetime value
-
 ## 🔄 Updates & Maintenance
 
 ### **Regular Tasks**
@@ -237,16 +219,6 @@ DATABASE_URL=postgresql://user:pass@localhost/dbname
 - Advanced analytics dashboard
 - Customer self-service portal
 - Enterprise license management
-
-## 📈 Success Metrics
-
-Track these KPIs for business success:
-- **License sales volume**
-- **Revenue per customer**
-- **Trial conversion rate**
-- **Customer support tickets**
-- **License activation rate**
-- **Churn and retention**
 
 ---
 
