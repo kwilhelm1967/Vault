@@ -102,7 +102,6 @@ npm run dist
 2. **One-time purchase** - No subscription fatigue
 3. **Hardware-bound licensing** - Prevents piracy
 4. **Modern UI/UX** - Apple-level design quality
-5. **Complete business package** - Ready to launch
 
 
 **Official Website**: [LocalPasswordVault.com](https://LocalPasswordVault.com)  
