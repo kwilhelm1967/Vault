@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
-  Search,
   Plus,
   Download,
   Lock,
@@ -10,8 +9,6 @@ import {
   EyeOff,
   Copy,
   Edit3,
-  X,
-  Clock,
   FileText,
 } from "lucide-react";
 import { PasswordEntry, Category } from "../types";
@@ -30,8 +27,6 @@ interface ElectronFloatingPanelProps {
   onLock: () => void;
   onExport: () => void;
   onImport: () => void;
-  searchTerm: string;
-  onSearchChange: (term: string) => void;
   selectedCategory: string;
   onCategoryChange: (category: string) => void;
   onMaximize: () => void;
@@ -47,8 +42,6 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
   onLock,
   onExport,
   onImport,
-  searchTerm,
-  onSearchChange,
   selectedCategory,
   onCategoryChange,
   onMaximize,
@@ -60,9 +53,6 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
     new Set()
   );
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
-  const [autoLockTime] = useState(15);
-  const [timeRemaining, setTimeRemaining] = useState(null);
-  const [timerActive, setTimerActive] = useState(false);
   const [isMainVaultUnlocked, setIsMainVaultUnlocked] = useState(false);
   // Removed unused positionLoaded state to avoid lint errors
 
@@ -182,72 +172,7 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-lock countdown
-  useEffect(() => {
-    if (!timerActive) return;
-
-    const interval = setInterval(() => {
-      setTimeRemaining((prev) => {
-        if (prev <= 1) {
-          onLock();
-          setTimerActive(false);
-          return null;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [timerActive, onLock]);
-
-  // Reset timer on user activity
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-
-    const startTimer = () => {
-      setTimerActive(true);
-      setTimeRemaining(autoLockTime * 60);
-    };
-
-    const resetTimer = (e: Event) => {
-      // Don't reset timer if clicking on category buttons
-      const target = e.target as HTMLElement;
-      if (target.closest('[data-category-button]')) {
-        return;
-      }
-
-      // Clear existing timeout
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-
-      // Stop current timer if active
-      setTimerActive(false);
-      setTimeRemaining(null);
-
-      // Start timer after 5 seconds of inactivity
-      timeoutId = setTimeout(() => {
-        startTimer();
-      }, 5000);
-    };
-
-    document.addEventListener("mousedown", resetTimer);
-    document.addEventListener("keydown", resetTimer);
-
-    // Initial timer start after 5 seconds
-    timeoutId = setTimeout(() => {
-      startTimer();
-    }, 5000);
-
-    return () => {
-      document.removeEventListener("mousedown", resetTimer);
-      document.removeEventListener("keydown", resetTimer);
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    };
-  }, [autoLockTime]);
-
+  
   // Load favorites from localStorage
   // useEffect(() => {
   //   const stored = localStorage.getItem("floating_panel_favorites");
@@ -270,21 +195,14 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
 
   const filteredEntries = useMemo(() => {
     return entries.filter((entry) => {
-      // Search filter: if no search term, all entries match search
-      const matchesSearch =
-        !searchTerm.trim() ||
-        entry.accountName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        entry.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (entry.notes || "").toLowerCase().includes(searchTerm.toLowerCase());
-
       // Category filter: if "all" is selected, all entries match category
       const matchesCategory =
         selectedCategory === "all" || entry.category === selectedCategory;
 
-      // Both filters must pass for entry to be included
-      return matchesSearch && matchesCategory;
+      // Only category filter is applied
+      return matchesCategory;
     });
-  }, [entries, searchTerm, selectedCategory]);
+  }, [entries, selectedCategory]);
 
   const favoriteEntries = filteredEntries.filter((entry) =>
     favorites.has(entry.id)
@@ -362,18 +280,7 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
     }
   };
 
-  const formatTime = (seconds: number | null) => {
-    if (seconds === null) return "15:00";
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  const getProgressPercentage = () => {
-    if (timeRemaining === null) return 0;
-    return ((autoLockTime * 60 - timeRemaining) / (autoLockTime * 60)) * 100;
-  };
-
+  
   return (
     <div
       className="h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex flex-col backdrop-blur-xl border border-slate-800/50 shadow-2xl"
@@ -394,20 +301,6 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
         </div>
 
         <div className="flex items-center space-x-3 no-drag">
-          {/* Enhanced Auto-lock timer */}
-          <div className="flex items-center space-x-2 bg-slate-800/50 rounded-lg px-3 py-1.5 border border-slate-700/50">
-            <Clock className="w-3.5 h-3.5 text-blue-400" />
-            <span className="text-xs  text-slate-300">
-              {formatTime(timeRemaining)}
-            </span>
-            <div className="w-12 h-1.5 bg-slate-700 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all duration-1000 rounded-full"
-                style={{ width: `${getProgressPercentage()}%` }}
-              />
-            </div>
-          </div>
-
           <div className="flex items-center space-x-2">
             <button
               onClick={onExport}
@@ -433,23 +326,6 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
               <Maximize2 className="w-4 h-4" />
             </button>
           </div>
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 group-focus-within:text-blue-400 w-4 h-4 transition-colors" />
-          <input
-            type="text"
-            placeholder="Quick Search"
-            value={searchTerm}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full pl-10 pr-10 py-3 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm backdrop-blur-sm no-drag"
-          />
-          {searchTerm && (
-            <button
-              onClick={() => onSearchChange("")}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-md p-1 transition-all no-drag"
-              title="Clear search"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
         </div>
       </div>
 
@@ -510,10 +386,10 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
           {displayEntries.length === 0 && (
             <div className="text-center py-12 text-slate-400">
               <div className="bg-slate-800/30 rounded-2xl p-8 border border-slate-700/30">
-                <Search className="w-12 h-12 mx-auto mb-4 opacity-40" />
+                <Plus className="w-12 h-12 mx-auto mb-4 opacity-40" />
                 <p className="text-sm font-medium mb-2">No passwords found</p>
                 <p className="text-xs opacity-60">
-                  Try adjusting your search or add a new password
+                  Add a new password to get started
                 </p>
               </div>
             </div>
