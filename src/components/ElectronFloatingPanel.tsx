@@ -58,7 +58,8 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
   );
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [autoLockTime] = useState(15);
-  const [timeRemaining, setTimeRemaining] = useState(autoLockTime * 60);
+  const [timeRemaining, setTimeRemaining] = useState(null);
+  const [timerActive, setTimerActive] = useState(false);
   // Removed unused positionLoaded state to avoid lint errors
 
   // Load and set window position on component mount
@@ -92,31 +93,67 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
 
   // Auto-lock countdown
   useEffect(() => {
+    if (!timerActive) return;
+
     const interval = setInterval(() => {
       setTimeRemaining((prev) => {
         if (prev <= 1) {
           onLock();
-          return 0;
+          setTimerActive(false);
+          return null;
         }
         return prev - 1;
       });
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [onLock]);
+  }, [timerActive, onLock]);
 
   // Reset timer on user activity
   useEffect(() => {
-    const resetTimer = () => {
+    let timeoutId: NodeJS.Timeout;
+
+    const startTimer = () => {
+      setTimerActive(true);
       setTimeRemaining(autoLockTime * 60);
+    };
+
+    const resetTimer = (e: Event) => {
+      // Don't reset timer if clicking on category buttons
+      const target = e.target as HTMLElement;
+      if (target.closest('[data-category-button]')) {
+        return;
+      }
+
+      // Clear existing timeout
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+
+      // Stop current timer if active
+      setTimerActive(false);
+      setTimeRemaining(null);
+
+      // Start timer after 5 seconds of inactivity
+      timeoutId = setTimeout(() => {
+        startTimer();
+      }, 5000);
     };
 
     document.addEventListener("mousedown", resetTimer);
     document.addEventListener("keydown", resetTimer);
 
+    // Initial timer start after 5 seconds
+    timeoutId = setTimeout(() => {
+      startTimer();
+    }, 5000);
+
     return () => {
       document.removeEventListener("mousedown", resetTimer);
       document.removeEventListener("keydown", resetTimer);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     };
   }, [autoLockTime]);
 
@@ -222,13 +259,15 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
     }
   };
 
-  const formatTime = (seconds: number) => {
+  const formatTime = (seconds: number | null) => {
+    if (seconds === null) return "15:00";
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   const getProgressPercentage = () => {
+    if (timeRemaining === null) return 0;
     return ((autoLockTime * 60 - timeRemaining) / (autoLockTime * 60)) * 100;
   };
 
