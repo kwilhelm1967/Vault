@@ -1,9 +1,13 @@
+// Load environment variables
+require("dotenv").config();
+
 const { app, BrowserWindow, Menu, shell, ipcMain } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const { screen, powerMonitor, globalShortcut } = require("electron");
 const Positioner = require("electron-positioner");
 const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
+const devToolsEnabled = isDev && process.env.DEV_TOOL === "true";
 
 // Add process error handlers for debugging
 process.on("uncaughtException", (error) => {
@@ -108,7 +112,9 @@ const createWindow = () => {
   // Load the app
   if (isDev) {
     mainWindow.loadURL("http://localhost:5173");
-    mainWindow.webContents.openDevTools();
+    if (devToolsEnabled) {
+      mainWindow.webContents.openDevTools();
+    }
   } else {
     mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
   }
@@ -313,8 +319,10 @@ const createFloatingWindow = () => {
     // Load the floating panel page
     if (isDev) {
       floatingWindow.loadURL("http://localhost:5173/#floating");
-      // Enable DevTools for floating panel in development
-      floatingWindow.webContents.openDevTools();
+      // Enable DevTools for floating panel in development if enabled
+      if (devToolsEnabled) {
+        floatingWindow.webContents.openDevTools();
+      }
     } else {
       floatingWindow.loadFile(path.join(__dirname, "../dist/index.html"), {
         hash: "floating",
@@ -710,6 +718,9 @@ const createMenu = () => {
           label: "Toggle Developer Tools",
           accelerator: "F12",
           click: () => {
+            // Only allow DevTools if enabled in development
+            if (!devToolsEnabled) return;
+
             // Toggle DevTools for focused window
             const focusedWindow = BrowserWindow.getFocusedWindow();
             if (focusedWindow) {
@@ -725,6 +736,8 @@ const createMenu = () => {
           label: "Toggle Main Window DevTools",
           accelerator: "CmdOrCtrl+Shift+I",
           click: () => {
+            if (!devToolsEnabled) return;
+
             if (mainWindow && !mainWindow.isDestroyed()) {
               if (mainWindow.webContents.isDevToolsOpened()) {
                 mainWindow.webContents.closeDevTools();
@@ -738,6 +751,8 @@ const createMenu = () => {
           label: "Toggle Floating Panel DevTools",
           accelerator: "CmdOrCtrl+Shift+D",
           click: () => {
+            if (!devToolsEnabled) return;
+
             if (floatingWindow && !floatingWindow.isDestroyed()) {
               if (floatingWindow.webContents.isDevToolsOpened()) {
                 floatingWindow.webContents.closeDevTools();
