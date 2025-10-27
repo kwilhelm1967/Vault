@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { LoginScreen } from "./components/LoginScreen";
 import { LicenseScreen } from "./components/LicenseScreen";
 import { MainVault } from "./components/MainVault";
@@ -13,86 +13,46 @@ import { useElectron } from "./hooks/useElectron";
 import { LicenseKeyDisplay } from "./components/LicenseKeyDisplay";
 import { DownloadPage } from "./components/DownloadPage";
 import { TrialTestingTools } from "./components/TrialTestingTools";
-// FIXED CATEGORIES - NO DUPLICATES ALLOWED
+
+// Fixed categories with proper typing
 const FIXED_CATEGORIES: Category[] = [
   { id: "all", name: "All", color: "#3b82f6", icon: "Grid3X3" },
-  {
-    id: "banking",
-    name: "Banking",
-    color: "#10b981",
-    icon: "CircleDollarSign",
-  },
+  { id: "banking", name: "Banking", color: "#10b981", icon: "CircleDollarSign" },
   { id: "shopping", name: "Shopping", color: "#f59e0b", icon: "ShoppingCart" },
-  {
-    id: "entertainment",
-    name: "Entertainment",
-    color: "#ef4444",
-    icon: "Ticket",
-  },
+  { id: "entertainment", name: "Entertainment", color: "#ef4444", icon: "Ticket" },
   { id: "email", name: "Email", color: "#f43f5e", icon: "Mail" },
   { id: "work", name: "Work", color: "#f43f5e", icon: "Briefcase" },
   { id: "business", name: "Business", color: "#8b5cf6", icon: "TrendingUp" },
   { id: "other", name: "Other", color: "#6b7280", icon: "FileText" },
-];
+] as const;
 
-function App() {
-  const { isElectron, isVaultUnlocked } = useElectron();
-  const [appStatus, setAppStatus] = useState(() =>
-    licenseService.getAppStatus()
-  );
+// Custom hook for app status management
+const useAppStatus = () => {
+  const [appStatus, setAppStatus] = useState(() => licenseService.getAppStatus());
 
-  const [isLocked, setIsLocked] = useState(true);
-  // Initialize state without triggering re-renders
-  const [entries, setEntries] = useState<PasswordEntry[]>(() => []);
-  const [searchTerm, setSearchTerm] = useState(() => "");
-  const [selectedCategory, setSelectedCategory] = useState(() => "all");
-  const [showMainVault, setShowMainVault] = useState(() => true);
-  const [showFloatingPanel, setShowFloatingPanel] = useState(() => false);
-  const [showPricingPlans, setShowPricingPlans] = useState(() => false);
-  // Initialize state without triggering re-renders
-  const [showDownloadPage, setShowDownloadPage] = useState(() => false);
-  const [showLicenseKeys, setShowLicenseKeys] = useState(
-    () => features.showTestingTools
-  );
-  const [showTrialTestingTools, setShowTrialTestingTools] = useState(
-    () => false
-  );
-
-  // Initialize vault state on app startup
-  useEffect(() => {
-    // Vault should start as locked for security
-    // User will need to enter password to unlock
-    setIsLocked(true);
-
-    // Clear any cached entries for security
-    setEntries([]);
+  const updateAppStatus = useCallback(() => {
+    const newStatus = licenseService.getAppStatus();
+    setAppStatus(newStatus);
+    return newStatus;
   }, []);
 
-  // Update app status periodically to check trial expiration
   useEffect(() => {
-    const updateAppStatus = () => {
-      const newStatus = licenseService.getAppStatus();
-      setAppStatus(newStatus);
-    };
-
-    // Update immediately
-    updateAppStatus();
-
-    // Update every minute to check trial status
     const interval = setInterval(updateAppStatus, 60000);
-
     return () => clearInterval(interval);
-  }, []);
+  }, [updateAppStatus]);
 
-  // Prevent flash by ensuring dark background is always present
+  return { appStatus, updateAppStatus };
+};
+
+// Custom hook for dark theme enforcement
+const useDarkTheme = () => {
   useEffect(() => {
-    document.documentElement.style.backgroundColor = "#0f172a";
-    document.body.style.backgroundColor = "#0f172a";
-    document.documentElement.style.color = "white";
-    document.body.style.color = "white";
+    const applyDarkTheme = () => {
+      document.documentElement.style.backgroundColor = "#0f172a";
+      document.body.style.backgroundColor = "#0f172a";
+      document.documentElement.style.color = "white";
+      document.body.style.color = "white";
 
-    // Remove any potential white backgrounds from the DOM
-    const removeWhiteBackgrounds = () => {
       const elements = document.querySelectorAll("*");
       elements.forEach((el) => {
         const computed = window.getComputedStyle(el);
@@ -105,323 +65,268 @@ function App() {
       });
     };
 
-    removeWhiteBackgrounds();
-
-    // Run again after a short delay to catch any late-loading elements
-    setTimeout(removeWhiteBackgrounds, 500);
+    applyDarkTheme();
+    const timeout = setTimeout(applyDarkTheme, 500);
+    return () => clearTimeout(timeout);
   }, []);
+};
 
-  // Check if we're in floating panel mode (for Electron)
-  const isFloatingMode = window.location.hash === "#floating";
+// Custom hook for vault data management
+const useVaultData = (isLocked: boolean, isElectron: boolean) => {
+  const [entries, setEntries] = useState<PasswordEntry[]>([]);
 
-  // Load data when vault is unlocked
-  useEffect(() => {
-    const loadData = async () => {
-      // Only load data if vault is unlocked
-      if (isLocked) {
-        // Clear entries when vault is locked for security
-        setEntries([]);
-        return;
+  const loadEntries = useCallback(async () => {
+    if (isLocked || !storageService.isVaultUnlocked()) {
+      setEntries([]);
+      return;
+    }
+
+    try {
+      const loadedEntries = await storageService.loadEntries();
+      setEntries(loadedEntries || []);
+
+      // Ensure fixed categories are saved
+      await storageService.saveCategories(FIXED_CATEGORIES);
+    } catch (error) {
+      console.error("Failed to load entries:", error);
+      setEntries([]);
+      if (error instanceof Error && error.message?.includes("locked")) {
+        throw error;
       }
+    }
+  }, [isLocked]);
 
+  useEffect(() => {
+    loadEntries();
+  }, [loadEntries]);
+
+  // Handle cross-window synchronization
+  useEffect(() => {
+    if (!isElectron || !window.electronAPI?.onEntriesChanged) return;
+
+    const handleEntriesChanged = async () => {
       try {
-        // Check if vault is properly unlocked before loading
-        if (!storageService.isVaultUnlocked()) {
-          console.log("Vault is not unlocked, skipping data load");
+        if (isLocked || !storageService.isVaultUnlocked()) {
+          setEntries([]);
           return;
         }
-
         const loadedEntries = await storageService.loadEntries();
-        if (loadedEntries && loadedEntries.length > 0) {
-          setEntries(loadedEntries);
-        }
-
-        // ALWAYS use fixed categories - never load from storage
-        // Save fixed categories to storage to overwrite any duplicates
-        await storageService.saveCategories(FIXED_CATEGORIES);
+        setEntries(loadedEntries || []);
       } catch (error) {
-        console.error("Failed to load data:", error);
-        // If loading fails, it might be because vault is locked
-        if (error instanceof Error && error.message?.includes("locked")) {
-          setIsLocked(true);
-        }
+        console.error("Failed to reload entries:", error);
+        setEntries([]);
       }
     };
 
-    loadData();
-  }, [isLocked]); // Re-run when lock status changes
+    window.electronAPI.onEntriesChanged(handleEntriesChanged);
+    return () => {
+      window.electronAPI?.removeEntriesChangedListener?.(handleEntriesChanged);
+    };
+  }, [isElectron, isLocked]);
 
-  // Listen for entries changes from other windows
+  return { entries, setEntries, loadEntries };
+};
+
+// Custom hook for auto-lock functionality
+const useAutoLock = (isLocked: boolean, onLock: () => Promise<void>) => {
   useEffect(() => {
-    if (
-      isElectron &&
-      window.electronAPI &&
-      window.electronAPI.onEntriesChanged
-    ) {
-      const handleEntriesChanged = async () => {
-        try {
-          console.log(
-            "Received entries changed signal, reloading from storage..."
-          );
+    if (isLocked) return;
 
-          // Only reload if vault is unlocked
-          if (isLocked || !storageService.isVaultUnlocked()) {
-            console.log("Vault is locked, skipping entries reload");
-            setEntries([]);
-            return;
-          }
-
-          const loadedEntries = await storageService.loadEntries();
-          setEntries(loadedEntries || []);
-        } catch (error) {
-          console.error("Failed to reload entries:", error);
-          // If reload fails due to locked vault, clear entries
-          if (error instanceof Error && error.message?.includes("locked")) {
-            setEntries([]);
-            setIsLocked(true);
-          }
-        }
-      };
-
-      // Listen for changes from other windows
-      window.electronAPI.onEntriesChanged(handleEntriesChanged);
-
-      // Cleanup listener on unmount
-      return () => {
-        if (
-          window.electronAPI &&
-          window.electronAPI.removeEntriesChangedListener
-        ) {
-          window.electronAPI.removeEntriesChangedListener(handleEntriesChanged);
-        }
-      };
-    }
-  }, [isElectron, isLocked]); // Re-run when lock status changes
-
-  // Auto-lock after 15 minutes of inactivity
-  useEffect(() => {
     let timeout: NodeJS.Timeout;
+    const AUTO_LOCK_DURATION = 30 * 60 * 1000; // 30 minutes
 
     const resetTimeout = () => {
       clearTimeout(timeout);
-      if (!isLocked) {
-        timeout = setTimeout(() => {
-          console.log("Auto-lock triggered after 15 minutes of inactivity");
-          handleLock();
-        }, 30 * 60 * 1000); // Increased to 30 minutes to prevent accidental locks
-      }
+      timeout = setTimeout(onLock, AUTO_LOCK_DURATION);
     };
 
-    const handleActivity = () => {
-      resetTimeout();
-    };
+    const handleActivity = () => resetTimeout();
 
-    if (!isLocked) {
-      document.addEventListener("mousedown", handleActivity);
-      document.addEventListener("keydown", handleActivity);
-      document.addEventListener("scroll", handleActivity);
-      document.addEventListener("click", handleActivity);
-      document.addEventListener("input", handleActivity);
-      resetTimeout();
-    }
+    const events = ["mousedown", "keydown", "scroll", "click", "input"];
+    events.forEach(event => document.addEventListener(event, handleActivity));
+    resetTimeout();
 
     return () => {
       clearTimeout(timeout);
-      document.removeEventListener("mousedown", handleActivity);
-      document.removeEventListener("keydown", handleActivity);
-      document.removeEventListener("scroll", handleActivity);
-      document.removeEventListener("click", handleActivity);
-      document.removeEventListener("input", handleActivity);
+      events.forEach(event => document.removeEventListener(event, handleActivity));
     };
-  }, [isLocked]);
+  }, [isLocked, onLock]);
+};
 
-  // Ensure the floating panel is always on top when in floating mode
+// Custom hook for floating mode
+const useFloatingMode = (isElectron: boolean) => {
+  const isFloatingMode = useMemo(() => window.location.hash === "#floating", []);
+
   useEffect(() => {
-    if (isElectron && isFloatingMode) {
-      const setAlwaysOnTop = async () => {
-        if (window.electronAPI && window.electronAPI.setAlwaysOnTop) {
-          // Set to always be on top with highest priority
-          await window.electronAPI.setAlwaysOnTop(true);
-        }
-      };
-      setAlwaysOnTop();
+    if (isElectron && isFloatingMode && window.electronAPI?.setAlwaysOnTop) {
+      window.electronAPI.setAlwaysOnTop(true);
     }
   }, [isElectron, isFloatingMode]);
 
-  // Listen for vault status changes from Electron and sync with local state
+  return isFloatingMode;
+};
+
+// Custom hook for vault status synchronization
+const useVaultStatusSync = (isElectron: boolean, setIsLocked: (locked: boolean) => void) => {
   useEffect(() => {
     if (!isElectron || !window.electronAPI?.onVaultStatusChange) return;
 
     const handleVaultStatusChange = (_event: any, unlocked: boolean) => {
-      console.log(
-        "Vault status changed from Electron:",
-        unlocked ? "unlocked" : "locked"
-      );
       setIsLocked(!unlocked);
-
-      // If vault is locked, ensure we show main vault and hide floating panel
-      if (!unlocked) {
-        setShowMainVault(true);
-        setShowFloatingPanel(false);
-      }
     };
 
-    // Set up the listener
     window.electronAPI.onVaultStatusChange(handleVaultStatusChange);
-
-    // Cleanup listener on unmount
     return () => {
-      if (window.electronAPI?.removeVaultStatusListener) {
-        window.electronAPI.removeVaultStatusListener();
-      }
+      window.electronAPI?.removeVaultStatusListener?.();
     };
+  }, [isElectron, setIsLocked]);
+};
+
+// Entry management utilities
+const useEntryManagement = (
+  entries: PasswordEntry[],
+  setEntries: (entries: PasswordEntry[]) => void,
+  isElectron: boolean
+) => {
+  const broadcastChange = useCallback(() => {
+    if (isElectron && window.electronAPI?.broadcastEntriesChanged) {
+      window.electronAPI.broadcastEntriesChanged();
+    }
   }, [isElectron]);
 
-  const handleLogin = async (password: string) => {
-    try {
-      // Use the new military encryption system for authentication
-      if (!storageService.vaultExists()) {
-        // First time setup - initialize vault with password
-        await storageService.initializeVault(password);
-        setIsLocked(false);
-
-        // Update vault status in Electron
-        if (isElectron && window.electronAPI) {
-          await window.electronAPI.vaultUnlocked?.();
-        }
-        return;
-      }
-
-      // Unlock existing vault with password
-      const isValid = await storageService.unlockVault(password);
-      if (isValid) {
-        setIsLocked(false);
-
-        // Update vault status in Electron
-        if (isElectron && window.electronAPI) {
-          await window.electronAPI.vaultUnlocked?.();
-        }
-      } else {
-        // LoginScreen should handle the error display
-        throw new Error("Invalid password");
-      }
-    } catch (error) {
-      console.error("Login failed:", error);
-      // Re-throw error so LoginScreen can handle it
-      throw error;
-    }
-  };
-
-  const handleLock = async () => {
-    // SECURITY: Lock the vault encryption first
-    storageService.lockVault();
-
-    // SECURITY: Notify Electron that vault is locked
-    if (isElectron && window.electronAPI && window.electronAPI.vaultLocked) {
-      await window.electronAPI.vaultLocked();
-    }
-
-    // Update local state
-    setIsLocked(true);
-    setShowMainVault(true);
-    setShowFloatingPanel(false);
-  };
-
-  // Toggle download page
-  const toggleDownloadPage = () => {
-    setShowDownloadPage(!showDownloadPage);
-    if (showDownloadPage) {
-      setShowMainVault(true);
-      setShowFloatingPanel(false);
-    } else {
-      setShowMainVault(false);
-      setShowFloatingPanel(false);
-    }
-  };
-
-  const handleAddEntry = async (
+  const handleAddEntry = useCallback(async (
     entryData: Omit<PasswordEntry, "id" | "createdAt" | "updatedAt">
   ) => {
+    if (!entryData.accountName || !entryData.username || !entryData.password || !entryData.category) {
+      console.error("Invalid entry data:", entryData);
+      return;
+    }
+
+    const newEntry: PasswordEntry = {
+      ...entryData,
+      id: crypto.randomUUID(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const updatedEntries = [...entries, newEntry];
+    setEntries(updatedEntries);
+
     try {
-      // Validate entry data
-      if (
-        !entryData.accountName ||
-        !entryData.username ||
-        !entryData.password ||
-        !entryData.category
-      ) {
-        console.error("Invalid entry data:", entryData);
-        return;
-      }
-
-      const newEntry: PasswordEntry = {
-        ...entryData,
-        id: crypto.randomUUID(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      const updatedEntries = [...entries, newEntry];
-      setEntries(updatedEntries);
       await storageService.saveEntries(updatedEntries);
-
-      // Broadcast change to other windows via IPC
-      if (
-        isElectron &&
-        window.electronAPI &&
-        window.electronAPI.broadcastEntriesChanged
-      ) {
-        window.electronAPI.broadcastEntriesChanged();
-      }
+      broadcastChange();
     } catch (error) {
       console.error("Failed to add entry:", error);
-      // Don't crash the app, just log the error
+      setEntries(entries); // Rollback on error
     }
-  };
+  }, [entries, setEntries, broadcastChange]);
 
-  const handleUpdateEntry = async (updatedEntry: PasswordEntry) => {
+  const handleUpdateEntry = useCallback(async (updatedEntry: PasswordEntry) => {
     const updatedEntries = entries.map((entry) =>
       entry.id === updatedEntry.id
         ? { ...updatedEntry, updatedAt: new Date() }
         : entry
     );
+
     setEntries(updatedEntries);
-    await storageService.saveEntries(updatedEntries);
 
-    // Broadcast change to other windows via IPC
-    if (
-      isElectron &&
-      window.electronAPI &&
-      window.electronAPI.broadcastEntriesChanged
-    ) {
-      window.electronAPI.broadcastEntriesChanged();
+    try {
+      await storageService.saveEntries(updatedEntries);
+      broadcastChange();
+    } catch (error) {
+      console.error("Failed to update entry:", error);
+      setEntries(entries); // Rollback on error
     }
-  };
+  }, [entries, setEntries, broadcastChange]);
 
-  const handleDeleteEntry = async (id: string) => {
+  const handleDeleteEntry = useCallback(async (id: string) => {
     const updatedEntries = entries.filter((entry) => entry.id !== id);
     setEntries(updatedEntries);
-    await storageService.saveEntries(updatedEntries);
 
-    // Broadcast change to other windows via IPC
-    if (
-      isElectron &&
-      window.electronAPI &&
-      window.electronAPI.broadcastEntriesChanged
-    ) {
-      window.electronAPI.broadcastEntriesChanged();
+    try {
+      await storageService.saveEntries(updatedEntries);
+      broadcastChange();
+    } catch (error) {
+      console.error("Failed to delete entry:", error);
+      setEntries(entries); // Rollback on error
     }
-  };
+  }, [entries, setEntries, broadcastChange]);
 
-  const handleExport = async () => {
+  return { handleAddEntry, handleUpdateEntry, handleDeleteEntry };
+};
+
+function App() {
+  const { isElectron, isVaultUnlocked } = useElectron();
+  const { appStatus, updateAppStatus } = useAppStatus();
+  const [isLocked, setIsLocked] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [showMainVault, setShowMainVault] = useState(true);
+  const [showFloatingPanel, setShowFloatingPanel] = useState(false);
+  const [showPricingPlans, setShowPricingPlans] = useState(false);
+  const [showDownloadPage, setShowDownloadPage] = useState(false);
+  const [showLicenseKeys, setShowLicenseKeys] = useState(features.showTestingTools);
+  const [showTrialTestingTools, setShowTrialTestingTools] = useState(false);
+
+  useDarkTheme();
+  const { entries, setEntries } = useVaultData(isLocked, isElectron);
+  const isFloatingMode = useFloatingMode(isElectron);
+  useVaultStatusSync(isElectron, setIsLocked);
+
+  const { handleAddEntry, handleUpdateEntry, handleDeleteEntry } = useEntryManagement(
+    entries,
+    setEntries,
+    isElectron
+  );
+
+  const handleLock = useCallback(async () => {
+    storageService.lockVault();
+
+    if (isElectron && window.electronAPI?.vaultLocked) {
+      await window.electronAPI.vaultLocked();
+    }
+
+    setIsLocked(true);
+    setShowMainVault(true);
+    setShowFloatingPanel(false);
+  }, [isElectron]);
+
+  useAutoLock(isLocked, handleLock);
+
+  const handleLogin = useCallback(async (password: string) => {
+    try {
+      if (!storageService.vaultExists()) {
+        await storageService.initializeVault(password);
+        setIsLocked(false);
+        if (isElectron && window.electronAPI?.vaultUnlocked) {
+          await window.electronAPI.vaultUnlocked();
+        }
+        return;
+      }
+
+      const isValid = await storageService.unlockVault(password);
+      if (isValid) {
+        setIsLocked(false);
+        if (isElectron && window.electronAPI?.vaultUnlocked) {
+          await window.electronAPI.vaultUnlocked();
+        }
+      } else {
+        throw new Error("Invalid password");
+      }
+    } catch (error) {
+      console.error("Login failed:", error);
+      throw error;
+    }
+  }, [isElectron]);
+
+  const handleExport = useCallback(async () => {
     try {
       const data = await storageService.exportData();
       const blob = new Blob([data], { type: "text/csv" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `password-vault-export-${new Date().toISOString().split("T")[0]
-        }.csv`;
+      a.download = `password-vault-export-${new Date().toISOString().split("T")[0]}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -430,9 +335,9 @@ function App() {
       console.error("Export failed:", error);
       alert("Failed to export data");
     }
-  };
+  }, []);
 
-  const handleImport = async () => {
+  const handleImport = useCallback(async () => {
     try {
       if (isLocked || !storageService.isVaultUnlocked()) {
         alert("Unlock the vault first.");
@@ -445,102 +350,115 @@ function App() {
       input.onchange = async () => {
         const file = input.files?.[0];
         if (!file) return;
+
         const text = await file.text();
         const result = importService.importContent(text);
+
         if (!result.entries.length) {
           alert('No valid entries found in file.');
           return;
         }
-        // Merge strategy: append new entries whose (accountName+username+password) combo not already present
+
         const existingKey = new Set(entries.map(e => `${e.accountName}||${e.username}||${e.password}`));
-        const newOnes = result.entries.filter(e => !existingKey.has(`${e.accountName}||${e.username}||${e.password}`));
-        const merged = [...entries, ...newOnes];
+        const newEntries = result.entries.filter(e => !existingKey.has(`${e.accountName}||${e.username}||${e.password}`));
+        const merged = [...entries, ...newEntries];
+
         await storageService.saveEntries(merged);
         setEntries(merged);
+
         if (result.warnings.length) {
           console.warn('Import warnings:', result.warnings);
         }
-        alert(`Imported ${newOnes.length} new entr${newOnes.length === 1 ? 'y' : 'ies'} (${result.format.toUpperCase()}).`);
+
+        alert(`Imported ${newEntries.length} new entr${newEntries.length === 1 ? 'y' : 'ies'} (${result.format.toUpperCase()}).`);
       };
       input.click();
     } catch (error) {
       console.error('Import failed:', error);
       alert('Failed to import data');
     }
-  };
+  }, [isLocked, entries, setEntries]);
 
-  // Toggle between main vault and floating panel
-  const toggleVaultView = () => {
+  const toggleVaultView = useCallback(() => {
     if (isElectron) {
       if (window.electronAPI) {
         if (showMainVault) {
           window.electronAPI.showFloatingPanel();
-          if (window.electronAPI.hideMainWindow) {
-            window.electronAPI.hideMainWindow();
-          } else {
-            window.electronAPI.minimizeMainWindow();
-          }
+          window.electronAPI.hideMainWindow?.() ?? window.electronAPI.minimizeMainWindow?.();
         } else {
           window.electronAPI.restoreMainWindow();
           window.electronAPI.hideFloatingPanel();
         }
       }
     } else {
-      // Use web-based floating panel
-      if (showMainVault) {
-        setShowMainVault(false);
-        setShowFloatingPanel(true);
-      } else {
-        setShowFloatingPanel(false);
-        setShowMainVault(true);
-      }
+      setShowMainVault(!showMainVault);
+      setShowFloatingPanel(!showFloatingPanel);
     }
-  };
+  }, [isElectron, showMainVault]);
 
-  // If we're in Electron floating mode, show the floating panel
-  if (isElectron && isFloatingMode) {
-    // SECURITY FIX: Don't allow floating panel access when vault is locked
-    if (!isVaultUnlocked) {
-      return null;
+  const toggleDownloadPage = useCallback(() => {
+    setShowDownloadPage(!showDownloadPage);
+    if (showDownloadPage) {
+      setShowMainVault(true);
+      setShowFloatingPanel(false);
+    } else {
+      setShowMainVault(false);
+      setShowFloatingPanel(false);
     }
+  }, [showDownloadPage]);
+
+  const floatingPanelProps = useMemo(() => ({
+    entries,
+    categories: FIXED_CATEGORIES,
+    onAddEntry: handleAddEntry,
+    onUpdateEntry: handleUpdateEntry,
+    onDeleteEntry: handleDeleteEntry,
+    searchTerm,
+    onSearchChange: setSearchTerm,
+    selectedCategory,
+    onCategoryChange: setSelectedCategory,
+    onLock: handleLock,
+    onExport: handleExport,
+    onImport: handleImport,
+  }), [entries, handleAddEntry, handleUpdateEntry, handleDeleteEntry, searchTerm, selectedCategory, handleLock, handleExport, handleImport]);
+
+  const mainVaultProps = useMemo(() => ({
+    ...floatingPanelProps,
+    onLock: handleLock,
+    onMinimize: toggleVaultView,
+    onShowPricingPlans: () => {
+      if (!appStatus.canUseApp || appStatus.requiresPurchase) {
+        updateAppStatus();
+      } else {
+        setShowPricingPlans(true);
+      }
+    },
+  }), [floatingPanelProps, handleLock, toggleVaultView, appStatus, updateAppStatus]);
+
+  // Electron floating mode
+  if (isElectron && isFloatingMode) {
+    if (!isVaultUnlocked) return null;
 
     return (
       <div className="bg-slate-900">
         <ElectronFloatingPanel
           key={`floating-panel-${entries.length}`}
-          entries={entries}
-          categories={FIXED_CATEGORIES}
-          onAddEntry={handleAddEntry}
-          onUpdateEntry={handleUpdateEntry}
-          onDeleteEntry={handleDeleteEntry}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          selectedCategory={selectedCategory}
-          onCategoryChange={setSelectedCategory}
+          {...floatingPanelProps}
           onMaximize={() => {
-            if (window.electronAPI) {
-              window.electronAPI.restoreMainWindow().then(() => {
-                if (window.electronAPI) {
-                  window.electronAPI.hideFloatingPanel();
-                }
-              });
-            }
+            window.electronAPI?.restoreMainWindow()?.then(() => {
+              window.electronAPI?.hideFloatingPanel();
+            });
           }}
-          onLock={handleLock}
-          onExport={handleExport}
-          onImport={handleImport}
         />
       </div>
     );
   }
 
+  // License screen
   if (!appStatus.canUseApp) {
     return (
       <LicenseScreen
-        onLicenseValid={() => {
-          // Refresh app status after license validation
-          setAppStatus(licenseService.getAppStatus());
-        }}
+        onLicenseValid={updateAppStatus}
         showPricingPlans={showPricingPlans}
         onShowPricingPlans={() => setShowPricingPlans(true)}
         onHidePricingPlans={() => setShowPricingPlans(false)}
@@ -548,6 +466,7 @@ function App() {
     );
   }
 
+  // Download page
   if (showDownloadPage) {
     return (
       <div className="relative">
@@ -562,13 +481,15 @@ function App() {
     );
   }
 
+  // Login screen
   if (isLocked) {
     return <LoginScreen onLogin={handleLogin} />;
   }
 
+  // Main app
   return (
     <div className="relative">
-      {/* License Keys Display - Only shown in test mode */}
+      {/* License Keys Display */}
       {showLicenseKeys && features.showTestingTools && (
         <div className="fixed inset-0 z-50 bg-slate-900/95 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
           <div className="max-w-2xl w-full">
@@ -585,52 +506,23 @@ function App() {
         </div>
       )}
 
+      {/* Main Vault */}
       {showMainVault && (
         <MainVault
           key={`main-vault-${entries.length}`}
-          entries={entries}
-          categories={FIXED_CATEGORIES}
-          onAddEntry={handleAddEntry}
-          onUpdateEntry={handleUpdateEntry}
-          onDeleteEntry={handleDeleteEntry}
-          onLock={handleLock}
-          onExport={handleExport}
-          onImport={handleImport}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          selectedCategory={selectedCategory}
-          onCategoryChange={setSelectedCategory}
-          onMinimize={toggleVaultView}
-          onShowPricingPlans={() => {
-            // If trial is expiring, show pricing plans in license screen
-            if (!appStatus.canUseApp || appStatus.requiresPurchase) {
-              setAppStatus(licenseService.getAppStatus());
-            } else {
-              setShowPricingPlans(true);
-            }
-          }}
+          {...mainVaultProps}
         />
       )}
 
-      {/* Floating Panel */}
+      {/* Floating Panel (Web) */}
       {!isElectron && showFloatingPanel && (
         <FloatingPanel
-          entries={entries}
-          categories={FIXED_CATEGORIES}
-          onAddEntry={handleAddEntry}
-          onUpdateEntry={handleUpdateEntry}
-          onDeleteEntry={handleDeleteEntry}
-          onLock={handleLock}
-          onExport={handleExport}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          selectedCategory={selectedCategory}
-          onCategoryChange={setSelectedCategory}
+          {...floatingPanelProps}
           onMaximize={toggleVaultView}
         />
       )}
 
-      {/* Environment indicator for test mode */}
+      {/* Environment indicators */}
       {features.showTestingTools && (
         <>
           <div className="fixed bottom-4 right-4 z-40 bg-amber-600 text-white px-3 py-1 rounded-full text-xs font-medium">
