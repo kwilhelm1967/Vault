@@ -868,8 +868,9 @@ ipcMain.handle("show-floating-panel", () => {
       window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
       window.setHiddenInMissionControl(true);
     }
+    return true; // Return success boolean instead of BrowserWindow object
   }
-  return window;
+  return false; // Return failure boolean
 });
 
 ipcMain.handle("hide-floating-panel", () => {

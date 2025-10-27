@@ -34,3 +34,5 @@ dist-ssr
 # Build files
 release/
 .cache/
+pnpm-lock.yaml
+pnpm-workspace.yaml
