@@ -4,7 +4,7 @@ Welcome to Local Password Vault! Thank you for your purchase.
 
 ## What's Included
 
-- **License Type:** Single User ($29.99)
+- **License Type:** Single User 
 - **Devices:** 1 device
 - **Support:** Standard support (48-hour response)
 
@@ -35,7 +35,6 @@ Choose your operating system:
 2. Enter your license key when prompted
 3. Accept the End User License Agreement
 4. Create your master password (IMPORTANT: Remember this!)
-5. Set up security questions for password recovery
 
 ### Step 3: Start Using Your Vault
 
@@ -64,7 +63,6 @@ Choose your operating system:
 
 - **Knowledge Base:** LocalPasswordVault.com/support
 - **Email Support:** support@LocalPasswordVault.com
-- **Response Time:** Within 48 hours
 
 ## License Terms
 
@@ -73,16 +71,6 @@ Your Single User license allows:
 - All features included in Single User tier
 - Transfer to new device 
 
-## Need More Devices?
-
-Upgrade options:
-- **Family Plan:** 3 devices + priority support
-- **Pro:** 6 devices + priority support
-- **Business Plan:** 10+ devices + enterprise features
-
-Visit LocalPasswordVault.com/upgrade to learn more.
-
----
 
 © 2025 Local Password Vault | LocalPasswordVault.com
 Support: support@LocalPasswordVault.com
