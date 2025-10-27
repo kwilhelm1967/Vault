@@ -13,9 +13,6 @@ A professional-grade, offline-first password management application built with R
 - **AES-256 Encryption** - Military-grade local encryption
 - **Hardware-Bound Licensing** - Prevents unauthorized distribution
 - **Master Password Protection** - Your data, your control
-- **Auto-Lock** - Automatic locking after 15 minutes of inactivity
-- **Security Questions** - Password recovery without cloud dependency
-
 ### 💻 **Cross-Platform Desktop App**
 - **Windows** - `.exe` installer and portable version
 - **macOS** - `.dmg` disk image
@@ -30,9 +27,8 @@ A professional-grade, offline-first password management application built with R
 - **Categories** - Organize by Banking, Shopping, Work, etc.
 
 ### 🚀 **Business Ready**
-- **Freemium Model** - Free version (25 passwords) + Pro upgrade
+- **Freemium Model** - Free version (25 passwords) 
 - **License Management** - Complete licensing system included
-- **Revenue Tracking** - Built-in sales analytics
 - **Customer Support** - Comprehensive support workflows
 
 ## 🎯 Perfect For
@@ -45,11 +41,6 @@ A professional-grade, offline-first password management application built with R
 
 ## 📊 Business Model
 
-### Pricing Tiers
-- **Free**: 25 passwords, basic features
-- **Pro**: $68.00 - Unlimited passwords, export/import, 6 devices
-- **Family**: $49.99 - 3 devices, family sharing
-- **Business**: $99.99 - 10 devices, admin features
 
 ## 🏗️ Technical Architecture
 
@@ -113,21 +104,13 @@ npm run dist
 - **macOS**: `LocalPasswordVault.dmg`
 - **Linux**: `LocalPasswordVault.AppImage`
 
-## 📈 Marketing & Sales
-
-### Target Market
-- **Security-conscious professionals** (50M+ users globally)
-- **Privacy-focused consumers** (100M+ users globally)
-- **Small-medium businesses** (10M+ businesses globally)
 
 ### Competitive Advantages
 1. **True offline operation** - No cloud dependency
 2. **One-time purchase** - No subscription fatigue
 3. **Hardware-bound licensing** - Prevents piracy
 4. **Modern UI/UX** - Apple-level design quality
-5. **Complete business package** - Ready to launch
 
-**Start your password vault business today!** 🚀
 
 ---
 
