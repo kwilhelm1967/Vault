@@ -32,7 +32,7 @@
     "build-only": "vite build",
     "build:prod": "vite build --mode production",
     "electron": "wait-on tcp:5173 && electron .",
-    "electron-dev": "concurrently \"npm run dev\" \"npm run electron\"",
+    "electron-dev": "npm run dev",
     "electron-test": "concurrently \"npm run start:test\" \"npm run electron\"",
     "electron-pack": "electron-builder",
     "dist": "npm run build-only && electron-builder --publish=never",
