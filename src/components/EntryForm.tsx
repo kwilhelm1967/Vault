@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { X, RefreshCw, Copy, Eye, EyeOff, Trash2, Save } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { X, RefreshCw, Copy, Eye, EyeOff, Trash2, Save, ChevronDown, Check } from "lucide-react";
 import { PasswordEntry, Category } from "../types";
 
 interface EntryFormProps {
@@ -30,6 +30,8 @@ export const EntryForm: React.FC<EntryFormProps> = ({
 
   const [showPassword, setShowPassword] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const generatePassword = () => {
     const chars =
@@ -50,6 +52,17 @@ export const EntryForm: React.FC<EntryFormProps> = ({
       console.error("Failed to copy:", error);
     }
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowCategoryDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -198,25 +211,52 @@ export const EntryForm: React.FC<EntryFormProps> = ({
             <label className="block text-sm font-medium text-slate-300 mb-2">
               Category
             </label>
-            <select
-              value={formData.category}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, category: e.target.value }))
-              }
-              className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm"
-              required
-            >
-              <option value="" disabled>
-                Select a category
-              </option>
-              {categories
-                .filter((c) => c.id !== "all")
-                .map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-            </select>
+            <div ref={dropdownRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm flex items-center justify-between text-left"
+              >
+                <span className={formData.category ? "text-white" : "text-slate-400"}>
+                  {formData.category
+                    ? categories.find(c => c.id === formData.category)?.name || "Select a category"
+                    : "Select a category"
+                  }
+                </span>
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform duration-200 ${showCategoryDropdown ? 'rotate-180' : ''}`}
+                />
+              </button>
+
+              {showCategoryDropdown && (
+                <div className="absolute z-[9999] top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-600/50 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
+                  <div className="p-1">
+                    {categories
+                      .filter((c) => c.id !== "all")
+                      .map((category) => (
+                        <button
+                          key={category.id}
+                          type="button"
+                          onClick={() => {
+                            setFormData((prev) => ({ ...prev, category: category.id }));
+                            setShowCategoryDropdown(false);
+                          }}
+                          className={`w-full px-3 py-2 text-left text-sm rounded-lg transition-all flex items-center justify-between ${
+                            formData.category === category.id
+                              ? "bg-blue-600/30 text-white"
+                              : "text-slate-300 hover:bg-slate-700/50 hover:text-white"
+                          }`}
+                        >
+                          <span>{category.name}</span>
+                          {formData.category === category.id && (
+                            <Check className="w-3 h-3 text-blue-400" />
+                          )}
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Account Details */}
