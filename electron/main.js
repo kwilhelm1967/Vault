@@ -1287,6 +1287,66 @@ ipcMain.handle("show-main-window", () => {
 
 // Shared data storage in main process
 let sharedEntries = null;
+const entriesFilePath = path.join(userDataPath, "password-entries.json");
+
+// Load entries from persistent storage
+const loadEntriesFromFile = () => {
+  try {
+    if (fs.existsSync(entriesFilePath)) {
+      const data = fs.readFileSync(entriesFilePath, "utf8");
+      const entries = JSON.parse(data);
+      console.log("Loaded entries from file:", entries.length);
+      return entries;
+    }
+  } catch (error) {
+    console.error("Failed to load entries from file, attempting recovery:", error);
+    // Try to recover from backup
+    const recoveredEntries = recoverFromBackup();
+    if (recoveredEntries) {
+      // Save recovered data to main file
+      fs.writeFileSync(entriesFilePath, JSON.stringify(recoveredEntries, null, 2));
+      return recoveredEntries;
+    }
+  }
+  return [];
+};
+
+// Save entries to persistent storage
+const saveEntriesToFile = (entries) => {
+  try {
+    // Create backup before saving
+    const backupFilePath = path.join(userDataPath, "password-entries.backup.json");
+    if (fs.existsSync(entriesFilePath)) {
+      fs.copyFileSync(entriesFilePath, backupFilePath);
+    }
+
+    fs.writeFileSync(entriesFilePath, JSON.stringify(entries, null, 2));
+    console.log("Saved entries to file:", entries.length);
+    return true;
+  } catch (error) {
+    console.error("Failed to save entries to file:", error);
+    return false;
+  }
+};
+
+// Recovery function to restore from backup if main file is corrupted
+const recoverFromBackup = () => {
+  try {
+    const backupFilePath = path.join(userDataPath, "password-entries.backup.json");
+    if (fs.existsSync(backupFilePath)) {
+      const backupData = fs.readFileSync(backupFilePath, "utf8");
+      const entries = JSON.parse(backupData);
+      console.log("Recovered entries from backup:", entries.length);
+      return entries;
+    }
+  } catch (error) {
+    console.error("Failed to recover from backup:", error);
+  }
+  return null;
+};
+
+// Initialize shared entries from file on startup
+sharedEntries = loadEntriesFromFile();
 
 // Entries synchronization IPC handlers
 ipcMain.handle("broadcast-entries-changed", () => {
@@ -1309,8 +1369,14 @@ ipcMain.handle("broadcast-entries-changed", () => {
 ipcMain.handle("save-shared-entries", (event, entries) => {
   try {
     sharedEntries = entries;
-    console.log("Entries saved to shared storage:", entries.length);
-    return true;
+    // Save to persistent file storage
+    const success = saveEntriesToFile(entries);
+    if (success) {
+      console.log("Entries saved to shared storage and file:", entries.length);
+    } else {
+      console.error("Failed to save entries to file, but kept in memory");
+    }
+    return success;
   } catch (error) {
     console.error("Failed to save shared entries:", error);
     return false;

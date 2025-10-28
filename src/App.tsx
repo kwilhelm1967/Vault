@@ -141,7 +141,8 @@ const useVaultData = (isLocked: boolean, isElectron: boolean, loadSharedEntries?
     if (!isInitialized) {
       loadEntries();
     }
-  }, [loadEntries, isInitialized]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInitialized]); // Remove loadEntries dependency to prevent infinite loop
 
   // Handle cross-window synchronization (only after initial load)
   useEffect(() => {
@@ -182,14 +183,21 @@ const useVaultData = (isLocked: boolean, isElectron: boolean, loadSharedEntries?
     return () => {
       window.electronAPI?.removeEntriesChangedListener?.(handleEntriesChanged);
     };
-  }, [isElectron, isLocked, loadSharedEntries, isInitialized]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isElectron, isLocked, isInitialized]); // Remove loadSharedEntries dependency
 
   // Reset initialization when vault locks/unlocks
   useEffect(() => {
     if (isLocked) {
       setIsInitialized(false);
+    } else {
+      // When vault is unlocked, trigger data loading if not initialized
+      if (!isInitialized && storageService.isVaultUnlocked()) {
+        loadEntries();
+      }
     }
-  }, [isLocked]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLocked, isInitialized]); // Remove loadEntries dependency
 
   return { entries, setEntries, loadEntries };
 };

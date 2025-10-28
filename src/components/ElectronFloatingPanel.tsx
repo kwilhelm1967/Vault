@@ -368,7 +368,7 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
       {/* Enhanced Entries List */}
       <div className="flex-1 overflow-y-auto no-drag bg-gradient-to-b from-transparent to-slate-900/20">
         <div className="p-4 space-y-2">
-          {regularEntries.slice(0, 8).map((entry) => (
+          {displayEntries.slice(0, 8).map((entry) => (
             <EntryItem
               key={entry.id}
               entry={entry}

@@ -309,6 +309,13 @@ export class StorageService {
       // Encrypt the entries before saving
       const entriesJson = JSON.stringify(validEntries);
       const encryptedData = await this.encryption.encryptData(entriesJson);
+
+      // Create backup before saving new data
+      const currentData = localStorage.getItem("password_entries_v2");
+      if (currentData) {
+        localStorage.setItem("password_entries_v2_backup", currentData);
+      }
+
       localStorage.setItem("password_entries_v2", encryptedData);
 
       // Also handle migration from old unencrypted data
@@ -332,20 +339,45 @@ export class StorageService {
       // Try to load encrypted data first
       const encryptedData = localStorage.getItem("password_entries_v2");
       if (encryptedData) {
-        const decryptedJson = await this.encryption.decryptData(encryptedData);
-        const entries = JSON.parse(decryptedJson);
+        try {
+          const decryptedJson = await this.encryption.decryptData(encryptedData);
+          const entries = JSON.parse(decryptedJson);
 
-        // Ensure entries is an array and has proper date objects
-        if (!Array.isArray(entries)) {
-          console.warn("Loaded entries is not an array, returning empty array");
-          return [];
+          // Ensure entries is an array and has proper date objects
+          if (!Array.isArray(entries)) {
+            console.warn("Loaded entries is not an array, returning empty array");
+            return [];
+          }
+
+          return entries.map((entry: any) => ({
+            ...entry,
+            createdAt: new Date(entry.createdAt),
+            updatedAt: new Date(entry.updatedAt),
+          }));
+        } catch (decryptError) {
+          console.error("Failed to decrypt main data, trying backup:", decryptError);
+          // Try to recover from backup
+          const backupData = localStorage.getItem("password_entries_v2_backup");
+          if (backupData) {
+            try {
+              const decryptedBackup = await this.encryption.decryptData(backupData);
+              const entries = JSON.parse(decryptedBackup);
+
+              if (Array.isArray(entries)) {
+                console.log("Successfully recovered from backup");
+                // Restore backup as main data
+                localStorage.setItem("password_entries_v2", backupData);
+                return entries.map((entry: any) => ({
+                  ...entry,
+                  createdAt: new Date(entry.createdAt),
+                  updatedAt: new Date(entry.updatedAt),
+                }));
+              }
+            } catch (backupError) {
+              console.error("Backup recovery failed:", backupError);
+            }
+          }
         }
-
-        return entries.map((entry: any) => ({
-          ...entry,
-          createdAt: new Date(entry.createdAt),
-          updatedAt: new Date(entry.updatedAt),
-        }));
       }
 
       // Handle migration from old unencrypted data
