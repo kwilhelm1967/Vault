@@ -77,9 +77,9 @@ Your Single User license allows:
 ## Need More Devices?
 
 Upgrade options:
-- **Family Plan:** 3 devices + priority support
-- **Pro:** 6 devices + priority support
-- **Business Plan:** 10+ devices + enterprise features
+- **Family Plan ($49.99):** 3 devices + priority support
+- **Pro ($68.00):** 6 devices + priority support
+- **Business Plan ($99.99):** 10+ devices + enterprise features
 
 Visit LocalPasswordVault.com/upgrade to learn more.
 
