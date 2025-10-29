@@ -2,9 +2,7 @@
 
 A professional-grade, offline-first password management application built with React, TypeScript, and Electron. Prioritizes security, privacy, and local operation with zero cloud dependencies.
 
-## 🌟 Live Demo
 
-**Try it now:** [https://localpasswordvault.com](https://localpasswordvault.com)  
 **Official Website**: [LocalPasswordVault.com](https://LocalPasswordVault.com) | **Contact**: support@LocalPasswordVault.com
 
 ## ✨ Key Features
