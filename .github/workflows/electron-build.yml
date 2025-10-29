@@ -28,11 +28,12 @@ jobs:
         run: npm ci
 
       - name: Build Electron app
-        uses: x6Pnda/action-electron-compiler@v1
+        uses: x6pnda/action-electron-compiler@v1.0.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           release: false
           package_manager: NPM
+          skip_build: false
         env:
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
@@ -64,11 +65,12 @@ jobs:
         run: npm ci
 
       - name: Release Electron app
-        uses: x6Pnda/action-electron-compiler@v1
+        uses: x6pnda/action-electron-compiler@v1.0.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           release: true
           package_manager: NPM
+          skip_build: false
         env:
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
