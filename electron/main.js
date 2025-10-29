@@ -10,6 +10,34 @@ const Positioner = require("electron-positioner");
 const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
 const devToolsEnabled = isDev && process.env.DEV_TOOL === "true";
 
+// SINGLE INSTANCE: Prevent multiple instances
+const gotTheLock = app.requestSingleInstanceLock();
+
+// If another instance is already running, focus it and quit
+if (!gotTheLock) {
+  console.log("Another instance is already running. Quitting...");
+  app.quit();
+  process.exit(0);
+}
+
+// Handle second instance attempt - focus existing window
+app.on('second-instance', () => {
+  console.log('Second instance detected, focusing existing window...');
+
+  // Someone tried to run a second instance, we should focus our window
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
+  }
+
+  // Also show floating button if vault is unlocked
+  if (isVaultUnlocked && floatingButton && !floatingButton.isDestroyed()) {
+    floatingButton.show();
+    floatingButton.focus();
+  }
+});
+
 // Add process error handlers for debugging
 process.on("uncaughtException", (error) => {
   console.error("Uncaught Exception:", error);

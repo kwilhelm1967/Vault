@@ -38,7 +38,7 @@ class SecureFileStorage {
   encryptData(plaintext, key) {
     try {
       const iv = crypto.randomBytes(12); // 96-bit IV for GCM
-      const cipher = crypto.createCipher('aes-256-gcm', key);
+      const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
 
       let encrypted = cipher.update(plaintext, 'utf8', 'hex');
       encrypted += cipher.final('hex');
@@ -64,7 +64,7 @@ class SecureFileStorage {
       const authTag = combined.slice(12, 28); // 16-byte auth tag
       const encrypted = combined.slice(28);
 
-      const decipher = crypto.createDecipher('aes-256-gcm', key);
+      const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
       decipher.setAuthTag(authTag);
 
       let decrypted = decipher.update(encrypted, null, 'utf8');
