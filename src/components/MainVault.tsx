@@ -389,7 +389,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
               return (
                 <div
                   key={entry.id}
-                  className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-900/40 backdrop-blur-sm border border-slate-600/50 rounded-2xl p-4 hover:bg-gradient-to-br hover:from-slate-800/60 hover:via-slate-800/50 hover:to-slate-900/60 transition-all duration-300 group shadow-xl hover:shadow-2xl hover:border-slate-500/60"
+                  className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-900/40 backdrop-blur-sm border border-slate-600/50 rounded-2xl p-4 hover:bg-gradient-to-br hover:from-slate-800/60 hover:via-slate-800/50 hover:to-slate-900/60 transition-all duration-300 group shadow-xl hover:shadow-2xl hover:border-slate-500/60 h-fit"
                 >
                   {/* Header with gradient accent */}
                   <div className={`flex items-start justify-between ${!isCollapsed && "mb-5"}`}>
