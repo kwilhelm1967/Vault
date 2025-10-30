@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Search,
   Plus,
@@ -70,6 +70,22 @@ export const MainVault: React.FC<MainVaultProps> = ({
   );
 
   console.log(entries, "entries");
+
+  // Handle cross-window synchronization
+  useEffect(() => {
+    if (!window.electronAPI?.onEntriesChanged) return;
+
+    const handleEntriesChanged = async () => {
+      console.log("Main vault: Entries changed event received");
+      // Trigger a reload through the parent component if available
+      // This will be handled by the parent App.tsx component
+    };
+
+    window.electronAPI.onEntriesChanged(handleEntriesChanged);
+    return () => {
+      window.electronAPI?.removeEntriesChangedListener?.(handleEntriesChanged);
+    };
+  }, []);
 
   const filteredEntries = useMemo(() => {
     return entries.filter((entry) => {

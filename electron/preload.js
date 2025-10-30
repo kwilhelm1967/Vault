@@ -117,15 +117,16 @@ contextBridge.exposeInMainWorld("electronAPI", {
   broadcastEntriesChanged: () => ipcRenderer.invoke("broadcast-entries-changed"),
   syncVaultToFloating: () => ipcRenderer.invoke("sync-vault-to-floating"),
 
-  // Secure listeners with memory management
+  // Secure listeners with memory management - support multiple listeners
   onEntriesChanged: (callback) => {
     if (typeof callback === 'function') {
-      ipcRenderer.removeAllListeners("entries-changed");
       ipcRenderer.on("entries-changed", callback);
     }
   },
-  removeEntriesChangedListener: () => {
-    ipcRenderer.removeAllListeners("entries-changed");
+  removeEntriesChangedListener: (callback) => {
+    if (typeof callback === 'function') {
+      ipcRenderer.removeListener("entries-changed", callback);
+    }
   },
 
   // SECURITY: Remove old insecure methods
