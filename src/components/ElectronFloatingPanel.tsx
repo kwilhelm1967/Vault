@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Plus,
-  Download,
   Lock,
   Maximize2,
   Trash2,
@@ -9,7 +8,6 @@ import {
   EyeOff,
   Copy,
   Edit3,
-  FileText,
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
@@ -42,8 +40,6 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
   onUpdateEntry,
   onDeleteEntry,
   onLock,
-  onExport,
-  onImport,
   selectedCategory,
   onCategoryChange,
   onMaximize,
@@ -337,22 +333,6 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
         <div className="flex items-center space-x-3 no-drag">
           <div className="flex items-center space-x-2">
             <button
-              onClick={onExport}
-              className="px-2 py-1 bg-slate-700/40 hover:bg-slate-600/40 rounded text-xs flex items-center space-x-1"
-              title="Export"
-            >
-              <Download className="w-4 h-4" />
-              <span>Export</span>
-            </button>
-            <button
-              onClick={onImport}
-              className="px-2 py-1 bg-slate-700/40 hover:bg-slate-600/40 rounded text-xs flex items-center space-x-1"
-              title="Import"
-            >
-              <FileText className="w-4 h-4" />
-              <span>Import</span>
-            </button>
-            <button
               onClick={onMaximize}
               className="p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-all duration-200 border border-transparent hover:border-slate-600/50 no-drag"
               title="Maximize"
@@ -443,14 +423,6 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
           >
             <Plus className="w-4 h-4" />
             <span className="text-sm font-medium">Add Account</span>
-          </button>
-
-          <button
-            onClick={onExport}
-            className="p-2.5 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-all duration-200 border border-slate-600/30 hover:border-slate-500/50 no-drag"
-            title="Export Vault"
-          >
-            <Download className="w-4 h-4" />
           </button>
 
           <button

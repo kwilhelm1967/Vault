@@ -16,7 +16,6 @@ import {
   ChevronDown,
   ChevronRight,
   Check,
-  FolderUp,
 } from "lucide-react";
 import { PasswordEntry, Category } from "../types";
 import { CategoryIcon } from "./CategoryIcon";
