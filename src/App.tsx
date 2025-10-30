@@ -202,31 +202,6 @@ const useVaultData = (isLocked: boolean, isElectron: boolean, loadSharedEntries?
   return { entries, setEntries, loadEntries };
 };
 
-// Custom hook for auto-lock functionality
-const useAutoLock = (isLocked: boolean, onLock: () => Promise<void>) => {
-  useEffect(() => {
-    if (isLocked) return;
-
-    let timeout: NodeJS.Timeout;
-    const AUTO_LOCK_DURATION = 30 * 60 * 1000; // 30 minutes
-
-    const resetTimeout = () => {
-      clearTimeout(timeout);
-      timeout = setTimeout(onLock, AUTO_LOCK_DURATION);
-    };
-
-    const handleActivity = () => resetTimeout();
-
-    const events = ["mousedown", "keydown", "scroll", "click", "input"];
-    events.forEach(event => document.addEventListener(event, handleActivity));
-    resetTimeout();
-
-    return () => {
-      clearTimeout(timeout);
-      events.forEach(event => document.removeEventListener(event, handleActivity));
-    };
-  }, [isLocked, onLock]);
-};
 
 // Custom hook for floating mode
 const useFloatingMode = (isElectron: boolean) => {
@@ -426,8 +401,6 @@ function App() {
     setShowMainVault(true);
     setShowFloatingPanel(false);
   }, [isElectron]);
-
-  useAutoLock(isLocked, handleLock);
 
   const handleLogin = useCallback(async (password: string) => {
     try {
