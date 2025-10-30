@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useState, useRef } from "react";
 import {
   Search,
   Plus,
-  Download,
+  FileUp,
+  FileDown,
   Lock,
   Minimize2,
   Trash2,
@@ -15,6 +16,7 @@ import {
   ChevronDown,
   ChevronRight,
   Check,
+  FolderUp,
 } from "lucide-react";
 import { PasswordEntry, Category } from "../types";
 import { CategoryIcon } from "./CategoryIcon";
@@ -245,14 +247,14 @@ export const MainVault: React.FC<MainVaultProps> = ({
                 className="p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-all"
                 title="Export Vault"
               >
-                <Download className="w-5 h-5" />
+                <FileDown className="w-5 h-5" />
               </button>
               <button
                 onClick={onImport}
                 className="p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-all"
                 title="Import Vault"
               >
-                <FileText className="w-5 h-5" />
+                <FileUp className="w-5 h-5" />
               </button>
 
               {onMinimize && (
