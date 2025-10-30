@@ -40,6 +40,13 @@ jobs:
   release:
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ${{ matrix.os }}
+
+    # 💡 --- THIS IS THE FIX --- 💡
+    # Grant the job permission to create a GitHub Release
+    permissions:
+      contents: write
+    # 💡 --- END OF FIX --- 💡
+
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -56,18 +63,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # --- 💡 STEP 1: Build the app (just like the 'build' job) ---
-      # This creates the .dmg, .exe, etc. files in the 'release/' folder
-      # We removed the '--publish always' and all the 'env' secrets
       - name: Build Artifacts
         run: npm run dist
 
-      # --- 💡 STEP 2: Upload built files to the GitHub Release ---
-      # This action automatically finds the tag and attaches your files.
       - name: Upload to Release
         uses: softprops/action-gh-release@v1
         with:
-          # This finds all files in the 'release' directory to upload
           files: release/**
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
