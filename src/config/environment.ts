@@ -14,9 +14,12 @@ const getEnvVar = (key: string, defaultValue: string = ""): string => {
   return import.meta.env[key] || defaultValue;
 };
 
+// Check if we're in production mode
+const isProductionMode = getEnvVar("VITE_APP_MODE") === "production";
+
 // Create environment configuration
 export const environment: Environment = {
-  isProduction: getEnvVar("VITE_APP_MODE") === "production",
+  isProduction: isProductionMode,
   isTest: getEnvVar("VITE_APP_MODE") === "test",
   isTrialVersion: getEnvVar("VITE_TRIAL_MODE") === "true",
   appVersion: getEnvVar("VITE_APP_VERSION", "1.0.0"),
@@ -26,7 +29,7 @@ export const environment: Environment = {
   ),
   licenseServerUrl: getEnvVar(
     "VITE_LICENSE_SERVER_URL",
-    "http://localhost:3001"
+    isProductionMode ? "https://server.localpasswordvault.com" : "http://localhost:5000"
   ),
   analyticsEnabled: getEnvVar("VITE_ANALYTICS_ENABLED", "false") === "true",
 };
