@@ -84,15 +84,14 @@ export class LicenseService {
     // Generate hash from components
     const fingerprint = components.join("|");
 
-    // Create a simple hash (for production, use crypto.subtle.digest)
-    let hash = 0;
-    for (let i = 0; i < fingerprint.length; i++) {
-      const char = fingerprint.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash; // Convert to 32bit integer
-    }
+    // Create SHA-256 hash using Web Crypto API
+    const encoder = new TextEncoder();
+    const data = encoder.encode(fingerprint);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-    return Math.abs(hash).toString(16).toUpperCase().padStart(8, "0");
+    return hashHex;
   }
 
   /**
@@ -181,7 +180,7 @@ export class LicenseService {
       if (!LicenseService.LIFETIME_ONE_TIME_ACTIVATION ||
           !localStorage.getItem(LicenseService.LICENSE_KEY_STORAGE)) {
         const response = await fetch(
-          `${environment.environment.licenseServerUrl}/api/activate-license`,
+          `${environment.environment.licenseServerUrl}/api/licenses/validate`,
           {
             method: "POST",
             headers: {
@@ -189,7 +188,7 @@ export class LicenseService {
             },
             body: JSON.stringify({
               licenseKey: cleanKey,
-              hardwareId: hardwareId,
+              hardwareHash: hardwareId,
             }),
           }
         );
@@ -219,7 +218,16 @@ export class LicenseService {
             error: result.error || "License activation failed",
           };
         }
-        licenseType = result.licenseData.type;
+
+        // Map backend plan type to frontend license type
+        const planTypeMap: Record<string, LicenseType> = {
+          'personal': 'single',
+          'family': 'family',
+          'pro': 'pro',
+          'business': 'business'
+        };
+
+        licenseType = planTypeMap[result.data?.planType] || 'single';
       } else {
         // Already activated earlier and lifetime mode is ON; trust stored type
         licenseType = (localStorage.getItem(

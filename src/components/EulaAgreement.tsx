@@ -1,16 +1,18 @@
 import React, { useState } from "react";
-import { CheckCircle, AlertCircle, Shield } from "lucide-react";
+import { CheckCircle, AlertCircle, Shield, Loader } from "lucide-react";
 
 interface EulaAgreementProps {
   onAccept: () => void;
   onDecline: () => void;
   error: string | null;
+  isLoading?: boolean;
 }
 
 export const EulaAgreement: React.FC<EulaAgreementProps> = ({
   onAccept,
   onDecline,
   error,
+  isLoading = false,
 }) => {
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const [isAgreed, setIsAgreed] = useState(false);
@@ -190,9 +192,40 @@ export const EulaAgreement: React.FC<EulaAgreementProps> = ({
           )}
 
           {error && (
-            <div className="mb-4 p-3 bg-amber-900/20 border border-amber-800/30 rounded-lg flex items-center space-x-2">
-              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
-              <span className="text-red-300 text-sm">{error}</span>
+            <div className="mb-4 p-4 bg-red-900/30 border border-red-800/50 rounded-lg">
+              <div className="flex items-start space-x-3">
+                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-red-300 text-sm font-medium mb-1">Activation Error</p>
+                  <p className="text-red-400 text-sm">{error}</p>
+                  {error.includes("Unable to connect") && (
+                    <div className="mt-3 p-2 bg-red-950/50 rounded border border-red-800/30">
+                      <p className="text-red-400 text-xs">
+                        <strong>Troubleshooting:</strong><br/>
+                        • Check your internet connection<br/>
+                        • Ensure the backend server is running on port 5000<br/>
+                        • Try again in a few moments
+                      </p>
+                    </div>
+                  )}
+                  {error.includes("already activated") && (
+                    <div className="mt-3 p-2 bg-amber-950/50 rounded border border-amber-800/30">
+                      <p className="text-amber-400 text-xs">
+                        <strong>Note:</strong> This license is already in use on another device.
+                        Please contact support if you need to transfer your license.
+                      </p>
+                    </div>
+                  )}
+                  {error.includes("not found") && (
+                    <div className="mt-3 p-2 bg-amber-950/50 rounded border border-amber-800/30">
+                      <p className="text-amber-400 text-xs">
+                        <strong>Check:</strong> Verify your license key is correct and try again.
+                        License keys are case-insensitive and should be in format: XXXX-XXXX-XXXX-XXXX
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
@@ -205,15 +238,24 @@ export const EulaAgreement: React.FC<EulaAgreementProps> = ({
             </button>
             <button
               onClick={onAccept}
-              disabled={!isAgreed || !hasScrolledToBottom}
+              disabled={!isAgreed || !hasScrolledToBottom || isLoading}
               className={`flex-1 px-4 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2 ${
-                isAgreed && hasScrolledToBottom
+                isAgreed && hasScrolledToBottom && !isLoading
                   ? "bg-blue-600 hover:bg-blue-700 text-white"
                   : "bg-slate-600 text-slate-400 cursor-not-allowed"
               }`}
             >
-              <CheckCircle className="w-4 h-4" />
-              <span>I Accept</span>
+              {isLoading ? (
+                <>
+                  <Loader className="w-4 h-4 animate-spin" />
+                  <span>Activating License...</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-4 h-4" />
+                  <span>I Accept</span>
+                </>
+              )}
             </button>
           </div>
         </div>

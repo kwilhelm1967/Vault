@@ -70,9 +70,6 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
     setIsActivating(true);
     setError(null);
 
-    setIsActivating(true);
-    setError(null);
-
     try {
       const result = await licenseService.activateLicense(
         licenseKey.trim().toUpperCase()
@@ -88,22 +85,47 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
         onLicenseValid();
         setShowEula(false);
       } else {
-        setError(result.error || "License activation failed");
+        // Enhanced error messages based on specific errors
+        let enhancedError = result.error || "License activation failed";
+
+        if (result.error?.includes("fetch")) {
+          enhancedError = "Unable to connect to license server. Please check your internet connection and ensure the backend server is running.";
+        } else if (result.error?.includes("409")) {
+          enhancedError = "This license key is already activated on another device. Each license can only be used on one device at a time.";
+        } else if (result.error?.includes("404")) {
+          enhancedError = "License key not found. Please double-check your license key and try again.";
+        } else if (result.error?.includes("validation")) {
+          enhancedError = "Invalid license key format. Please ensure your key is in the format: XXXX-XXXX-XXXX-XXXX";
+        } else if (result.error?.includes("network")) {
+          enhancedError = "Network error occurred. Please check your connection and try again.";
+        }
+
+        setError(enhancedError);
         analyticsService.trackLicenseEvent(
           "license_activation_failed",
           undefined,
           {
             error: result.error || "Unknown error",
+            enhancedError,
           }
         );
       }
     } catch (error) {
-      setError("License activation failed. Please try again.");
+      let enhancedError = "License activation failed. Please try again.";
+
+      if (error instanceof TypeError && error.message.includes("fetch")) {
+        enhancedError = "Unable to connect to license server. Please check your internet connection and try again.";
+      } else if (error instanceof Error) {
+        enhancedError = `License activation failed: ${error.message}`;
+      }
+
+      setError(enhancedError);
       analyticsService.trackLicenseEvent(
         "license_activation_error",
         undefined,
         {
-          error: "Server error",
+          error: error instanceof Error ? error.message : "Unknown error",
+          enhancedError,
         }
       );
     } finally {
@@ -216,6 +238,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
               : handleEulaAccept
           }
           error={error}
+          isLoading={isActivating}
           onDecline={handleEulaDecline}
         />
       )}
