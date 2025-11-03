@@ -120,8 +120,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
       const matchesSearch =
         !searchTerm.trim() ||
         entry.accountName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        entry.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (entry.notes || "").toLowerCase().includes(searchTerm.toLowerCase());
+        entry.username.toLowerCase().includes(searchTerm.toLowerCase());
 
       // Category filter: if "all" is selected, all entries match category
       const matchesCategory =

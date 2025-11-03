@@ -247,8 +247,7 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
   const filteredEntries = entries.filter((entry) => {
     const matchesSearch =
       entry.accountName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      entry.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (entry.notes || "").toLowerCase().includes(searchTerm.toLowerCase());
+      entry.username.toLowerCase().includes(searchTerm.toLowerCase());
 
     // If there's a search term, search across all categories
     // If no search term, filter by selected category
