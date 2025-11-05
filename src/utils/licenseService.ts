@@ -97,9 +97,9 @@ export class LicenseService {
   /**
    * Get the current license and trial status
    */
-  getAppStatus(): AppLicenseStatus {
+  async getAppStatus(): Promise<AppLicenseStatus> {
     const licenseInfo = this.getLicenseInfo();
-    const trialInfo = trialService.getTrialInfo();
+    const trialInfo = await trialService.getTrialInfo();
 
     // Check if user can use the app based on license or trial status
     let canUseApp = false;
@@ -203,7 +203,7 @@ export class LicenseService {
   }
 
   /**
-   * Activate a license key
+   * Activate a license key with enhanced security
    */
   async activateLicense(
     licenseKey: string
@@ -219,7 +219,7 @@ export class LicenseService {
       const existingLicenseInfo = this.getLicenseInfo();
       if (existingLicenseInfo.type === 'trial' && existingLicenseInfo.key === cleanKey) {
         // Check if the trial has expired
-        const trialInfo = trialService.getTrialInfo();
+        const trialInfo = await trialService.getTrialInfo();
         if (trialInfo.isExpired) {
           console.log('🚨 Attempting to reactivate expired trial key:', cleanKey);
           return {
@@ -295,23 +295,38 @@ export class LicenseService {
         const planTypeMap: Record<string, LicenseType> = {
           'personal': 'personal',
           'family': 'family',
-          'trial': 'trial'        
+          'trial': 'trial'
 };
 
         licenseType = planTypeMap[result.data?.planType] || 'personal';
 
         // Store the license token for offline validation and trial expiration checking
-        if (result.token) {
-          localStorage.setItem('license_token', result.token);
+        if (result.data?.token) {
+                    localStorage.setItem('license_token', result.data.token);
 
           // If this is a trial license, initialize the local trial service with backend data
           if (licenseType === 'trial' && result.data) {
             console.log('🎯 Initializing trial with backend data:', result.data);
-            console.log('🎯 About to start trial service...');
-            // For trial licenses, we need to start the local trial to match backend validation
-            // The trial service will use the backend token data for expiration checking
-            const trialInfo = trialService.startTrial();
-            console.log('🎯 Trial service started, returned info:', trialInfo);
+
+            // Verify backend response matches security requirements
+            if (result.data.isNewActivation) {
+              // Store additional security information
+              localStorage.setItem('trial_activation_time', result.data.activationTime || new Date().toISOString());
+              localStorage.setItem('trial_expiry_time', result.data.expiryTime || '');
+            }
+
+            // For trial licenses, start the backend-dependent trial service
+            // The trial service will fetch status from the backend API
+            try {
+              const trialInfo = await trialService.startTrial(cleanKey, hardwareId);
+              console.log('🎯 Trial service started, returned info:', trialInfo);
+
+              // Store encrypted trial data for additional security
+              this.storeSecureTrialData(result.data, cleanKey, hardwareId);
+            } catch (error) {
+              console.error('Error starting trial service:', error);
+              throw error;
+            }
           }
         }
       } else {
@@ -319,6 +334,17 @@ export class LicenseService {
         licenseType = (localStorage.getItem(
           LicenseService.LICENSE_TYPE_STORAGE
         ) as LicenseType) || undefined;
+
+        // Verify trial integrity if it's a trial license
+        if (licenseType === 'trial') {
+          const integrityCheck = await this.verifyTrialIntegrity(cleanKey, hardwareId);
+          if (!integrityCheck) {
+            return {
+              success: false,
+              error: "Trial integrity check failed. Please contact support."
+            };
+          }
+        }
       }
 
       localStorage.setItem(LicenseService.LICENSE_KEY_STORAGE, cleanKey);
@@ -361,6 +387,79 @@ export class LicenseService {
   }
 
   /**
+   * Store secure trial data
+   */
+  private storeSecureTrialData(backendData: any, licenseKey: string, hardwareHash: string): void {
+    try {
+      const secureData = {
+        licenseKey,
+        hardwareHash,
+        activationTime: backendData.activationTime,
+        expiryTime: backendData.expiryTime,
+        trialDurationMs: backendData.trialDurationMs,
+        securityHash: backendData.token ? this.extractSecurityHash(backendData.token) : null,
+        timestamp: Date.now()
+      };
+
+      // Store in sessionStorage (cleared on browser close)
+      sessionStorage.setItem('secure_trial_data', JSON.stringify(secureData));
+    } catch (error) {
+      console.error('Error storing secure trial data:', error);
+    }
+  }
+
+  /**
+   * Verify trial integrity
+   */
+  private async verifyTrialIntegrity(licenseKey: string, hardwareHash: string): Promise<boolean> {
+    try {
+      const storedHardwareHash = localStorage.getItem('trial_hardware_hash');
+      const currentHardwareHash = await this.generateHardwareFingerprint();
+
+      // Verify hardware hash hasn't changed
+      if (storedHardwareHash && storedHardwareHash !== currentHardwareHash) {
+        console.error('Trial integrity check failed: hardware hash mismatch');
+        return false;
+      }
+
+      // Verify license key matches
+      const storedLicenseKey = localStorage.getItem(TrialService.TRIAL_LICENSE_KEY);
+      if (storedLicenseKey !== licenseKey) {
+        console.error('Trial integrity check failed: license key mismatch');
+        return false;
+      }
+
+      // Verify secure session data if available
+      const secureSession = sessionStorage.getItem('trial_session');
+      if (secureSession) {
+        const sessionData = JSON.parse(secureSession);
+        if (sessionData.hardwareHash !== currentHardwareHash || sessionData.licenseKey !== licenseKey) {
+          console.error('Trial integrity check failed: session data mismatch');
+          return false;
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error verifying trial integrity:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Extract security hash from token
+   */
+  private extractSecurityHash(token: string): string | null {
+    try {
+      const tokenData = JSON.parse(atob(token.split('.')[1]));
+      return tokenData.securityHash || null;
+    } catch (error) {
+      console.error('Error extracting security hash:', error);
+      return null;
+    }
+  }
+
+  /**
    * Validate license in background without blocking UI
    */
   private async validateLicenseInBackground(_licenseKey: string): Promise<void> {
@@ -373,14 +472,14 @@ export class LicenseService {
   /**
    * Start trial period
    */
-  startTrial(): TrialInfo {
-    return trialService.startTrial();
+  async startTrial(licenseKey: string, hardwareHash: string): Promise<TrialInfo> {
+    return trialService.startTrial(licenseKey, hardwareHash);
   }
 
   /**
    * Check if user can start a trial
    */
-  canStartTrial(): boolean {
+  async canStartTrial(): Promise<boolean> {
     return trialService.canStartTrial();
   }
 
@@ -420,22 +519,22 @@ export class LicenseService {
   /**
    * Check if app access should be blocked
    */
-  shouldBlockAccess(): boolean {
-    const status = this.getAppStatus();
+  async shouldBlockAccess(): Promise<boolean> {
+    const status = await this.getAppStatus();
     return !status.canUseApp;
   }
 
   /**
    * Get trial progress percentage
    */
-  getTrialProgress(): number {
+  async getTrialProgress(): Promise<number> {
     return trialService.getTrialProgress();
   }
 
   /**
    * Get trial time remaining
    */
-  getTrialTimeRemaining(): string {
+  async getTrialTimeRemaining(): Promise<string> {
     return trialService.getTrialTimeRemaining();
   }
 

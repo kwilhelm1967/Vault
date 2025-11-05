@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Lock, Clock, AlertTriangle, CreditCard, Shield, ChevronRight, Key } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Lock, Clock, AlertTriangle, CreditCard, Shield, ChevronRight, Key, X } from "lucide-react";
 import { trialService } from "../utils/trialService";
 
 interface TrialExpirationBannerProps {
@@ -16,8 +16,41 @@ interface TrialExpirationBannerProps {
 
 export const TrialExpirationBanner: React.FC<TrialExpirationBannerProps> = ({ trialInfo, onApplyLicenseKey }) => {
   const [showLicenseInput, setShowLicenseInput] = useState(false);
-  const isTestMode = trialService.isTestMode();
-  const timeUnit = isTestMode ? "minutes" : "days";
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [isEnforcing, setIsEnforcing] = useState(false);
+  const isDevelopmentMode = import.meta.env.DEV;
+  const timeUnit = isDevelopmentMode ? "minutes" : "days";
+
+  // Update time every second for precise countdown
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Enforce trial expiration - lock user out
+  useEffect(() => {
+    if (trialInfo.isExpired && !isEnforcing) {
+      setIsEnforcing(true);
+      console.log('🚨 TRIAL EXPIRED - Enforcing app lockdown');
+
+      // Clear any sensitive data
+      try {
+        localStorage.removeItem('license_token');
+        localStorage.removeItem('trial_session');
+        sessionStorage.removeItem('secure_trial_data');
+      } catch (error) {
+        console.error('Error clearing trial data:', error);
+      }
+
+      // Force redirect to license page
+      setTimeout(() => {
+        window.location.reload();
+      }, 5000);
+    }
+  }, [trialInfo.isExpired, isEnforcing]);
 
   const handlePurchaseNow = () => {
     const url = "https://localpasswordvault.com/#plans";
@@ -47,10 +80,28 @@ export const TrialExpirationBanner: React.FC<TrialExpirationBannerProps> = ({ tr
 
     return (
       <div className="w-full max-w-4xl mx-auto mb-8">
-        {/* Simplified Expiration Alert */}
-        <div className="bg-gradient-to-r from-red-900/90 to-red-800/90 border-2 border-red-600 rounded-2xl p-8 shadow-2xl backdrop-blur-sm">
+        {/* Enhanced Expiration Alert with Countdown */}
+        <div className="bg-gradient-to-r from-red-900/95 to-red-800/95 border-2 border-red-600 rounded-2xl p-8 shadow-2xl backdrop-blur-sm relative overflow-hidden">
+          {/* Countdown overlay */}
+          <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-6xl font-bold text-red-300 mb-2">
+                EXPIRED
+              </div>
+              <div className="text-xl text-red-400">
+                Trial Access Terminated
+              </div>
+              {isEnforcing && (
+                <div className="mt-4 text-red-300 animate-pulse">
+                  <div className="text-sm">Locking down application...</div>
+                  <div className="text-xs mt-1">Redirecting in 5 seconds</div>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Header Section */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-6 relative z-10">
             <div className="flex items-center space-x-4">
               <div className="relative">
                 <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center animate-pulse">
@@ -72,7 +123,7 @@ export const TrialExpirationBanner: React.FC<TrialExpirationBannerProps> = ({ tr
           </div>
 
           {/* Message Section */}
-          <div className="bg-red-950/50 rounded-xl p-6 mb-6 border border-red-700/50">
+          <div className="bg-red-950/50 rounded-xl p-6 mb-6 border border-red-700/50 relative z-10">
             <div className="flex items-start space-x-3">
               <AlertTriangle className="w-6 h-6 text-red-400 mt-1 flex-shrink-0" />
               <div className="flex-1">
@@ -80,15 +131,18 @@ export const TrialExpirationBanner: React.FC<TrialExpirationBannerProps> = ({ tr
                   Access to Your Vault Has Been Suspended
                 </h3>
                 <p className="text-red-200 leading-relaxed">
-                  Your trial period has ended and access to your password vault has been temporarily suspended.
-                  To continue using Local Password Vault and protect your sensitive data, please purchase a license or apply your license key.
+                  Your trial period has ended and access to your password vault has been permanently suspended.
+                  To continue using Local Password Vault and protect your sensitive data, you must purchase a license.
+                </p>
+                <p className="text-red-300 text-sm mt-2 font-medium">
+                  ⚠️ Trial keys cannot be reused. Each trial key can only be activated once.
                 </p>
               </div>
             </div>
           </div>
 
           {/* Trial Details */}
-          <div className="grid md:grid-cols-2 gap-6 mb-6">
+          <div className="grid md:grid-cols-2 gap-6 mb-6 relative z-10">
             <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-700">
               <div className="flex items-center space-x-2 mb-2">
                 <Clock className="w-5 h-5 text-slate-400" />
@@ -104,22 +158,22 @@ export const TrialExpirationBanner: React.FC<TrialExpirationBannerProps> = ({ tr
             <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-700">
               <div className="flex items-center space-x-2 mb-2">
                 <Shield className="w-5 h-5 text-slate-400" />
-                <span className="text-slate-300 font-medium">What Happens Next</span>
+                <span className="text-slate-300 font-medium">Security Notice</span>
               </div>
               <p className="text-white text-sm">
-                Your data remains securely encrypted and will be available once you activate a license.
+                Your data remains securely encrypted. No access is possible without a valid license.
               </p>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 relative z-10">
             <button
               onClick={handlePurchaseNow}
               className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-4 px-6 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl transform hover:scale-105"
             >
               <CreditCard className="w-5 h-5" />
-              <span>Get License Now</span>
+              <span>Purchase License</span>
               <ChevronRight className="w-5 h-5" />
             </button>
             <button
@@ -127,15 +181,18 @@ export const TrialExpirationBanner: React.FC<TrialExpirationBannerProps> = ({ tr
               className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-4 px-6 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl transform hover:scale-105"
             >
               <Key className="w-5 h-5" />
-              <span>Apply Your Key</span>
+              <span>Activate License Key</span>
               <ChevronRight className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Urgency Message */}
-          <div className="mt-6 text-center">
-            <p className="text-red-300 text-sm">
+          {/* Final Warning */}
+          <div className="mt-6 text-center relative z-10">
+            <p className="text-red-300 text-sm font-medium">
               🔒 Your passwords remain secure and encrypted. Purchase a license to regain access.
+            </p>
+            <p className="text-red-400 text-xs mt-1">
+              This device is permanently locked from trial access. Trial keys are single-use only.
             </p>
           </div>
         </div>

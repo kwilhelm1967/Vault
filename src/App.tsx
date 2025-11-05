@@ -7,13 +7,12 @@ import { ElectronFloatingPanel } from "./components/ElectronFloatingPanel";
 import { PasswordEntry, Category } from "./types";
 import { storageService } from "./utils/storage";
 import { importService } from "./utils/importService";
-import { licenseService } from "./utils/licenseService";
+import { licenseService, AppLicenseStatus } from "./utils/licenseService";
 import { trialService } from "./utils/trialService";
 import { features } from "./config/environment";
 import { useElectron } from "./hooks/useElectron";
 import { LicenseKeyDisplay } from "./components/LicenseKeyDisplay";
 import { DownloadPage } from "./components/DownloadPage";
-import { TrialTestingTools } from "./components/TrialTestingTools";
 
 // Fixed categories with proper typing
 const FIXED_CATEGORIES: Category[] = [
@@ -29,14 +28,19 @@ const FIXED_CATEGORIES: Category[] = [
 
 // Custom hook for app status management
 const useAppStatus = () => {
-  const [appStatus, setAppStatus] = useState(() => licenseService.getAppStatus());
+  const [appStatus, setAppStatus] = useState<AppLicenseStatus | null>(null);
   const [checkingEnabled, setCheckingEnabled] = useState(true);
 
-  const updateAppStatus = useCallback(() => {
-    const newStatus = licenseService.getAppStatus();
+  const updateAppStatus = useCallback(async () => {
+    const newStatus = await licenseService.getAppStatus();
     setAppStatus(newStatus);
     return newStatus;
   }, []);
+
+  // Initialize app status on mount
+  useEffect(() => {
+    updateAppStatus();
+  }, [updateAppStatus]);
 
   // Handle trial expiration with immediate redirect
   const handleTrialExpiration = useCallback(() => {
@@ -60,8 +64,8 @@ const useAppStatus = () => {
   }, [updateAppStatus]);
 
   // Immediate status check function
-  const checkStatusImmediately = useCallback(() => {
-    const currentStatus = licenseService.getAppStatus();
+  const checkStatusImmediately = useCallback(async () => {
+    const currentStatus = await licenseService.getAppStatus();
 
     // If trial has expired and we're not on license screen, force redirect
     if (currentStatus.trialInfo.isExpired && currentStatus.canUseApp) {
@@ -81,12 +85,24 @@ const useAppStatus = () => {
     // Set up trial expiration callback
     trialService.addExpirationCallback(handleTrialExpiration);
 
-    // Check trial status every 2 seconds in test mode, every 30 seconds in production
+    // Check trial status every 5 seconds in development mode, every 30 seconds in production
     // But only if checking is enabled
-    const checkInterval = trialService.isTestMode() ? 2000 : 30000;
-    const interval = checkingEnabled ? setInterval(() => {
-      const expirationDetected = trialService.checkAndHandleExpiration();
-      checkStatusImmediately();
+    const checkInterval = import.meta.env.DEV ? 5000 : 30000;
+    const interval = checkingEnabled ? setInterval(async () => {
+      const expirationDetected = await trialService.checkAndHandleExpiration();
+      await checkStatusImmediately();
+
+      // Force immediate lock if trial expired
+      const currentStatus = await licenseService.getAppStatus();
+      if (currentStatus.trialInfo.isExpired && currentStatus.canUseApp) {
+        console.log("🚨 FORCE LOCK: Trial expired but app still accessible - forcing lock");
+        // Force multiple status updates to ensure lock
+        for (let i = 0; i < 3; i++) {
+          setTimeout(() => {
+            window.location.reload();
+          }, i * 1000);
+        }
+      }
 
       // If expiration detected 3+ times, stop checking
       if (expirationDetected && trialService.isExpirationConfirmed()) {
@@ -614,11 +630,23 @@ function App() {
 
   // SAFETY CHECK: Force redirect if trial has expired but we're not on license screen
   useEffect(() => {
-    if (appStatus.trialInfo.isExpired && appStatus.canUseApp) {
+    if (appStatus && appStatus.trialInfo.isExpired && appStatus.canUseApp) {
       console.log("🚨 SAFETY CHECK: Forcing redirect due to expired trial");
       checkStatusImmediately();
     }
-  }, [appStatus.trialInfo.isExpired, appStatus.canUseApp, checkStatusImmediately]);
+  }, [appStatus?.trialInfo.isExpired, appStatus?.canUseApp, checkStatusImmediately]);
+
+  // Show loading state while app status is being determined
+  if (!appStatus) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-white text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-lg">Loading application...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Electron floating mode
   if (isElectron && isFloatingMode) {
@@ -731,11 +759,6 @@ function App() {
             Trial Tools
           </button>
         </>
-      )}
-
-      {/* Trial Testing Tools */}
-      {showTrialTestingTools && features.showTestingTools && (
-        <TrialTestingTools onClose={() => setShowTrialTestingTools(false)} />
       )}
     </div>
   );

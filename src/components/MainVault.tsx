@@ -20,7 +20,6 @@ import {
 import { PasswordEntry, Category } from "../types";
 import { CategoryIcon } from "./CategoryIcon";
 import { EntryForm } from "./EntryForm";
-import { TrialWarningBanner } from "./TrialWarningBanner";
 
 interface MainVaultProps {
   entries: PasswordEntry[];
@@ -284,8 +283,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
 
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto px-6 py-8">
-          {/* Trial Warning Banner */}
-          {onShowPricingPlans && <TrialWarningBanner />}
+          {/* Trial Warning Banner removed - replaced by enhanced TrialExpirationBanner in LicenseScreen */}
 
           {/* Search and Controls */}
           <div className="mb-8">

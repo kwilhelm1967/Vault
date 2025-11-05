@@ -1,36 +1,46 @@
 export interface TrialInfo {
   isTrialActive: boolean;
   daysRemaining: number;
+  hoursRemaining: number;
+  minutesRemaining: number;
+  secondsRemaining: number;
   isExpired: boolean;
   startDate: Date | null;
   endDate: Date | null;
   hasTrialBeenUsed: boolean;
+  timeRemaining: string;
+  trialDurationDisplay: string;
+  licenseKey: string | null;
+  securityHash: string | null;
+  activationTime: Date | null;
+  lastChecked: Date | null;
+}
+
+export interface BackendTrialStatus {
+  isTrial: boolean;
+  isActive: boolean;
+  isExpired: boolean;
+  daysRemaining: number;
+  hoursRemaining: number;
+  minutesRemaining: number;
+  expiresAt: string | null;
+  timeRemaining: string;
+  licenseKey: string;
+  planName: string;
+  trialDuration: string;
 }
 
 export class TrialService {
   private static instance: TrialService;
   private static readonly TRIAL_START_KEY = "trial_start_date";
   private static readonly TRIAL_USED_KEY = "trial_used";
+  private static readonly TRIAL_LICENSE_KEY = "trial_license_key";
+  private static readonly LICENSE_TOKEN_KEY = "license_token";
   private countdownInterval: NodeJS.Timeout | null = null;
   private expirationCallbacks: (() => void)[] = [];
   private expirationConfirmed: boolean = false;
   private expirationConfirmationCount: number = 0;
-
-  // Configurable trial duration - set to 5 minutes for testing, 7 days for production
-  // Set this to true for 5-minute testing mode, false for normal 7-day trial
-  private static readonly USE_TEST_MODE = true;
-
-  private static get TRIAL_DURATION_MS(): number {
-    return TrialService.USE_TEST_MODE ? 5 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000;
-  }
-
-  private static get TRIAL_DURATION_DAYS(): number {
-    return TrialService.USE_TEST_MODE ? 0 : 7;
-  }
-
-  private static get TRIAL_DURATION_MINUTES(): number {
-    return TrialService.USE_TEST_MODE ? 5 : 0;
-  }
+  private developmentLoggingInterval: NodeJS.Timeout | null = null;
 
   static getInstance(): TrialService {
     if (!TrialService.instance) {
@@ -40,149 +50,302 @@ export class TrialService {
   }
 
   /**
-   * Start the trial period
+   * Start the trial period - now backend-dependent
    */
-  startTrial(): TrialInfo {
-    const now = new Date();
-    console.log('🎯 Starting trial at:', now.toISOString());
-
-    localStorage.setItem(TrialService.TRIAL_START_KEY, now.toISOString());
+  async startTrial(licenseKey: string, hardwareHash: string): Promise<TrialInfo> {
+    
+    // Store trial metadata with enhanced security
+    const activationTime = new Date().toISOString();
+    localStorage.setItem(TrialService.TRIAL_START_KEY, activationTime);
     localStorage.setItem(TrialService.TRIAL_USED_KEY, "true");
+    localStorage.setItem(TrialService.TRIAL_LICENSE_KEY, licenseKey);
 
-    // Start countdown logging for test mode
-    if (TrialService.USE_TEST_MODE) {
-      this.startCountdownLogging();
-    }
+    // Store hardware hash for verification
+    localStorage.setItem('trial_hardware_hash', hardwareHash);
 
-    const trialInfo = this.getTrialInfo();
-    console.log('🎯 Trial info after start:', trialInfo);
+    // Create secure session storage for trial data
+    const trialSession = {
+      licenseKey,
+      hardwareHash,
+      activationTime,
+      initialized: true
+    };
+    sessionStorage.setItem('trial_session', JSON.stringify(trialSession));
+
+    // Development logging disabled to prevent unnecessary API calls
+    // The trial now works offline using the JWT token
+    // if (import.meta.env.DEV) {
+    //   this.startDevelopmentLogging(licenseKey, hardwareHash);
+    // }
+
+    // Get initial trial status from backend
+    const trialInfo = await this.getTrialInfo();
+    console.log('🎯 Trial started, backend status:', trialInfo);
     return trialInfo;
   }
 
   /**
-   * Get current trial information
+   * Get current trial information - now backend-dependent
    */
-  getTrialInfo(): TrialInfo {
-    const startDateStr = localStorage.getItem(TrialService.TRIAL_START_KEY);
-    const hasTrialBeenUsed =
-      localStorage.getItem(TrialService.TRIAL_USED_KEY) === "true";
+  async getTrialInfo(): Promise<TrialInfo> {
+    const hasTrialBeenUsed = localStorage.getItem(TrialService.TRIAL_USED_KEY) === "true";
+    const licenseKey = localStorage.getItem(TrialService.TRIAL_LICENSE_KEY);
+    const licenseToken = localStorage.getItem(TrialService.LICENSE_TOKEN_KEY);
+    const storedHardwareHash = localStorage.getItem('trial_hardware_hash');
 
-    if (!startDateStr || !hasTrialBeenUsed) {
+    
+    if (!hasTrialBeenUsed || !licenseKey) {
       // No trial started yet
       return {
         isTrialActive: false,
-        daysRemaining: TrialService.TRIAL_DURATION_DAYS,
+        daysRemaining: 0,
+        hoursRemaining: 0,
+        minutesRemaining: 0,
+        secondsRemaining: 0,
         isExpired: false,
         startDate: null,
         endDate: null,
         hasTrialBeenUsed: false,
+        timeRemaining: 'No trial activated',
+        trialDurationDisplay: 'None',
+        licenseKey: null,
+        securityHash: null,
+        activationTime: null,
+        lastChecked: new Date(),
       };
     }
 
-    // Check if we have backend trial data from license token
-    try {
-      const licenseToken = localStorage.getItem('license_token');
-      if (licenseToken) {
+    // Verify hardware hash matches
+    const currentHardwareHash = await this.generateHardwareFingerprint();
+    if (storedHardwareHash && storedHardwareHash !== currentHardwareHash) {
+      console.error('Hardware hash mismatch detected');
+      return {
+        isTrialActive: false,
+        daysRemaining: 0,
+        hoursRemaining: 0,
+        minutesRemaining: 0,
+        secondsRemaining: 0,
+        isExpired: true,
+        startDate: null,
+        endDate: null,
+        hasTrialBeenUsed: true,
+        timeRemaining: 'Trial invalidated - device changed',
+        trialDurationDisplay: 'Invalid',
+        licenseKey: licenseKey,
+        securityHash: null,
+        activationTime: null,
+        lastChecked: new Date(),
+      };
+    }
+
+    // If we have a license token, use it for trial status (offline capable)
+    if (licenseToken) {
+      try {
         const tokenData = JSON.parse(atob(licenseToken.split('.')[1])); // Decode JWT payload
-        console.log('🔍 JWT Token Data:', tokenData);
-
-        // Use backend trial expiry date if available
-        if (tokenData.trialExpiryDate && tokenData.isTrial) {
-          const backendExpiryDate = new Date(tokenData.trialExpiryDate);
+        
+        if (tokenData.isTrial && tokenData.trialExpiryDate) {
           const now = new Date();
-          const isExpired = now > backendExpiryDate;
+          const expiryDate = new Date(tokenData.trialExpiryDate);
+          const isExpired = now > expiryDate;
+          const isActive = !isExpired;
 
-          console.log('🔍 Trial Expiry Check:', {
-            backendExpiryDate: backendExpiryDate.toISOString(),
-            now: now.toISOString(),
-            isExpired,
-            timeDiff: backendExpiryDate.getTime() - now.getTime()
-          });
+          // Calculate remaining time with seconds precision
+          const remainingMs = Math.max(0, expiryDate.getTime() - now.getTime());
+          const daysRemaining = Math.floor(remainingMs / (24 * 60 * 60 * 1000));
+          const hoursRemaining = Math.floor((remainingMs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+          const minutesRemaining = Math.floor((remainingMs % (60 * 60 * 1000)) / (60 * 1000));
+          const secondsRemaining = Math.floor((remainingMs % (60 * 1000)) / 1000);
 
-          let daysRemaining = 0;
-          if (TrialService.USE_TEST_MODE) {
-            // For testing mode, show minutes remaining
-            daysRemaining = Math.max(
-              0,
-              Math.ceil((backendExpiryDate.getTime() - now.getTime()) / (60 * 1000))
-            );
+          let timeRemaining;
+          if (isExpired) {
+            timeRemaining = 'Trial expired';
+          } else if (daysRemaining > 0) {
+            timeRemaining = `${daysRemaining}d ${hoursRemaining}h ${minutesRemaining}m ${secondsRemaining}s`;
+          } else if (hoursRemaining > 0) {
+            timeRemaining = `${hoursRemaining}h ${minutesRemaining}m ${secondsRemaining}s`;
+          } else if (minutesRemaining > 0) {
+            timeRemaining = `${minutesRemaining}m ${secondsRemaining}s`;
           } else {
-            // For production mode, show days remaining
-            daysRemaining = Math.max(
-              0,
-              Math.ceil((backendExpiryDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))
-            );
+            timeRemaining = `${secondsRemaining}s`;
           }
 
           return {
-            isTrialActive: !isExpired,
+            isTrialActive: isActive,
             daysRemaining,
+            hoursRemaining,
+            minutesRemaining,
+            secondsRemaining,
             isExpired,
-            startDate: new Date(startDateStr),
-            endDate: backendExpiryDate,
+            startDate: new Date(localStorage.getItem(TrialService.TRIAL_START_KEY) || now.toISOString()),
+            endDate: expiryDate,
             hasTrialBeenUsed: true,
+            timeRemaining,
+            trialDurationDisplay: tokenData.trialDurationDisplay || 'Unknown',
+            licenseKey: licenseKey,
+            securityHash: tokenData.securityHash || null,
+            activationTime: tokenData.activationTime ? new Date(tokenData.activationTime) : null,
+            lastChecked: new Date(),
           };
         }
+      } catch (error) {
+        console.error('Error parsing license token:', error);
+      }
+    }
+
+    // Fallback: Return basic trial info (will be updated by backend calls)
+    return {
+      isTrialActive: false,
+      daysRemaining: 0,
+      hoursRemaining: 0,
+      minutesRemaining: 0,
+      secondsRemaining: 0,
+      isExpired: false,
+      startDate: new Date(localStorage.getItem(TrialService.TRIAL_START_KEY) || ''),
+      endDate: null,
+      hasTrialBeenUsed: true,
+      timeRemaining: 'Checking trial status...',
+      trialDurationDisplay: 'Unknown',
+      licenseKey: licenseKey,
+      securityHash: null,
+      activationTime: null,
+      lastChecked: new Date(),
+    };
+  }
+
+  /**
+   * Generate hardware fingerprint for trial validation
+   */
+  private async generateHardwareFingerprint(): Promise<string> {
+    const components = [];
+
+    // Screen and display info
+    components.push(`${screen.width}x${screen.height}x${screen.colorDepth}`);
+    components.push(screen.pixelDepth.toString());
+
+    // System info
+    components.push(navigator.platform);
+    components.push(navigator.language);
+    components.push(navigator.hardwareConcurrency?.toString() || "unknown");
+    components.push(Intl.DateTimeFormat().resolvedOptions().timeZone);
+
+    // Browser and engine info
+    components.push(navigator.userAgent.slice(0, 100));
+    components.push(navigator.vendor || "unknown");
+
+    // WebGL fingerprinting
+    try {
+      const canvas = document.createElement("canvas");
+      const gl = canvas.getContext("webgl") as WebGLRenderingContext;
+      if (gl) {
+        const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+        if (debugInfo) {
+          components.push(gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL));
+          components.push(gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL));
+        }
+        components.push(gl.getParameter(gl.VERSION));
+      }
+    } catch (e) {
+      components.push("webgl_unavailable");
+    }
+
+    // Generate hash from components
+    const fingerprint = components.join("|");
+
+    // Create SHA-256 hash using Web Crypto API
+    const encoder = new TextEncoder();
+    const data = encoder.encode(fingerprint);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    return hashHex;
+  }
+
+  /**
+   * Get trial status from backend API
+   */
+  async getTrialStatusFromBackend(licenseKey: string, hardwareHash: string): Promise<BackendTrialStatus | null> {
+    try {
+      const response = await fetch('/api/licenses/trial-status/' + licenseKey, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ hardwareHash }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        return result.data;
+      } else {
+        console.warn('Backend trial status check failed:', response.status);
+        return null;
       }
     } catch (error) {
-      console.error('Error reading backend trial data:', error);
-      // Fall back to local calculation if token parsing fails
+      console.error('Error fetching trial status from backend:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Start development logging - logs trial status every 5 seconds in development mode
+   */
+  private startDevelopmentLogging(licenseKey: string, hardwareHash: string): void {
+    if (this.developmentLoggingInterval) {
+      clearInterval(this.developmentLoggingInterval);
     }
 
-    // Fallback to local calculation if no backend data
-    const startDate = new Date(startDateStr);
-    const endDate = new Date(
-      startDate.getTime() + TrialService.TRIAL_DURATION_MS
-    );
-    const now = new Date();
+    console.log('🔍 Starting development trial status logging (every 5 seconds)...');
 
-    console.log('🔍 Local Trial Calculation:', {
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-      now: now.toISOString(),
-      durationMs: TrialService.TRIAL_DURATION_MS,
-      timeDiff: endDate.getTime() - now.getTime()
-    });
+    this.developmentLoggingInterval = setInterval(async () => {
+      try {
+        const backendStatus = await this.getTrialStatusFromBackend(licenseKey, hardwareHash);
+        if (backendStatus) {
+          console.log('🔍 DEVELOPMENT TRIAL STATUS CHECK:', {
+            licenseKey: backendStatus.licenseKey,
+            isActive: backendStatus.isActive,
+            isExpired: backendStatus.isExpired,
+            daysRemaining: backendStatus.daysRemaining,
+            hoursRemaining: backendStatus.hoursRemaining,
+            minutesRemaining: backendStatus.minutesRemaining,
+            expiresAt: backendStatus.expiresAt,
+            timeRemaining: backendStatus.timeRemaining,
+            trialDuration: backendStatus.trialDuration,
+            timestamp: new Date().toISOString()
+          });
+        } else {
+          console.log('🔍 DEVELOPMENT TRIAL STATUS CHECK: Failed to get status from backend');
+        }
+      } catch (error) {
+        console.error('🔍 DEVELOPMENT TRIAL STATUS CHECK: Error:', error);
+      }
+    }, 5000); // Every 5 seconds
+  }
 
-    const isExpired = now > endDate;
-    let daysRemaining = 0;
-    if (TrialService.USE_TEST_MODE) {
-      // For testing mode, show minutes remaining
-      daysRemaining = Math.max(
-        0,
-        Math.ceil((endDate.getTime() - now.getTime()) / (60 * 1000))
-      );
-    } else {
-      // For production mode, show days remaining
-      daysRemaining = Math.max(
-        0,
-        Math.ceil((endDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))
-      );
+  /**
+   * Stop development logging
+   */
+  private stopDevelopmentLogging(): void {
+    if (this.developmentLoggingInterval) {
+      clearInterval(this.developmentLoggingInterval);
+      this.developmentLoggingInterval = null;
+      console.log('🔍 Development trial status logging stopped');
     }
-
-    return {
-      isTrialActive: !isExpired,
-      daysRemaining,
-      isExpired,
-      startDate,
-      endDate,
-      hasTrialBeenUsed: true,
-    };
   }
 
   /**
    * Check if trial has expired
    */
-  isTrialExpired(): boolean {
-    const trialInfo = this.getTrialInfo();
+  async isTrialExpired(): Promise<boolean> {
+    const trialInfo = await this.getTrialInfo();
     return trialInfo.hasTrialBeenUsed && trialInfo.isExpired;
   }
 
   /**
    * Check and handle trial expiration (triggers callbacks if expired)
    */
-  checkAndHandleExpiration(): boolean {
-    const trialInfo = this.getTrialInfo();
+  async checkAndHandleExpiration(): Promise<boolean> {
+    const trialInfo = await this.getTrialInfo();
 
     console.log('🔍 Expiration Check:', {
       trialInfo,
@@ -240,70 +403,25 @@ export class TrialService {
   /**
    * Check if trial is currently active
    */
-  isTrialActive(): boolean {
-    const trialInfo = this.getTrialInfo();
+  async isTrialActive(): Promise<boolean> {
+    const trialInfo = await this.getTrialInfo();
     return trialInfo.hasTrialBeenUsed && trialInfo.isTrialActive;
   }
 
   /**
    * Check if user can start a trial (hasn't used it yet)
    */
-  canStartTrial(): boolean {
-    const trialInfo = this.getTrialInfo();
+  async canStartTrial(): Promise<boolean> {
+    const trialInfo = await this.getTrialInfo();
     return !trialInfo.hasTrialBeenUsed;
   }
 
   /**
    * Get remaining trial time in a human-readable format
    */
-  getTrialTimeRemaining(): string {
-    const trialInfo = this.getTrialInfo();
-
-    if (!trialInfo.hasTrialBeenUsed) {
-      if (TrialService.USE_TEST_MODE) {
-        return `${TrialService.TRIAL_DURATION_MINUTES} minutes available`;
-      } else {
-        return `${TrialService.TRIAL_DURATION_DAYS} days available`;
-      }
-    }
-
-    if (trialInfo.isExpired) {
-      return "Trial expired";
-    }
-
-    if (TrialService.USE_TEST_MODE) {
-      // Show minutes for testing mode
-      const minutes = trialInfo.daysRemaining;
-      if (minutes === 1) {
-        return "1 minute remaining";
-      } else if (minutes === 0) {
-        return "Less than 1 minute remaining";
-      } else {
-        return `${minutes} minutes remaining`;
-      }
-    } else {
-      // Show days for production mode
-      const days = trialInfo.daysRemaining;
-      if (days === 1) {
-        return "1 day remaining";
-      } else if (days === 0) {
-        // Check hours remaining for last day
-        const now = new Date();
-        const endDate = trialInfo.endDate!;
-        const hoursRemaining = Math.max(
-          0,
-          Math.ceil((endDate.getTime() - now.getTime()) / (60 * 60 * 1000))
-        );
-
-        if (hoursRemaining <= 1) {
-          return "Less than 1 hour remaining";
-        } else {
-          return `${hoursRemaining} hours remaining`;
-        }
-      } else {
-        return `${days} days remaining`;
-      }
-    }
+  async getTrialTimeRemaining(): Promise<string> {
+    const trialInfo = await this.getTrialInfo();
+    return trialInfo.timeRemaining;
   }
 
   /**
@@ -312,11 +430,17 @@ export class TrialService {
   resetTrial(): void {
     localStorage.removeItem(TrialService.TRIAL_START_KEY);
     localStorage.removeItem(TrialService.TRIAL_USED_KEY);
+    localStorage.removeItem(TrialService.TRIAL_LICENSE_KEY);
+    localStorage.removeItem(TrialService.LICENSE_TOKEN_KEY);
 
-    // Stop countdown logging if running
-    this.stopCountdownLogging();
+    // Stop development logging if running
+    this.stopDevelopmentLogging();
 
-    console.log("🔄 TRIAL RESET - Countdown stopped");
+    // Reset expiration tracking
+    this.expirationConfirmed = false;
+    this.expirationConfirmationCount = 0;
+
+    console.log("🔄 TRIAL RESET - Development logging stopped");
   }
 
   /**
@@ -325,29 +449,24 @@ export class TrialService {
   endTrial(): void {
     // Keep the trial data but mark it as used
     // This prevents starting another trial
-    const now = new Date();
-    const pastDate = new Date(
-      now.getTime() - TrialService.TRIAL_DURATION_MS - 1000
-    );
-    localStorage.setItem(TrialService.TRIAL_START_KEY, pastDate.toISOString());
     localStorage.setItem(TrialService.TRIAL_USED_KEY, "true");
 
-    // Stop countdown logging if running
-    this.stopCountdownLogging();
+    // Stop development logging if running
+    this.stopDevelopmentLogging();
 
     // Trigger expiration callbacks since trial ended
     this.triggerExpirationCallbacks();
 
-    console.log("🛑 TRIAL ENDED - Countdown stopped - Expiration callbacks triggered");
+    console.log("🛑 TRIAL ENDED - Development logging stopped - Expiration callbacks triggered");
   }
 
   /**
-   * Get trial progress as percentage (0-100)
+   * Get trial progress as percentage (0-100) - calculated from backend data
    */
-  getTrialProgress(): number {
-    const trialInfo = this.getTrialInfo();
+  async getTrialProgress(): Promise<number> {
+    const trialInfo = await this.getTrialInfo();
 
-    if (!trialInfo.hasTrialBeenUsed) {
+    if (!trialInfo.hasTrialBeenUsed || !trialInfo.startDate || !trialInfo.endDate) {
       return 0;
     }
 
@@ -355,23 +474,9 @@ export class TrialService {
       return 100;
     }
 
-    const totalTime = TrialService.TRIAL_DURATION_MS;
-    const elapsed = totalTime - (trialInfo.endDate!.getTime() - new Date().getTime());
-    return Math.round((elapsed / totalTime) * 100);
-  }
-
-  /**
-   * Get test mode status
-   */
-  isTestMode(): boolean {
-    return TrialService.USE_TEST_MODE;
-  }
-
-  /**
-   * Toggle test mode (for development only)
-   */
-  static setTestMode(enabled: boolean): void {
-    (TrialService as any).USE_TEST_MODE = enabled;
+    const totalTime = trialInfo.endDate.getTime() - trialInfo.startDate.getTime();
+    const elapsed = new Date().getTime() - trialInfo.startDate.getTime();
+    return Math.round(Math.min(100, Math.max(0, (elapsed / totalTime) * 100)));
   }
 
   /**
@@ -403,203 +508,6 @@ export class TrialService {
         console.error("Error in expiration callback:", error);
       }
     });
-  }
-
-  /**
-   * Start countdown logging for test mode
-   */
-  private startCountdownLogging(): void {
-    // Clear any existing countdown
-    if (this.countdownInterval) {
-      clearInterval(this.countdownInterval);
-    }
-
-    console.log("🕒 TRIAL COUNTDOWN STARTED");
-    console.log("================================");
-
-    // Update countdown every second in test mode, every minute in production
-    const updateInterval = TrialService.USE_TEST_MODE ? 1000 : 60000;
-
-    this.countdownInterval = setInterval(() => {
-      const trialInfo = this.getTrialInfo();
-
-      if (!trialInfo.hasTrialBeenUsed) {
-        if (this.countdownInterval) {
-          clearInterval(this.countdownInterval);
-          this.countdownInterval = null;
-        }
-        console.log("⏸️  Trial not started yet");
-        return;
-      }
-
-      const now = new Date();
-      const remainingMs = trialInfo.endDate!.getTime() - now.getTime();
-
-      // Check if trial has expired (with high precision)
-      if (remainingMs <= 0) {
-        if (this.countdownInterval) {
-          clearInterval(this.countdownInterval);
-          this.countdownInterval = null;
-        }
-        console.log("⏰ TRIAL EXPIRED!");
-        console.log("================================");
-        console.log(`🔴 EXPIRATION TIME: ${trialInfo.endDate!.toISOString()}`);
-        console.log(`🔴 CURRENT TIME: ${now.toISOString()}`);
-        console.log(`🔴 OVERDUE BY: ${Math.abs(remainingMs)}ms`);
-
-        // Trigger expiration callbacks
-        this.triggerExpirationCallbacks();
-        return;
-      }
-
-      // Calculate remaining time with high precision
-      const totalSeconds = Math.max(0, Math.floor(remainingMs / 1000));
-      const minutes = Math.floor(totalSeconds / 60);
-      const seconds = totalSeconds % 60;
-      const milliseconds = remainingMs % 1000;
-
-      // Format time display based on mode
-      let timeDisplay: string;
-      if (TrialService.USE_TEST_MODE) {
-        // Precise display for testing
-        if (minutes > 0) {
-          timeDisplay = `${minutes}m ${seconds}s ${milliseconds}ms`;
-        } else if (seconds > 0) {
-          timeDisplay = `${seconds}s ${milliseconds}ms`;
-        } else {
-          timeDisplay = `${milliseconds}ms`;
-        }
-      } else {
-        // Simple display for production
-        if (totalSeconds >= 86400) {
-          const days = Math.floor(totalSeconds / 86400);
-          timeDisplay = `${days} day${days === 1 ? '' : 's'}`;
-        } else if (totalSeconds >= 3600) {
-          const hours = Math.floor(totalSeconds / 3600);
-          timeDisplay = `${hours} hour${hours === 1 ? '' : 's'}`;
-        } else if (totalSeconds >= 60) {
-          timeDisplay = `${minutes}m ${seconds}s`;
-        } else {
-          timeDisplay = `${seconds}s`;
-        }
-      }
-
-      // Calculate percentage with high precision
-      const percentage = Math.round(this.getTrialProgress() * 100) / 100;
-
-      // Create progress bar
-      const barLength = 20;
-      const filledLength = Math.round((percentage / 100) * barLength);
-      const progressBar = '█'.repeat(filledLength) + '░'.repeat(barLength - filledLength);
-
-      console.log(`⏱️  [${progressBar}] ${percentage}% | ${timeDisplay} remaining | Status: ${trialInfo.isTrialActive ? 'ACTIVE' : 'EXPIRED'}`);
-
-      // Warning levels based on mode
-      if (TrialService.USE_TEST_MODE) {
-        // Test mode warnings
-        if (totalSeconds <= 30 && totalSeconds > 0) {
-          console.log(`⚠️  WARNING: Less than 30 seconds remaining!`);
-        }
-        if (totalSeconds <= 10 && totalSeconds > 0) {
-          console.log(`🚨 FINAL COUNTDOWN: ${totalSeconds} seconds left!`);
-        }
-        if (totalSeconds <= 5 && totalSeconds > 0) {
-          console.log(`🔴 CRITICAL: ${totalSeconds} seconds remaining!`);
-        }
-      } else {
-        // Production mode warnings
-        const totalHours = totalSeconds / 3600;
-        if (totalHours <= 24 && totalHours > 0) {
-          console.log(`⚠️  WARNING: Less than 24 hours remaining!`);
-        }
-        if (totalHours <= 1 && totalHours > 0) {
-          console.log(`🚨 FINAL COUNTDOWN: Less than 1 hour remaining!`);
-        }
-      }
-    }, updateInterval);
-  }
-
-  /**
-   * Stop countdown logging
-   */
-  private stopCountdownLogging(): void {
-    if (this.countdownInterval) {
-      clearInterval(this.countdownInterval);
-      this.countdownInterval = null;
-      console.log("🛑 TRIAL COUNTDOWN STOPPED");
-    }
-  }
-
-  /**
-   * Validate trial timing accuracy (for testing)
-   */
-  validateTrialAccuracy(): {
-    isAccurate: boolean;
-    expectedDuration: number;
-    actualDuration: number;
-    variance: number;
-    details: string;
-  } {
-    const trialInfo = this.getTrialInfo();
-
-    if (!trialInfo.hasTrialBeenUsed || !trialInfo.startDate || !trialInfo.endDate) {
-      return {
-        isAccurate: false,
-        expectedDuration: TrialService.TRIAL_DURATION_MS,
-        actualDuration: 0,
-        variance: 0,
-        details: "Trial not started"
-      };
-    }
-
-    const expectedDuration = TrialService.TRIAL_DURATION_MS;
-    const actualDuration = trialInfo.endDate.getTime() - trialInfo.startDate.getTime();
-    const variance = Math.abs(actualDuration - expectedDuration);
-    const variancePercent = (variance / expectedDuration) * 100;
-
-    const isAccurate = variance <= 1000; // Allow 1 second variance
-
-    const mode = TrialService.USE_TEST_MODE ? "Test Mode" : "Production Mode";
-    const expectedDisplay = TrialService.USE_TEST_MODE ? "5 minutes" : "7 days";
-
-    return {
-      isAccurate,
-      expectedDuration,
-      actualDuration,
-      variance,
-      details: `${mode}: Expected ${expectedDisplay} (${expectedDuration}ms), got ${actualDuration}ms, variance: ${variancePercent.toFixed(2)}%`
-    };
-  }
-
-  /**
-   * Get precise trial status with millisecond accuracy
-   */
-  getPreciseTrialStatus(): {
-    isActive: boolean;
-    isExpired: boolean;
-    remainingMs: number;
-    remainingSeconds: number;
-    progressPercent: number;
-    expiresAt: Date | null;
-    startedAt: Date | null;
-  } {
-    const trialInfo = this.getTrialInfo();
-    const now = new Date();
-
-    let remainingMs = 0;
-    if (trialInfo.endDate) {
-      remainingMs = Math.max(0, trialInfo.endDate.getTime() - now.getTime());
-    }
-
-    return {
-      isActive: trialInfo.isTrialActive,
-      isExpired: trialInfo.isExpired,
-      remainingMs,
-      remainingSeconds: Math.max(0, Math.floor(remainingMs / 1000)),
-      progressPercent: this.getTrialProgress(),
-      expiresAt: trialInfo.endDate,
-      startedAt: trialInfo.startDate
-    };
   }
 }
 

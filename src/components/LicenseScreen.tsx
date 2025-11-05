@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Lock,
   Key,
@@ -12,7 +12,7 @@ import {
   Download,
 } from "lucide-react";
 import { analyticsService } from "../utils/analyticsService";
-import { licenseService } from "../utils/licenseService";
+import { licenseService, AppLicenseStatus } from "../utils/licenseService";
 import { EulaAgreement } from "./EulaAgreement";
 import { DownloadInstructions } from "./DownloadInstructions";
 import { DownloadPage } from "./DownloadPage";
@@ -32,9 +32,34 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
   const [licenseKey, setLicenseKey] = useState("");
   const [isActivating, setIsActivating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [appStatus, setAppStatus] = useState(() =>
-    licenseService.getAppStatus()
-  );
+  const [appStatus, setAppStatus] = useState<AppLicenseStatus | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Initialize app status on mount
+  useEffect(() => {
+    const initAppStatus = async () => {
+      try {
+        const status = await licenseService.getAppStatus();
+        setAppStatus(status);
+      } catch (error) {
+        console.error('Error initializing app status:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    initAppStatus();
+  }, []);
+
+  const updateAppStatus = useCallback(async () => {
+    try {
+      const status = await licenseService.getAppStatus();
+      setAppStatus(status);
+      return status;
+    } catch (error) {
+      console.error('Error updating app status:', error);
+      return null;
+    }
+  }, []);
   const [selectedPlan, setSelectedPlan] = useState<"single" | "family">(
     "single"
   );
@@ -60,8 +85,13 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
 
   useEffect(() => {
     // Update app status every minute to check trial expiration
-    const interval = setInterval(() => {
-      setAppStatus(licenseService.getAppStatus());
+    const interval = setInterval(async () => {
+      try {
+        const status = await licenseService.getAppStatus();
+        setAppStatus(status);
+      } catch (error) {
+        console.error('Error updating app status:', error);
+      }
     }, 60000);
 
     return () => clearInterval(interval);
@@ -91,8 +121,10 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
           result.licenseType || "unknown"
         );
         // Refresh app status
-        setAppStatus(licenseService.getAppStatus());
-        onLicenseValid();
+        const updatedStatus = await updateAppStatus();
+        if (updatedStatus) {
+          onLicenseValid();
+        }
         setShowEula(false);
       } else {
         // Enhanced error messages based on specific errors
@@ -195,6 +227,18 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
     setError(null);
   };
 
+  // Show loading state while app status is being determined
+  if (isLoading || !appStatus) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-white text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-lg">Loading license screen...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-900 overflow-y-auto">
       {/* EULA Modal */}
@@ -281,7 +325,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
 
           {/* Advanced Trial Expiration Banner */}
           <TrialExpirationBanner
-            trialInfo={appStatus.trialInfo}
+            trialInfo={appStatus?.trialInfo}
             onApplyLicenseKey={handleApplyLicenseKey}
           />
 
@@ -291,7 +335,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
               <div
                 id="license-activation-section"
                 className={`${
-                  showLicenseInput || !appStatus.trialInfo.isExpired
+                  showLicenseInput || !appStatus?.trialInfo?.isExpired
                     ? "block"
                     : "hidden"
                 }`}
