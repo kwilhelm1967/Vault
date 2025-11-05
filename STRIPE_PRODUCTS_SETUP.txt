@@ -7,7 +7,7 @@
 PRODUCT 1: Single User License
 Name: "Local Password Vault - Single User"
 Description: "Single device license with complete source code"
-Price: $29.00 (one-time payment, NOT recurring)
+Price: (one-time payment, NOT recurring)
 Metadata:
   Key: product_id
   Value: prod_single_user
@@ -15,26 +15,11 @@ Metadata:
 PRODUCT 2: Family Plan License  
 Name: "Local Password Vault - Family Plan"
 Description: "3 device licenses with family sharing"
-Price: $49.00 (one-time payment, NOT recurring)
+Price:  (one-time payment, NOT recurring)
 Metadata:
   Key: product_id
   Value: prod_family_plan
 
-PRODUCT 3: Pro License
-Name: "Local Password Vault - Pro"
-Description: "6 device licenses with advanced features"
-Price: $68.00 (one-time payment, NOT recurring)
-Metadata:
-  Key: product_id
-  Value: prod_pro_license
-
-PRODUCT 4: Business Plan License
-Name: "Local Password Vault - Business Plan"
-Description: "10+ device licenses with enterprise features"
-Price: $99.00 (one-time payment, NOT recurring)
-Metadata:
-  Key: product_id
-  Value: prod_business_plan
 
 ## IMPORTANT NOTES FOR YOUR DEVELOPER
 

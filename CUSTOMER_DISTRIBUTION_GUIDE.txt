@@ -4,7 +4,7 @@ This guide provides detailed instructions for distributing Local Password Vault 
 
 ## 📦 Package Contents by License Tier
 
-### Single User License ($29.99)
+### Single User License 
 - Desktop Application (Windows, macOS, Linux)
 - License Key
 - Single User Documentation:
@@ -15,7 +15,7 @@ This guide provides detailed instructions for distributing Local Password Vault 
   - GETTING_STARTED.txt
   - SUPPORT.txt
 
-### Family Plan ($49.99)
+### Family Plan 
 - Desktop Application (Windows, macOS, Linux)
 - 3 License Keys
 - Family Plan Documentation:
@@ -26,17 +26,6 @@ This guide provides detailed instructions for distributing Local Password Vault 
   - GETTING_STARTED.txt
   - SUPPORT.txt
 
-### Business Plan ($99.99)
-- Desktop Application (Windows, macOS, Linux)
-- 10 License Keys
-- Business Plan Documentation:
-  - README.txt
-  - QUICK_START.txt
-  - FEATURES.txt
-  - LICENSE.txt
-  - GETTING_STARTED.txt
-  - SUPPORT.txt
-  - Enterprise Deployment Guide
 
 ## 📧 Email Delivery Process
 
@@ -44,7 +33,7 @@ This guide provides detailed instructions for distributing Local Password Vault 
 Use the provided email templates in `license-packages/email-templates/`:
 - `single-user-email.html`
 - `family-plan-email.html`
-- `business-plan-email.html`
+
 
 ### 2. Generate License Keys
 Use the license generator in `license-generator/index.html` to create unique license keys for each customer.
@@ -90,14 +79,11 @@ For Business Plan customers:
 - Include instructions for transferring to new device
 
 ### Family Plan
-- Three license keys per customer
+- 5 license keys per customer
 - Each key hardware-bound to one device
 - Include instructions for family sharing setup
 
-### Business Plan
-- Ten license keys per customer
-- Admin dashboard for license management
-- Instructions for team deployment
+
 
 ## 📚 Documentation Delivery
 
@@ -123,10 +109,7 @@ For Business Plan customers:
 - Family Plan: priority@LocalPasswordVault.com (24-hour response)
 - Business Plan: enterprise@LocalPasswordVault.com (4-hour response)
 
-### Phone Support (Business Plan Only)
-- Dedicated support line: +1-555-123-4567
-- Available Monday-Friday, 9am-5pm EST
-- Emergency support available 24/7
+
 
 ## 🔄 Updates and Maintenance
 

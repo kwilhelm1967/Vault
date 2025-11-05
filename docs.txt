@@ -35,7 +35,7 @@
 
 **ONLINE PHASE (Purchase to Install):**
 
-1. Customer visits website (hosted at card.co)
+1. Customer visits website 
 2. Stripe processes payment and triggers webhook
 3. License server generates keys and creates download package
 4. Brevo sends email with license keys + download link
@@ -52,7 +52,7 @@
 
 **Always Online:**
 
-- Website/landing page (card.co)
+- Website/landing page 
 - Stripe payment processing
 - License server (Linode)
 - Email delivery (Brevo)
@@ -83,7 +83,7 @@ Local Password Vault is a desktop password manager that operates **fully offline
 
 - `src/utils/licenseService.ts` - One-time license activation (lifetime mode – no periodic validation)
 - `src/utils/enhancedLicensing.ts` - Enhanced licensing features
-- `src/utils/antiPiracyService.ts` - Anti-piracy monitoring (can be disabled)
+
 
 **STATUS**: Lifetime mode enabled. Only first activation hits the server; production builds already operate fully offline afterward.
 
