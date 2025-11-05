@@ -215,6 +215,20 @@ export class LicenseService {
         return { success: false, error: "Invalid license key format" };
       }
 
+      // Check if this is the same trial key being reactivated
+      const existingLicenseInfo = this.getLicenseInfo();
+      if (existingLicenseInfo.type === 'trial' && existingLicenseInfo.key === cleanKey) {
+        // Check if the trial has expired
+        const trialInfo = trialService.getTrialInfo();
+        if (trialInfo.isExpired) {
+          console.log('🚨 Attempting to reactivate expired trial key:', cleanKey);
+          return {
+            success: false,
+            error: "Your trial period has expired. This trial license key can only be used once. Please purchase a license to continue using the app."
+          };
+        }
+      }
+
       // Generate hardware fingerprint for activation
       const hardwareId = await this.generateHardwareFingerprint();
 
@@ -250,6 +264,13 @@ export class LicenseService {
               error: "License key is already activated on another device",
             };
           }
+          // Handle trial expiration from backend
+          if (result.error?.includes("trial") && result.error?.includes("expir")) {
+            return {
+              success: false,
+              error: "Your trial period has expired. This trial license key can only be used once. Please purchase a license to continue using the app."
+            };
+          }
           return {
             success: false,
             error: result.error || "License activation failed",
@@ -257,6 +278,13 @@ export class LicenseService {
         }
 
         if (!result.success) {
+          // Handle trial expiration from backend success response
+          if (result.error?.includes("trial") && result.error?.includes("expir")) {
+            return {
+              success: false,
+              error: "Your trial period has expired. This trial license key can only be used once. Please purchase a license to continue using the app."
+            };
+          }
           return {
             success: false,
             error: result.error || "License activation failed",

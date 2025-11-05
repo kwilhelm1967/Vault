@@ -107,6 +107,12 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
         } else if (result.error?.includes("404")) {
           enhancedError =
             "License key not found. Please double-check your license key and try again.";
+        } else if (result.error?.includes("trial") && result.error?.includes("expir")) {
+          enhancedError =
+            "Your trial period has expired. Trial licenses can only be used once. Please purchase a license to continue using the app.";
+        } else if (result.error?.includes("trial") && result.error?.includes("once")) {
+          enhancedError =
+            "This trial license has already been used. Trial licenses can only be activated once. Please purchase a license to continue using the app.";
         } else if (result.error?.includes("validation")) {
           enhancedError =
             "Invalid license key format. Please ensure your key is in the format: XXXX-XXXX-XXXX-XXXX";
