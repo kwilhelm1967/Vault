@@ -93,7 +93,16 @@ export class TrialService {
     const licenseToken = localStorage.getItem(TrialService.LICENSE_TOKEN_KEY);
     const storedHardwareHash = localStorage.getItem('trial_hardware_hash');
 
-    
+    // Debug: show the actual token data
+    if (licenseToken) {
+      try {
+        const tokenData = JSON.parse(atob(licenseToken.split('.')[1]));
+        console.log('🔍 Full token data:', tokenData);
+      } catch (error) {
+        console.error('Error parsing token for debug:', error);
+      }
+    }
+
     if (!hasTrialBeenUsed || !licenseKey) {
       // No trial started yet
       return {
@@ -261,77 +270,11 @@ export class TrialService {
     return hashHex;
   }
 
-  /**
-   * Get trial status from backend API
-   */
-  async getTrialStatusFromBackend(licenseKey: string, hardwareHash: string): Promise<BackendTrialStatus | null> {
-    try {
-      const response = await fetch('/api/licenses/trial-status/' + licenseKey, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ hardwareHash }),
-      });
+  // Backend API method removed - trial status is now determined from JWT token
+  // async getTrialStatusFromBackend() - removed to prevent 404 errors
 
-      if (response.ok) {
-        const result = await response.json();
-        return result.data;
-      } else {
-        console.warn('Backend trial status check failed:', response.status);
-        return null;
-      }
-    } catch (error) {
-      console.error('Error fetching trial status from backend:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Start development logging - logs trial status every 5 seconds in development mode
-   */
-  private startDevelopmentLogging(licenseKey: string, hardwareHash: string): void {
-    if (this.developmentLoggingInterval) {
-      clearInterval(this.developmentLoggingInterval);
-    }
-
-    console.log('🔍 Starting development trial status logging (every 5 seconds)...');
-
-    this.developmentLoggingInterval = setInterval(async () => {
-      try {
-        const backendStatus = await this.getTrialStatusFromBackend(licenseKey, hardwareHash);
-        if (backendStatus) {
-          console.log('🔍 DEVELOPMENT TRIAL STATUS CHECK:', {
-            licenseKey: backendStatus.licenseKey,
-            isActive: backendStatus.isActive,
-            isExpired: backendStatus.isExpired,
-            daysRemaining: backendStatus.daysRemaining,
-            hoursRemaining: backendStatus.hoursRemaining,
-            minutesRemaining: backendStatus.minutesRemaining,
-            expiresAt: backendStatus.expiresAt,
-            timeRemaining: backendStatus.timeRemaining,
-            trialDuration: backendStatus.trialDuration,
-            timestamp: new Date().toISOString()
-          });
-        } else {
-          console.log('🔍 DEVELOPMENT TRIAL STATUS CHECK: Failed to get status from backend');
-        }
-      } catch (error) {
-        console.error('🔍 DEVELOPMENT TRIAL STATUS CHECK: Error:', error);
-      }
-    }, 5000); // Every 5 seconds
-  }
-
-  /**
-   * Stop development logging
-   */
-  private stopDevelopmentLogging(): void {
-    if (this.developmentLoggingInterval) {
-      clearInterval(this.developmentLoggingInterval);
-      this.developmentLoggingInterval = null;
-      console.log('🔍 Development trial status logging stopped');
-    }
-  }
+  // Development logging methods removed to prevent unnecessary API calls
+  // The trial now works offline using JWT token validation
 
   /**
    * Check if trial has expired

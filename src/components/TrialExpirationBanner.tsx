@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Lock, Clock, AlertTriangle, CreditCard, Shield, ChevronRight, Key, X } from "lucide-react";
-import { trialService } from "../utils/trialService";
+import { Lock, Clock, AlertTriangle, CreditCard, Shield, ChevronRight, Key } from "lucide-react";
 
 interface TrialExpirationBannerProps {
   trialInfo: {
