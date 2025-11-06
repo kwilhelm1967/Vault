@@ -91,9 +91,16 @@ export class TrialService {
     const licenseToken = localStorage.getItem(TrialService.LICENSE_TOKEN_KEY);
     const storedHardwareHash = localStorage.getItem('trial_hardware_hash');
 
-    
+    console.log('🔍 Trial Service Raw Data:', {
+      hasTrialBeenUsed,
+      licenseKey,
+      licenseToken: licenseToken ? 'EXISTS' : 'NULL',
+      storedHardwareHash,
+    });
+
     if (!hasTrialBeenUsed || !licenseKey) {
       // No trial started yet
+      console.log('📋 No trial started - returning default state');
       return {
         isTrialActive: false,
         daysRemaining: 0,
@@ -140,12 +147,21 @@ export class TrialService {
     if (licenseToken) {
       try {
         const tokenData = JSON.parse(atob(licenseToken.split('.')[1])); // Decode JWT payload
-        
+        console.log('🔍 Trial Service JWT Token Data:', tokenData);
+
         if (tokenData.isTrial && tokenData.trialExpiryDate) {
           const now = new Date();
           const expiryDate = new Date(tokenData.trialExpiryDate);
           const isExpired = now >= expiryDate; // Use >= to include exact expiry time
           const isActive = !isExpired;
+
+          console.log('🕐 Trial Time Check:', {
+            now: now.toISOString(),
+            expiryDate: expiryDate.toISOString(),
+            isExpired,
+            isActive,
+            timeDiffMs: now.getTime() - expiryDate.getTime(),
+          });
 
           // Calculate remaining time with seconds precision
           const remainingMs = Math.max(0, expiryDate.getTime() - now.getTime());
@@ -190,7 +206,47 @@ export class TrialService {
       }
     }
 
-    // Fallback: Return basic trial info (will be updated by backend calls)
+    // Fallback: If we have trial data but no license token, check if trial should be expired
+    const trialStartDate = localStorage.getItem(TrialService.TRIAL_START_KEY);
+    if (trialStartDate) {
+      const startDate = new Date(trialStartDate);
+      // In development mode, trials expire after minutes instead of days
+      const isDevMode = import.meta.env.DEV;
+      const trialDurationMs = isDevMode ? 5 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000; // 5 min dev vs 7 days prod
+      const expiryDate = new Date(startDate.getTime() + trialDurationMs);
+      const now = new Date();
+      const isExpired = now >= expiryDate;
+
+      console.log('🕐 Fallback Time Check:', {
+        trialStartDate: startDate.toISOString(),
+        expiryDate: expiryDate.toISOString(),
+        now: now.toISOString(),
+        isExpired,
+        isDevMode,
+        trialDurationMs,
+      });
+
+      return {
+        isTrialActive: !isExpired,
+        daysRemaining: isExpired ? 0 : Math.max(0, Math.floor((expiryDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))),
+        hoursRemaining: isExpired ? 0 : Math.max(0, Math.floor((expiryDate.getTime() - now.getTime()) / (60 * 60 * 1000))),
+        minutesRemaining: isExpired ? 0 : Math.max(0, Math.floor((expiryDate.getTime() - now.getTime()) / (60 * 1000))),
+        secondsRemaining: isExpired ? 0 : Math.max(0, Math.floor((expiryDate.getTime() - now.getTime()) / 1000)),
+        isExpired,
+        startDate,
+        endDate: expiryDate,
+        hasTrialBeenUsed: true,
+        timeRemaining: isExpired ? 'Trial expired' : `Checking trial status...`,
+        trialDurationDisplay: isDevMode ? '5 minutes' : '7 days',
+        licenseKey: licenseKey,
+        securityHash: null,
+        activationTime: startDate,
+        lastChecked: new Date(),
+      };
+    }
+
+    // Final fallback with no start date
+    console.log('📋 No trial start date found - returning basic info');
     return {
       isTrialActive: false,
       daysRemaining: 0,

@@ -101,7 +101,17 @@ export class LicenseService {
     const licenseInfo = this.getLicenseInfo();
     const trialInfo = await trialService.getTrialInfo();
 
-    
+    console.log('📊 App Status Check:', {
+      licenseInfo,
+      trialInfo: {
+        ...trialInfo,
+        // Show key info for debugging
+        hasTrialBeenUsed: trialInfo.hasTrialBeenUsed,
+        isExpired: trialInfo.isExpired,
+        isTrialActive: trialInfo.isTrialActive,
+      }
+    });
+
     // Check if user can use the app based on license or trial status
     let canUseApp = false;
     let requiresPurchase = false;
@@ -125,13 +135,24 @@ export class LicenseService {
     }
 
     
-    return {
+    const status = {
       isLicensed: licenseInfo.isValid,
       licenseInfo,
       trialInfo,
       canUseApp,
       requiresPurchase,
     };
+
+    console.log('📊 Final App Status:', {
+      isLicensed: status.isLicensed,
+      canUseApp: status.canUseApp,
+      requiresPurchase: status.requiresPurchase,
+      trialExpired: status.trialInfo.isExpired,
+      trialUsed: status.trialInfo.hasTrialBeenUsed,
+      trialActive: status.trialInfo.isTrialActive,
+    });
+
+    return status;
   }
 
   /**
@@ -169,8 +190,11 @@ export class LicenseService {
           if (tokenData.trialExpiryDate) {
             const trialExpiryDate = new Date(tokenData.trialExpiryDate);
             if (new Date() > trialExpiryDate) {
-              // Trial has expired, remove license
+              // Trial has expired, remove license and mark trial as expired
+              console.log('🚨 Trial expired in license service, marking trial as expired');
               this.removeLicense();
+              // Ensure trial service knows the trial has expired
+              trialService.endTrial();
               return {
                 isValid: false,
                 type: null,

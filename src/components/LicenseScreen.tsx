@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   Lock,
   Key,
@@ -22,44 +22,50 @@ interface LicenseScreenProps {
   onLicenseValid: () => void;
   showPricingPlans?: boolean;
   onHidePricingPlans?: () => void;
+  appStatus: AppLicenseStatus; // Receive appStatus as a prop
 }
 
 export const LicenseScreen: React.FC<LicenseScreenProps> = ({
   onLicenseValid,
   showPricingPlans = false,
   onHidePricingPlans,
+  appStatus, // Destructure appStatus
 }) => {
   const [licenseKey, setLicenseKey] = useState("");
   const [isActivating, setIsActivating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [appStatus, setAppStatus] = useState<AppLicenseStatus | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // const [appStatus, setAppStatus] = useState<AppLicenseStatus | null>(null); // Removed
+  // const [isLoading, setIsLoading] = useState(true); // Removed
 
-  // Initialize app status on mount
-  useEffect(() => {
-    const initAppStatus = async () => {
-      try {
-        const status = await licenseService.getAppStatus();
-        setAppStatus(status);
-      } catch (error) {
-        console.error('Error initializing app status:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    initAppStatus();
-  }, []);
+  // Initialize app status on mount - Removed
+  // useEffect(() => {
+  //   const initAppStatus = async () => {
+  //     try {
+  //       const status = await licenseService.getAppStatus();
+  //       setAppStatus(status);
+  //     } catch (error) {
+  //       console.error('Error initializing app status:', error);
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
+  //   initAppStatus();
+  // }, []);
 
   const updateAppStatus = useCallback(async () => {
     try {
-      const status = await licenseService.getAppStatus();
-      setAppStatus(status);
-      return status;
+      // We call onLicenseValid, which is updateAppStatus from App.tsx
+      // This will trigger a re-render with a new appStatus prop
+      onLicenseValid();
+      // No need to fetch status internally anymore
+      // const status = await licenseService.getAppStatus();
+      // setAppStatus(status);
+      // return status;
     } catch (error) {
       console.error('Error updating app status:', error);
       return null;
     }
-  }, []);
+  }, [onLicenseValid]);
   const [selectedPlan, setSelectedPlan] = useState<"single" | "family">(
     "single"
   );
@@ -72,6 +78,9 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
 
   const handleApplyLicenseKey = () => {
     setShowLicenseInput(true);
+    // Reset any previous errors when showing license input
+    setError(null);
+    setLicenseKey("");
     // Scroll to the license activation section
     setTimeout(() => {
       const licenseSection = document.getElementById(
@@ -83,19 +92,14 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
     }, 100);
   };
 
+  // Reset license input when trial expires
   useEffect(() => {
-    // Update app status every minute to check trial expiration
-    const interval = setInterval(async () => {
-      try {
-        const status = await licenseService.getAppStatus();
-        setAppStatus(status);
-      } catch (error) {
-        console.error('Error updating app status:', error);
-      }
-    }, 60000);
-
-    return () => clearInterval(interval);
-  }, []);
+    if (appStatus?.trialInfo?.isExpired && showLicenseInput) {
+      // Keep license input visible if user already clicked apply key
+      // But clear any previous errors
+      setError(null);
+    }
+  }, [appStatus?.trialInfo?.isExpired, showLicenseInput]);
 
   const handleActivateLicense = async () => {
     if (!licenseKey.trim()) {
@@ -228,7 +232,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
   };
 
   // Show loading state while app status is being determined
-  if (isLoading || !appStatus) {
+  if (!appStatus) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <div className="text-white text-center">
@@ -323,20 +327,47 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
             </p>
           </div>
 
-          {/* Advanced Trial Expiration Banner */}
-          <TrialExpirationBanner
-            trialInfo={appStatus?.trialInfo}
-            onApplyLicenseKey={handleApplyLicenseKey}
-          />
+          {/* Trial Expiration Banner - Always show when trial is expired */}
+          {(() => {
+            const shouldShowBanner = appStatus?.trialInfo?.isExpired;
+            console.log('🚨 Banner Render Check:', {
+              trialExpired: appStatus?.trialInfo?.isExpired,
+              shouldShowBanner,
+              trialInfo: appStatus?.trialInfo
+            });
+            return shouldShowBanner;
+          })() && (
+            <TrialExpirationBanner
+              trialInfo={appStatus.trialInfo}
+              onApplyLicenseKey={handleApplyLicenseKey}
+            />
+          )}
 
-          {/* License Activation - Hide when trial is expired */}
+          {/* License Activation - Hide when trial is expired unless user clicks apply key */}
           {!showPricingPlans ? (
             <div className="max-w-md mx-auto mb-8">
               {/* License Activation */}
               <div
                 id="license-activation-section"
                 className={`${
-                  showLicenseInput || !appStatus?.trialInfo?.isExpired
+                  // Debug logging
+                  (() => {
+                    console.log('🔧 License Screen Visibility Check:', {
+                      trialExpired: appStatus?.trialInfo?.isExpired,
+                      showLicenseInput,
+                      showPricingPlans,
+                      canUseApp: appStatus?.canUseApp,
+                      condition1: appStatus?.trialInfo?.isExpired && showLicenseInput,
+                      condition2: !appStatus?.trialInfo?.isExpired,
+                      shouldShow: (appStatus?.trialInfo?.isExpired && showLicenseInput) || !appStatus?.trialInfo?.isExpired
+                    });
+                    return '';
+                  })()
+                } ${
+                  // if trial is expired, only show if user clicks 'apply key'
+                  (appStatus?.trialInfo?.isExpired && showLicenseInput) ||
+                  // if trial is not expired (or not started), show it
+                  !appStatus?.trialInfo?.isExpired
                     ? "block"
                     : "hidden"
                 }`}

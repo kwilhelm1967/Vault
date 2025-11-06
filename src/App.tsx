@@ -674,6 +674,7 @@ function App() {
         onLicenseValid={updateAppStatus}
         showPricingPlans={showPricingPlans}
         onHidePricingPlans={() => setShowPricingPlans(false)}
+        appStatus={appStatus}
       />
     );
   }
@@ -703,6 +704,7 @@ function App() {
           onLicenseValid={updateAppStatus}
           showPricingPlans={showPricingPlans}
           onHidePricingPlans={() => setShowPricingPlans(false)}
+          appStatus={appStatus}
         />
       );
     }

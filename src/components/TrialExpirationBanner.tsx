@@ -32,14 +32,13 @@ export const TrialExpirationBanner: React.FC<TrialExpirationBannerProps> = ({ tr
     }
   };
 
+  // Don't show banner if trial hasn't been used at all
   if (!trialInfo.hasTrialBeenUsed) {
     return null;
   }
 
+  // Always show banner when trial is expired
   if (trialInfo.isExpired) {
-    // Always show expiration banner when trial is expired
-    // The banner itself includes the license activation option
-
     return (
       <div className="w-full max-w-4xl mx-auto mb-8">
         {/* Enhanced Expiration Alert with Countdown */}
