@@ -334,7 +334,7 @@ export class LicenseService {
 
         // Verify trial integrity if it's a trial license
         if (licenseType === 'trial') {
-          const integrityCheck = await this.verifyTrialIntegrity(cleanKey, hardwareId);
+          const integrityCheck = await this.verifyTrialIntegrity(cleanKey);
           if (!integrityCheck) {
             return {
               success: false,
@@ -415,7 +415,7 @@ export class LicenseService {
   /**
    * Verify trial integrity
    */
-  private async verifyTrialIntegrity(licenseKey: string, hardwareHash: string): Promise<boolean> {
+  private async verifyTrialIntegrity(licenseKey: string): Promise<boolean> {
     try {
       const storedHardwareHash = localStorage.getItem('trial_hardware_hash');
       const currentHardwareHash = await this.generateHardwareFingerprint();
