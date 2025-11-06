@@ -72,13 +72,16 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
             await window.electronAPI.syncVaultToFloating();
             // Load entries from shared storage
             const sharedEntries = await window.electronAPI.loadSharedEntries();
-            if (sharedEntries && sharedEntries.length > 0) {
+            if (sharedEntries) {
               console.log("Floating panel: Loaded shared entries:", sharedEntries.length);
-              onEntriesReload?.(sharedEntries.map((entry: any) => ({
-                ...entry,
-                createdAt: new Date(entry.createdAt),
-                updatedAt: new Date(entry.updatedAt),
-              })));
+              const mappedEntries = sharedEntries.length > 0
+                ? sharedEntries.map((entry: any) => ({
+                    ...entry,
+                    createdAt: new Date(entry.createdAt),
+                    updatedAt: new Date(entry.updatedAt),
+                  }))
+                : [];
+              onEntriesReload?.(mappedEntries);
             }
           }
         } catch (error) {
@@ -102,13 +105,16 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
         // Vault was unlocked in another window, reload data
         try {
           const sharedEntries = await window.electronAPI.loadSharedEntries();
-          if (sharedEntries && sharedEntries.length > 0) {
+          if (sharedEntries) {
             console.log("Floating panel: Reloaded entries after vault unlock:", sharedEntries.length);
-            onEntriesReload?.(sharedEntries.map((entry: any) => ({
-              ...entry,
-              createdAt: new Date(entry.createdAt),
-              updatedAt: new Date(entry.updatedAt),
-            })));
+            const mappedEntries = sharedEntries.length > 0
+              ? sharedEntries.map((entry: any) => ({
+                  ...entry,
+                  createdAt: new Date(entry.createdAt),
+                  updatedAt: new Date(entry.updatedAt),
+                }))
+              : [];
+            onEntriesReload?.(mappedEntries);
           }
         } catch (error) {
           console.error("Failed to handle vault unlock in floating panel:", error);
@@ -133,13 +139,17 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
         // Try to load from shared storage first (for updates from MainVault)
         if (window.electronAPI?.loadSharedEntries) {
           const sharedEntries = await window.electronAPI.loadSharedEntries();
-          if (sharedEntries && sharedEntries.length > 0) {
+          // Handle empty array case explicitly
+          if (sharedEntries) {
             console.log("Floating panel: Loaded entries from shared storage:", sharedEntries.length);
-            onEntriesReload?.(sharedEntries.map((entry: any) => ({
-              ...entry,
-              createdAt: new Date(entry.createdAt),
-              updatedAt: new Date(entry.updatedAt),
-            })));
+            const mappedEntries = sharedEntries.length > 0
+              ? sharedEntries.map((entry: any) => ({
+                  ...entry,
+                  createdAt: new Date(entry.createdAt),
+                  updatedAt: new Date(entry.updatedAt),
+                }))
+              : [];
+            onEntriesReload?.(mappedEntries);
             return;
           }
         }
@@ -148,7 +158,7 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
         if (storageService.isVaultUnlocked()) {
           console.log("Floating panel: Fallback - loading from localStorage");
           const loadedEntries = await storageService.loadEntries();
-          onEntriesReload?.(loadedEntries);
+          onEntriesReload?.(loadedEntries || []);
         }
       } catch (error) {
         console.error("Failed to reload entries in floating panel:", error);
@@ -564,7 +574,7 @@ const EntryItem: React.FC<EntryItemProps> = ({
     <div className="bg-gradient-to-br from-slate-800/50 via-slate-800/30 to-slate-700/40 backdrop-blur-sm rounded-xl p-4 mb-3 border border-slate-600/30 hover:border-slate-500/50 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-300 group relative">
       <div className={`flex items-start justify-between ${!isCollapsed && "mb-4"}`}>
         <div
-          className="flex items-center space-x-3 flex-1 min-w-0 cursor-pointer"
+          className="flex items-center flex-1 min-w-0 cursor-pointer"
           onClick={() => onToggleCollapsed(entry.id)}
         >
           <button className="p-1 text-slate-400 hover:text-white transition-colors">
