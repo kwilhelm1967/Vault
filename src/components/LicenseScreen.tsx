@@ -76,6 +76,54 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
   const [showDownloadPage, setShowDownloadPage] = useState(false);
   const [showLicenseInput, setShowLicenseInput] = useState(false);
 
+  // Get trial information from localStorage
+  const getTrialInfoFromLocalStorage = useCallback(() => {
+    try {
+      const trialUsed = localStorage.getItem('trial_used') === 'true';
+      const trialActivationTime = localStorage.getItem('trial_activation_time');
+      const trialExpiryTime = localStorage.getItem('trial_expiry_time');
+
+      if (!trialUsed || !trialActivationTime || !trialExpiryTime) {
+        return {
+          hasTrialBeenUsed: false,
+          isExpired: false,
+          isTrialActive: false,
+          daysRemaining: 0,
+          startDate: null,
+          endDate: null,
+        };
+      }
+
+      const startDate = new Date(trialActivationTime);
+      const endDate = new Date(trialExpiryTime);
+      const now = new Date();
+      const isExpired = now > endDate;
+      const isTrialActive = !isExpired;
+      const daysRemaining = Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+
+      return {
+        hasTrialBeenUsed: trialUsed,
+        isExpired,
+        isTrialActive,
+        daysRemaining,
+        startDate,
+        endDate,
+      };
+    } catch (error) {
+      console.error('Error reading trial info from localStorage:', error);
+      return {
+        hasTrialBeenUsed: false,
+        isExpired: false,
+        isTrialActive: false,
+        daysRemaining: 0,
+        startDate: null,
+        endDate: null,
+      };
+    }
+  }, []);
+
+  const localStorageTrialInfo = getTrialInfoFromLocalStorage();
+
   const handleApplyLicenseKey = () => {
 
     setShowLicenseInput(true);
@@ -95,12 +143,12 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
 
   // Reset license input when trial expires
   useEffect(() => {
-    if (appStatus?.trialInfo?.isExpired && showLicenseInput) {
+    if (localStorageTrialInfo.isExpired && showLicenseInput) {
       // Keep license input visible if user already clicked apply key
       // But clear any previous errors
       setError(null);
     }
-  }, [appStatus?.trialInfo?.isExpired, showLicenseInput]);
+  }, [localStorageTrialInfo.isExpired, showLicenseInput]);
 
   const handleActivateLicense = async () => {
 
@@ -328,14 +376,10 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
             </p>
           </div>
 
-          {/* Trial Expiration Banner - Always show when trial is expired */}
-          {(() => {
-            const shouldShowBanner = appStatus?.trialInfo?.isExpired;
-
-            return shouldShowBanner;
-          })() && (
+          {/* Trial Expiration Banner - Show based on localStorage trial data */}
+          {localStorageTrialInfo.hasTrialBeenUsed && (
             <TrialExpirationBanner
-              trialInfo={appStatus.trialInfo}
+              trialInfo={localStorageTrialInfo}
               onApplyLicenseKey={handleApplyLicenseKey}
             />
           )}
@@ -347,15 +391,10 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
               <div
                 id="license-activation-section"
                 className={`${
-                  // Debug logging
-                  (() => {
-                    return '';
-                  })()
-                } ${
                   // if trial is expired, only show if user clicks 'apply key'
-                  (appStatus?.trialInfo?.isExpired && showLicenseInput) ||
+                  (localStorageTrialInfo.isExpired && showLicenseInput) ||
                   // if trial is not expired (or not started), show it
-                  !appStatus?.trialInfo?.isExpired
+                  !localStorageTrialInfo.isExpired
                     ? "block"
                     : "hidden"
                 }`}
