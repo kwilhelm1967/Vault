@@ -1,5 +1,15 @@
 import React, { useState, useRef, useEffect } from "react";
-import { X, RefreshCw, Copy, Eye, EyeOff, Trash2, Save, ChevronDown, Check } from "lucide-react";
+import {
+  X,
+  RefreshCw,
+  Copy,
+  Eye,
+  EyeOff,
+  Trash2,
+  Save,
+  ChevronDown,
+  Check,
+} from "lucide-react";
 import { PasswordEntry, Category } from "../types";
 import { storageService } from "../utils/storage";
 
@@ -33,6 +43,12 @@ export const EntryForm: React.FC<EntryFormProps> = ({
   const [copySuccess, setCopySuccess] = useState(false);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{
+    accountName?: string;
+    username?: string;
+    password?: string;
+    category?: string;
+  }>({});
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const generatePassword = () => {
@@ -57,67 +73,94 @@ export const EntryForm: React.FC<EntryFormProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setShowCategoryDropdown(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFieldErrors({});
 
-    if (
-      formData.accountName.trim() &&
-      formData.username.trim() &&
-      formData.password.trim() &&
-      formData.category
-    ) {
+    const errors: {
+      accountName?: string;
+      username?: string;
+      password?: string;
+      category?: string;
+    } = {};
+
+    if (!formData.accountName.trim()) {
+      errors.accountName = "Account name is required";
+    }
+
+    if (!formData.username.trim()) {
+      errors.username = "Username/Email is required";
+    }
+
+    if (!formData.password.trim()) {
+      errors.password = "Password is required";
+    }
+
+    if (!formData.category) {
+      errors.category = "Please select a category";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+
+    try {
+      const entryData = {
+        ...formData,
+        accountName: formData.accountName.trim(),
+        username: formData.username.trim(),
+        password: formData.password.trim(),
+        notes: formData.notes?.trim() || "",
+        balance: formData.balance?.trim() || "",
+      };
+
+      // Submit to parent component
+      await onSubmit(entryData);
+
+      // Enhanced synchronization - ensure floating panel gets updates
       try {
-        const entryData = {
-          ...formData,
-          accountName: formData.accountName.trim(),
-          username: formData.username.trim(),
-          password: formData.password.trim(),
-          notes: formData.notes?.trim() || "",
-          balance: formData.balance?.trim() || "",
-        };
+        // Small delay to ensure storage has processed the changes
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
-        // Submit to parent component
-        await onSubmit(entryData);
+        // Save current entries to temporary shared storage for floating panel
+        const currentEntries = await storageService.loadEntries();
+        if (window.electronAPI?.saveSharedEntries) {
+          await window.electronAPI.saveSharedEntries(currentEntries);
+          console.log(
+            "EntryForm: Saved entries to shared storage for floating panel"
+          );
+        }
 
-        // Enhanced synchronization - ensure floating panel gets updates
-        try {
-          // Small delay to ensure storage has processed the changes
-          await new Promise(resolve => setTimeout(resolve, 100));
+        // Force immediate cross-window sync after saving
+        if (window.electronAPI?.broadcastEntriesChanged) {
+          await window.electronAPI.broadcastEntriesChanged();
+          console.log("EntryForm: Broadcasted entries changed event");
+        }
 
-          // Save current entries to temporary shared storage for floating panel
-          const currentEntries = await storageService.loadEntries();
-          if (window.electronAPI?.saveSharedEntries) {
-            await window.electronAPI.saveSharedEntries(currentEntries);
-            console.log("EntryForm: Saved entries to shared storage for floating panel");
-          }
-
-          // Force immediate cross-window sync after saving
-          if (window.electronAPI?.broadcastEntriesChanged) {
-            await window.electronAPI.broadcastEntriesChanged();
-            console.log("EntryForm: Broadcasted entries changed event");
-          }
-
-          // Also trigger sync to floating panel if available
-          if (window.electronAPI?.syncVaultToFloating) {
-            await window.electronAPI.syncVaultToFloating();
-            console.log("EntryForm: Synced vault to floating panel");
-          }
-        } catch (error) {
-          console.error("EntryForm: Failed to synchronize entries:", error);
+        // Also trigger sync to floating panel if available
+        if (window.electronAPI?.syncVaultToFloating) {
+          await window.electronAPI.syncVaultToFloating();
+          console.log("EntryForm: Synced vault to floating panel");
         }
       } catch (error) {
-        console.error("Error submitting form:", error);
-        // Don't crash the app, just log the error
+        console.error("EntryForm: Failed to synchronize entries:", error);
       }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      setFieldErrors({ accountName: "Failed to save entry. Please try again." });
     }
   };
 
@@ -135,28 +178,37 @@ export const EntryForm: React.FC<EntryFormProps> = ({
         // Enhanced synchronization - ensure floating panel gets updates after delete
         try {
           // Small delay to ensure storage has processed the changes
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise((resolve) => setTimeout(resolve, 100));
 
           // Save current entries to temporary shared storage for floating panel
           const currentEntries = await storageService.loadEntries();
           if (window.electronAPI?.saveSharedEntries) {
             await window.electronAPI.saveSharedEntries(currentEntries);
-            console.log("EntryForm: Saved entries to shared storage for floating panel after delete");
+            console.log(
+              "EntryForm: Saved entries to shared storage for floating panel after delete"
+            );
           }
 
           // Force immediate cross-window sync after saving
           if (window.electronAPI?.broadcastEntriesChanged) {
             await window.electronAPI.broadcastEntriesChanged();
-            console.log("EntryForm: Broadcasted entries changed event after delete");
+            console.log(
+              "EntryForm: Broadcasted entries changed event after delete"
+            );
           }
 
           // Also trigger sync to floating panel if available
           if (window.electronAPI?.syncVaultToFloating) {
             await window.electronAPI.syncVaultToFloating();
-            console.log("EntryForm: Synced vault to floating panel after delete");
+            console.log(
+              "EntryForm: Synced vault to floating panel after delete"
+            );
           }
         } catch (error) {
-          console.error("EntryForm: Failed to synchronize entries after delete:", error);
+          console.error(
+            "EntryForm: Failed to synchronize entries after delete:",
+            error
+          );
         }
       } catch (error) {
         console.error("Error deleting entry:", error);
@@ -195,55 +247,82 @@ export const EntryForm: React.FC<EntryFormProps> = ({
           {/* Account Name */}
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">
-              Account Name
+              Account Name <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
               value={formData.accountName}
-              onChange={(e) =>
+              onChange={(e) => {
                 setFormData((prev) => ({
                   ...prev,
                   accountName: e.target.value,
-                }))
-              }
-              className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm"
+                }));
+                if (fieldErrors.accountName && e.target.value.trim()) {
+                  setFieldErrors(prev => ({ ...prev, accountName: undefined }));
+                }
+              }}
+              className={`w-full px-4 py-3 rounded-xl text-white placeholder-slate-400 focus:outline-none transition-all text-sm ${
+                fieldErrors.accountName
+                  ? "bg-red-900/20 border-2 border-red-500/50 focus:border-red-500/70 focus:ring-2 focus:ring-red-500/20"
+                  : "bg-slate-700/50 border border-slate-600/50 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
+              }`}
               placeholder="e.g., Gmail, Bank of America"
-              required
             />
+            {fieldErrors.accountName && (
+              <p className="mt-1 text-xs text-red-400 font-medium">{fieldErrors.accountName}</p>
+            )}
           </div>
 
           {/* Username */}
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">
-              Username/Email
+              Username/Email <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
               value={formData.username}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, username: e.target.value }))
-              }
-              className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm"
+              onChange={(e) => {
+                setFormData((prev) => ({ ...prev, username: e.target.value }));
+                if (fieldErrors.username && e.target.value.trim()) {
+                  setFieldErrors(prev => ({ ...prev, username: undefined }));
+                }
+              }}
+              className={`w-full px-4 py-3 rounded-xl text-white placeholder-slate-400 focus:outline-none transition-all text-sm ${
+                fieldErrors.username
+                  ? "bg-red-900/20 border-2 border-red-500/50 focus:border-red-500/70 focus:ring-2 focus:ring-red-500/20"
+                  : "bg-slate-700/50 border border-slate-600/50 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
+              }`}
               placeholder="username@example.com"
-              required
             />
+            {fieldErrors.username && (
+              <p className="mt-1 text-xs text-red-400 font-medium">{fieldErrors.username}</p>
+            )}
           </div>
 
           {/* Password */}
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">
-              Password
+              Password <span className="text-red-400">*</span>
             </label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
                 value={formData.password}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, password: e.target.value }))
-                }
-                className="w-full px-4 py-3 pr-32 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm"
+                onChange={(e) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    password: e.target.value,
+                  }));
+                  if (fieldErrors.password && e.target.value.trim()) {
+                    setFieldErrors(prev => ({ ...prev, password: undefined }));
+                  }
+                }}
+                className={`w-full px-4 py-3 pr-32 rounded-xl text-white placeholder-slate-400 focus:outline-none transition-all text-sm ${
+                  fieldErrors.password
+                    ? "bg-red-900/20 border-2 border-red-500/50 focus:border-red-500/70 focus:ring-2 focus:ring-red-500/20"
+                    : "bg-slate-700/50 border border-slate-600/50 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
+                }`}
                 placeholder="Enter password"
-                required
               />
               <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center space-x-1">
                 <button
@@ -280,27 +359,41 @@ export const EntryForm: React.FC<EntryFormProps> = ({
                 <span>Generate Password</span>
               </button>
             </div>
+
+            {fieldErrors.password && (
+              <p className="mt-1 text-xs text-red-400 font-medium">{fieldErrors.password}</p>
+            )}
           </div>
 
           {/* Category */}
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">
-              Category
+              Category <span className="text-red-400">*</span>
             </label>
             <div ref={dropdownRef} className="relative">
               <button
                 type="button"
                 onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm flex items-center justify-between text-left"
+                className={`w-full px-4 py-3 rounded-xl text-white focus:outline-none transition-all text-sm flex items-center justify-between text-left ${
+                  fieldErrors.category
+                    ? "bg-red-900/20 border-2 border-red-500/50 focus:border-red-500/70 focus:ring-2 focus:ring-red-500/20"
+                    : "bg-slate-700/50 border border-slate-600/50 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
+                }`}
               >
-                <span className={formData.category ? "text-white" : "text-slate-400"}>
-                  {formData.category
-                    ? categories.find(c => c.id === formData.category)?.name || "Select a category"
-                    : "Select a category"
+                <span
+                  className={
+                    formData.category ? "text-white" : "text-slate-400"
                   }
+                >
+                  {formData.category
+                    ? categories.find((c) => c.id === formData.category)
+                        ?.name || "Select a category"
+                    : "Select a category"}
                 </span>
                 <ChevronDown
-                  className={`w-4 h-4 transition-transform duration-200 ${showCategoryDropdown ? 'rotate-180' : ''}`}
+                  className={`w-4 h-4 transition-transform duration-200 ${
+                    showCategoryDropdown ? "rotate-180" : ""
+                  }`}
                 />
               </button>
 
@@ -314,8 +407,14 @@ export const EntryForm: React.FC<EntryFormProps> = ({
                           key={category.id}
                           type="button"
                           onClick={() => {
-                            setFormData((prev) => ({ ...prev, category: category.id }));
+                            setFormData((prev) => ({
+                              ...prev,
+                              category: category.id,
+                            }));
                             setShowCategoryDropdown(false);
+                            if (fieldErrors.category) {
+                              setFieldErrors(prev => ({ ...prev, category: undefined }));
+                            }
                           }}
                           className={`w-full px-3 py-2 text-left text-sm rounded-lg transition-all flex items-center justify-between ${
                             formData.category === category.id
@@ -331,6 +430,10 @@ export const EntryForm: React.FC<EntryFormProps> = ({
                       ))}
                   </div>
                 </div>
+              )}
+
+              {fieldErrors.category && (
+                <p className="mt-1 text-xs text-red-400 font-medium">{fieldErrors.category}</p>
               )}
             </div>
           </div>
