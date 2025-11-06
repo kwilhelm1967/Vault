@@ -44,8 +44,6 @@ const useAppStatus = () => {
 
   // Handle trial expiration with immediate redirect
   const handleTrialExpiration = useCallback(() => {
-    console.log("🚨 TRIAL EXPIRED - Redirecting to license page");
-
     // Force multiple immediate updates to ensure redirect happens
     setTimeout(() => updateAppStatus(), 0);
     setTimeout(() => updateAppStatus(), 10);
@@ -58,7 +56,6 @@ const useAppStatus = () => {
 
     // Disable further checking after a few confirmations
     setTimeout(() => {
-      console.log("🛑 Disabling further trial checks - expiration confirmed");
       setCheckingEnabled(false);
     }, 10000); // Stop checking after 10 seconds
   }, [updateAppStatus]);
@@ -69,7 +66,6 @@ const useAppStatus = () => {
 
     // If trial has expired and we're not on license screen, force redirect
     if (currentStatus.trialInfo.isExpired && currentStatus.canUseApp) {
-      console.log("🔄 FORCING STATUS UPDATE FOR EXPIRED TRIAL");
       // Force the license service to re-evaluate status
       setAppStatus({
         ...currentStatus,
@@ -95,7 +91,6 @@ const useAppStatus = () => {
       // Force immediate lock if trial expired
       const currentStatus = await licenseService.getAppStatus();
       if (currentStatus.trialInfo.isExpired && currentStatus.canUseApp) {
-        console.log("🚨 FORCE LOCK: Trial expired but app still accessible - forcing lock");
         // Force multiple status updates to ensure lock
         for (let i = 0; i < 3; i++) {
           setTimeout(() => {
@@ -106,7 +101,6 @@ const useAppStatus = () => {
 
       // If expiration detected 3+ times, stop checking
       if (expirationDetected && trialService.isExpirationConfirmed()) {
-        console.log("✅ Expiration confirmed multiple times - stopping checks");
         setCheckingEnabled(false);
       }
     }, checkInterval) : null;
@@ -668,7 +662,6 @@ function App() {
 
   // License screen - Check both canUseApp and trial expiration
   if (!appStatus.canUseApp || appStatus.trialInfo.isExpired) {
-    console.log("📱 Showing license screen - canUseApp:", appStatus.canUseApp, "trialExpired:", appStatus.trialInfo.isExpired);
     return (
       <LicenseScreen
         onLicenseValid={updateAppStatus}
@@ -698,7 +691,6 @@ function App() {
   if (isLocked) {
     // Double-check trial status before showing login screen
     if (appStatus.trialInfo.isExpired) {
-      console.log("🚫 BLOCKING LOGIN SCREEN - Trial expired, redirecting to license");
       return (
         <LicenseScreen
           onLicenseValid={updateAppStatus}

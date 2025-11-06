@@ -101,17 +101,6 @@ export class LicenseService {
     const licenseInfo = this.getLicenseInfo();
     const trialInfo = await trialService.getTrialInfo();
 
-    console.log('📊 App Status Check:', {
-      licenseInfo,
-      trialInfo: {
-        ...trialInfo,
-        // Show key info for debugging
-        hasTrialBeenUsed: trialInfo.hasTrialBeenUsed,
-        isExpired: trialInfo.isExpired,
-        isTrialActive: trialInfo.isTrialActive,
-      }
-    });
-
     // Check if user can use the app based on license or trial status
     let canUseApp = false;
     let requiresPurchase = false;
@@ -142,15 +131,6 @@ export class LicenseService {
       canUseApp,
       requiresPurchase,
     };
-
-    console.log('📊 Final App Status:', {
-      isLicensed: status.isLicensed,
-      canUseApp: status.canUseApp,
-      requiresPurchase: status.requiresPurchase,
-      trialExpired: status.trialInfo.isExpired,
-      trialUsed: status.trialInfo.hasTrialBeenUsed,
-      trialActive: status.trialInfo.isTrialActive,
-    });
 
     return status;
   }
@@ -186,12 +166,10 @@ export class LicenseService {
         const storedData = localStorage.getItem('license_token');
         if (storedData) {
           const tokenData = JSON.parse(atob(storedData.split('.')[1])); // Decode JWT payload
-          console.log('🔍 License Service JWT Token Data:', tokenData);
           if (tokenData.trialExpiryDate) {
             const trialExpiryDate = new Date(tokenData.trialExpiryDate);
             if (new Date() > trialExpiryDate) {
               // Trial has expired, remove license and mark trial as expired
-              console.log('🚨 Trial expired in license service, marking trial as expired');
               this.removeLicense();
               // Ensure trial service knows the trial has expired
               trialService.endTrial();
@@ -247,7 +225,6 @@ export class LicenseService {
         // Check if the trial has expired
         const trialInfo = await trialService.getTrialInfo();
         if (trialInfo.isExpired) {
-          console.log('🚨 Attempting to reactivate expired trial key:', cleanKey);
           return {
             success: false,
             error: "Your trial period has expired. This trial license key can only be used once. Please purchase a license to continue using the app."
@@ -278,7 +255,6 @@ export class LicenseService {
         );
 
         const result = await response.json();
-        console.log(result);
 
         if (!response.ok) {
           if (response.status === 404) {
@@ -332,8 +308,6 @@ export class LicenseService {
 
           // If this is a trial license, initialize the local trial service with backend data
           if (licenseType === 'trial' && result.data) {
-            console.log('🎯 Initializing trial with backend data:', result.data);
-
             // Verify backend response matches security requirements
             if (result.data.isNewActivation) {
               // Store additional security information
@@ -344,9 +318,6 @@ export class LicenseService {
             // For trial licenses, start the backend-dependent trial service
             // The trial service will fetch status from the backend API
             try {
-              const trialInfo = await trialService.startTrial(cleanKey, hardwareId);
-              console.log('🎯 Trial service started, returned info:', trialInfo);
-
               // Store encrypted trial data for additional security
               this.storeSecureTrialData(result.data, cleanKey, hardwareId);
             } catch (error) {
@@ -392,7 +363,6 @@ export class LicenseService {
 
       // Only end trial for non-trial licenses
       if (licenseType !== 'trial') {
-        console.log('🧹 Clearing trial data for paid license activation');
         trialService.endTrial();
 
         // Also clear any remaining trial-related localStorage items
@@ -457,7 +427,7 @@ export class LicenseService {
       }
 
       // Verify license key matches
-      const storedLicenseKey = localStorage.getItem(TrialService.TRIAL_LICENSE_KEY);
+      const storedLicenseKey = localStorage.getItem('trial_license_key');
       if (storedLicenseKey !== licenseKey) {
         console.error('Trial integrity check failed: license key mismatch');
         return false;

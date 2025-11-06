@@ -78,7 +78,6 @@ export class TrialService {
 
     // Get initial trial status from backend
     const trialInfo = await this.getTrialInfo();
-    console.log('🎯 Trial started, backend status:', trialInfo);
     return trialInfo;
   }
 
@@ -91,19 +90,11 @@ export class TrialService {
     const licenseToken = localStorage.getItem(TrialService.LICENSE_TOKEN_KEY);
     const storedHardwareHash = localStorage.getItem('trial_hardware_hash');
 
-    console.log('🔍 Trial Service Raw Data:', {
-      hasTrialBeenUsed,
-      licenseKey,
-      licenseToken: licenseToken ? 'EXISTS' : 'NULL',
-      storedHardwareHash,
-    });
-
     // Check if user has a valid non-trial license - if so, return no trial state
     if (licenseToken) {
       try {
         const tokenData = JSON.parse(atob(licenseToken.split('.')[1]));
         if (tokenData.planType && tokenData.planType !== 'trial') {
-          console.log('💎 User has valid paid license - returning no trial state');
           // Clear any remaining trial data
           localStorage.removeItem(TrialService.TRIAL_USED_KEY);
           localStorage.removeItem(TrialService.TRIAL_LICENSE_KEY);
@@ -133,7 +124,6 @@ export class TrialService {
 
     if (!hasTrialBeenUsed || !licenseKey) {
       // No trial started yet
-      console.log('📋 No trial started - returning default state');
       return {
         isTrialActive: false,
         daysRemaining: 0,
@@ -180,7 +170,6 @@ export class TrialService {
     if (licenseToken) {
       try {
         const tokenData = JSON.parse(atob(licenseToken.split('.')[1])); // Decode JWT payload
-        console.log('🔍 Trial Service JWT Token Data:', tokenData);
 
         if (tokenData.isTrial && tokenData.trialExpiryDate) {
           const now = new Date();
@@ -188,13 +177,6 @@ export class TrialService {
           const isExpired = now >= expiryDate; // Use >= to include exact expiry time
           const isActive = !isExpired;
 
-          console.log('🕐 Trial Time Check:', {
-            now: now.toISOString(),
-            expiryDate: expiryDate.toISOString(),
-            isExpired,
-            isActive,
-            timeDiffMs: now.getTime() - expiryDate.getTime(),
-          });
 
           // Calculate remaining time with seconds precision
           const remainingMs = Math.max(0, expiryDate.getTime() - now.getTime());
@@ -250,14 +232,6 @@ export class TrialService {
       const now = new Date();
       const isExpired = now >= expiryDate;
 
-      console.log('🕐 Fallback Time Check:', {
-        trialStartDate: startDate.toISOString(),
-        expiryDate: expiryDate.toISOString(),
-        now: now.toISOString(),
-        isExpired,
-        isDevMode,
-        trialDurationMs,
-      });
 
       return {
         isTrialActive: !isExpired,
@@ -279,7 +253,6 @@ export class TrialService {
     }
 
     // Final fallback with no start date
-    console.log('📋 No trial start date found - returning basic info');
     return {
       isTrialActive: false,
       daysRemaining: 0,
@@ -368,16 +341,10 @@ export class TrialService {
   async checkAndHandleExpiration(): Promise<boolean> {
     const trialInfo = await this.getTrialInfo();
 
-    console.log('🔍 Expiration Check:', {
-      trialInfo,
-      expirationConfirmed: this.expirationConfirmed
-    });
-
     // If trial is not used or not expired, no need to check further
     if (!trialInfo.hasTrialBeenUsed || !trialInfo.isExpired) {
       // Reset expiration confirmation if trial is somehow valid again
       if (this.expirationConfirmed && !trialInfo.isExpired) {
-        console.log('🔄 Trial is valid again, resetting expiration confirmation');
         this.expirationConfirmed = false;
         this.expirationConfirmationCount = 0;
       }
@@ -387,16 +354,13 @@ export class TrialService {
     // If expiration is confirmed, limit further checking
     if (this.expirationConfirmed) {
       this.expirationConfirmationCount++;
-      console.log(`🔍 Expiration confirmed check #${this.expirationConfirmationCount} (max 3)`);
 
       // Only verify 2-3 times after initial confirmation
       if (this.expirationConfirmationCount >= 3) {
-        console.log("✅ Expiration fully confirmed - stopping further checks");
         return true;
       }
     } else {
       // First time detecting expiration
-      console.log("🚨 TRIAL EXPIRATION DETECTED - Triggering callbacks");
       this.expirationConfirmed = true;
       this.expirationConfirmationCount = 1;
       this.triggerExpirationCallbacks();
@@ -418,7 +382,6 @@ export class TrialService {
   resetExpirationConfirmation(): void {
     this.expirationConfirmed = false;
     this.expirationConfirmationCount = 0;
-    console.log("🔄 Expiration confirmation reset");
   }
 
   /**
@@ -459,8 +422,6 @@ export class TrialService {
     // Reset expiration tracking
     this.expirationConfirmed = false;
     this.expirationConfirmationCount = 0;
-
-    console.log("🔄 TRIAL RESET - Development logging stopped");
   }
 
   /**
@@ -476,7 +437,6 @@ export class TrialService {
     // Trigger expiration callbacks since trial ended
     this.triggerExpirationCallbacks();
 
-    console.log("🛑 TRIAL ENDED - Development logging stopped - Expiration callbacks triggered");
   }
 
   /**
@@ -519,7 +479,6 @@ export class TrialService {
    * Trigger all expiration callbacks
    */
   private triggerExpirationCallbacks(): void {
-    console.log("🚨 TRIGGERING TRIAL EXPIRATION CALLBACKS");
     this.expirationCallbacks.forEach(callback => {
       try {
         callback();

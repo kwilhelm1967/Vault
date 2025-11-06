@@ -330,11 +330,6 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
           {/* Trial Expiration Banner - Always show when trial is expired */}
           {(() => {
             const shouldShowBanner = appStatus?.trialInfo?.isExpired;
-            console.log('🚨 Banner Render Check:', {
-              trialExpired: appStatus?.trialInfo?.isExpired,
-              shouldShowBanner,
-              trialInfo: appStatus?.trialInfo
-            });
             return shouldShowBanner;
           })() && (
             <TrialExpirationBanner
