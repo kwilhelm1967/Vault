@@ -456,6 +456,39 @@ const createFloatingWindow = () => {
 // Create floating button window
 const createFloatingButton = () => {
   try {
+    // SECURITY: Check trial status before creating floating button
+    const fs = require('fs');
+    const path = require('path');
+    const userDataPath = app.getPath("userData");
+    const trialInfoPath = path.join(userDataPath, 'trial-info.json');
+
+    let isTrialExpired = false;
+    let hasValidLicense = false;
+
+    // Check if user has valid license (non-trial)
+    try {
+      if (fs.existsSync(trialInfoPath)) {
+        const trialData = JSON.parse(fs.readFileSync(trialInfoPath, 'utf8'));
+        if (trialData.expiryTime) {
+          const now = new Date();
+          const expiry = new Date(trialData.expiryTime);
+          isTrialExpired = now > expiry;
+        }
+        // Check if they have a valid non-trial license
+        hasValidLicense = trialData.hasValidLicense === true;
+      }
+    } catch (error) {
+      console.error('Error checking trial status for floating button creation:', error);
+      // If we can't check, assume trial is expired for security
+      isTrialExpired = true;
+    }
+
+    // SECURITY: Do not create floating button if trial is expired AND no valid license
+    if (isTrialExpired && !hasValidLicense) {
+      console.log("SECURITY: Floating button creation blocked - trial expired and no valid license");
+      return null;
+    }
+
     if (floatingButton) {
       if (floatingButton.isMinimized() || !floatingButton.isVisible()) {
         floatingButton.restore();
@@ -839,12 +872,98 @@ app.whenReady().then(() => {
   // SECURITY FIX: Don't create floating button automatically
   // It should only be created when vault is unlocked
 
+  // TRIAL SECURITY: Start periodic trial validation
+  let trialValidationInterval = setInterval(() => {
+    validateAndEnforceTrialStatus();
+  }, 30000); // Check every 30 seconds
+
+  // Clear interval when app quits
+  app.on('will-quit', () => {
+    if (trialValidationInterval) {
+      clearInterval(trialValidationInterval);
+      trialValidationInterval = null;
+    }
+  });
+
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
     }
   });
 });
+
+// TRIAL SECURITY: Periodic trial validation function
+const validateAndEnforceTrialStatus = () => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const userDataPath = app.getPath("userData");
+    const trialInfoPath = path.join(userDataPath, 'trial-info.json');
+
+    let isTrialExpired = false;
+    let hasValidLicense = false;
+
+    // Check trial status
+    if (fs.existsSync(trialInfoPath)) {
+      try {
+        const trialData = JSON.parse(fs.readFileSync(trialInfoPath, 'utf8'));
+        if (trialData.expiryTime) {
+          const now = new Date();
+          const expiry = new Date(trialData.expiryTime);
+          isTrialExpired = now > expiry;
+        }
+        hasValidLicense = trialData.hasValidLicense === true;
+      } catch (error) {
+        console.error('Error in periodic trial validation:', error);
+        isTrialExpired = true; // Assume expired for security
+      }
+    }
+
+    // SECURITY: If trial is expired and no valid license, enforce restrictions
+    if (isTrialExpired && !hasValidLicense) {
+      console.log("PERIODIC CHECK: Trial expired - enforcing restrictions");
+
+      // Force destroy floating button if it exists
+      if (floatingButton && !floatingButton.isDestroyed()) {
+        console.log("Destroying floating button due to trial expiration");
+        try {
+          floatingButton.removeAllListeners();
+          floatingButton.destroy();
+        } catch (error) {
+          console.error('Error destroying floating button:', error);
+        }
+        floatingButton = null;
+      }
+
+      // Force close floating window if it exists
+      if (floatingWindow && !floatingWindow.isDestroyed()) {
+        console.log("Closing floating window due to trial expiration");
+        try {
+          floatingWindow.close();
+        } catch (error) {
+          console.error('Error closing floating window:', error);
+        }
+        floatingWindow = null;
+      }
+
+      // Lock vault if it's unlocked
+      if (isVaultUnlocked) {
+        console.log("Locking vault due to trial expiration");
+        isVaultUnlocked = false;
+
+        // Send lock message to all windows
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send("lock-vault");
+        }
+        if (floatingWindow && !floatingWindow.isDestroyed()) {
+          floatingWindow.webContents.send("lock-vault");
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error in periodic trial validation:', error);
+  }
+};
 
 app.on("window-all-closed", () => {
   console.log("All windows closed! Platform:", process.platform);
@@ -1059,7 +1178,7 @@ ipcMain.handle("save-floating-panel-position", (event, x, y) => {
 
 // Vault status handlers
 const vaultHandlers = {
-  "vault-unlocked": () => {
+  "vault-unlocked": async () => {
     try {
       console.log("Vault unlocked");
       isVaultUnlocked = true;
@@ -1067,7 +1186,47 @@ const vaultHandlers = {
       mainWindow?.webContents.send("vault-status-changed", isVaultUnlocked);
       floatingWindow?.webContents.send("vault-status-changed", isVaultUnlocked);
       floatingButton?.webContents.send("vault-status-changed", isVaultUnlocked);
-      // Show floating button when vault is unlocked
+
+      // TRIAL SECURITY: Check trial status before creating floating button
+      const fs = require('fs');
+      const path = require('path');
+      const userDataPath = app.getPath("userData");
+      const trialInfoPath = path.join(userDataPath, 'trial-info.json');
+
+      let isTrialExpired = false;
+      let hasValidLicense = false;
+
+      // Check if user has valid license (non-trial)
+      try {
+        if (fs.existsSync(trialInfoPath)) {
+          const trialData = JSON.parse(fs.readFileSync(trialInfoPath, 'utf8'));
+          if (trialData.expiryTime) {
+            const now = new Date();
+            const expiry = new Date(trialData.expiryTime);
+            isTrialExpired = now > expiry;
+          }
+          // Check if they have a valid non-trial license
+          hasValidLicense = trialData.hasValidLicense === true;
+        }
+      } catch (error) {
+        console.error('Error checking trial status for floating button:', error);
+        // If we can't check, assume trial is expired for security
+        isTrialExpired = true;
+      }
+
+      // SECURITY: Only create floating button if trial is NOT expired OR user has valid license
+      if (isTrialExpired && !hasValidLicense) {
+        console.log("Trial expired and no valid license - NOT creating floating button");
+        // Force cleanup any existing floating button
+        if (floatingButton && !floatingButton.isDestroyed()) {
+          floatingButton.removeAllListeners();
+          floatingButton.destroy();
+          floatingButton = null;
+        }
+        return true;
+      }
+
+      // Show floating button when vault is unlocked and trial is valid
       // Force cleanup before creation to prevent overlap or race conditions
       if (floatingButton && !floatingButton.isDestroyed()) {
         floatingButton.removeAllListeners();
@@ -1076,7 +1235,7 @@ const vaultHandlers = {
       }
 
       if (!floatingButton || floatingButton.isDestroyed()) {
-        console.log("Creating floating button for unlocked vault...");
+        console.log("Creating floating button for unlocked vault (valid trial/license)...");
         floatingButton = createFloatingButton();
       }
       return true;
@@ -1374,6 +1533,96 @@ ipcMain.handle("get-vault-status", () => {
 ipcMain.handle("vault-exists", () => {
   if (!secureStorage) return false;
   return secureStorage.vaultExists();
+});
+
+// TRIAL: Check if trial has expired
+ipcMain.handle("is-trial-expired", () => {
+  try {
+    // Check localStorage for trial status via renderer process
+    // Since we're in main process, we need to validate through the license service
+    // This is a simplified check - the main validation happens in renderer
+
+    // For now, we'll use a basic check of trial activation time
+    // In a real implementation, you might want to store trial expiry in a secure location
+    const fs = require('fs');
+    const path = require('path');
+    const userDataPath = app.getPath("userData");
+    const trialInfoPath = path.join(userDataPath, 'trial-info.json');
+
+    if (fs.existsSync(trialInfoPath)) {
+      try {
+        const trialData = JSON.parse(fs.readFileSync(trialInfoPath, 'utf8'));
+        if (trialData.expiryTime) {
+          const now = new Date();
+          const expiry = new Date(trialData.expiryTime);
+          return now > expiry;
+        }
+      } catch (error) {
+        console.error('Error reading trial info:', error);
+      }
+    }
+
+    // If no trial info found, assume trial is not expired
+    return false;
+  } catch (error) {
+    console.error('Error checking trial status:', error);
+    return false;
+  }
+});
+
+// TRIAL: Check trial status with more detail
+ipcMain.handle("check-trial-status", () => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const userDataPath = app.getPath("userData");
+    const trialInfoPath = path.join(userDataPath, 'trial-info.json');
+
+    if (!fs.existsSync(trialInfoPath)) {
+      return {
+        hasTrial: false,
+        isExpired: false,
+        canUnlock: true // No trial means they should go straight to license
+      };
+    }
+
+    try {
+      const trialData = JSON.parse(fs.readFileSync(trialInfoPath, 'utf8'));
+      const now = new Date();
+
+      if (!trialData.expiryTime) {
+        return {
+          hasTrial: true,
+          isExpired: false,
+          canUnlock: false
+        };
+      }
+
+      const expiry = new Date(trialData.expiryTime);
+      const isExpired = now > expiry;
+
+      return {
+        hasTrial: true,
+        isExpired,
+        canUnlock: !isExpired,
+        expiryTime: trialData.expiryTime
+      };
+    } catch (error) {
+      console.error('Error parsing trial data:', error);
+      return {
+        hasTrial: false,
+        isExpired: false,
+        canUnlock: false
+      };
+    }
+  } catch (error) {
+    console.error('Error checking trial status:', error);
+    return {
+      hasTrial: false,
+      isExpired: false,
+      canUnlock: false
+    };
+  }
 });
 
 // SECURE: Save encrypted vault data (never store plaintext in main process)

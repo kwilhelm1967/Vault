@@ -10,6 +10,8 @@ import {
   Edit3,
   ChevronDown,
   ChevronRight,
+  AlertCircle,
+  ExternalLink,
 } from "lucide-react";
 import { PasswordEntry, Category } from "../types";
 import { CategoryIcon } from "./CategoryIcon";
@@ -55,7 +57,95 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
   const [collapsedEntries, setCollapsedEntries] = useState<Set<string>>(new Set());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<PasswordEntry | null>(null);
+  const [isTrialExpired, setIsTrialExpired] = useState(false);
   // Removed unused positionLoaded state to avoid lint errors
+
+  // Function to get trial info from localStorage
+  const getTrialInfoFromLocalStorage = () => {
+    const hasTrialBeenUsed = localStorage.getItem('trial_used') === 'true';
+    const licenseToken = localStorage.getItem('license_token');
+
+    if (!hasTrialBeenUsed) {
+      return {
+        hasTrialBeenUsed: false,
+        isExpired: false,
+        isTrialActive: false,
+        daysRemaining: 0,
+        startDate: null,
+        endDate: null,
+      };
+    }
+
+    // Check license token for trial status
+    if (licenseToken) {
+      try {
+        const tokenData = JSON.parse(atob(licenseToken.split('.')[1]));
+        if (tokenData.isTrial && tokenData.trialExpiryDate) {
+          const now = new Date();
+          const expiryDate = new Date(tokenData.trialExpiryDate);
+          const isExpired = now >= expiryDate;
+
+          return {
+            hasTrialBeenUsed: true,
+            isExpired,
+            isTrialActive: !isExpired,
+            daysRemaining: isExpired ? 0 : Math.max(0, Math.floor((expiryDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))),
+            startDate: new Date(localStorage.getItem('trial_start_date') || now.toISOString()),
+            endDate: expiryDate,
+          };
+        }
+      } catch (error) {
+        console.error('Error parsing license token:', error);
+      }
+    }
+
+    // Fallback to local trial calculation
+    const trialStartDate = localStorage.getItem('trial_start_date');
+    if (trialStartDate) {
+      const startDate = new Date(trialStartDate);
+      const isDevMode = import.meta.env.DEV;
+      const trialDurationMs = isDevMode ? 5 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000;
+      const expiryDate = new Date(startDate.getTime() + trialDurationMs);
+      const now = new Date();
+      const isExpired = now >= expiryDate;
+
+      return {
+        hasTrialBeenUsed: true,
+        isExpired,
+        isTrialActive: !isExpired,
+        daysRemaining: isExpired ? 0 : Math.max(0, Math.floor((expiryDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))),
+        startDate,
+        endDate: expiryDate,
+      };
+    }
+
+    return {
+      hasTrialBeenUsed: true,
+      isExpired: false,
+      isTrialActive: false,
+      daysRemaining: 0,
+      startDate: null,
+      endDate: null,
+    };
+  };
+
+  // Check trial status and update state
+  useEffect(() => {
+    const checkTrialStatus = () => {
+      const trialInfo = getTrialInfoFromLocalStorage();
+      setIsTrialExpired(trialInfo.isExpired);
+
+      if (trialInfo.isExpired) {
+        console.log("Floating panel: Trial expired - blocking access");
+      }
+    };
+
+    checkTrialStatus();
+
+    // Check trial status every 30 seconds
+    const interval = setInterval(checkTrialStatus, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Initialize floating panel vault when vault is unlocked in main window
   useEffect(() => {
@@ -65,6 +155,12 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
           const mainVaultStatus = await window.electronAPI.getVaultStatus();
           console.log("Floating panel: Main vault unlocked status:", mainVaultStatus);
           setIsMainVaultUnlocked(mainVaultStatus);
+
+          // If trial is expired, don't initialize floating panel
+          if (isTrialExpired) {
+            console.log("Floating panel: Trial expired - not initializing vault");
+            return;
+          }
 
           if (mainVaultStatus && !storageService.isVaultUnlocked()) {
             console.log("Floating panel: Attempting to sync with main vault");
@@ -91,7 +187,7 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
     };
 
     initializeFloatingVault();
-  }, [onEntriesReload]);
+  }, [onEntriesReload, isTrialExpired]);
 
   // Handle vault status changes
   useEffect(() => {
@@ -302,6 +398,12 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
   const handleAddEntry = async (
     entryData: Omit<PasswordEntry, "id" | "createdAt" | "updatedAt">
   ) => {
+    // Check if trial is expired
+    if (isTrialExpired) {
+      console.error("Cannot add entry: Trial has expired");
+      return;
+    }
+
     // Check if main vault is unlocked (floating panel relies on main window's vault state)
     if (!isMainVaultUnlocked) {
       console.error("Cannot add entry: Main vault is locked");
@@ -315,6 +417,12 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
   const handleUpdateEntry = async (
     entryData: Omit<PasswordEntry, "id" | "createdAt" | "updatedAt">
   ) => {
+    // Check if trial is expired
+    if (isTrialExpired) {
+      console.error("Cannot update entry: Trial has expired");
+      return;
+    }
+
     // Check if main vault is unlocked (floating panel relies on main window's vault state)
     if (!isMainVaultUnlocked) {
       console.error("Cannot update entry: Main vault is locked");
@@ -340,7 +448,58 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
     }
   };
 
-  
+  const handleRedirectToMainVault = () => {
+    if (window.electronAPI?.focusMainWindow) {
+      window.electronAPI.focusMainWindow();
+    }
+    if (window.electronAPI?.closeFloatingPanel) {
+      window.electronAPI.closeFloatingPanel();
+    }
+  };
+  // If trial is expired, show expired message instead of the floating panel
+  if (isTrialExpired) {
+    return (
+      <div
+        className="h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex flex-col items-center justify-center backdrop-blur-xl border border-slate-800/50 shadow-2xl p-8"
+        style={{ zIndex: 9999 }}
+      >
+        <div className="bg-slate-800 border-2 border-slate-600 rounded-xl p-8 shadow-2xl max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Lock className="w-8 h-8 text-white" />
+          </div>
+
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Your Trial Has Ended
+          </h2>
+
+          <p className="text-slate-300 text-lg mb-6">
+            Your 7 day trial has expired.
+            <br />
+            Your vault is still safely stored on your device.
+            <br />
+            To continue using Local Password Vault, you need a lifetime key.
+          </p>
+
+          <div className="space-y-4">
+            <button
+              onClick={handleRedirectToMainVault}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-200"
+            >
+              Buy Lifetime Access
+            </button>
+
+            <button
+              onClick={handleRedirectToMainVault}
+              className="w-full bg-slate-700 hover:bg-slate-600 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-200"
+            >
+              I Already Purchased a Key
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className="h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex flex-col backdrop-blur-xl border border-slate-800/50 shadow-2xl"

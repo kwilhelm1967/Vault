@@ -497,3 +497,106 @@ export class TrialService {
 }
 
 export const trialService = TrialService.getInstance();
+
+/**
+ * Main Process Communication Helpers for Trial Validation
+ * These functions help synchronize trial status between renderer and main process
+ */
+
+/**
+ * Check if trial is expired via main process
+ * This provides an additional security layer by validating trial status in the main process
+ */
+export async function checkTrialExpiredInMainProcess(): Promise<boolean> {
+  try {
+    if (window.electronAPI?.isTrialExpired) {
+      return await window.electronAPI.isTrialExpired();
+    }
+
+    // Fallback to local check if main process API not available
+    return await trialService.isTrialExpired();
+  } catch (error) {
+    console.error('Error checking trial status in main process:', error);
+    return true; // Assume expired for security
+  }
+}
+
+/**
+ * Get detailed trial status from main process
+ */
+export async function getTrialStatusFromMainProcess(): Promise<{
+  hasTrial: boolean;
+  isExpired: boolean;
+  canUnlock: boolean;
+  expiryTime?: string;
+}> {
+  try {
+    if (window.electronAPI?.checkTrialStatus) {
+      return await window.electronAPI.checkTrialStatus();
+    }
+
+    // Fallback to local check if main process API not available
+    const trialInfo = await trialService.getTrialInfo();
+    return {
+      hasTrial: trialInfo.hasTrialBeenUsed,
+      isExpired: trialInfo.isExpired,
+      canUnlock: !trialInfo.isExpired,
+      expiryTime: trialInfo.endDate?.toISOString()
+    };
+  } catch (error) {
+    console.error('Error getting trial status from main process:', error);
+    return {
+      hasTrial: false,
+      isExpired: true,
+      canUnlock: false
+    };
+  }
+}
+
+/**
+ * Sync trial status to main process for consistent enforcement
+ * This ensures the main process has the same trial data as renderer
+ */
+export async function syncTrialStatusToMainProcess(): Promise<boolean> {
+  try {
+    const trialInfo = await trialService.getTrialInfo();
+
+    // Save trial info to file system for main process access
+    if (window.electronAPI?.saveTrialInfo) {
+      return await window.electronAPI.saveTrialInfo({
+        hasTrial: trialInfo.hasTrialBeenUsed,
+        isExpired: trialInfo.isExpired,
+        expiryTime: trialInfo.endDate?.toISOString(),
+        hasValidLicense: trialInfo.licenseKey && !trialInfo.isTrialActive
+      });
+    }
+
+    return false;
+  } catch (error) {
+    console.error('Error syncing trial status to main process:', error);
+    return false;
+  }
+}
+
+/**
+ * Validate trial status across both processes
+ * Returns true if trial is valid in both renderer and main process
+ */
+export async function validateTrialStatusAcrossProcesses(): Promise<boolean> {
+  try {
+    // Check trial status in renderer
+    const rendererTrialInfo = await trialService.getTrialInfo();
+
+    // Check trial status in main process
+    const mainProcessStatus = await getTrialStatusFromMainProcess();
+
+    // Both processes must agree that trial is valid
+    const rendererValid = !rendererTrialInfo.isExpired || !rendererTrialInfo.hasTrialBeenUsed;
+    const mainProcessValid = mainProcessStatus.canUnlock;
+
+    return rendererValid && mainProcessValid;
+  } catch (error) {
+    console.error('Error validating trial status across processes:', error);
+    return false; // Assume invalid for security
+  }
+}

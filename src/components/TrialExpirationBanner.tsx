@@ -1,5 +1,5 @@
 import React from "react";
-import { Lock, Clock, CreditCard, Shield, ChevronRight, Key } from "lucide-react";
+import { Lock, Clock, CreditCard, Key } from "lucide-react";
 
 interface TrialExpirationBannerProps {
   trialInfo: {
@@ -11,13 +11,13 @@ interface TrialExpirationBannerProps {
     endDate: Date | null;
   };
   onApplyLicenseKey?: () => void;
+  showLicenseInput?: boolean;
 }
 
-export const TrialExpirationBanner: React.FC<TrialExpirationBannerProps> = ({ trialInfo, onApplyLicenseKey }) => {
+export const TrialExpirationBanner: React.FC<TrialExpirationBannerProps> = ({ trialInfo, onApplyLicenseKey, showLicenseInput = false }) => {
 
   const handlePurchaseNow = () => {
     const url = "https://localpasswordvault.com/#plans";
-
 
     if (window.electronAPI) {
       window.electronAPI.openExternal(url);
@@ -38,75 +38,41 @@ export const TrialExpirationBanner: React.FC<TrialExpirationBannerProps> = ({ tr
     return null;
   }
 
-  // Always show banner when trial is expired
-  if (trialInfo.isExpired) {
+  // Always show banner when trial is expired - SIMPLIFIED VERSION
+  // Hide if user has clicked "I Already Purchased a Key"
+  if (trialInfo.isExpired && !showLicenseInput) {
     return (
-      <div className="w-full max-w-4xl mx-auto mb-8">
-        <div className="bg-slate-800 border-2 border-red-600 rounded-xl p-6 shadow-2xl">
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center animate-pulse">
-              <Lock className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-2">
-                Your Trial Has Expired
-              </h2>
-              <p className="text-slate-300 text-lg">
-                Thank you for trying Local Password Vault!
-              </p>
-            </div>
+      <div className="w-full max-w-2xl mx-auto mb-8">
+        <div className="bg-slate-800 border-2 border-slate-600 rounded-xl p-8 shadow-2xl text-center">
+          <div className="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Lock className="w-8 h-8 text-white" />
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6 mb-6">
-            <div className="bg-slate-700/50 rounded-xl p-4 border border-slate-600/50">
-              <div className="flex items-center space-x-2 mb-2">
-                <Clock className="w-5 h-5 text-slate-400" />
-                <span className="text-slate-300 font-medium">Trial Period</span>
-              </div>
-              <p className="text-white text-sm">
-                {trialInfo.startDate && `Started: ${new Date(trialInfo.startDate).toLocaleDateString()}`}
-              </p>
-              <p className="text-red-400 text-sm">
-                {trialInfo.endDate && `Expired: ${new Date(trialInfo.endDate).toLocaleDateString()}`}
-              </p>
-            </div>
-            <div className="bg-slate-700/50 rounded-xl p-4 border border-slate-600/50">
-              <div className="flex items-center space-x-2 mb-2">
-                <Shield className="w-5 h-5 text-slate-400" />
-                <span className="text-slate-300 font-medium">Security Notice</span>
-              </div>
-              <p className="text-white text-sm">
-                Your data remains securely encrypted. No access is possible without a valid license.
-              </p>
-            </div>
-          </div>
+          <h1 className="text-3xl font-bold text-white mb-4">
+            Your Trial Has Ended
+          </h1>
 
-          <div className="flex flex-col sm:flex-row gap-4">
+          <p className="text-slate-300 text-lg mb-8">
+            Your 7 day trial has expired.
+            <br />
+            Your vault is still safely stored on your device.
+            <br />
+            To continue using Local Password Vault, you need a lifetime key.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={handlePurchaseNow}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-4 px-6 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl"
+              className="bg-blue-600 hover:bg-blue-700 text-white py-3 px-8 rounded-xl font-semibold transition-all duration-200"
             >
-              <CreditCard className="w-5 h-5" />
-              <span>Purchase License</span>
-              <ChevronRight className="w-5 h-5" />
+              Buy Lifetime Access
             </button>
             <button
               onClick={handleApplyKey}
-              className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-4 px-6 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl"
+              className="bg-slate-700 hover:bg-slate-600 text-white py-3 px-8 rounded-xl font-semibold transition-all duration-200"
             >
-              <Key className="w-5 h-5" />
-              <span>Activate License Key</span>
-              <ChevronRight className="w-5 h-5" />
+              I Already Purchased a Key
             </button>
-          </div>
-
-          <div className="mt-6 text-center">
-            <p className="text-slate-300 text-sm font-medium">
-              🔒 Your passwords remain secure and encrypted. Purchase a license to regain access.
-            </p>
-            <p className="text-slate-400 text-xs mt-1">
-              This device is permanently locked from trial access. Trial keys are single-use only.
-            </p>
           </div>
         </div>
       </div>
