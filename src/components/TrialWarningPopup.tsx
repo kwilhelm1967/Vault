@@ -1,9 +1,8 @@
 import React from "react";
-import { X, ExternalLink } from "lucide-react";
+import { X, ExternalLink, ArrowRight } from "lucide-react";
 
 interface TrialWarningPopupProps {
-  warningType: 'expiring' | 'final';
-  timeRemaining: string;
+  warningType: "expiring" | "final";
   onClose: () => void;
   onPurchaseNow: () => void;
   onDownloadContent: () => void;
@@ -11,13 +10,10 @@ interface TrialWarningPopupProps {
 
 export const TrialWarningPopup: React.FC<TrialWarningPopupProps> = ({
   warningType,
-  timeRemaining,
   onClose,
   onPurchaseNow,
   onDownloadContent,
 }) => {
-  const isFinalWarning = warningType === 'final';
-
   const content = {
     expiring: {
       headline: "Trial Expiring Soon!",
@@ -33,66 +29,49 @@ export const TrialWarningPopup: React.FC<TrialWarningPopupProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-[9999]">
+      {/* Main content box */}
       <div className="bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 rounded-2xl overflow-hidden border border-slate-600/50 shadow-2xl w-full max-w-md">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600/20 to-indigo-600/20 border-b border-slate-700/50 p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <h3 className="text-white font-bold text-lg leading-tight">
-                {currentContent.headline}
-              </h3>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-all flex-shrink-0 ml-4"
-              title="Close"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
+        {/* Using the layout from your images (centered, no header) */}
+        <div className="p-8 pt-12 relative flex flex-col items-center text-center">
+          {/* Close Button */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-all"
+            title="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
 
-        {/* Body */}
-        <div className="p-6">
-          <p className="text-slate-400 text-sm leading-relaxed mb-6">
+          {/* Headline - Styled like EntryForm header */}
+          <h3 className="text-2xl font-bold text-white mb-4">
+            {currentContent.headline}
+          </h3>
+
+          {/* Body Text - Styled like EntryForm body text */}
+          <p className="text-slate-400 text-base mb-8 max-w-sm">
             {currentContent.body}
           </p>
 
-          {timeRemaining && (
-            <div className="mb-6 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-              <p className="text-amber-400 text-sm font-medium text-center">
-                Time remaining: {timeRemaining}
-              </p>
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="space-y-3">
+          {/* Action Buttons Container */}
+          <div className="w-full flex flex-col items-center space-y-4">
+            {/* Purchase Now Button - Styled like EntryForm primary button */}
             <button
               onClick={onPurchaseNow}
-              className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white py-3 px-4 rounded-xl font-medium transition-all text-sm shadow-lg"
+              className="w-full max-w-xs flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white py-3 px-4 rounded-xl font-medium transition-all text-sm shadow-lg"
             >
               <span>Purchase Now</span>
-              <ExternalLink className="w-4 h-4" />
+              <ArrowRight className="w-5 h-5" />
             </button>
 
+            {/* Download Content Link - Styled as a simple text link */}
             <button
               onClick={onDownloadContent}
-              className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-slate-600/50 hover:bg-slate-600 text-white rounded-xl font-medium transition-all text-sm border border-slate-500/50"
+              className="flex items-center justify-center space-x-1.5 text-slate-400 hover:text-white transition-colors text-sm font-medium"
             >
               <span>Download Your Current Content</span>
               <ExternalLink className="w-4 h-4" />
             </button>
           </div>
-
-          {/* Urgency indicator for final notice */}
-          {isFinalWarning && (
-            <div className="mt-4 text-center">
-              <p className="text-red-400 text-xs font-medium">
-                ⚠️ This is your final warning before trial expiration
-              </p>
-            </div>
-          )}
         </div>
       </div>
     </div>

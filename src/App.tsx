@@ -473,15 +473,12 @@ function App() {
 
   // Warning popup callback
   const handleWarningPopup = useCallback((state: WarningPopupState) => {
-    console.log('🎯 WARNING POPUP CALLBACK TRIGGERED:', state);
     setWarningPopupState(state);
 
     if (state.shouldShowExpiringWarning) {
-      console.log('🚨 SHOWING EXPIRING WARNING POPUP');
       setCurrentWarningType('expiring');
       setShowWarningPopup(true);
     } else if (state.shouldShowFinalWarning) {
-      console.log('🚨 SHOWING FINAL WARNING POPUP');
       setCurrentWarningType('final');
       setShowWarningPopup(true);
     }
@@ -497,15 +494,10 @@ function App() {
     console.log(`⏰ SETTING UP WARNING POPUP MONITORING (interval: ${checkInterval}ms)`);
 
     const warningInterval = setInterval(async () => {
-      // Only log every 10 seconds to reduce spam
-      if (Date.now() % 10000 < 1000) {
-        console.log('⏰ RUNNING SCHEDULED WARNING POPUP CHECK');
-      }
       await trialService.checkWarningPopups();
     }, checkInterval);
 
     // Initial check immediately
-    console.log('🚀 RUNNING INITIAL WARNING POPUP CHECK');
     trialService.checkWarningPopups();
 
     return () => {
