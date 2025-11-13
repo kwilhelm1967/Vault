@@ -513,9 +513,9 @@ function App() {
 
   const handlePurchaseNow = useCallback(() => {
     setShowWarningPopup(false);
-    setShowPricingPlans(true);
-    updateAppStatus();
-  }, [updateAppStatus]);
+    // Instant redirect to pricing plans URL
+    window.open('https://localpasswordvault.com/#plans', '_blank');
+  }, []);
 
   
   const { handleAddEntry, handleUpdateEntry, handleDeleteEntry } = useEntryManagement(
