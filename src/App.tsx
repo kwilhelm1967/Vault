@@ -18,6 +18,7 @@ import { TrialTestingTools } from "./components/TrialTestingTools";
 // Dev preview imports (for testing trial screens)
 import { KeyActivationScreen } from "./components/KeyActivationScreen";
 import { ExpiredTrialScreen } from "./components/ExpiredTrialScreen";
+import { TrialStatusBanner } from "./components/TrialStatusBanner";
 
 // Fixed categories with proper typing
 const FIXED_CATEGORIES: Category[] = [
@@ -894,6 +895,29 @@ function App() {
           onBuyLifetimeAccess={() => alert('Buy clicked')}
           onAlreadyPurchased={() => window.location.href = '/?preview=keyactivation'}
         />
+      );
+    }
+
+    // Trial banner preview
+    const trialBannerPreview = urlParams.get('trialbanner');
+    if (trialBannerPreview === 'active' || trialBannerPreview === 'urgent' || trialBannerPreview === 'expired') {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-8">
+          <h2 className="text-white text-xl font-bold mb-4">Trial Banner Preview: {trialBannerPreview}</h2>
+          <TrialStatusBanner 
+            previewMode={trialBannerPreview}
+            onPurchase={() => alert('Purchase clicked')}
+            onExport={() => alert('Export clicked')}
+          />
+          <div className="mt-8 space-y-2">
+            <p className="text-slate-400 text-sm">Preview other states:</p>
+            <div className="flex gap-2">
+              <a href="?trialbanner=active" className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm">Active</a>
+              <a href="?trialbanner=urgent" className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm">Urgent</a>
+              <a href="?trialbanner=expired" className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm">Expired</a>
+            </div>
+          </div>
+        </div>
       );
     }
   }

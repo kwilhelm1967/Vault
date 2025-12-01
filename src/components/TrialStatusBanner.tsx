@@ -21,6 +21,8 @@ const colors = {
 interface TrialStatusBannerProps {
   onPurchase?: () => void;
   onExport?: () => void;
+  /** Dev mode: 'active' | 'urgent' | 'expired' to force show banner */
+  previewMode?: 'active' | 'urgent' | 'expired';
 }
 
 interface TimeRemaining {
@@ -35,11 +37,38 @@ interface TimeRemaining {
 export const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({ 
   onPurchase,
   onExport,
+  previewMode,
 }) => {
   const [timeRemaining, setTimeRemaining] = useState<TimeRemaining | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Dev preview mode - show mock data
+    if (previewMode) {
+      const mockTimes: Record<string, TimeRemaining> = {
+        active: { days: 5, hours: 12, minutes: 30, seconds: 45, isExpired: false, isActive: true },
+        urgent: { days: 0, hours: 3, minutes: 45, seconds: 20, isExpired: false, isActive: true },
+        expired: { days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: true, isActive: false },
+      };
+      setTimeRemaining(mockTimes[previewMode]);
+      setIsLoading(false);
+      
+      // Countdown for preview
+      const interval = setInterval(() => {
+        setTimeRemaining(prev => {
+          if (!prev || prev.isExpired) return prev;
+          let { days, hours, minutes, seconds } = prev;
+          seconds--;
+          if (seconds < 0) { seconds = 59; minutes--; }
+          if (minutes < 0) { minutes = 59; hours--; }
+          if (hours < 0) { hours = 23; days--; }
+          if (days < 0) return { ...prev, isExpired: true, isActive: false };
+          return { ...prev, days, hours, minutes, seconds };
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+
     const loadTrialStatus = async () => {
       try {
         const trialInfo = await trialService.getTrialInfo();
@@ -104,7 +133,7 @@ export const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [previewMode]);
 
   // Don't show if loading or no trial
   if (isLoading || !timeRemaining) {

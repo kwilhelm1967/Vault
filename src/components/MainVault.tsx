@@ -161,6 +161,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
   selectedCategory,
   onCategoryChange,
   onMinimize,
+  onShowPricingPlans,
 }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingEntry, setEditingEntry] = useState<PasswordEntry | null>(null);
@@ -627,6 +628,11 @@ export const MainVault: React.FC<MainVaultProps> = ({
           <TrialStatusBanner 
             onPurchase={onShowPricingPlans}
             onExport={onExport}
+            previewMode={
+              import.meta.env.DEV 
+                ? new URLSearchParams(window.location.search).get('trial') as 'active' | 'urgent' | 'expired' | undefined
+                : undefined
+            }
           />
         </div>
 
