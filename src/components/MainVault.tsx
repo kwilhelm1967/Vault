@@ -125,6 +125,7 @@ import { Dashboard } from "./Dashboard";
 import { Settings, clearClipboardAfterTimeout, getVaultSettings } from "./Settings";
 import { generateTOTP, getTimeRemaining, isValidTOTPSecret } from "../utils/totp";
 import { TrialStatusBanner } from "./TrialStatusBanner";
+import { playLockSound, playCopySound, playDeleteSound, playSuccessSound } from "../utils/soundEffects";
 
 interface MainVaultProps {
   entries: PasswordEntry[];
@@ -395,6 +396,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
 
   const copyToClipboard = async (text: string, id: string) => {
     await navigator.clipboard.writeText(text);
+    playCopySound();
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
     
@@ -410,6 +412,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
 
   const handleConfirmDelete = () => {
     if (entryToDelete) {
+      playDeleteSound();
       onDeleteEntry(entryToDelete.id);
       // Close any modals showing this entry
       if (viewingEntry?.id === entryToDelete.id) {
@@ -602,7 +605,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
             </button>
           )}
           <button
-            onClick={onLock}
+            onClick={() => { playLockSound(); onLock(); }}
             className="nav-item-hover w-full pl-5 pr-3 py-2 text-slate-400 rounded-r-lg text-sm flex items-center gap-2.5 transition-colors"
           >
             <Lock 

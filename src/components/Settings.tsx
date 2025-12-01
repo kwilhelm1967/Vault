@@ -25,6 +25,8 @@ import {
   RefreshCw,
   HelpCircle,
   Edit3,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { generateRecoveryPhrase, storeRecoveryPhrase } from "../utils/recoveryPhrase";
 import { storageService } from "../utils/storage";
@@ -52,12 +54,14 @@ export interface VaultSettings {
   autoLockTimeout: number;
   clipboardClearTimeout: number;
   showPasswordsDefault: boolean;
+  soundEffectsEnabled: boolean;
 }
 
 const DEFAULT_SETTINGS: VaultSettings = {
   autoLockTimeout: 5,
   clipboardClearTimeout: 30,
   showPasswordsDefault: false,
+  soundEffectsEnabled: false, // OFF by default
 };
 
 interface SettingsProps {
@@ -338,10 +342,21 @@ export const Settings: React.FC<SettingsProps> = ({
   const [showCurrentHint, setShowCurrentHint] = useState(false);
 
   useEffect(() => {
+    // Load settings including sound effects from vault_settings JSON
+    let soundEffectsEnabled = DEFAULT_SETTINGS.soundEffectsEnabled;
+    try {
+      const vaultSettings = localStorage.getItem('vault_settings');
+      if (vaultSettings) {
+        const parsed = JSON.parse(vaultSettings);
+        soundEffectsEnabled = parsed.soundEffectsEnabled ?? false;
+      }
+    } catch { /* ignore */ }
+    
     const loadedSettings: VaultSettings = {
       autoLockTimeout: parseInt(localStorage.getItem(SETTINGS_KEYS.AUTO_LOCK_TIMEOUT) || String(DEFAULT_SETTINGS.autoLockTimeout)),
       clipboardClearTimeout: parseInt(localStorage.getItem(SETTINGS_KEYS.CLIPBOARD_CLEAR_TIMEOUT) || String(DEFAULT_SETTINGS.clipboardClearTimeout)),
       showPasswordsDefault: localStorage.getItem(SETTINGS_KEYS.SHOW_PASSWORDS_DEFAULT) === "true",
+      soundEffectsEnabled,
     };
     setSettings(loadedSettings);
     
@@ -477,6 +492,18 @@ export const Settings: React.FC<SettingsProps> = ({
     saveSetting(SETTINGS_KEYS.SHOW_PASSWORDS_DEFAULT, value, "showPasswords");
   };
 
+  const handleSoundEffectsChange = (value: boolean) => {
+    setSettings(prev => ({ ...prev, soundEffectsEnabled: value }));
+    // Save to vault_settings JSON for the soundEffects utility to read
+    try {
+      const existing = localStorage.getItem('vault_settings');
+      const parsed = existing ? JSON.parse(existing) : {};
+      parsed.soundEffectsEnabled = value;
+      localStorage.setItem('vault_settings', JSON.stringify(parsed));
+      showSavedIndicator("soundEffects");
+    } catch { /* ignore */ }
+  };
+
   const autoLockOptions = [
     { value: 0, label: "Never" },
     { value: 1, label: "1 minute" },
@@ -584,6 +611,31 @@ export const Settings: React.FC<SettingsProps> = ({
               checked={settings.showPasswordsDefault}
               onChange={handleShowPasswordsChange}
               saved={savedIndicator === "showPasswords"}
+            />
+          </div>
+        </BouncyCard>
+
+        <BouncyCard variant="accent">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-4">
+              <div 
+                className="w-12 h-12 rounded-xl flex items-center justify-center"
+                style={{ backgroundColor: `${colors.steelBlue500}15` }}
+              >
+                {settings.soundEffectsEnabled 
+                  ? <Volume2 className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.steelBlue400 }} />
+                  : <VolumeX className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.steelBlue400 }} />
+                }
+              </div>
+              <div>
+                <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-1">Sound Effects</h3>
+                <p className="text-slate-500 text-xs">Subtle audio feedback</p>
+              </div>
+            </div>
+            <BlueToggle
+              checked={settings.soundEffectsEnabled}
+              onChange={handleSoundEffectsChange}
+              saved={savedIndicator === "soundEffects"}
             />
           </div>
         </BouncyCard>
@@ -1233,10 +1285,20 @@ export const Settings: React.FC<SettingsProps> = ({
 
 // Export settings utilities
 export const getVaultSettings = (): VaultSettings => {
+  let soundEffectsEnabled = false;
+  try {
+    const vaultSettings = localStorage.getItem('vault_settings');
+    if (vaultSettings) {
+      const parsed = JSON.parse(vaultSettings);
+      soundEffectsEnabled = parsed.soundEffectsEnabled ?? false;
+    }
+  } catch { /* ignore */ }
+  
   return {
     autoLockTimeout: parseInt(localStorage.getItem(SETTINGS_KEYS.AUTO_LOCK_TIMEOUT) || String(DEFAULT_SETTINGS.autoLockTimeout)),
     clipboardClearTimeout: parseInt(localStorage.getItem(SETTINGS_KEYS.CLIPBOARD_CLEAR_TIMEOUT) || String(DEFAULT_SETTINGS.clipboardClearTimeout)),
     showPasswordsDefault: localStorage.getItem(SETTINGS_KEYS.SHOW_PASSWORDS_DEFAULT) === "true",
+    soundEffectsEnabled,
   };
 };
 

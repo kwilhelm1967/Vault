@@ -16,6 +16,7 @@ import {
 import { PasswordEntry, Category, CustomField } from "../types";
 import { storageService } from "../utils/storage";
 import { PasswordGenerator } from "./PasswordGenerator";
+import { playSuccessSound } from "../utils/soundEffects";
 
 // Entry templates for common sites
 interface EntryTemplate {
@@ -238,6 +239,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
 
       // Submit to parent component
       await onSubmit(entryData);
+      playSuccessSound();
 
       // Enhanced synchronization - ensure floating panel gets updates
       try {
