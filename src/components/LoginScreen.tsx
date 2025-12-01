@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from "react";
-import { Lock, Eye, EyeOff, Key, AlertCircle, Info, Shield, Loader2 } from "lucide-react";
+import { Lock, Eye, EyeOff, Key, AlertCircle, Info, Shield, Loader2, HelpCircle } from "lucide-react";
 import { storageService } from "../utils/storage";
 import { generateRecoveryPhrase, storeRecoveryPhrase } from "../utils/recoveryPhrase";
 import { RecoveryPhraseSetup } from "./RecoveryPhraseSetup";
@@ -51,11 +51,26 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   // Rate limiting states
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
   const [remainingAttempts, setRemainingAttempts] = useState(5);
+  
+  // Password hint states
+  const [passwordHint, setPasswordHint] = useState("");
+  const [showHintInput, setShowHintInput] = useState(false);
+  const [savedHint, setSavedHint] = useState<string | null>(null);
+  const [showSavedHint, setShowSavedHint] = useState(false);
+  const [isLoadingHint, setIsLoadingHint] = useState(false);
 
   const strength = useMemo(() => calculateStrength(password), [password]);
 
   useEffect(() => {
-    setIsFirstTime(!storageService.vaultExists());
+    const vaultExists = storageService.vaultExists();
+    setIsFirstTime(!vaultExists);
+    
+    // Load saved hint for existing vaults
+    if (vaultExists) {
+      storageService.getPasswordHint().then(hint => {
+        setSavedHint(hint);
+      });
+    }
     
     // Check initial lockout status
     const checkLockout = () => {
@@ -138,6 +153,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     // Store the recovery phrase hash
     await storeRecoveryPhrase(recoveryPhrase);
     
+    // Store password hint if provided (before vault is created, so don't require unlock)
+    if (passwordHint.trim()) {
+      await storageService.setPasswordHint(passwordHint.trim(), false);
+    }
+    
     // Now create the vault with the password
     await performLogin(pendingPassword);
     
@@ -145,6 +165,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     setShowRecoverySetup(false);
     setRecoveryPhrase("");
     setPendingPassword("");
+    setPasswordHint("");
   };
 
   const handleRecoveryBack = () => {
@@ -286,7 +307,65 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                   </div>
                 </div>
               )}
+
+              {/* Show Hint Button (Existing Vault Only) */}
+              {!isFirstTime && savedHint && (
+                <div className="mt-2">
+                  {!showSavedHint ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowSavedHint(true)}
+                      className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-blue-400 transition-colors"
+                    >
+                      <HelpCircle className="w-3.5 h-3.5" />
+                      Show password hint
+                    </button>
+                  ) : (
+                    <div className="bg-slate-700/30 rounded-lg p-2.5 border border-slate-600/30">
+                      <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Password Hint</p>
+                      <p className="text-slate-300 text-xs">{savedHint}</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
+
+            {/* Password Hint Input (First Time Only) */}
+            {isFirstTime && (
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label htmlFor="hint" className="text-xs font-medium text-slate-300">
+                    Password Hint (Optional)
+                  </label>
+                  {!showHintInput && (
+                    <button
+                      type="button"
+                      onClick={() => setShowHintInput(true)}
+                      className="text-[10px] text-blue-400 hover:text-blue-300 transition-colors"
+                    >
+                      + Add hint
+                    </button>
+                  )}
+                </div>
+                {showHintInput && (
+                  <>
+                    <input
+                      id="hint"
+                      type="text"
+                      value={passwordHint}
+                      onChange={(e) => setPasswordHint(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-700/30 border border-slate-600/50 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 transition-all text-sm"
+                      placeholder="A hint to help you remember"
+                      maxLength={100}
+                      disabled={isLoading}
+                    />
+                    <p className="mt-1 text-[10px] text-slate-500">
+                      This hint will be visible without your password
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
 
             {/* Submit Button */}
             <button

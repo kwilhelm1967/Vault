@@ -22,7 +22,12 @@ import {
   ChevronDown,
   Database,
   Sparkles,
+  RefreshCw,
+  HelpCircle,
+  Edit3,
 } from "lucide-react";
+import { generateRecoveryPhrase, storeRecoveryPhrase } from "../utils/recoveryPhrase";
+import { storageService } from "../utils/storage";
 
 // Color palette
 const colors = {
@@ -310,6 +315,19 @@ export const Settings: React.FC<SettingsProps> = ({
   const [importData, setImportData] = useState("");
   const [encryptError, setEncryptError] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Recovery phrase states
+  const [showRegenerateModal, setShowRegenerateModal] = useState(false);
+  const [newRecoveryPhrase, setNewRecoveryPhrase] = useState("");
+  const [phraseConfirmed, setPhraseConfirmed] = useState(false);
+  const [showPhrase, setShowPhrase] = useState(false);
+  const [phraseCopied, setPhraseCopied] = useState(false);
+  
+  // Password hint states
+  const [showHintModal, setShowHintModal] = useState(false);
+  const [currentHint, setCurrentHint] = useState<string | null>(null);
+  const [newHint, setNewHint] = useState("");
+  const [showCurrentHint, setShowCurrentHint] = useState(false);
 
   useEffect(() => {
     const loadedSettings: VaultSettings = {
@@ -318,12 +336,74 @@ export const Settings: React.FC<SettingsProps> = ({
       showPasswordsDefault: localStorage.getItem(SETTINGS_KEYS.SHOW_PASSWORDS_DEFAULT) === "true",
     };
     setSettings(loadedSettings);
+    
+    // Load current password hint
+    storageService.getPasswordHint().then(hint => {
+      setCurrentHint(hint);
+      setNewHint(hint || "");
+    });
   }, []);
+  
+  // Handle regenerating recovery phrase
+  const handleStartRegenerate = () => {
+    const phrase = generateRecoveryPhrase();
+    setNewRecoveryPhrase(phrase);
+    setPhraseConfirmed(false);
+    setShowPhrase(false);
+    setPhraseCopied(false);
+    setShowRegenerateModal(true);
+  };
+  
+  const handleConfirmRegenerate = async () => {
+    if (!phraseConfirmed) return;
+    try {
+      await storeRecoveryPhrase(newRecoveryPhrase);
+      setShowRegenerateModal(false);
+      setNewRecoveryPhrase("");
+      showSavedIndicator("Recovery phrase updated!");
+    } catch (error) {
+      console.error("Failed to store recovery phrase:", error);
+    }
+  };
+  
+  const handleCopyPhrase = async () => {
+    await navigator.clipboard.writeText(newRecoveryPhrase);
+    setPhraseCopied(true);
+    setTimeout(() => setPhraseCopied(false), 2000);
+  };
+  
+  // Handle password hint
+  const handleSaveHint = async () => {
+    try {
+      await storageService.setPasswordHint(newHint.trim() || null);
+      setCurrentHint(newHint.trim() || null);
+      setShowHintModal(false);
+      showSavedIndicator(newHint.trim() ? "Hint saved!" : "Hint removed!");
+    } catch (error) {
+      console.error("Failed to save hint:", error);
+    }
+  };
+  
+  const handleRemoveHint = async () => {
+    try {
+      await storageService.setPasswordHint(null);
+      setCurrentHint(null);
+      setNewHint("");
+      setShowHintModal(false);
+      showSavedIndicator("Hint removed!");
+    } catch (error) {
+      console.error("Failed to remove hint:", error);
+    }
+  };
+
+  const showSavedIndicator = (message: string) => {
+    setSavedIndicator(message);
+    setTimeout(() => setSavedIndicator(null), 2000);
+  };
 
   const saveSetting = (key: string, value: string | number | boolean, settingName: string) => {
     localStorage.setItem(key, String(value));
-    setSavedIndicator(settingName);
-    setTimeout(() => setSavedIndicator(null), 1500);
+    showSavedIndicator(settingName);
   };
 
   const handleAutoLockChange = (value: number) => {
@@ -517,6 +597,52 @@ export const Settings: React.FC<SettingsProps> = ({
               style={{ backgroundColor: `${colors.steelBlue500}10` }}
             >
               <span style={{ color: colors.steelBlue400 }}>→</span>
+            </div>
+          </div>
+        </BouncyCard>
+
+        {/* Recovery Phrase */}
+        <BouncyCard onClick={handleStartRegenerate} variant="accent">
+          <div className="flex items-center gap-4">
+            <div 
+              className="w-12 h-12 rounded-xl flex items-center justify-center"
+              style={{ backgroundColor: `${colors.steelBlue500}15` }}
+            >
+              <RefreshCw className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.steelBlue400 }} />
+            </div>
+            <div className="flex-1">
+              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-1">Recovery Phrase</h3>
+              <p className="text-slate-500 text-xs">Generate new 12-word phrase</p>
+            </div>
+            <div 
+              className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{ backgroundColor: `${colors.steelBlue500}10` }}
+            >
+              <span style={{ color: colors.steelBlue400 }}>→</span>
+            </div>
+          </div>
+        </BouncyCard>
+
+        {/* Password Hint */}
+        <BouncyCard onClick={() => setShowHintModal(true)} variant="accent">
+          <div className="flex items-center gap-4">
+            <div 
+              className="w-12 h-12 rounded-xl flex items-center justify-center"
+              style={{ backgroundColor: `${colors.steelBlue500}15` }}
+            >
+              <HelpCircle className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.steelBlue400 }} />
+            </div>
+            <div className="flex-1">
+              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-1">Password Hint</h3>
+              <p className="text-slate-500 text-xs">
+                {currentHint ? "Hint is set" : "No hint configured"}
+              </p>
+            </div>
+            <div 
+              className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{ backgroundColor: `${colors.steelBlue500}10` }}
+            >
+              <Edit3 className="w-4 h-4" style={{ color: colors.steelBlue400 }} />
             </div>
           </div>
         </BouncyCard>
@@ -850,6 +976,234 @@ export const Settings: React.FC<SettingsProps> = ({
                   {isProcessing ? "Importing..." : "Import Secure"}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Regenerate Recovery Phrase Modal */}
+      {showRegenerateModal && (
+        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md flex items-start justify-center pt-[10vh] p-4 z-50 overflow-auto">
+          <div 
+            className="rounded-2xl p-6 w-full max-w-lg animate-bounce-in"
+            style={{
+              backgroundColor: "rgba(30, 41, 59, 0.98)",
+              border: `1px solid ${colors.steelBlue500}40`,
+              boxShadow: "0 25px 50px rgba(0,0,0,0.5)",
+            }}
+          >
+            <div className="text-center mb-6">
+              <div 
+                className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                style={{ 
+                  backgroundColor: `${colors.steelBlue500}15`,
+                  border: `2px solid ${colors.steelBlue500}30`,
+                }}
+              >
+                <RefreshCw className="w-8 h-8" strokeWidth={1.5} style={{ color: colors.steelBlue400 }} />
+              </div>
+              <h3 style={{ color: colors.warmIvory }} className="text-xl font-bold mb-2">New Recovery Phrase</h3>
+              <p className="text-slate-400 text-sm">
+                Save this phrase to recover your vault if you forget your password
+              </p>
+            </div>
+
+            {/* Warning */}
+            <div 
+              className="rounded-xl p-4 mb-6 flex gap-3"
+              style={{
+                backgroundColor: "rgba(245, 158, 11, 0.1)",
+                border: "1px solid rgba(245, 158, 11, 0.2)",
+              }}
+            >
+              <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" strokeWidth={1.5} />
+              <div>
+                <p className="text-amber-200 text-sm font-medium mb-1">Important</p>
+                <p className="text-slate-400 text-xs leading-relaxed">
+                  This will replace your existing recovery phrase. Write down these 12 words and store them safely. Your old phrase will no longer work.
+                </p>
+              </div>
+            </div>
+
+            {/* Phrase Display */}
+            <div 
+              className="rounded-xl p-4 mb-4"
+              style={{ backgroundColor: "rgba(15, 23, 42, 0.6)", border: `1px solid ${colors.steelBlue500}30` }}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-slate-400 text-xs uppercase tracking-wider">12-Word Phrase</span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowPhrase(!showPhrase)}
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
+                    style={{ backgroundColor: `${colors.steelBlue500}15`, color: colors.steelBlue400 }}
+                  >
+                    {showPhrase ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    {showPhrase ? "Hide" : "Show"}
+                  </button>
+                  <button
+                    onClick={handleCopyPhrase}
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
+                    style={{ backgroundColor: `${colors.steelBlue500}15`, color: phraseCopied ? "#10b981" : colors.steelBlue400 }}
+                  >
+                    {phraseCopied ? <Check className="w-3.5 h-3.5" /> : <Clipboard className="w-3.5 h-3.5" />}
+                    {phraseCopied ? "Copied!" : "Copy"}
+                  </button>
+                </div>
+              </div>
+              
+              {showPhrase ? (
+                <div className="grid grid-cols-3 gap-2">
+                  {newRecoveryPhrase.split(" ").map((word, index) => (
+                    <div 
+                      key={index}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg"
+                      style={{ backgroundColor: "rgba(15, 23, 42, 0.8)" }}
+                    >
+                      <span className="text-slate-500 text-xs w-4">{index + 1}.</span>
+                      <span className="text-white text-sm font-mono">{word}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <p className="text-slate-500 text-sm">Click "Show" to reveal your phrase</p>
+                </div>
+              )}
+            </div>
+
+            {/* Confirmation */}
+            <label className="flex items-center gap-3 mb-6 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={phraseConfirmed}
+                onChange={(e) => setPhraseConfirmed(e.target.checked)}
+                className="w-4 h-4 rounded border-slate-600 bg-slate-700/50 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
+              />
+              <span className="text-slate-300 text-sm">I have written down this phrase securely</span>
+            </label>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowRegenerateModal(false);
+                  setNewRecoveryPhrase("");
+                  setPhraseConfirmed(false);
+                }}
+                className="flex-1 px-4 py-2.5 bg-slate-700/50 hover:bg-slate-600/50 text-white rounded-lg text-sm font-medium transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmRegenerate}
+                disabled={!phraseConfirmed}
+                className="flex-1 px-4 py-2.5 text-white rounded-lg text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ backgroundColor: phraseConfirmed ? colors.steelBlue500 : "rgba(91, 130, 184, 0.3)" }}
+              >
+                Save New Phrase
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Password Hint Modal */}
+      {showHintModal && (
+        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md flex items-start justify-center pt-[20vh] p-4 z-50">
+          <div 
+            className="rounded-2xl p-6 w-full max-w-md animate-bounce-in"
+            style={{
+              backgroundColor: "rgba(30, 41, 59, 0.98)",
+              border: `1px solid ${colors.steelBlue500}40`,
+              boxShadow: "0 25px 50px rgba(0,0,0,0.5)",
+            }}
+          >
+            <div className="flex items-center gap-4 mb-6">
+              <div 
+                className="w-12 h-12 rounded-xl flex items-center justify-center"
+                style={{ backgroundColor: `${colors.steelBlue500}15` }}
+              >
+                <HelpCircle className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.steelBlue400 }} />
+              </div>
+              <div>
+                <h3 style={{ color: colors.warmIvory }} className="text-lg font-bold">Password Hint</h3>
+                <p className="text-slate-400 text-xs">A reminder shown on the login screen</p>
+              </div>
+            </div>
+
+            {/* Current Hint Display */}
+            {currentHint && (
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs text-slate-400">Current Hint</label>
+                  <button
+                    onClick={() => setShowCurrentHint(!showCurrentHint)}
+                    className="flex items-center gap-1 text-xs"
+                    style={{ color: colors.steelBlue400 }}
+                  >
+                    {showCurrentHint ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                    {showCurrentHint ? "Hide" : "Show"}
+                  </button>
+                </div>
+                <div 
+                  className="px-3 py-2.5 rounded-lg text-sm"
+                  style={{ backgroundColor: "rgba(15, 23, 42, 0.6)", border: `1px solid ${colors.steelBlue500}20` }}
+                >
+                  {showCurrentHint ? (
+                    <span className="text-slate-200">{currentHint}</span>
+                  ) : (
+                    <span className="text-slate-500">••••••••••</span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* New/Edit Hint Input */}
+            <div className="mb-6">
+              <label className="text-xs text-slate-400 mb-1.5 block">
+                {currentHint ? "Update Hint" : "Set Hint"}
+              </label>
+              <input
+                type="text"
+                value={newHint}
+                onChange={(e) => setNewHint(e.target.value)}
+                className="w-full px-3 py-2.5 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+                placeholder="A hint to help you remember your password"
+                maxLength={100}
+              />
+              <p className="mt-1.5 text-xs text-slate-500">
+                ⚠️ This hint is visible without your password
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowHintModal(false);
+                  setNewHint(currentHint || "");
+                  setShowCurrentHint(false);
+                }}
+                className="flex-1 px-4 py-2.5 bg-slate-700/50 hover:bg-slate-600/50 text-white rounded-lg text-sm font-medium transition-all"
+              >
+                Cancel
+              </button>
+              {currentHint && (
+                <button
+                  onClick={handleRemoveHint}
+                  className="px-4 py-2.5 text-red-400 hover:bg-red-500/10 rounded-lg text-sm font-medium transition-all"
+                >
+                  Remove
+                </button>
+              )}
+              <button
+                onClick={handleSaveHint}
+                className="flex-1 px-4 py-2.5 text-white rounded-lg text-sm font-medium transition-all"
+                style={{ backgroundColor: colors.steelBlue500 }}
+              >
+                Save
+              </button>
             </div>
           </div>
         </div>

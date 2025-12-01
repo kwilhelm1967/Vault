@@ -751,6 +751,35 @@ export class StorageService {
       throw new Error("Invalid import data format");
     }
   }
+
+  // Get password hint (stored unencrypted so it can be accessed without password)
+  async getPasswordHint(): Promise<string | null> {
+    try {
+      const hint = localStorage.getItem("vault_password_hint_v2");
+      return hint || null;
+    } catch (error) {
+      console.error("Failed to load password hint:", error);
+      return null;
+    }
+  }
+
+  // Set password hint (can be set during initial setup without unlock, or when unlocked)
+  async setPasswordHint(hint: string | null, requireUnlock: boolean = true): Promise<void> {
+    if (requireUnlock && !this.encryption.isUnlocked()) {
+      throw new Error("Vault is locked. Please unlock vault first.");
+    }
+    
+    try {
+      if (hint && hint.trim()) {
+        localStorage.setItem("vault_password_hint_v2", hint.trim());
+      } else {
+        localStorage.removeItem("vault_password_hint_v2");
+      }
+    } catch (error) {
+      console.error("Failed to save password hint:", error);
+      throw error;
+    }
+  }
 }
 
 export const storageService = StorageService.getInstance();
