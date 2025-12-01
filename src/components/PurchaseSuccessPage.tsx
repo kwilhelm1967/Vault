@@ -337,18 +337,18 @@ export const PurchaseSuccessPage: React.FC = () => {
 
           {/* Download Section */}
           <div className="mb-8">
-            <h2 className="text-xl font-semibold text-white mb-4 flex items-center space-x-2">
+            <h2 className="text-lg font-semibold text-white mb-4 flex items-center space-x-2">
               <Download className="w-5 h-5" style={{ color: colors.steelBlue400 }} />
               <span>Download for Your Platform</span>
             </h2>
 
-            <div className="grid gap-4">
+            <div className="grid grid-cols-3 gap-3">
               {sortedPlatforms.map((platform) => {
                 const isRecommended = platform.id === detectedOS;
                 return (
                   <div
                     key={platform.id}
-                    className="rounded-xl transition-all overflow-hidden"
+                    className="rounded-lg transition-all overflow-hidden text-center"
                     style={{
                       backgroundColor: colors.slateBackground,
                       border: isRecommended
@@ -358,46 +358,36 @@ export const PurchaseSuccessPage: React.FC = () => {
                   >
                     {isRecommended && (
                       <div
-                        className="px-3 py-1.5 text-xs font-medium text-center"
+                        className="px-2 py-1 text-[10px] font-medium"
                         style={{ backgroundColor: colors.steelBlue500, color: "white" }}
                       >
-                        Recommended for You
+                        Recommended
                       </div>
                     )}
 
-                    <div className="p-5">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <div
-                            className="w-12 h-12 rounded-lg flex items-center justify-center"
-                            style={{ backgroundColor: `${colors.steelBlue500}20` }}
-                          >
-                            <span style={{ color: colors.steelBlue400 }}>{platform.icon}</span>
-                          </div>
-                          <div>
-                            <h3 className="text-lg font-semibold text-white">{platform.name}</h3>
-                            <p className="text-sm" style={{ color: colors.warmIvory, opacity: 0.6 }}>
-                              {platform.fileType} • {platform.fileSize}
-                            </p>
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={() => handleDownload(platform)}
-                          className="px-6 py-3 rounded-lg font-medium flex items-center space-x-2 transition-all hover:scale-[1.02]"
-                          style={{
-                            backgroundColor: colors.steelBlue500,
-                            color: "white",
-                          }}
-                        >
-                          <Download className="w-4 h-4" />
-                          <span>Download</span>
-                        </button>
+                    <div className={`p-3 ${!isRecommended ? 'pt-4' : ''}`}>
+                      <div
+                        className="w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-2"
+                        style={{ backgroundColor: `${colors.steelBlue500}20` }}
+                      >
+                        <span style={{ color: colors.steelBlue400 }}>{platform.icon}</span>
                       </div>
+                      <h3 className="text-sm font-semibold text-white">{platform.name}</h3>
+                      <p className="text-[11px] mb-3" style={{ color: colors.warmIvory, opacity: 0.5 }}>
+                        {platform.fileType}
+                      </p>
 
-                      <div className="mt-3 text-sm" style={{ color: colors.warmIvory, opacity: 0.5 }}>
-                        Requires: {platform.requirements}
-                      </div>
+                      <button
+                        onClick={() => handleDownload(platform)}
+                        className="w-full px-3 py-2 rounded-md text-sm font-medium flex items-center justify-center space-x-1.5 transition-all hover:scale-[1.02]"
+                        style={{
+                          backgroundColor: colors.steelBlue500,
+                          color: "white",
+                        }}
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Download</span>
+                      </button>
                     </div>
                   </div>
                 );
