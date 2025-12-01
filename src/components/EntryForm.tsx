@@ -10,8 +10,10 @@ import {
   Wand2,
   Globe,
   FileText,
+  Plus,
+  Lock,
 } from "lucide-react";
-import { PasswordEntry, Category } from "../types";
+import { PasswordEntry, Category, CustomField } from "../types";
 import { storageService } from "../utils/storage";
 import { PasswordGenerator } from "./PasswordGenerator";
 
@@ -73,8 +75,37 @@ export const EntryForm: React.FC<EntryFormProps> = ({
     category: entry?.category || "",
     totpSecret: entry?.totpSecret || "",
   });
+  const [customFields, setCustomFields] = useState<CustomField[]>(entry?.customFields || []);
+  const [visibleSecretFields, setVisibleSecretFields] = useState<Set<string>>(new Set());
   
   const isSecureNote = entryType === "secure_note";
+  
+  // Custom field handlers
+  const addCustomField = () => {
+    const newField: CustomField = {
+      id: crypto.randomUUID(),
+      label: "",
+      value: "",
+      isSecret: false,
+    };
+    setCustomFields([...customFields, newField]);
+  };
+  
+  const updateCustomField = (id: string, updates: Partial<CustomField>) => {
+    setCustomFields(customFields.map(f => f.id === id ? { ...f, ...updates } : f));
+  };
+  
+  const removeCustomField = (id: string) => {
+    setCustomFields(customFields.filter(f => f.id !== id));
+  };
+  
+  const toggleSecretFieldVisibility = (id: string) => {
+    setVisibleSecretFields(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
 
   const [showPassword, setShowPassword] = useState(false);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
@@ -197,6 +228,12 @@ export const EntryForm: React.FC<EntryFormProps> = ({
           : entry?.passwordHistory),
         // 2FA secret
         totpSecret: isSecureNote ? undefined : (formData.totpSecret?.trim() || undefined),
+        // Custom fields - filter out empty ones
+        customFields: customFields.filter(f => f.label.trim() && f.value.trim()).map(f => ({
+          ...f,
+          label: f.label.trim(),
+          value: f.value.trim(),
+        })),
       };
 
       // Submit to parent component
@@ -677,6 +714,84 @@ export const EntryForm: React.FC<EntryFormProps> = ({
               <p className="mt-1 text-xs text-slate-500">Optional - paste the secret key from your authenticator setup</p>
             </div>
           )}
+
+          {/* Custom Fields */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-slate-300">
+                Custom Fields
+              </label>
+              <button
+                type="button"
+                onClick={addCustomField}
+                className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+              >
+                <Plus className="w-3 h-3" strokeWidth={2} />
+                Add Field
+              </button>
+            </div>
+            
+            {customFields.length === 0 ? (
+              <p className="text-xs text-slate-500 py-2">No custom fields. Click "Add Field" to create one.</p>
+            ) : (
+              <div className="space-y-3">
+                {customFields.map((field) => (
+                  <div key={field.id} className="bg-slate-700/30 rounded-xl p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <input
+                        type="text"
+                        value={field.label}
+                        onChange={(e) => updateCustomField(field.id, { label: e.target.value })}
+                        placeholder="Field name"
+                        className="flex-1 px-3 py-1.5 rounded-lg text-xs text-white placeholder-slate-500 bg-slate-800/50 border border-slate-600/50 focus:outline-none focus:border-blue-500/50"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => updateCustomField(field.id, { isSecret: !field.isSecret })}
+                        className={`p-1.5 rounded-lg transition-colors ${
+                          field.isSecret 
+                            ? "bg-blue-500/20 text-blue-400" 
+                            : "bg-slate-700/50 text-slate-500 hover:text-slate-300"
+                        }`}
+                        title={field.isSecret ? "Secret field (hidden)" : "Make secret"}
+                      >
+                        <Lock className="w-3.5 h-3.5" strokeWidth={1.5} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeCustomField(field.id)}
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                        title="Remove field"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type={field.isSecret && !visibleSecretFields.has(field.id) ? "password" : "text"}
+                        value={field.value}
+                        onChange={(e) => updateCustomField(field.id, { value: e.target.value })}
+                        placeholder="Field value"
+                        className="w-full px-3 py-2 pr-10 rounded-lg text-sm text-white placeholder-slate-500 bg-slate-800/50 border border-slate-600/50 focus:outline-none focus:border-blue-500/50"
+                      />
+                      {field.isSecret && (
+                        <button
+                          type="button"
+                          onClick={() => toggleSecretFieldVisibility(field.id)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-white transition-colors"
+                        >
+                          {visibleSecretFields.has(field.id) 
+                            ? <EyeOff className="w-4 h-4" strokeWidth={1.5} />
+                            : <Eye className="w-4 h-4" strokeWidth={1.5} />
+                          }
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-6 border-t border-slate-700/50">

@@ -73,7 +73,52 @@ const findDuplicates = (entries: PasswordEntry[], currentEntry: PasswordEntry): 
   );
 };
 
-import { PasswordEntry, Category } from "../types";
+// Custom Field Display Component
+const CustomFieldDisplay: React.FC<{ field: CustomField }> = ({ field }) => {
+  const [visible, setVisible] = React.useState(!field.isSecret);
+  const [copied, setCopied] = React.useState(false);
+  
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(field.value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+    clearClipboardAfterTimeout();
+  };
+  
+  return (
+    <div className="bg-slate-700/30 rounded-lg p-3 flex items-center justify-between">
+      <div className="flex-1 min-w-0">
+        <span className="text-xs text-slate-500 block">{field.label}</span>
+        <span className="text-sm text-slate-200 font-mono truncate block">
+          {field.isSecret && !visible ? "••••••••" : field.value}
+        </span>
+      </div>
+      <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+        {field.isSecret && (
+          <button
+            onClick={() => setVisible(!visible)}
+            className="p-1.5 text-slate-500 hover:text-white rounded transition-colors"
+            title={visible ? "Hide" : "Show"}
+          >
+            {visible 
+              ? <EyeOff className="w-4 h-4" strokeWidth={1.5} />
+              : <Eye className="w-4 h-4" strokeWidth={1.5} />
+            }
+          </button>
+        )}
+        <button
+          onClick={handleCopy}
+          className="p-1.5 text-slate-500 hover:text-blue-400 rounded transition-colors"
+          title="Copy"
+        >
+          {copied ? <Check className="w-4 h-4 text-green-400" strokeWidth={1.5} /> : <Copy className="w-4 h-4" strokeWidth={1.5} />}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+import { PasswordEntry, Category, CustomField } from "../types";
 import { CategoryIcon } from "./CategoryIcon";
 import { EntryForm } from "./EntryForm";
 import { Dashboard } from "./Dashboard";
@@ -981,6 +1026,22 @@ export const MainVault: React.FC<MainVaultProps> = ({
                           {entry.notes && (
                             <p className="mt-3 text-slate-500 text-xs line-clamp-2">{entry.notes}</p>
                           )}
+
+                          {/* Custom Fields Preview - inside expanded section */}
+                          {entry.customFields && entry.customFields.length > 0 && (
+                            <div className="mt-3 flex flex-wrap gap-1">
+                              {entry.customFields.slice(0, 3).map((field: CustomField) => (
+                                <span key={field.id} className="text-xs px-2 py-0.5 rounded bg-slate-700/50 text-slate-400">
+                                  {field.label}
+                                </span>
+                              ))}
+                              {entry.customFields.length > 3 && (
+                                <span className="text-xs px-2 py-0.5 rounded bg-slate-700/50 text-slate-500">
+                                  +{entry.customFields.length - 3} more
+                                </span>
+                              )}
+                            </div>
+                          )}
                           
                           {/* Password Age - inside expanded section */}
                           <p className={`mt-2 text-xs flex items-center gap-1 ${passwordAge.isOld ? 'text-orange-400' : 'text-slate-500'}`}>
@@ -1191,6 +1252,18 @@ export const MainVault: React.FC<MainVaultProps> = ({
                     <label className="text-xs text-slate-500 uppercase tracking-wider">Notes</label>
                     <div className="mt-1 bg-slate-700/30 rounded-lg p-3">
                       <p className="text-slate-300 text-sm whitespace-pre-wrap">{viewingEntry.notes}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Custom Fields */}
+                {viewingEntry.customFields && viewingEntry.customFields.length > 0 && (
+                  <div>
+                    <label className="text-xs text-slate-500 uppercase tracking-wider">Custom Fields</label>
+                    <div className="mt-1 space-y-2">
+                      {viewingEntry.customFields.map((field: CustomField) => (
+                        <CustomFieldDisplay key={field.id} field={field} />
+                      ))}
                     </div>
                   </div>
                 )}
