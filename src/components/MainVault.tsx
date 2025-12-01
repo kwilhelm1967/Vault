@@ -730,10 +730,10 @@ export const MainVault: React.FC<MainVaultProps> = ({
                   {/* Dropdown Menu */}
                   {showSortDropdown && (
                     <div 
-                      className="absolute right-0 top-full mt-1 w-44 rounded-xl py-1 z-50"
+                      className="absolute right-0 top-full mt-1 w-44 rounded-xl py-1 z-50 isolate"
                       style={{
-                        background: "rgb(30, 41, 59)",
-                        border: "1px solid rgba(71, 85, 105, 0.7)",
+                        backgroundColor: "#1e293b",
+                        border: "1px solid #475569",
                         boxShadow: "0 10px 40px -10px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.3)",
                       }}
                     >
@@ -755,11 +755,23 @@ export const MainVault: React.FC<MainVaultProps> = ({
                               setSortOrder(newSortOrder);
                               setShowSortDropdown(false);
                             }}
-                            className={`w-full text-left px-3 py-2 text-xs transition-colors ${
-                              isSelected 
-                                ? "bg-[#5B82B8]/20 text-white" 
-                                : "text-slate-400 hover:bg-slate-700/50 hover:text-white"
-                            }`}
+                            className="w-full text-left px-3 py-2 text-xs transition-colors"
+                            style={{
+                              backgroundColor: isSelected ? "#334155" : "#1e293b",
+                              color: isSelected ? "#ffffff" : "#94a3b8",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!isSelected) {
+                                e.currentTarget.style.backgroundColor = "#334155";
+                                e.currentTarget.style.color = "#ffffff";
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!isSelected) {
+                                e.currentTarget.style.backgroundColor = "#1e293b";
+                                e.currentTarget.style.color = "#94a3b8";
+                              }
+                            }}
                           >
                             <span className="flex items-center justify-between">
                               {option.label}

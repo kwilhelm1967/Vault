@@ -582,42 +582,57 @@ export const EntryForm: React.FC<EntryFormProps> = ({
 
               {showCategoryDropdown && (
                 <div 
-                  className="absolute z-[9999] top-full left-0 right-0 mt-1 rounded-xl max-h-60 overflow-y-auto"
+                  className="absolute z-[9999] top-full left-0 right-0 mt-1 rounded-xl max-h-60 overflow-y-auto isolate"
                   style={{
-                    background: "rgb(30, 41, 59)",
-                    border: "1px solid rgba(71, 85, 105, 0.5)",
+                    backgroundColor: "#1e293b",
+                    border: "1px solid #475569",
                     boxShadow: "0 10px 40px -10px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.3)",
                   }}
                 >
                   <div className="p-1">
                     {categories
                       .filter((c) => c.id !== "all")
-                      .map((category) => (
-                        <button
-                          key={category.id}
-                          type="button"
-                          onClick={() => {
-                            setFormData((prev) => ({
-                              ...prev,
-                              category: category.id,
-                            }));
-                            setShowCategoryDropdown(false);
-                            if (fieldErrors.category) {
-                              setFieldErrors(prev => ({ ...prev, category: undefined }));
-                            }
-                          }}
-                          className={`w-full px-3 py-2 text-left text-sm rounded-lg transition-all flex items-center justify-between ${
-                            formData.category === category.id
-                              ? "bg-blue-600/30 text-white"
-                              : "text-slate-300 hover:bg-slate-700/50 hover:text-white"
-                          }`}
-                        >
-                          <span>{category.name}</span>
-                          {formData.category === category.id && (
-                            <Check className="w-3 h-3 text-blue-400" />
-                          )}
-                        </button>
-                      ))}
+                      .map((category) => {
+                        const isSelected = formData.category === category.id;
+                        return (
+                          <button
+                            key={category.id}
+                            type="button"
+                            onClick={() => {
+                              setFormData((prev) => ({
+                                ...prev,
+                                category: category.id,
+                              }));
+                              setShowCategoryDropdown(false);
+                              if (fieldErrors.category) {
+                                setFieldErrors(prev => ({ ...prev, category: undefined }));
+                              }
+                            }}
+                            className="w-full px-3 py-2 text-left text-sm rounded-lg transition-colors flex items-center justify-between"
+                            style={{
+                              backgroundColor: isSelected ? "#334155" : "#1e293b",
+                              color: isSelected ? "#ffffff" : "#cbd5e1",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!isSelected) {
+                                e.currentTarget.style.backgroundColor = "#334155";
+                                e.currentTarget.style.color = "#ffffff";
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!isSelected) {
+                                e.currentTarget.style.backgroundColor = "#1e293b";
+                                e.currentTarget.style.color = "#cbd5e1";
+                              }
+                            }}
+                          >
+                            <span>{category.name}</span>
+                            {isSelected && (
+                              <Check className="w-3 h-3 text-blue-400" />
+                            )}
+                          </button>
+                        );
+                      })}
                   </div>
                 </div>
               )}

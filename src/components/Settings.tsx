@@ -182,35 +182,42 @@ const BlueSelect: React.FC<{
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
           <div 
-            className="absolute right-0 top-full mt-2 py-2 rounded-xl z-50 min-w-[160px] overflow-hidden"
+            className="absolute right-0 top-full mt-2 py-2 rounded-xl z-50 min-w-[160px] overflow-hidden isolate"
             style={{
-              background: "rgb(30, 41, 59)",
-              border: `1px solid rgba(91, 130, 184, 0.3)`,
+              backgroundColor: "#1e293b",
+              border: "1px solid #475569",
               boxShadow: "0 10px 40px -10px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.3)",
             }}
           >
-            {options.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onChange(opt.value);
-                  setIsOpen(false);
-                }}
-                className={`w-full px-4 py-2.5 text-left text-sm transition-colors flex items-center justify-between ${
-                  opt.value === value ? "" : "hover:bg-slate-700/50"
-                }`}
-                style={{ 
-                  color: opt.value === value ? colors.steelBlue400 : colors.warmIvory,
-                  backgroundColor: opt.value === value ? `${colors.steelBlue500}15` : "transparent",
-                }}
-              >
-                <span>{opt.label}</span>
-                {opt.value === value && (
-                  <Check className="w-4 h-4" strokeWidth={2} style={{ color: colors.steelBlue400 }} />
-                )}
-              </button>
-            ))}
+            {options.map((opt) => {
+              const isSelected = opt.value === value;
+              return (
+                <button
+                  key={opt.value}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onChange(opt.value);
+                    setIsOpen(false);
+                  }}
+                  className="w-full px-4 py-2.5 text-left text-sm transition-colors flex items-center justify-between"
+                  style={{ 
+                    color: isSelected ? colors.steelBlue400 : colors.warmIvory,
+                    backgroundColor: isSelected ? "#334155" : "#1e293b",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected) e.currentTarget.style.backgroundColor = "#334155";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) e.currentTarget.style.backgroundColor = "#1e293b";
+                  }}
+                >
+                  <span>{opt.label}</span>
+                  {isSelected && (
+                    <Check className="w-4 h-4" strokeWidth={2} style={{ color: colors.steelBlue400 }} />
+                  )}
+                </button>
+              );
+            })}
           </div>
         </>
       )}
