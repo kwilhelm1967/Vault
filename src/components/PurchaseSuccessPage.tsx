@@ -215,9 +215,9 @@ export const PurchaseSuccessPage: React.FC = () => {
           <div className="text-center mb-10">
             <div
               className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
-              style={{ backgroundColor: `${colors.steelBlue500}20`, border: `2px solid ${colors.steelBlue400}40` }}
+              style={{ backgroundColor: `${colors.successGreen}20`, border: `2px solid ${colors.successGreen}40` }}
             >
-              <CheckCircle className="w-10 h-10" style={{ color: colors.steelBlue400 }} />
+              <CheckCircle className="w-10 h-10" style={{ color: colors.successGreen }} />
             </div>
             <h1 className="text-3xl font-bold text-white mb-3">
               Thank You for Your Purchase!
