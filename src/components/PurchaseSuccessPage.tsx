@@ -257,7 +257,7 @@ export const PurchaseSuccessPage: React.FC = () => {
                 return (
                   <div
                     key={platform.id}
-                    className="rounded-xl p-5 transition-all relative overflow-hidden"
+                    className="rounded-xl transition-all overflow-hidden"
                     style={{
                       backgroundColor: colors.slateBackground,
                       border: isRecommended
@@ -267,44 +267,46 @@ export const PurchaseSuccessPage: React.FC = () => {
                   >
                     {isRecommended && (
                       <div
-                        className="absolute top-0 right-0 px-3 py-1 text-xs font-medium rounded-bl-lg"
+                        className="px-3 py-1.5 text-xs font-medium text-center"
                         style={{ backgroundColor: colors.steelBlue500, color: "white" }}
                       >
                         Recommended for You
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div
-                          className="w-12 h-12 rounded-lg flex items-center justify-center"
-                          style={{ backgroundColor: `${colors.steelBlue500}20` }}
+                    <div className="p-5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div
+                            className="w-12 h-12 rounded-lg flex items-center justify-center"
+                            style={{ backgroundColor: `${colors.steelBlue500}20` }}
+                          >
+                            <span style={{ color: colors.steelBlue400 }}>{platform.icon}</span>
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-white">{platform.name}</h3>
+                            <p className="text-sm" style={{ color: colors.warmIvory, opacity: 0.6 }}>
+                              {platform.fileType} • {platform.fileSize}
+                            </p>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => handleDownload(platform)}
+                          className="px-6 py-3 rounded-lg font-medium flex items-center space-x-2 transition-all hover:scale-[1.02]"
+                          style={{
+                            backgroundColor: colors.steelBlue500,
+                            color: "white",
+                          }}
                         >
-                          <span style={{ color: colors.steelBlue400 }}>{platform.icon}</span>
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-white">{platform.name}</h3>
-                          <p className="text-sm" style={{ color: colors.warmIvory, opacity: 0.6 }}>
-                            {platform.fileType} • {platform.fileSize}
-                          </p>
-                        </div>
+                          <Download className="w-4 h-4" />
+                          <span>Download</span>
+                        </button>
                       </div>
 
-                      <button
-                        onClick={() => handleDownload(platform)}
-                        className="px-6 py-3 rounded-lg font-medium flex items-center space-x-2 transition-all hover:scale-[1.02]"
-                        style={{
-                          backgroundColor: colors.steelBlue500,
-                          color: "white",
-                        }}
-                      >
-                        <Download className="w-4 h-4" />
-                        <span>Download</span>
-                      </button>
-                    </div>
-
-                    <div className="mt-3 text-sm" style={{ color: colors.warmIvory, opacity: 0.5 }}>
-                      Requires: {platform.requirements}
+                      <div className="mt-3 text-sm" style={{ color: colors.warmIvory, opacity: 0.5 }}>
+                        Requires: {platform.requirements}
+                      </div>
                     </div>
                   </div>
                 );
