@@ -34,9 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Landing page preview route: `/?preview=landing`
 - Purchase success page preview: `/?preview=success`
 
-### 💰 Pricing Update
-- Personal Vault: $29 (was $49)
-
 ---
 
 ## [1.2.0] - 2024-12-01

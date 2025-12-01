@@ -842,6 +842,30 @@ function App() {
     }
   }, [appStatus?.trialInfo.isExpired, appStatus?.canUseApp, appStatus?.isLicensed, checkStatusImmediately]);
 
+  /**
+   * Dev Preview Mode: Add ?preview=landing, ?preview=success, etc. to see those screens
+   * This runs BEFORE the loading check so previews work immediately
+   */
+  if (import.meta.env.DEV) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const preview = urlParams.get('preview');
+    
+    // Landing page preview - no loading required
+    if (preview === 'landing') {
+      return <LandingPage />;
+    }
+
+    // Purchase success page preview
+    if (preview === 'success' || urlParams.get('key') || urlParams.get('license')) {
+      return <PurchaseSuccessPage />;
+    }
+
+    // Download page preview
+    if (preview === 'download') {
+      return <DownloadPage />;
+    }
+  }
+
   // Show loading state while app status is being determined
   if (!appStatus) {
     return (
@@ -923,20 +947,6 @@ function App() {
       );
     }
 
-    // Download page preview
-    if (urlParams.get('preview') === 'download') {
-      return <DownloadPage />;
-    }
-
-    // Purchase success page preview
-    if (urlParams.get('preview') === 'success' || urlParams.get('key') || urlParams.get('license')) {
-      return <PurchaseSuccessPage />;
-    }
-
-    // Landing page preview
-    if (urlParams.get('preview') === 'landing') {
-      return <LandingPage />;
-    }
   }
 
   /**

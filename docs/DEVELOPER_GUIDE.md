@@ -173,7 +173,7 @@ Add `?dev=1` to bypass license check during development.
 
 | Plan | Price | Keys | Devices |
 |------|-------|------|---------|
-| Personal Vault | $29 | 1 | 1 |
+| Personal Vault | $49 | 1 | 1 |
 | Family Vault | $79 | 5 | 5 |
 | Free Trial | $0 | 1 | 1 (7 days) |
 

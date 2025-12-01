@@ -988,7 +988,7 @@ export const LandingPage: React.FC = () => {
             />
             <PricingCard
               title="Personal Vault"
-              price="$29"
+              price="$49"
               period="one-time"
               features={[
                 "Lifetime license",
