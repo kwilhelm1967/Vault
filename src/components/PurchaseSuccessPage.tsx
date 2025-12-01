@@ -74,47 +74,96 @@ const getOS = (): string => {
 };
 
 export const PurchaseSuccessPage: React.FC = () => {
-  const [copied, setCopied] = useState(false);
-  const [licenseKey, setLicenseKey] = useState<string>("");
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [licenseKeys, setLicenseKeys] = useState<string[]>([]);
   const [customerEmail, setCustomerEmail] = useState<string>("");
   const [planName, setPlanName] = useState<string>("Lifetime License");
+  const [planType, setPlanType] = useState<string>("single");
   const detectedOS = getOS();
 
-  // Extract license key and other params from URL
+  // Extract license keys and other params from URL
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const key = urlParams.get("key") || urlParams.get("license") || urlParams.get("licenseKey");
+    
+    // Support multiple keys: ?keys=KEY1,KEY2,KEY3 or ?key=KEY1&key2=KEY2&key3=KEY3
+    const keysParam = urlParams.get("keys");
+    const singleKey = urlParams.get("key") || urlParams.get("license") || urlParams.get("licenseKey");
+    
+    const keys: string[] = [];
+    
+    if (keysParam) {
+      // Comma-separated keys
+      keys.push(...keysParam.split(",").map(k => k.trim()).filter(k => k));
+    } else if (singleKey) {
+      keys.push(singleKey);
+      // Check for additional numbered keys (key2, key3, etc.)
+      for (let i = 2; i <= 10; i++) {
+        const additionalKey = urlParams.get(`key${i}`);
+        if (additionalKey) {
+          keys.push(additionalKey);
+        }
+      }
+    }
+    
+    setLicenseKeys(keys);
+    
     const email = urlParams.get("email");
     const plan = urlParams.get("plan");
+    const type = urlParams.get("type"); // single, family, business
 
-    if (key) {
-      setLicenseKey(key);
-    }
     if (email) {
       setCustomerEmail(decodeURIComponent(email));
     }
     if (plan) {
       setPlanName(decodeURIComponent(plan));
     }
+    if (type) {
+      setPlanType(type);
+    } else if (keys.length >= 10) {
+      setPlanType("business");
+      if (!plan) setPlanName("Business License");
+    } else if (keys.length >= 3) {
+      setPlanType("family");
+      if (!plan) setPlanName("Family Plan");
+    } else {
+      setPlanType("single");
+      if (!plan) setPlanName("Single User License");
+    }
   }, []);
 
-  const handleCopyKey = async () => {
-    if (!licenseKey) return;
-    
+  const handleCopyKey = async (key: string, index: number) => {
     try {
-      await navigator.clipboard.writeText(licenseKey);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(key);
+      setCopiedIndex(index);
+      setTimeout(() => setCopiedIndex(null), 2000);
     } catch (err) {
       // Fallback for older browsers
       const textArea = document.createElement("textarea");
-      textArea.value = licenseKey;
+      textArea.value = key;
       document.body.appendChild(textArea);
       textArea.select();
       document.execCommand("copy");
       document.body.removeChild(textArea);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setCopiedIndex(index);
+      setTimeout(() => setCopiedIndex(null), 2000);
+    }
+  };
+
+  const handleCopyAllKeys = async () => {
+    const allKeys = licenseKeys.join("\n");
+    try {
+      await navigator.clipboard.writeText(allKeys);
+      setCopiedIndex(-1); // -1 indicates "all copied"
+      setTimeout(() => setCopiedIndex(null), 2000);
+    } catch (err) {
+      const textArea = document.createElement("textarea");
+      textArea.value = allKeys;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      setCopiedIndex(-1);
+      setTimeout(() => setCopiedIndex(null), 2000);
     }
   };
 
@@ -178,8 +227,8 @@ export const PurchaseSuccessPage: React.FC = () => {
             </p>
           </div>
 
-          {/* License Key Card */}
-          {licenseKey && (
+          {/* License Keys Card */}
+          {licenseKeys.length > 0 && (
             <div
               className="rounded-xl p-6 mb-8"
               style={{
@@ -187,52 +236,97 @@ export const PurchaseSuccessPage: React.FC = () => {
                 border: `1px solid ${colors.steelBlue400}40`,
               }}
             >
-              <div className="flex items-center space-x-3 mb-4">
-                <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: `${colors.softGold}20` }}
-                >
-                  <Key className="w-5 h-5" style={{ color: colors.softGold }} />
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div
+                    className="w-10 h-10 rounded-lg flex items-center justify-center"
+                    style={{ backgroundColor: `${colors.softGold}20` }}
+                  >
+                    <Key className="w-5 h-5" style={{ color: colors.softGold }} />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-white">
+                      {licenseKeys.length === 1 ? "Your License Key" : `Your License Keys (${licenseKeys.length})`}
+                    </h2>
+                    <p className="text-sm" style={{ color: colors.warmIvory, opacity: 0.6 }}>
+                      {licenseKeys.length === 1 
+                        ? "Save this key — you'll need it to activate the app"
+                        : "Each key activates one device — share with family members"}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-white">Your License Key</h2>
-                  <p className="text-sm" style={{ color: colors.warmIvory, opacity: 0.6 }}>
-                    Save this key — you'll need it to activate the app
-                  </p>
-                </div>
+                
+                {licenseKeys.length > 1 && (
+                  <button
+                    onClick={handleCopyAllKeys}
+                    className="px-4 py-2 rounded-lg flex items-center space-x-2 transition-all"
+                    style={{
+                      backgroundColor: copiedIndex === -1 ? `${colors.successGreen}20` : `${colors.steelBlue500}20`,
+                      border: `1px solid ${copiedIndex === -1 ? colors.successGreen : colors.steelBlue400}40`,
+                      color: copiedIndex === -1 ? colors.successGreen : colors.steelBlue400,
+                    }}
+                  >
+                    {copiedIndex === -1 ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        <span className="text-sm font-medium">All Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        <span className="text-sm font-medium">Copy All</span>
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
 
-              <div
-                className="rounded-lg p-4 flex items-center justify-between"
-                style={{ backgroundColor: colors.deepNavy, border: `1px solid ${colors.steelBlue400}30` }}
-              >
-                <code
-                  className="text-lg font-mono tracking-wider select-all"
-                  style={{ color: colors.steelBlue400 }}
-                >
-                  {licenseKey}
-                </code>
-                <button
-                  onClick={handleCopyKey}
-                  className="ml-4 px-4 py-2 rounded-lg flex items-center space-x-2 transition-all"
-                  style={{
-                    backgroundColor: copied ? `${colors.successGreen}20` : `${colors.steelBlue500}20`,
-                    border: `1px solid ${copied ? colors.successGreen : colors.steelBlue400}40`,
-                    color: copied ? colors.successGreen : colors.steelBlue400,
-                  }}
-                >
-                  {copied ? (
-                    <>
-                      <Check className="w-4 h-4" />
-                      <span className="text-sm font-medium">Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4" />
-                      <span className="text-sm font-medium">Copy</span>
-                    </>
-                  )}
-                </button>
+              <div className="space-y-3">
+                {licenseKeys.map((key, index) => (
+                  <div
+                    key={index}
+                    className="rounded-lg p-4 flex items-center justify-between"
+                    style={{ backgroundColor: colors.deepNavy, border: `1px solid ${colors.steelBlue400}30` }}
+                  >
+                    <div className="flex items-center space-x-3">
+                      {licenseKeys.length > 1 && (
+                        <span 
+                          className="text-xs font-medium px-2 py-1 rounded"
+                          style={{ backgroundColor: `${colors.steelBlue500}30`, color: colors.steelBlue400 }}
+                        >
+                          Key {index + 1}
+                        </span>
+                      )}
+                      <code
+                        className="text-base font-mono tracking-wider select-all"
+                        style={{ color: colors.steelBlue400 }}
+                      >
+                        {key}
+                      </code>
+                    </div>
+                    <button
+                      onClick={() => handleCopyKey(key, index)}
+                      className="ml-4 px-3 py-1.5 rounded-lg flex items-center space-x-2 transition-all"
+                      style={{
+                        backgroundColor: copiedIndex === index ? `${colors.successGreen}20` : `${colors.steelBlue500}20`,
+                        border: `1px solid ${copiedIndex === index ? colors.successGreen : colors.steelBlue400}40`,
+                        color: copiedIndex === index ? colors.successGreen : colors.steelBlue400,
+                      }}
+                    >
+                      {copiedIndex === index ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          <span className="text-sm font-medium">Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4" />
+                          <span className="text-sm font-medium">Copy</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                ))}
               </div>
 
               {customerEmail && (
