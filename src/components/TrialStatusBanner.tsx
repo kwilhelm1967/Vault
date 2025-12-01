@@ -175,13 +175,14 @@ export const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
     }
   };
 
-  // Alert palette for warning/expired states - subtle, translucent red
+  // Alert palette for warning/expired states - refined, premium styling
   const alertColors = {
-    background: 'rgba(255, 75, 75, 0.10)',
-    border: 'rgba(255, 75, 75, 0.25)',
-    text: '#FF6B6B',
-    textMuted: 'rgba(255, 107, 107, 0.7)',
-    iconBg: 'rgba(255, 75, 75, 0.15)',
+    background: 'linear-gradient(90deg, rgba(255, 85, 85, 0.12) 0%, rgba(255, 85, 85, 0.06) 100%)',
+    border: 'rgba(255, 85, 85, 0.22)',
+    text: '#FF6E6E',
+    textMuted: 'rgba(255, 110, 110, 0.75)',
+    iconBg: 'rgba(255, 85, 85, 0.15)',
+    iconBorder: 'rgba(255, 85, 85, 0.25)',
   };
 
   // Expired state
@@ -190,7 +191,7 @@ export const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
       <div 
         className="rounded-xl px-4 py-3 mb-4"
         style={{ 
-          backgroundColor: alertColors.background,
+          background: alertColors.background,
           border: `1px solid ${alertColors.border}`,
         }}
       >
@@ -198,7 +199,10 @@ export const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
           <div className="flex items-center gap-3">
             <div 
               className="p-2 rounded-lg"
-              style={{ backgroundColor: alertColors.iconBg }}
+              style={{ 
+                background: alertColors.iconBg,
+                border: `1px solid ${alertColors.iconBorder}`,
+              }}
             >
               <AlertTriangle className="w-5 h-5" strokeWidth={1.5} style={{ color: alertColors.text }} />
             </div>
@@ -233,23 +237,32 @@ export const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
     );
   }
 
-  // Warning state (urgent) - uses same alert palette for very urgent, gold for regular urgent
+  // Warning state (urgent) - refined gradient for very urgent, gold for regular urgent
   if (isUrgent) {
     const useAlertStyle = isVeryUrgent;
+    
+    // Gold gradient for regular urgent state
+    const goldGradient = `linear-gradient(90deg, rgba(201, 174, 102, 0.12) 0%, rgba(201, 174, 102, 0.06) 100%)`;
+    const goldBorder = 'rgba(201, 174, 102, 0.25)';
+    const goldIconBg = 'rgba(201, 174, 102, 0.15)';
+    const goldIconBorder = 'rgba(201, 174, 102, 0.25)';
     
     return (
       <div 
         className="rounded-xl px-4 py-3 mb-4"
         style={{ 
-          backgroundColor: useAlertStyle ? alertColors.background : `${colors.brandGold}12`,
-          border: `1px solid ${useAlertStyle ? alertColors.border : colors.brandGold}50`,
+          background: useAlertStyle ? alertColors.background : goldGradient,
+          border: `1px solid ${useAlertStyle ? alertColors.border : goldBorder}`,
         }}
       >
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div 
               className="p-2 rounded-lg"
-              style={{ backgroundColor: useAlertStyle ? alertColors.iconBg : `${colors.brandGold}20` }}
+              style={{ 
+                background: useAlertStyle ? alertColors.iconBg : goldIconBg,
+                border: `1px solid ${useAlertStyle ? alertColors.iconBorder : goldIconBorder}`,
+              }}
             >
               <AlertTriangle 
                 className="w-5 h-5" 
