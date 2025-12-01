@@ -123,6 +123,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
   const [currentView, setCurrentView] = useState<"dashboard" | "passwords" | "settings">("dashboard");
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showWeakOnly, setShowWeakOnly] = useState(false);
+  const [showReusedOnly, setShowReusedOnly] = useState(false);
   const [expandedEntries, setExpandedEntries] = useState<Set<string>>(new Set());
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [sortBy, setSortBy] = useState<"name" | "date" | "category">("name");
@@ -184,6 +185,17 @@ export const MainVault: React.FC<MainVaultProps> = ({
       return strength <= 2;
     };
 
+    // Build password count map for reuse detection
+    const passwordCounts: Record<string, number> = {};
+    entries.forEach((entry) => {
+      if (entry.password && entry.entryType !== "secure_note") {
+        passwordCounts[entry.password] = (passwordCounts[entry.password] || 0) + 1;
+      }
+    });
+    const isReusedPassword = (password: string): boolean => {
+      return (passwordCounts[password] || 0) > 1;
+    };
+
     // Filter entries (includes search in notes)
     let filtered = entries.filter((entry) => {
       const searchLower = searchTerm.toLowerCase().trim();
@@ -196,8 +208,9 @@ export const MainVault: React.FC<MainVaultProps> = ({
       const matchesCategory =
         selectedCategory === "all" || entry.category === selectedCategory;
       const matchesWeakFilter = !showWeakOnly || isWeakPassword(entry.password);
+      const matchesReusedFilter = !showReusedOnly || isReusedPassword(entry.password);
       const matchesFavorites = !showFavoritesOnly || entry.isFavorite;
-      return matchesSearch && matchesCategory && matchesWeakFilter && matchesFavorites;
+      return matchesSearch && matchesCategory && matchesWeakFilter && matchesReusedFilter && matchesFavorites;
     });
 
     // Sort entries (favorites always first, then by selected sort)
@@ -223,7 +236,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
     });
 
     return filtered;
-  }, [entries, searchTerm, selectedCategory, showWeakOnly, showFavoritesOnly, sortBy, sortOrder]);
+  }, [entries, searchTerm, selectedCategory, showWeakOnly, showReusedOnly, showFavoritesOnly, sortBy, sortOrder]);
 
   const togglePasswordVisibility = (entryId: string) => {
     setVisiblePasswords((prev) => {
@@ -450,11 +463,11 @@ export const MainVault: React.FC<MainVaultProps> = ({
               setCurrentView("passwords");
             }}
             className={`nav-item-hover w-full px-3 py-2 mb-0.5 rounded-lg text-left text-sm transition-all flex items-center gap-2.5 ${
-              currentView === "passwords" && selectedCategory === "all" && !showWeakOnly && !showFavoritesOnly
+              currentView === "passwords" && selectedCategory === "all" && !showWeakOnly && !showReusedOnly && !showFavoritesOnly
                 ? "nav-item-selected text-white"
                 : "text-slate-400 hover:bg-slate-700/30 hover:text-white"
             }`}
-            style={currentView === "passwords" && selectedCategory === "all" && !showWeakOnly && !showFavoritesOnly ? { backgroundColor: `${colors.steelBlue600}20` } : {}}
+            style={currentView === "passwords" && selectedCategory === "all" && !showWeakOnly && !showReusedOnly && !showFavoritesOnly ? { backgroundColor: `${colors.steelBlue600}20` } : {}}
           >
             <Shield className="w-4 h-4 opacity-70" strokeWidth={1.5} />
             All Accounts
@@ -536,12 +549,20 @@ export const MainVault: React.FC<MainVaultProps> = ({
             onViewCategory={(categoryId) => {
               onCategoryChange(categoryId);
               setShowWeakOnly(false);
+              setShowReusedOnly(false);
               setCurrentView("passwords");
             }}
             onViewEntry={(entry) => setViewingEntry(entry)}
             onViewWeakPasswords={() => {
               onCategoryChange("all");
               setShowWeakOnly(true);
+              setShowReusedOnly(false);
+              setCurrentView("passwords");
+            }}
+            onViewReusedPasswords={() => {
+              onCategoryChange("all");
+              setShowWeakOnly(false);
+              setShowReusedOnly(true);
               setCurrentView("passwords");
             }}
           />
@@ -571,6 +592,11 @@ export const MainVault: React.FC<MainVaultProps> = ({
                       <AlertTriangle className="w-6 h-6 text-amber-400" strokeWidth={1.5} />
                       <span className="text-amber-400">Weak Passwords</span>
                     </>
+                  ) : showReusedOnly ? (
+                    <>
+                      <AlertTriangle className="w-6 h-6" strokeWidth={1.5} style={{ color: '#C9AE66' }} />
+                      <span style={{ color: '#C9AE66' }}>Reused Passwords</span>
+                    </>
                   ) : showFavoritesOnly ? (
                     <>
                       <Star className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
@@ -584,6 +610,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
                   {filteredEntries.length} {filteredEntries.length === 1 ? "item" : "items"}
                   {searchTerm && ` matching "${searchTerm}"`}
                   {showWeakOnly && " • These need stronger passwords"}
+                  {showReusedOnly && " • Consider using unique passwords"}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -645,10 +672,11 @@ export const MainVault: React.FC<MainVaultProps> = ({
                   )}
                 </div>
                 {/* Clear Filters */}
-                {(showWeakOnly || showFavoritesOnly) && (
+                {(showWeakOnly || showReusedOnly || showFavoritesOnly) && (
                   <button
                     onClick={() => {
                       setShowWeakOnly(false);
+                      setShowReusedOnly(false);
                       setShowFavoritesOnly(false);
                     }}
                     className="text-xs px-3 py-1.5 rounded-lg bg-slate-700/50 text-slate-400 hover:text-slate-200 hover:bg-slate-700 transition-colors"

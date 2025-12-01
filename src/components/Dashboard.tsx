@@ -34,6 +34,7 @@ interface DashboardProps {
   onViewCategory: (categoryId: string) => void;
   onViewEntry: (entry: PasswordEntry) => void;
   onViewWeakPasswords?: () => void;
+  onViewReusedPasswords?: () => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -43,6 +44,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onViewCategory,
   onViewEntry,
   onViewWeakPasswords,
+  onViewReusedPasswords,
 }) => {
   // Calculate statistics
   const stats = useMemo(() => {
@@ -249,7 +251,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Reused Passwords */}
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-5">
+        <div 
+          className={`bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-5 transition-all duration-200 ${
+            stats.reusedPasswords > 0 ? "cursor-pointer hover:bg-slate-800/70" : ""
+          }`}
+          style={stats.reusedPasswords > 0 ? { borderColor: 'rgba(201, 174, 102, 0.3)' } : {}}
+          onMouseEnter={(e) => stats.reusedPasswords > 0 && (e.currentTarget.style.borderColor = 'rgba(201, 174, 102, 0.5)')}
+          onMouseLeave={(e) => stats.reusedPasswords > 0 && (e.currentTarget.style.borderColor = 'rgba(201, 174, 102, 0.3)')}
+          onClick={stats.reusedPasswords > 0 ? onViewReusedPasswords : undefined}
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Reused Passwords</p>
@@ -273,7 +283,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
           <div className="mt-3 flex items-center gap-1.5 text-xs">
             {stats.reusedPasswords > 0 ? (
-              <span style={{ color: '#C9AE66' }}>Consider using unique passwords</span>
+              <span style={{ color: '#C9AE66' }} className="flex items-center gap-1">
+                Click to view & update
+                <ChevronRight className="w-3 h-3" strokeWidth={2} />
+              </span>
             ) : (
               <span className="text-emerald-400">All passwords are unique!</span>
             )}
