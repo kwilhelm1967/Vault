@@ -1,216 +1,392 @@
-import React, { useState } from 'react';
-import { Download, FileDown, HardDrive, Code, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+/**
+ * DownloadPage Component
+ * 
+ * End-user download page for Local Password Vault.
+ * Offers platform-specific downloads (no source code).
+ */
+
+import React, { useState, useEffect } from 'react';
+import { 
+  Download, 
+  Monitor, 
+  Apple, 
+  Server,
+  FileText, 
+  CheckCircle, 
+  Shield,
+  Lock,
+  Zap,
+  ChevronRight,
+  ExternalLink
+} from 'lucide-react';
+
+// Color palette matching LPV design system
+const colors = {
+  steelBlue600: "#4A6FA5",
+  steelBlue500: "#5B82B8",
+  steelBlue400: "#7A9DC7",
+  warmIvory: "#F3F4F6",
+  brandGold: "#C9AE66",
+};
+
+// Platform detection
+const detectPlatform = (): 'windows' | 'macos' | 'linux' | 'unknown' => {
+  const userAgent = navigator.userAgent.toLowerCase();
+  if (userAgent.includes('win')) return 'windows';
+  if (userAgent.includes('mac')) return 'macos';
+  if (userAgent.includes('linux')) return 'linux';
+  return 'unknown';
+};
+
+// Platform info
+const platforms = {
+  windows: {
+    name: 'Windows',
+    icon: Monitor,
+    extension: '.exe',
+    filename: 'LocalPasswordVault-Setup.exe',
+    size: '~85 MB',
+    requirements: 'Windows 10 or later (64-bit)',
+    color: '#0078D4',
+  },
+  macos: {
+    name: 'macOS',
+    icon: Apple,
+    extension: '.dmg',
+    filename: 'LocalPasswordVault.dmg',
+    size: '~95 MB',
+    requirements: 'macOS 10.15 (Catalina) or later',
+    color: '#000000',
+  },
+  linux: {
+    name: 'Linux',
+    icon: Server,
+    extension: '.AppImage',
+    filename: 'LocalPasswordVault.AppImage',
+    size: '~90 MB',
+    requirements: 'Ubuntu 18.04+ or equivalent',
+    color: '#FCC624',
+  },
+};
+
+interface DownloadCardProps {
+  platform: 'windows' | 'macos' | 'linux';
+  isRecommended?: boolean;
+  onDownload: (platform: string) => void;
+  downloading: string | null;
+}
+
+const DownloadCard: React.FC<DownloadCardProps> = ({ 
+  platform, 
+  isRecommended, 
+  onDownload,
+  downloading 
+}) => {
+  const info = platforms[platform];
+  const Icon = info.icon;
+  const isDownloading = downloading === platform;
+
+  return (
+    <div 
+      className={`relative rounded-2xl p-6 transition-all duration-300 ${
+        isRecommended 
+          ? 'border-2 ring-2 ring-offset-2 ring-offset-slate-900' 
+          : 'border hover:border-slate-600'
+      }`}
+      style={{
+        backgroundColor: 'rgba(30, 41, 59, 0.6)',
+        borderColor: isRecommended ? colors.steelBlue500 : 'rgba(71, 85, 105, 0.5)',
+        ...(isRecommended && { ringColor: `${colors.steelBlue500}40` }),
+      }}
+    >
+      {isRecommended && (
+        <div 
+          className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-semibold text-white"
+          style={{ backgroundColor: colors.steelBlue500 }}
+        >
+          Recommended for You
+        </div>
+      )}
+
+      <div className="flex items-center gap-4 mb-4">
+        <div 
+          className="w-14 h-14 rounded-xl flex items-center justify-center"
+          style={{ backgroundColor: `${colors.steelBlue500}15` }}
+        >
+          <Icon className="w-7 h-7" strokeWidth={1.5} style={{ color: colors.steelBlue400 }} />
+        </div>
+        <div>
+          <h3 className="text-xl font-bold" style={{ color: colors.warmIvory }}>{info.name}</h3>
+          <p className="text-slate-500 text-sm">{info.extension} installer</p>
+        </div>
+      </div>
+
+      <div className="space-y-2 mb-5">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-slate-500">File size</span>
+          <span style={{ color: colors.warmIvory }}>{info.size}</span>
+        </div>
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-slate-500">Requirements</span>
+          <span className="text-right text-xs" style={{ color: colors.warmIvory }}>{info.requirements}</span>
+        </div>
+      </div>
+
+      <button
+        onClick={() => onDownload(platform)}
+        disabled={isDownloading}
+        className="w-full py-3 px-4 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2"
+        style={{ 
+          backgroundColor: isDownloading ? '#475569' : colors.steelBlue500,
+        }}
+        onMouseEnter={(e) => {
+          if (!isDownloading) e.currentTarget.style.backgroundColor = colors.steelBlue600;
+        }}
+        onMouseLeave={(e) => {
+          if (!isDownloading) e.currentTarget.style.backgroundColor = colors.steelBlue500;
+        }}
+      >
+        {isDownloading ? (
+          <>
+            <div className="w-5 h-5 border-2 border-slate-400 border-t-white rounded-full animate-spin" />
+            <span>Preparing Download...</span>
+          </>
+        ) : (
+          <>
+            <Download className="w-5 h-5" strokeWidth={1.5} />
+            <span>Download for {info.name}</span>
+          </>
+        )}
+      </button>
+    </div>
+  );
+};
 
 export const DownloadPage: React.FC = () => {
-  const [downloadStatus, setDownloadStatus] = useState<'idle' | 'downloading' | 'complete' | 'error'>('idle');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [detectedPlatform, setDetectedPlatform] = useState<'windows' | 'macos' | 'linux' | 'unknown'>('unknown');
+  const [downloading, setDownloading] = useState<string | null>(null);
+  const [downloadComplete, setDownloadComplete] = useState<string | null>(null);
 
-  const handleDownload = async (type: 'project' | 'windows' | 'macos' | 'linux' | 'docs') => {
-    setDownloadStatus('downloading');
-    setErrorMessage(null);
+  useEffect(() => {
+    setDetectedPlatform(detectPlatform());
+  }, []);
+
+  const handleDownload = async (platform: string) => {
+    setDownloading(platform);
+    setDownloadComplete(null);
     
     try {
-      // Simulate download process
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Simulate download initialization
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Create appropriate download based on type
-      if (type === 'project') {
-        // Download the project files
-        const link = document.createElement('a');
-        link.href = '/download-project.js';
-        link.download = 'download-project.js';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } else if (type === 'docs') {
-        // Download documentation
-        const link = document.createElement('a');
-        link.href = '/BUSINESS_PLAN.txt';
-        link.download = 'BUSINESS_PLAN.txt';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } else {
-        // For platform-specific downloads, redirect to the appropriate URL
-        window.open(`https://LocalPasswordVault.com/download/${type}`, '_blank');
-      }
+      // Open download URL
+      const downloadUrl = `https://localpasswordvault.com/download/${platform}`;
+      window.open(downloadUrl, '_blank');
       
-      setDownloadStatus('complete');
-      setTimeout(() => setDownloadStatus('idle'), 3000);
+      setDownloadComplete(platform);
     } catch (err) {
       console.error('Download failed:', err);
-      setDownloadStatus('error');
-      setErrorMessage('Download failed. Please try again or contact support.');
+    } finally {
+      setDownloading(null);
     }
   };
 
+  const handleDocDownload = (docType: string) => {
+    const docUrls: Record<string, string> = {
+      quickstart: 'https://localpasswordvault.com/docs/quickstart',
+      userguide: 'https://localpasswordvault.com/docs/user-guide',
+      security: 'https://localpasswordvault.com/docs/security',
+    };
+    window.open(docUrls[docType] || '#', '_blank');
+  };
+
+  // Sort platforms to show recommended first
+  const sortedPlatforms = (['windows', 'macos', 'linux'] as const).sort((a, b) => {
+    if (a === detectedPlatform) return -1;
+    if (b === detectedPlatform) return 1;
+    return 0;
+  });
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col justify-center p-4" style={{ backgroundColor: '#0f172a' }}>
-      <div className="max-w-4xl w-full mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Local Password Vault</h1>
-          <p className="text-slate-400">Download the complete password management solution</p>
+    <div 
+      className="min-h-screen flex flex-col"
+      style={{ background: 'linear-gradient(to bottom right, #0f172a, #1e293b, #0f172a)' }}
+    >
+      {/* Header */}
+      <header className="py-6 px-4 border-b border-slate-800">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div 
+              className="w-10 h-10 rounded-xl flex items-center justify-center"
+              style={{ background: `linear-gradient(135deg, ${colors.steelBlue500}, ${colors.steelBlue600})` }}
+            >
+              <Shield className="w-5 h-5 text-white" strokeWidth={1.5} />
+            </div>
+            <span className="text-xl font-bold" style={{ color: colors.warmIvory }}>
+              Local Password Vault
+            </span>
+          </div>
+          <a 
+            href="https://localpasswordvault.com"
+            className="text-sm flex items-center gap-1 transition-colors"
+            style={{ color: colors.steelBlue400 }}
+          >
+            Visit Website
+            <ExternalLink className="w-4 h-4" strokeWidth={1.5} />
+          </a>
         </div>
-        
-        {/* Download Panel */}
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6 max-w-2xl mx-auto">
-          <div className="flex items-center space-x-3 mb-6">
-            <Download className="w-6 h-6 text-blue-400" />
-            <h2 className="text-xl font-semibold text-white">Download Local Password Vault</h2>
-          </div>
-          
-          <p className="text-slate-400 text-sm mb-6">
-            Download the complete Local Password Vault project, including source code, documentation, and business resources.
-          </p>
-          
-          <div className="space-y-6">
-            <div className="bg-slate-700/50 rounded-lg p-4">
-              <div className="flex items-start space-x-3 mb-3">
-                <Code className="w-5 h-5 text-blue-400 mt-0.5" />
-                <div>
-                  <h3 className="text-white font-medium">Complete Project</h3>
-                  <p className="text-slate-400 text-sm">
-                    Includes all source code, documentation, and business resources.
-                  </p>
-                </div>
-              </div>
-              
-              <button
-                onClick={() => handleDownload('project')}
-                disabled={downloadStatus === 'downloading'}
-                className={`mt-3 flex items-center justify-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all ${
-                  downloadStatus === 'complete'
-                    ? 'bg-green-600 hover:bg-green-700 text-white'
-                    : downloadStatus === 'downloading'
-                    ? 'bg-slate-600 text-slate-300 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                }`}
-              >
-                {downloadStatus === 'downloading' ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-slate-400 border-t-white rounded-full animate-spin" />
-                    <span>Creating Download...</span>
-                  </>
-                ) : downloadStatus === 'complete' ? (
-                  <>
-                    <CheckCircle className="w-4 h-4" />
-                    <span>Download Complete</span>
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-4 h-4" />
-                    <span>Download Project</span>
-                  </>
-                )}
-              </button>
-              
-              {errorMessage && (
-                <div className="mt-2 text-red-500 text-sm flex items-center space-x-1">
-                  <AlertCircle className="w-4 h-4" />
-                  <span>{errorMessage}</span>
-                </div>
-              )}
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-slate-700/50 rounded-lg p-4">
-                <div className="flex items-start space-x-3 mb-3">
-                  <HardDrive className="w-5 h-5 text-green-400 mt-0.5" />
-                  <div>
-                    <h3 className="text-white font-medium">Desktop Applications</h3>
-                    <p className="text-slate-400 text-sm">
-                      Download pre-built desktop applications.
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="space-y-2 mt-3">
-                  <button 
-                    onClick={() => handleDownload('windows')}
-                    className="flex items-center space-x-2 w-full px-3 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg text-sm transition-colors"
-                  >
-                    <FileDown className="w-4 h-4" />
-                    <span>Windows (.exe)</span>
-                  </button>
-                  
-                  <button 
-                    onClick={() => handleDownload('macos')}
-                    className="flex items-center space-x-2 w-full px-3 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg text-sm transition-colors"
-                  >
-                    <FileDown className="w-4 h-4" />
-                    <span>macOS (.dmg)</span>
-                  </button>
-                  
-                  <button 
-                    onClick={() => handleDownload('linux')}
-                    className="flex items-center space-x-2 w-full px-3 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg text-sm transition-colors"
-                  >
-                    <FileDown className="w-4 h-4" />
-                    <span>Linux (.AppImage)</span>
-                  </button>
-                </div>
-              </div>
-              
-              <div className="bg-slate-700/50 rounded-lg p-4">
-                <div className="flex items-start space-x-3 mb-3">
-                  <FileText className="w-5 h-5 text-purple-400 mt-0.5" />
-                  <div>
-                    <h3 className="text-white font-medium">Documentation</h3>
-                    <p className="text-slate-400 text-sm">
-                      Download business and technical documentation.
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="space-y-2 mt-3">
-                  <button 
-                    onClick={() => handleDownload('docs')}
-                    className="flex items-center space-x-2 w-full px-3 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg text-sm transition-colors"
-                  >
-                    <FileDown className="w-4 h-4" />
-                    <span>Business Documentation</span>
-                  </button>
-                  
-                  <a 
-                    href="/CUSTOMER_DISTRIBUTION_GUIDE.txt" 
-                    download
-                    className="flex items-center space-x-2 w-full px-3 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg text-sm transition-colors"
-                  >
-                    <FileDown className="w-4 h-4" />
-                    <span>Distribution Guide</span>
-                  </a>
-                  
-                  <a 
-                    href="/LICENSE_KEY_MANAGEMENT_GUIDE.txt" 
-                    download
-                    className="flex items-center space-x-2 w-full px-3 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg text-sm transition-colors"
-                  >
-                    <FileDown className="w-4 h-4" />
-                    <span>License Management Guide</span>
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="mt-6 pt-6 border-t border-slate-700">
-            <p className="text-slate-400 text-sm">
-              Need help? Check the <a href="/DOWNLOAD_INSTRUCTIONS.txt" download className="text-blue-400 hover:text-blue-300">download instructions</a> or contact <a href="mailto:support@LocalPasswordVault.com" className="text-blue-400 hover:text-blue-300">support@LocalPasswordVault.com</a>.
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 py-12 px-4">
+        <div className="max-w-5xl mx-auto">
+          {/* Hero Section */}
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold mb-4" style={{ color: colors.warmIvory }}>
+              Download Local Password Vault
+            </h1>
+            <p className="text-lg text-slate-400 max-w-2xl mx-auto">
+              Secure, offline password management for your desktop. 
+              Your data stays on your device — always encrypted, always private.
             </p>
           </div>
+
+          {/* Version Info */}
+          <div className="flex items-center justify-center gap-4 mb-10">
+            <span className="px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: `${colors.steelBlue500}20`, color: colors.steelBlue400 }}>
+              Version 1.2.0
+            </span>
+            <span className="px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}>
+              Latest Release
+            </span>
+          </div>
+
+          {/* Download Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            {sortedPlatforms.map((platform) => (
+              <DownloadCard
+                key={platform}
+                platform={platform}
+                isRecommended={platform === detectedPlatform}
+                onDownload={handleDownload}
+                downloading={downloading}
+              />
+            ))}
+          </div>
+
+          {/* Download Success Message */}
+          {downloadComplete && (
+            <div 
+              className="mb-8 p-4 rounded-xl flex items-center gap-3"
+              style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)' }}
+            >
+              <CheckCircle className="w-5 h-5 text-emerald-400" strokeWidth={1.5} />
+              <span className="text-emerald-300">
+                Download started! Check your browser's download folder.
+              </span>
+            </div>
+          )}
+
+          {/* Features Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div className="flex items-center gap-3 p-4 rounded-xl" style={{ backgroundColor: 'rgba(30, 41, 59, 0.4)' }}>
+              <Lock className="w-5 h-5" style={{ color: colors.steelBlue400 }} strokeWidth={1.5} />
+              <div>
+                <p className="font-medium" style={{ color: colors.warmIvory }}>AES-256 Encryption</p>
+                <p className="text-xs text-slate-500">Military-grade security</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-4 rounded-xl" style={{ backgroundColor: 'rgba(30, 41, 59, 0.4)' }}>
+              <Shield className="w-5 h-5" style={{ color: colors.steelBlue400 }} strokeWidth={1.5} />
+              <div>
+                <p className="font-medium" style={{ color: colors.warmIvory }}>100% Offline</p>
+                <p className="text-xs text-slate-500">No cloud, no servers</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-4 rounded-xl" style={{ backgroundColor: 'rgba(30, 41, 59, 0.4)' }}>
+              <Zap className="w-5 h-5" style={{ color: colors.steelBlue400 }} strokeWidth={1.5} />
+              <div>
+                <p className="font-medium" style={{ color: colors.warmIvory }}>Lifetime License</p>
+                <p className="text-xs text-slate-500">One-time purchase</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Documentation Section */}
+          <div 
+            className="rounded-2xl p-6"
+            style={{ backgroundColor: 'rgba(30, 41, 59, 0.4)', border: '1px solid rgba(71, 85, 105, 0.3)' }}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <FileText className="w-5 h-5" style={{ color: colors.steelBlue400 }} strokeWidth={1.5} />
+              <h2 className="text-lg font-semibold" style={{ color: colors.warmIvory }}>Documentation</h2>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <button
+                onClick={() => handleDocDownload('quickstart')}
+                className="flex items-center justify-between p-3 rounded-xl transition-colors group"
+                style={{ backgroundColor: 'rgba(30, 41, 59, 0.6)' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(51, 65, 85, 0.6)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(30, 41, 59, 0.6)'}
+              >
+                <div className="text-left">
+                  <p className="font-medium text-sm" style={{ color: colors.warmIvory }}>Quick Start Guide</p>
+                  <p className="text-xs text-slate-500">Get up and running fast</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-colors" strokeWidth={1.5} />
+              </button>
+
+              <button
+                onClick={() => handleDocDownload('userguide')}
+                className="flex items-center justify-between p-3 rounded-xl transition-colors group"
+                style={{ backgroundColor: 'rgba(30, 41, 59, 0.6)' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(51, 65, 85, 0.6)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(30, 41, 59, 0.6)'}
+              >
+                <div className="text-left">
+                  <p className="font-medium text-sm" style={{ color: colors.warmIvory }}>User Manual</p>
+                  <p className="text-xs text-slate-500">Complete feature guide</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-colors" strokeWidth={1.5} />
+              </button>
+
+              <button
+                onClick={() => handleDocDownload('security')}
+                className="flex items-center justify-between p-3 rounded-xl transition-colors group"
+                style={{ backgroundColor: 'rgba(30, 41, 59, 0.6)' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(51, 65, 85, 0.6)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(30, 41, 59, 0.6)'}
+              >
+                <div className="text-left">
+                  <p className="font-medium text-sm" style={{ color: colors.warmIvory }}>Security Overview</p>
+                  <p className="text-xs text-slate-500">How we protect your data</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-colors" strokeWidth={1.5} />
+              </button>
+            </div>
+          </div>
         </div>
-        
-        {/* Footer */}
-        <div className="text-center mt-8 pt-8 border-t border-slate-700">
-          <p className="text-xs text-slate-500">
-            Secure • Private • Offline • Local Password Management
+      </main>
+
+      {/* Footer */}
+      <footer className="py-8 px-4 border-t border-slate-800">
+        <div className="max-w-6xl mx-auto text-center">
+          <p className="text-sm text-slate-500 mb-2">
+            Need help? Contact{' '}
+            <a 
+              href="mailto:support@localpasswordvault.com" 
+              className="transition-colors"
+              style={{ color: colors.steelBlue400 }}
+            >
+              support@localpasswordvault.com
+            </a>
           </p>
-          <p className="text-xs text-slate-600 mt-2">
-            © 2025 Local Password Vault | <a href="https://LocalPasswordVault.com" className="text-blue-400 hover:text-blue-300">LocalPasswordVault.com</a>
+          <p className="text-xs text-slate-600">
+            © 2025 Local Password Vault. All rights reserved.
           </p>
         </div>
-      </div>
+      </footer>
     </div>
   );
 };

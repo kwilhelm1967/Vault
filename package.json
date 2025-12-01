@@ -37,6 +37,9 @@
     "electron-pack": "electron-builder",
     "dist": "npm run build-only && electron-builder --publish=never",
     "dist:prod": "npm run build:prod && electron-builder --publish=never",
+    "dist:win": "npm run build:prod && electron-builder --win --publish=never",
+    "dist:mac": "npm run build:prod && electron-builder --mac --publish=never",
+    "dist:linux": "npm run build:prod && electron-builder --linux --publish=never",
     "lint": "eslint .",
     "preview": "vite preview"
   },
