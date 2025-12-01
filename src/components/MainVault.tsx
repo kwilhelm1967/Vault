@@ -729,7 +729,14 @@ export const MainVault: React.FC<MainVaultProps> = ({
                   
                   {/* Dropdown Menu */}
                   {showSortDropdown && (
-                    <div className="absolute right-0 top-full mt-1 w-44 bg-slate-800 border border-slate-700/70 rounded-xl shadow-xl shadow-black/20 py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div 
+                      className="absolute right-0 top-full mt-1 w-44 rounded-xl py-1 z-50"
+                      style={{
+                        background: "rgb(30, 41, 59)",
+                        border: "1px solid rgba(71, 85, 105, 0.7)",
+                        boxShadow: "0 10px 40px -10px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.3)",
+                      }}
+                    >
                       {[
                         { value: "name-asc", label: "Name (A-Z)" },
                         { value: "name-desc", label: "Name (Z-A)" },

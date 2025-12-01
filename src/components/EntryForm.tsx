@@ -581,7 +581,14 @@ export const EntryForm: React.FC<EntryFormProps> = ({
               </button>
 
               {showCategoryDropdown && (
-                <div className="absolute z-[9999] top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-600/50 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
+                <div 
+                  className="absolute z-[9999] top-full left-0 right-0 mt-1 rounded-xl max-h-60 overflow-y-auto"
+                  style={{
+                    background: "rgb(30, 41, 59)",
+                    border: "1px solid rgba(71, 85, 105, 0.5)",
+                    boxShadow: "0 10px 40px -10px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.3)",
+                  }}
+                >
                   <div className="p-1">
                     {categories
                       .filter((c) => c.id !== "all")
