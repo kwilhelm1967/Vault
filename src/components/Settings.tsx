@@ -182,10 +182,11 @@ const BlueSelect: React.FC<{
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
           <div 
-            className="absolute right-0 top-full mt-2 py-2 rounded-xl shadow-2xl z-50 min-w-[160px] overflow-hidden"
+            className="absolute right-0 top-full mt-2 py-2 rounded-xl z-50 min-w-[160px] overflow-hidden"
             style={{
-              backgroundColor: "#1e293b",
-              border: `1px solid ${colors.steelBlue500}30`,
+              background: "rgb(30, 41, 59)",
+              border: `1px solid rgba(91, 130, 184, 0.3)`,
+              boxShadow: "0 10px 40px -10px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.3)",
             }}
           >
             {options.map((opt) => (
