@@ -175,12 +175,13 @@ export const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
     }
   };
 
-  // Alert palette for warning/expired states
+  // Alert palette for warning/expired states - subtle, translucent red
   const alertColors = {
-    background: '#3A1F23',
-    border: '#A14545',
+    background: 'rgba(255, 75, 75, 0.10)',
+    border: 'rgba(255, 75, 75, 0.25)',
     text: '#FF6B6B',
-    textMuted: '#FF6B6B99',
+    textMuted: 'rgba(255, 107, 107, 0.7)',
+    iconBg: 'rgba(255, 75, 75, 0.15)',
   };
 
   // Expired state
@@ -197,7 +198,7 @@ export const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
           <div className="flex items-center gap-3">
             <div 
               className="p-2 rounded-lg"
-              style={{ backgroundColor: `${alertColors.border}30` }}
+              style={{ backgroundColor: alertColors.iconBg }}
             >
               <AlertTriangle className="w-5 h-5" strokeWidth={1.5} style={{ color: alertColors.text }} />
             </div>
@@ -248,7 +249,7 @@ export const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
           <div className="flex items-center gap-3">
             <div 
               className="p-2 rounded-lg"
-              style={{ backgroundColor: useAlertStyle ? `${alertColors.border}30` : `${colors.brandGold}20` }}
+              style={{ backgroundColor: useAlertStyle ? alertColors.iconBg : `${colors.brandGold}20` }}
             >
               <AlertTriangle 
                 className="w-5 h-5" 
