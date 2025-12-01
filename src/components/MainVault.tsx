@@ -124,6 +124,7 @@ import { EntryForm } from "./EntryForm";
 import { Dashboard } from "./Dashboard";
 import { Settings, clearClipboardAfterTimeout, getVaultSettings } from "./Settings";
 import { generateTOTP, getTimeRemaining, isValidTOTPSecret } from "../utils/totp";
+import { TrialStatusBanner } from "./TrialStatusBanner";
 
 interface MainVaultProps {
   entries: PasswordEntry[];
@@ -621,6 +622,14 @@ export const MainVault: React.FC<MainVaultProps> = ({
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         
+        {/* Trial Status Banner */}
+        <div className="px-6 pt-4">
+          <TrialStatusBanner 
+            onPurchase={onShowPricingPlans}
+            onExport={onExport}
+          />
+        </div>
+
         {currentView === "dashboard" ? (
           <Dashboard
             entries={entries}
