@@ -4,7 +4,7 @@
  * Primary vault interface with sidebar navigation and password grid.
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Search,
   Plus,
@@ -23,6 +23,7 @@ import {
   Minimize2,
   Star,
   ArrowUpDown,
+  ChevronDown,
   Globe,
   ExternalLink,
   Clock,
@@ -126,6 +127,8 @@ export const MainVault: React.FC<MainVaultProps> = ({
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [sortBy, setSortBy] = useState<"name" | "date" | "category">("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const sortDropdownRef = useRef<HTMLDivElement>(null);
   
   // Bulk select state
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
@@ -283,6 +286,17 @@ export const MainVault: React.FC<MainVaultProps> = ({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
+
+  // Close sort dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
+        setShowSortDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const copyToClipboard = async (text: string, id: string) => {
     await navigator.clipboard.writeText(text);
@@ -574,24 +588,61 @@ export const MainVault: React.FC<MainVaultProps> = ({
               </div>
               <div className="flex items-center gap-2">
                 {/* Sort Dropdown */}
-                <div className="flex items-center gap-1">
-                  <ArrowUpDown className="w-4 h-4 text-slate-500" strokeWidth={1.5} />
-                  <select
-                    value={`${sortBy}-${sortOrder}`}
-                    onChange={(e) => {
-                      const [newSortBy, newSortOrder] = e.target.value.split("-") as ["name" | "date" | "category", "asc" | "desc"];
-                      setSortBy(newSortBy);
-                      setSortOrder(newSortOrder);
-                    }}
-                    className="bg-slate-800/50 border border-slate-700/50 rounded-lg text-xs text-slate-300 px-2 py-1.5 focus:outline-none focus:border-blue-500"
+                <div ref={sortDropdownRef} className="relative">
+                  <button
+                    onClick={() => setShowSortDropdown(!showSortDropdown)}
+                    className="flex items-center gap-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-xs text-slate-300 px-3 py-1.5 hover:border-slate-600 hover:bg-slate-800/70 transition-all"
                   >
-                    <option value="name-asc">Name (A-Z)</option>
-                    <option value="name-desc">Name (Z-A)</option>
-                    <option value="date-desc">Newest First</option>
-                    <option value="date-asc">Oldest First</option>
-                    <option value="category-asc">Category (A-Z)</option>
-                    <option value="category-desc">Category (Z-A)</option>
-                  </select>
+                    <ArrowUpDown className="w-3.5 h-3.5 text-slate-500" strokeWidth={1.5} />
+                    <span>
+                      {sortBy === "name" && sortOrder === "asc" && "Name (A-Z)"}
+                      {sortBy === "name" && sortOrder === "desc" && "Name (Z-A)"}
+                      {sortBy === "date" && sortOrder === "desc" && "Newest First"}
+                      {sortBy === "date" && sortOrder === "asc" && "Oldest First"}
+                      {sortBy === "category" && sortOrder === "asc" && "Category (A-Z)"}
+                      {sortBy === "category" && sortOrder === "desc" && "Category (Z-A)"}
+                    </span>
+                    <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${showSortDropdown ? 'rotate-180' : ''}`} strokeWidth={1.5} />
+                  </button>
+                  
+                  {/* Dropdown Menu */}
+                  {showSortDropdown && (
+                    <div className="absolute right-0 top-full mt-1 w-44 bg-slate-800 border border-slate-700/70 rounded-xl shadow-xl shadow-black/20 py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                      {[
+                        { value: "name-asc", label: "Name (A-Z)" },
+                        { value: "name-desc", label: "Name (Z-A)" },
+                        { value: "date-desc", label: "Newest First" },
+                        { value: "date-asc", label: "Oldest First" },
+                        { value: "category-asc", label: "Category (A-Z)" },
+                        { value: "category-desc", label: "Category (Z-A)" },
+                      ].map((option) => {
+                        const isSelected = `${sortBy}-${sortOrder}` === option.value;
+                        return (
+                          <button
+                            key={option.value}
+                            onClick={() => {
+                              const [newSortBy, newSortOrder] = option.value.split("-") as ["name" | "date" | "category", "asc" | "desc"];
+                              setSortBy(newSortBy);
+                              setSortOrder(newSortOrder);
+                              setShowSortDropdown(false);
+                            }}
+                            className={`w-full text-left px-3 py-2 text-xs transition-colors ${
+                              isSelected 
+                                ? "bg-[#5B82B8]/20 text-white" 
+                                : "text-slate-400 hover:bg-slate-700/50 hover:text-white"
+                            }`}
+                          >
+                            <span className="flex items-center justify-between">
+                              {option.label}
+                              {isSelected && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#5B82B8]"></span>
+                              )}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
                 {/* Clear Filters */}
                 {(showWeakOnly || showFavoritesOnly) && (
