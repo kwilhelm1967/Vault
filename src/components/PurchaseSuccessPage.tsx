@@ -233,22 +233,22 @@ export const PurchaseSuccessPage: React.FC = () => {
                 border: `1px solid ${colors.steelBlue400}40`,
               }}
             >
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center space-x-3">
                   <div
-                    className="w-10 h-10 rounded-lg flex items-center justify-center"
+                    className="w-9 h-9 rounded-lg flex items-center justify-center"
                     style={{ backgroundColor: `${colors.softGold}20` }}
                   >
-                    <Key className="w-5 h-5" style={{ color: colors.softGold }} />
+                    <Key className="w-4 h-4" style={{ color: colors.softGold }} />
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-white">
-                      {licenseKeys.length === 1 ? "Your License Key" : `Your License Keys (${licenseKeys.length})`}
+                    <h2 className="text-base font-semibold text-white">
+                      {licenseKeys.length === 1 ? "Your License Key" : `Your ${licenseKeys.length} License Keys`}
                     </h2>
-                    <p className="text-sm" style={{ color: colors.warmIvory, opacity: 0.6 }}>
+                    <p className="text-xs" style={{ color: colors.warmIvory, opacity: 0.6 }}>
                       {licenseKeys.length === 1 
                         ? "Save this key — you'll need it to activate the app"
-                        : "Each key activates one device — install on up to 5 devices"}
+                        : "Click any key to copy • One key per device"}
                     </p>
                   </div>
                 </div>
@@ -256,7 +256,7 @@ export const PurchaseSuccessPage: React.FC = () => {
                 {licenseKeys.length > 1 && (
                   <button
                     onClick={handleCopyAllKeys}
-                    className="px-4 py-2 rounded-lg flex items-center space-x-2 transition-all"
+                    className="px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition-all text-xs"
                     style={{
                       backgroundColor: copiedIndex === -1 ? `${colors.successGreen}20` : `${colors.steelBlue500}20`,
                       border: `1px solid ${copiedIndex === -1 ? colors.successGreen : colors.steelBlue400}40`,
@@ -265,21 +265,22 @@ export const PurchaseSuccessPage: React.FC = () => {
                   >
                     {copiedIndex === -1 ? (
                       <>
-                        <Check className="w-4 h-4" />
-                        <span className="text-sm font-medium">All Copied!</span>
+                        <Check className="w-3.5 h-3.5" />
+                        <span className="font-medium">Copied!</span>
                       </>
                     ) : (
                       <>
-                        <Copy className="w-4 h-4" />
-                        <span className="text-sm font-medium">Copy All</span>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span className="font-medium">Copy All</span>
                       </>
                     )}
                   </button>
                 )}
               </div>
 
-              {/* Compact grid for multiple keys, single row for one key */}
+              {/* Compact display for license keys */}
               {licenseKeys.length === 1 ? (
+                /* Single key - prominent display */
                 <div
                   className="rounded-lg p-4 flex items-center justify-between"
                   style={{ backgroundColor: colors.deepNavy, border: `1px solid ${colors.steelBlue400}30` }}
@@ -313,43 +314,46 @@ export const PurchaseSuccessPage: React.FC = () => {
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-2">
-                  {licenseKeys.map((key, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleCopyKey(key, index)}
-                      className="rounded-lg px-3 py-2.5 flex items-center justify-between transition-all hover:scale-[1.01] group"
-                      style={{ 
-                        backgroundColor: copiedIndex === index ? `${colors.successGreen}15` : colors.deepNavy, 
-                        border: `1px solid ${copiedIndex === index ? colors.successGreen : colors.steelBlue400}30` 
-                      }}
-                    >
-                      <div className="flex items-center space-x-2 min-w-0">
+                /* Multiple keys - compact inline list */
+                <div
+                  className="rounded-lg p-3"
+                  style={{ backgroundColor: colors.deepNavy, border: `1px solid ${colors.steelBlue400}30` }}
+                >
+                  <div className="flex flex-wrap gap-1.5">
+                    {licenseKeys.map((key, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleCopyKey(key, index)}
+                        className="rounded px-2 py-1 flex items-center space-x-1.5 transition-all hover:scale-[1.02] group"
+                        style={{ 
+                          backgroundColor: copiedIndex === index ? `${colors.successGreen}20` : `${colors.slateBackground}`, 
+                          border: `1px solid ${copiedIndex === index ? colors.successGreen : colors.steelBlue400}25` 
+                        }}
+                        title={`Click to copy Key ${index + 1}`}
+                      >
                         <span 
-                          className="text-[10px] font-bold px-1.5 py-0.5 rounded flex-shrink-0"
+                          className="text-[9px] font-bold w-4 h-4 rounded flex items-center justify-center flex-shrink-0"
                           style={{ 
-                            backgroundColor: copiedIndex === index ? `${colors.successGreen}30` : `${colors.steelBlue500}30`, 
+                            backgroundColor: copiedIndex === index ? `${colors.successGreen}30` : `${colors.steelBlue500}25`, 
                             color: copiedIndex === index ? colors.successGreen : colors.steelBlue400 
                           }}
                         >
                           {index + 1}
                         </span>
                         <code
-                          className="text-xs font-mono tracking-wide select-all truncate"
+                          className="text-[11px] font-mono tracking-wide"
                           style={{ color: copiedIndex === index ? colors.successGreen : colors.steelBlue400 }}
                         >
                           {key}
                         </code>
-                      </div>
-                      <span className="flex-shrink-0 ml-2">
                         {copiedIndex === index ? (
-                          <Check className="w-3.5 h-3.5" style={{ color: colors.successGreen }} />
+                          <Check className="w-3 h-3 flex-shrink-0" style={{ color: colors.successGreen }} />
                         ) : (
-                          <Copy className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100" style={{ color: colors.steelBlue400 }} />
+                          <Copy className="w-3 h-3 flex-shrink-0 opacity-30 group-hover:opacity-80" style={{ color: colors.steelBlue400 }} />
                         )}
-                      </span>
-                    </button>
-                  ))}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
 
