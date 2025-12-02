@@ -2,10 +2,12 @@
 
 ## Templates Included
 
-| Template | File | Purpose |
+| Template | File | Trigger |
 |----------|------|---------|
-| Purchase Confirmation | `purchase-confirmation.html` | Sent after successful payment |
-| Trial Welcome | `trial-welcome.html` | Sent when trial starts |
+| Purchase Confirmation | `purchase-confirmation.html` | After payment |
+| Trial Welcome | `trial-welcome.html` | Trial signup |
+| Trial Expiring | `trial-expiring.html` | 24 hours before expiry |
+| Trial Expired | `trial-expired.html` | Day after expiry |
 
 ---
 
@@ -15,15 +17,17 @@
 
 1. Log into [Brevo](https://app.brevo.com)
 2. Go to **Campaigns → Templates**
-3. Click **New Template** → **Drag & Drop Editor** → **Code your own**
-4. Paste the HTML from each template file
-5. Save with these names:
+3. Click **New Template** → **Code your own**
+4. Paste HTML from each template file
+5. Save with names:
    - `purchase-confirmation`
    - `trial-welcome`
+   - `trial-expiring`
+   - `trial-expired`
 
 ### Step 2: Note Template IDs
 
-After saving, Brevo assigns an ID to each template. Note these for your backend config.
+After saving, Brevo assigns an ID. Note these for backend config.
 
 ---
 
@@ -31,89 +35,171 @@ After saving, Brevo assigns an ID to each template. Note these for your backend 
 
 ### Purchase Confirmation
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `{{ params.PLAN_NAME }}` | Plan purchased | Personal Vault |
-| `{{ params.AMOUNT }}` | Price paid | $49.00 |
-| `{{ params.LICENSE_KEY }}` | License key | PERS-XXXX-XXXX-XXXX |
-| `{{ params.MAX_DEVICES }}` | Device limit | 1 |
-| `{{ params.ORDER_DATE }}` | Purchase date | December 2, 2025 |
-| `{{ params.ORDER_ID }}` | Stripe session ID | cs_xxx |
+| Variable | Example |
+|----------|---------|
+| `{{ params.PLAN_NAME }}` | Personal Vault |
+| `{{ params.AMOUNT }}` | $49.00 |
+| `{{ params.LICENSE_KEY }}` | PERS-XXXX-XXXX-XXXX |
+| `{{ params.MAX_DEVICES }}` | 1 |
+| `{{ params.ORDER_DATE }}` | December 2, 2025 |
+| `{{ params.ORDER_ID }}` | cs_xxx |
 
 ### Trial Welcome
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `{{ params.TRIAL_KEY }}` | Trial key | TRIA-XXXX-XXXX-XXXX |
-| `{{ params.EXPIRES_AT }}` | Expiration date | December 9, 2025 |
-| `{{ params.SIGNUP_DATE }}` | Signup date | December 2, 2025 |
+| Variable | Example |
+|----------|---------|
+| `{{ params.TRIAL_KEY }}` | TRIA-XXXX-XXXX-XXXX |
+| `{{ params.EXPIRES_AT }}` | December 9, 2025 |
+| `{{ params.SIGNUP_DATE }}` | December 2, 2025 |
+
+### Trial Expiring (24hr Warning)
+
+| Variable | Example |
+|----------|---------|
+| `{{ params.EXPIRES_AT }}` | December 9, 2025 |
+
+### Trial Expired
+
+| Variable | Example |
+|----------|---------|
+| `{{ params.EXPIRED_DATE }}` | December 9, 2025 |
+| `{{ params.EMAIL }}` | user@example.com |
 
 ---
 
-## Sending via API
+## Automated Email Triggers
 
-### Purchase Email
+### Scheduled Job Setup
+
+Create a cron job to run daily and check for:
+1. Trials expiring in 24 hours → Send `trial-expiring`
+2. Trials expired yesterday → Send `trial-expired`
+
+**File: `backend/jobs/trialEmails.js`**
 
 ```javascript
-const Brevo = require('@getbrevo/brevo');
+const db = require('../database/db');
+const { sendTrialExpiringEmail, sendTrialExpiredEmail } = require('../services/email');
 
-const apiInstance = new Brevo.TransactionalEmailsApi();
-apiInstance.setApiKey(Brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
+async function checkTrialEmails() {
+  const now = new Date();
+  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-await apiInstance.sendTransacEmail({
-  to: [{ email: 'customer@example.com' }],
-  templateId: YOUR_PURCHASE_TEMPLATE_ID,
-  params: {
-    PLAN_NAME: 'Personal Vault',
-    AMOUNT: '$49.00',
-    LICENSE_KEY: 'PERS-XXXX-XXXX-XXXX',
-    MAX_DEVICES: '1',
-    ORDER_DATE: 'December 2, 2025',
-    ORDER_ID: 'cs_xxx'
+  // Get trials expiring in ~24 hours
+  const expiringTrials = db.db.prepare(`
+    SELECT * FROM trials 
+    WHERE expires_at BETWEEN ? AND ?
+    AND is_converted = FALSE
+    AND expiring_email_sent = FALSE
+  `).all(now.toISOString(), tomorrow.toISOString());
+
+  for (const trial of expiringTrials) {
+    await sendTrialExpiringEmail({
+      to: trial.email,
+      expiresAt: new Date(trial.expires_at)
+    });
+    
+    db.db.prepare(`
+      UPDATE trials SET expiring_email_sent = TRUE WHERE id = ?
+    `).run(trial.id);
   }
-});
+
+  // Get trials that expired yesterday
+  const expiredTrials = db.db.prepare(`
+    SELECT * FROM trials 
+    WHERE expires_at BETWEEN ? AND ?
+    AND is_converted = FALSE
+    AND expired_email_sent = FALSE
+  `).all(yesterday.toISOString(), now.toISOString());
+
+  for (const trial of expiredTrials) {
+    await sendTrialExpiredEmail({
+      to: trial.email,
+      expiredDate: new Date(trial.expires_at)
+    });
+    
+    db.db.prepare(`
+      UPDATE trials SET expired_email_sent = TRUE WHERE id = ?
+    `).run(trial.id);
+  }
+
+  console.log(`Processed ${expiringTrials.length} expiring, ${expiredTrials.length} expired`);
+}
+
+module.exports = { checkTrialEmails };
 ```
 
-### Trial Email
+### Add to Database Schema
 
-```javascript
-await apiInstance.sendTransacEmail({
-  to: [{ email: 'customer@example.com' }],
-  templateId: YOUR_TRIAL_TEMPLATE_ID,
-  params: {
-    TRIAL_KEY: 'TRIA-XXXX-XXXX-XXXX',
-    EXPIRES_AT: 'December 9, 2025',
-    SIGNUP_DATE: 'December 2, 2025'
-  }
-});
+Add these columns to `trials` table:
+
+```sql
+ALTER TABLE trials ADD COLUMN expiring_email_sent BOOLEAN DEFAULT FALSE;
+ALTER TABLE trials ADD COLUMN expired_email_sent BOOLEAN DEFAULT FALSE;
+```
+
+### Run with Cron
+
+```bash
+# Add to crontab (runs daily at 9 AM)
+0 9 * * * cd /path/to/backend && node -e "require('./jobs/trialEmails').checkTrialEmails()"
+```
+
+Or use PM2:
+
+```bash
+pm2 start jobs/trialEmails.js --cron "0 9 * * *" --no-autorestart
 ```
 
 ---
 
-## Alternative: SMTP Method
+## Discount Code Setup
 
-The backend currently uses SMTP which works with these templates as raw HTML. The templates in `backend/templates/` (not the brevo folder) are used for SMTP sending.
+The `trial-expired` template includes a **COMEBACK10** discount code.
 
-If you prefer Brevo's template system with the API:
-1. Install: `npm install @getbrevo/brevo`
-2. Update `services/email.js` to use Brevo API instead of SMTP
-3. Set `BREVO_API_KEY` in `.env`
+### In Stripe:
+
+1. Go to [Stripe → Coupons](https://dashboard.stripe.com/coupons)
+2. Create coupon:
+   - Code: `COMEBACK10`
+   - Type: Percentage off
+   - Amount: 10%
+   - Duration: Once
+3. Apply to checkout sessions when code is present
 
 ---
 
-## Testing
+## Email Send Flow
 
-1. Send test emails to yourself first
-2. Check rendering in:
-   - Gmail
-   - Outlook
-   - Apple Mail
-   - Mobile devices
-3. Verify all variables populate correctly
+```
+Day 0: User signs up
+       → Send: trial-welcome
+
+Day 6: 24 hours before expiry
+       → Send: trial-expiring (cron job)
+
+Day 7: Trial expires
+       → Send: trial-expired (cron job)
+
+Day 7+: User purchases
+       → Send: purchase-confirmation (webhook)
+```
+
+---
+
+## Testing Checklist
+
+- [ ] All templates render in Gmail
+- [ ] All templates render in Outlook
+- [ ] All templates render on mobile
+- [ ] Variables populate correctly
+- [ ] Links work
+- [ ] Unsubscribe link works
+- [ ] Discount code works in Stripe
 
 ---
 
 ## Support
 
 Brevo Documentation: https://developers.brevo.com/docs
-
