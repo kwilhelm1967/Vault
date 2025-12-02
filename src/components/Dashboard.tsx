@@ -4,7 +4,7 @@
  * Overview page with stats, recent activity, and quick actions.
  */
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import {
   Shield,
   Key,
@@ -14,9 +14,14 @@ import {
   Clock,
   Plus,
   ChevronRight,
+  ShieldAlert,
+  ShieldCheck,
+  Loader2,
+  CalendarClock,
 } from "lucide-react";
 import { PasswordEntry, Category } from "../types";
 import { CategoryIcon } from "./CategoryIcon";
+import { checkPasswordBreach } from "../utils/breachCheck";
 
 // Refined color palette
 const colors = {
@@ -97,6 +102,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
     });
     const reusedPasswords = Object.values(passwordCounts).filter(count => count > 1).reduce((sum, count) => sum + count, 0);
 
+    // Count old passwords (>90 days)
+    const now = new Date();
+    const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+    const oldPasswords = entries.filter((entry) => {
+      if (entry.entryType === "secure_note") return false;
+      const changeDate = entry.passwordChangedAt || entry.createdAt;
+      return new Date(changeDate) < ninetyDaysAgo;
+    }).length;
+
     return {
       totalAccounts,
       categoryCounts,
@@ -105,6 +119,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       recentlyAdded,
       recentlyUpdated,
       reusedPasswords,
+      oldPasswords,
     };
   }, [entries]);
 
@@ -115,6 +130,53 @@ export const Dashboard: React.FC<DashboardProps> = ({
       .slice(0, 5);
   }, [entries]);
 
+  // Breach check state
+  const [breachResults, setBreachResults] = useState<Map<string, { breached: boolean; count: number }> | null>(null);
+  const [isCheckingBreaches, setIsCheckingBreaches] = useState(false);
+  const [breachCheckError, setBreachCheckError] = useState<string | null>(null);
+
+  // Count breached passwords
+  const breachedCount = useMemo(() => {
+    if (!breachResults) return 0;
+    let count = 0;
+    entries.forEach(entry => {
+      if (entry.entryType !== "secure_note" && breachResults.get(entry.password)?.breached) {
+        count++;
+      }
+    });
+    return count;
+  }, [breachResults, entries]);
+
+  // Check all passwords for breaches
+  const handleBreachCheck = useCallback(async () => {
+    setIsCheckingBreaches(true);
+    setBreachCheckError(null);
+    
+    const results = new Map<string, { breached: boolean; count: number }>();
+    const uniquePasswords = new Set<string>();
+    
+    // Get unique passwords
+    entries.forEach(entry => {
+      if (entry.entryType !== "secure_note" && entry.password) {
+        uniquePasswords.add(entry.password);
+      }
+    });
+    
+    try {
+      for (const password of uniquePasswords) {
+        const result = await checkPasswordBreach(password);
+        results.set(password, { breached: result.breached, count: result.count });
+        // Small delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 150));
+      }
+      setBreachResults(results);
+    } catch (error) {
+      setBreachCheckError('Failed to check breaches. Please try again.');
+    } finally {
+      setIsCheckingBreaches(false);
+    }
+  }, [entries]);
+
   // Security score (0-100)
   const securityScore = useMemo(() => {
     if (entries.length === 0) return 100;
@@ -122,9 +184,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const strongRatio = stats.strongPasswords / entries.length;
     const weakPenalty = (stats.weakPasswords / entries.length) * 30;
     const reusedPenalty = (stats.reusedPasswords / entries.length) * 20;
+    const oldPenalty = (stats.oldPasswords / entries.length) * 10;
+    const breachPenalty = breachResults ? (breachedCount / entries.length) * 40 : 0;
     
-    return Math.max(0, Math.min(100, Math.round(strongRatio * 100 - weakPenalty - reusedPenalty)));
-  }, [entries.length, stats.strongPasswords, stats.weakPasswords, stats.reusedPasswords]);
+    return Math.max(0, Math.min(100, Math.round(strongRatio * 100 - weakPenalty - reusedPenalty - oldPenalty - breachPenalty)));
+  }, [entries.length, stats.strongPasswords, stats.weakPasswords, stats.reusedPasswords, stats.oldPasswords, breachedCount, breachResults]);
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-emerald-400";
@@ -289,6 +353,86 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </span>
             ) : (
               <span className="text-emerald-400">All passwords are unique!</span>
+            )}
+          </div>
+        </div>
+
+        {/* Old Passwords (>90 days) */}
+        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl py-3.5 px-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Old Passwords</p>
+              <p className={`text-[1.625rem] font-bold mt-1 ${stats.oldPasswords > 0 ? "text-orange-400" : ""}`} style={stats.oldPasswords === 0 ? { color: colors.warmIvory } : {}}>
+                {stats.oldPasswords}
+              </p>
+            </div>
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+              stats.oldPasswords > 0 ? "bg-orange-500/10" : "bg-slate-700/50"
+            }`}>
+              <CalendarClock className={`w-6 h-6 ${stats.oldPasswords > 0 ? "text-orange-400" : "text-slate-500"}`} strokeWidth={1.5} />
+            </div>
+          </div>
+          <div className="mt-2 flex items-center gap-1.5 text-xs">
+            {stats.oldPasswords > 0 ? (
+              <span className="text-orange-400">{stats.oldPasswords} over 90 days old</span>
+            ) : (
+              <span className="text-emerald-400">All passwords are fresh!</span>
+            )}
+          </div>
+        </div>
+
+        {/* Breach Check */}
+        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl py-3.5 px-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Breach Check</p>
+              {breachResults ? (
+                <p className={`text-[1.625rem] font-bold mt-1 ${breachedCount > 0 ? "text-red-400" : "text-emerald-400"}`}>
+                  {breachedCount > 0 ? breachedCount : "Safe"}
+                </p>
+              ) : (
+                <p className="text-[1.625rem] font-bold mt-1 text-slate-500">—</p>
+              )}
+            </div>
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+              breachResults 
+                ? breachedCount > 0 ? "bg-red-500/10" : "bg-emerald-500/10"
+                : "bg-slate-700/50"
+            }`}>
+              {breachResults ? (
+                breachedCount > 0 
+                  ? <ShieldAlert className="w-6 h-6 text-red-400" strokeWidth={1.5} />
+                  : <ShieldCheck className="w-6 h-6 text-emerald-400" strokeWidth={1.5} />
+              ) : (
+                <Shield className="w-6 h-6 text-slate-500" strokeWidth={1.5} />
+              )}
+            </div>
+          </div>
+          <div className="mt-2">
+            {isCheckingBreaches ? (
+              <span className="text-slate-400 text-xs flex items-center gap-1.5">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                Checking passwords...
+              </span>
+            ) : breachResults ? (
+              breachedCount > 0 ? (
+                <span className="text-red-400 text-xs">{breachedCount} found in data breaches!</span>
+              ) : (
+                <span className="text-emerald-400 text-xs">No breaches detected</span>
+              )
+            ) : (
+              <button
+                onClick={handleBreachCheck}
+                className="text-xs px-2.5 py-1 rounded-md transition-colors"
+                style={{ backgroundColor: colors.steelBlue600, color: 'white' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.steelBlue500}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = colors.steelBlue600}
+              >
+                Check Now
+              </button>
+            )}
+            {breachCheckError && (
+              <span className="text-amber-400 text-xs block mt-1">{breachCheckError}</span>
             )}
           </div>
         </div>

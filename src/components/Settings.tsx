@@ -162,17 +162,17 @@ const BlueSelect: React.FC<{
         }}
         className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
         style={{
-          backgroundColor: `${colors.steelBlue500}15`,
+          backgroundColor: "#1e293b",
           color: colors.steelBlue400,
-          border: `1px solid ${colors.steelBlue500}30`,
+          border: "1px solid #475569",
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = `${colors.steelBlue500}25`;
-          e.currentTarget.style.borderColor = `${colors.steelBlue500}50`;
+          e.currentTarget.style.backgroundColor = "#334155";
+          e.currentTarget.style.borderColor = "#64748b";
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = `${colors.steelBlue500}15`;
-          e.currentTarget.style.borderColor = `${colors.steelBlue500}30`;
+          e.currentTarget.style.backgroundColor = "#1e293b";
+          e.currentTarget.style.borderColor = "#475569";
         }}
       >
         <span>{selectedLabel}</span>
