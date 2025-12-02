@@ -730,9 +730,9 @@ export const LandingPage: React.FC = () => {
       <section className="py-16 px-6 border-y" style={{ borderColor: `${colors.steel}30` }}>
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <AnimatedCounter end={50000} suffix="+" label="Active Users" />
-            <AnimatedCounter end={5} suffix="M+" label="Passwords Secured" />
-            <AnimatedCounter end={0} label="Cloud Breaches" />
+            <AnimatedCounter end={256} suffix="-bit" label="AES Encryption" />
+            <AnimatedCounter end={0} label="Cloud Servers" />
+            <AnimatedCounter end={0} label="Data We Store" />
             <AnimatedCounter end={100} suffix="%" label="Offline Privacy" />
           </div>
         </div>
