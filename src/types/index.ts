@@ -37,3 +37,17 @@ export interface Category {
   color: string;
   icon: string;
 }
+
+/**
+ * Raw entry as loaded from JSON storage (dates are strings before conversion)
+ * Use with parseRawEntry() to convert to PasswordEntry
+ */
+export type RawPasswordEntry = Record<string, unknown> & {
+  id: string;
+  accountName: string;
+  username: string;
+  password: string;
+  category: string;
+  createdAt: string;
+  updatedAt: string;
+};

@@ -1,4 +1,4 @@
-import { PasswordEntry, Category } from "../types";
+import { PasswordEntry, Category, RawPasswordEntry } from "../types";
 import { memorySecurity } from "./memorySecurity";
 import { sanitizeTextField, sanitizePassword, sanitizeNotes } from "./sanitization";
 
@@ -453,7 +453,7 @@ export class StorageService {
             return [];
           }
 
-          return entries.map((entry: any) => ({
+          return entries.map((entry: RawPasswordEntry) => ({
             ...entry,
             createdAt: new Date(entry.createdAt),
             updatedAt: new Date(entry.updatedAt),
@@ -470,7 +470,7 @@ export class StorageService {
               if (Array.isArray(entries)) {
                 // Restore backup as main data
                 localStorage.setItem("password_entries_v2", backupData);
-                return entries.map((entry: any) => ({
+                return entries.map((entry: RawPasswordEntry) => ({
                   ...entry,
                   createdAt: new Date(entry.createdAt),
                   updatedAt: new Date(entry.updatedAt),
@@ -490,7 +490,7 @@ export class StorageService {
 
         if (Array.isArray(entries)) {
           // Convert dates and save as encrypted
-          const migratedEntries = entries.map((entry: any) => ({
+          const migratedEntries = entries.map((entry: RawPasswordEntry) => ({
             ...entry,
             createdAt: new Date(entry.createdAt),
             updatedAt: new Date(entry.updatedAt),

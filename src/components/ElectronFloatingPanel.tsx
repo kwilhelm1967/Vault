@@ -11,7 +11,7 @@ import {
   ChevronDown,
   ChevronRight
 } from "lucide-react";
-import { PasswordEntry, Category } from "../types";
+import { PasswordEntry, Category, RawPasswordEntry } from "../types";
 import { CategoryIcon } from "./CategoryIcon";
 import { EntryForm } from "./EntryForm";
 import { storageService } from "../utils/storage";
@@ -165,7 +165,7 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
             const sharedEntries = await window.electronAPI.loadSharedEntries();
             if (sharedEntries) {
               const mappedEntries = sharedEntries.length > 0
-                ? sharedEntries.map((entry: any) => ({
+                ? sharedEntries.map((entry: RawPasswordEntry) => ({
                     ...entry,
                     createdAt: new Date(entry.createdAt),
                     updatedAt: new Date(entry.updatedAt),
@@ -187,7 +187,7 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
   useEffect(() => {
     if (!window.electronAPI?.onVaultStatusChange) return;
 
-    const handleVaultStatusChange = async (_event: any, unlocked: boolean) => {
+    const handleVaultStatusChange = async (_event: unknown, unlocked: boolean) => {
       setIsMainVaultUnlocked(unlocked);
 
       if (unlocked) {
@@ -196,7 +196,7 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
           const sharedEntries = await window.electronAPI.loadSharedEntries();
           if (sharedEntries) {
             const mappedEntries = sharedEntries.length > 0
-              ? sharedEntries.map((entry: any) => ({
+              ? sharedEntries.map((entry: RawPasswordEntry) => ({
                   ...entry,
                   createdAt: new Date(entry.createdAt),
                   updatedAt: new Date(entry.updatedAt),
@@ -229,7 +229,7 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
           // Handle empty array case explicitly
           if (sharedEntries) {
             const mappedEntries = sharedEntries.length > 0
-              ? sharedEntries.map((entry: any) => ({
+              ? sharedEntries.map((entry: RawPasswordEntry) => ({
                   ...entry,
                   createdAt: new Date(entry.createdAt),
                   updatedAt: new Date(entry.updatedAt),

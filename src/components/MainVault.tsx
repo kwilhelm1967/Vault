@@ -188,6 +188,35 @@ export const MainVault: React.FC<MainVaultProps> = ({
   const [totpCode, setTotpCode] = useState<string>("");
   const [totpTimeRemaining, setTotpTimeRemaining] = useState(30);
   
+  // Local search input state for debouncing
+  const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
+  const searchDebounceRef = useRef<NodeJS.Timeout>();
+  
+  // Sync local search with parent when prop changes
+  useEffect(() => {
+    setLocalSearchTerm(searchTerm);
+  }, [searchTerm]);
+  
+  // Debounced search handler (150ms delay)
+  const handleSearchInput = useCallback((value: string) => {
+    setLocalSearchTerm(value);
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+    searchDebounceRef.current = setTimeout(() => {
+      onSearchChange(value);
+    }, 150);
+  }, [onSearchChange]);
+  
+  // Cleanup debounce timer
+  useEffect(() => {
+    return () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
+    };
+  }, []);
+  
   // Bulk select state
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
   const [selectedEntries, setSelectedEntries] = useState<Set<string>>(new Set());
@@ -458,8 +487,9 @@ export const MainVault: React.FC<MainVaultProps> = ({
             <input
               type="text"
               placeholder="Search accounts..."
-              value={searchTerm}
-              onChange={(e) => onSearchChange(e.target.value)}
+              aria-label="Search accounts"
+              value={localSearchTerm}
+              onChange={(e) => handleSearchInput(e.target.value)}
               className="w-full pl-8 pr-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-sm placeholder-slate-400 focus:outline-none transition-all"
               style={{ 
                 color: colors.warmIvory,
@@ -473,9 +503,9 @@ export const MainVault: React.FC<MainVaultProps> = ({
                 e.target.style.boxShadow = '';
               }}
             />
-            {searchTerm && (
+            {localSearchTerm && (
               <button
-                onClick={() => onSearchChange("")}
+                onClick={() => handleSearchInput("")}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
               >
                 <X className="w-3.5 h-3.5" strokeWidth={1.5} />
@@ -501,7 +531,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto pr-2 py-2">
+        <nav className="flex-1 overflow-y-auto pr-2 py-2" aria-label="Main navigation">
           {/* Dashboard Link */}
           <button
             onClick={() => setCurrentView("dashboard")}
@@ -609,6 +639,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
           )}
           <button
             onClick={() => { playLockSound(); onLock(); }}
+            aria-label="Lock vault and return to login"
             className="nav-item-hover w-full pl-5 pr-3 py-2 text-slate-400 rounded-r-lg text-sm flex items-center gap-2.5 transition-colors"
           >
             <Lock 
@@ -718,6 +749,16 @@ export const MainVault: React.FC<MainVaultProps> = ({
                 <div ref={sortDropdownRef} className="relative">
                   <button
                     onClick={() => setShowSortDropdown(!showSortDropdown)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') setShowSortDropdown(false);
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setShowSortDropdown(!showSortDropdown);
+                      }
+                    }}
+                    aria-haspopup="listbox"
+                    aria-expanded={showSortDropdown}
+                    aria-label="Sort entries"
                     className="flex items-center gap-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-xs text-slate-300 px-3 py-1.5 hover:border-slate-600 hover:bg-slate-800/70 transition-all"
                   >
                     <ArrowUpDown className="w-3.5 h-3.5 text-slate-500" strokeWidth={1.5} />
@@ -736,6 +777,11 @@ export const MainVault: React.FC<MainVaultProps> = ({
                   {showSortDropdown && (
                     <div 
                       className="absolute right-0 top-full mt-1 w-44 rounded-xl py-1 z-50 isolate"
+                      role="listbox"
+                      aria-label="Sort options"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') setShowSortDropdown(false);
+                      }}
                       style={{
                         backgroundColor: "#1e293b",
                         border: "1px solid #475569",
@@ -749,18 +795,31 @@ export const MainVault: React.FC<MainVaultProps> = ({
                         { value: "date-asc", label: "Oldest First" },
                         { value: "category-asc", label: "Category (A-Z)" },
                         { value: "category-desc", label: "Category (Z-A)" },
-                      ].map((option) => {
+                      ].map((option, index) => {
                         const isSelected = `${sortBy}-${sortOrder}` === option.value;
                         return (
                           <button
                             key={option.value}
+                            role="option"
+                            aria-selected={isSelected}
+                            tabIndex={showSortDropdown ? 0 : -1}
+                            autoFocus={index === 0 && showSortDropdown}
                             onClick={() => {
                               const [newSortBy, newSortOrder] = option.value.split("-") as ["name" | "date" | "category", "asc" | "desc"];
                               setSortBy(newSortBy);
                               setSortOrder(newSortOrder);
                               setShowSortDropdown(false);
                             }}
-                            className="w-full text-left px-3 py-2 text-xs transition-colors"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                const [newSortBy, newSortOrder] = option.value.split("-") as ["name" | "date" | "category", "asc" | "desc"];
+                                setSortBy(newSortBy);
+                                setSortOrder(newSortOrder);
+                                setShowSortDropdown(false);
+                              }
+                            }}
+                            className="w-full text-left px-3 py-2 text-xs transition-colors focus:outline-none focus:ring-1 focus:ring-blue-500"
                             style={{
                               backgroundColor: isSelected ? "#334155" : "#1e293b",
                               color: isSelected ? "#ffffff" : "#94a3b8",

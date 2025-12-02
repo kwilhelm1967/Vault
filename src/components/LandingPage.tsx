@@ -436,13 +436,17 @@ export const LandingPage: React.FC = () => {
   const [email, setEmail] = useState("");
   
   const handleStartTrial = () => {
-    // Handle trial start
-    console.log("Starting trial with email:", email);
+    // Trial signup handled by backend API
+    if (import.meta.env.DEV) {
+      console.log("Trial signup - email:", email);
+    }
   };
   
   const handleDownload = (platform: string) => {
-    // Handle download
-    console.log("Downloading for:", platform);
+    // Download links open in new tab
+    if (import.meta.env.DEV) {
+      console.log("Download initiated:", platform);
+    }
   };
 
   return (

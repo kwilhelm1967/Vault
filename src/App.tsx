@@ -5,7 +5,7 @@ import { MainVault } from "./components/MainVault";
 import { FloatingPanel } from "./components/FloatingPanel";
 import { ElectronFloatingPanel } from "./components/ElectronFloatingPanel";
 import { TrialWarningPopup } from "./components/TrialWarningPopup";
-import { PasswordEntry, Category } from "./types";
+import { PasswordEntry, Category, RawPasswordEntry } from "./types";
 import { storageService } from "./utils/storage";
 import { importService } from "./utils/importService";
 import { licenseService, AppLicenseStatus } from "./utils/licenseService";
@@ -21,6 +21,8 @@ import { ExpiredTrialScreen } from "./components/ExpiredTrialScreen";
 import { TrialStatusBanner } from "./components/TrialStatusBanner";
 import { PurchaseSuccessPage } from "./components/PurchaseSuccessPage";
 import { LandingPage } from "./components/LandingPage";
+import { OfflineIndicator } from "./components/OfflineIndicator";
+import { UndoToast } from "./components/UndoToast";
 
 // Fixed categories with proper typing
 const FIXED_CATEGORIES: Category[] = [
@@ -169,7 +171,7 @@ const useVaultData = (isLocked: boolean, isElectron: boolean, loadSharedEntries?
         try {
           const sharedEntries = await loadSharedEntries();
           if (sharedEntries && sharedEntries.length > 0) {
-            loadedEntries = sharedEntries.map((entry: any) => ({
+            loadedEntries = sharedEntries.map((entry: RawPasswordEntry) => ({
               ...entry,
               createdAt: new Date(entry.createdAt),
               updatedAt: new Date(entry.updatedAt),
@@ -234,7 +236,7 @@ const useVaultData = (isLocked: boolean, isElectron: boolean, loadSharedEntries?
         if (loadSharedEntries) {
           const sharedEntries = await loadSharedEntries();
           if (sharedEntries) {
-            const mappedEntries = sharedEntries.map((entry: any) => ({
+            const mappedEntries = sharedEntries.map((entry: RawPasswordEntry) => ({
               ...entry,
               createdAt: new Date(entry.createdAt),
               updatedAt: new Date(entry.updatedAt),
@@ -295,7 +297,7 @@ const useVaultStatusSync = (isElectron: boolean, setIsLocked: (locked: boolean) 
   useEffect(() => {
     if (!isElectron || !window.electronAPI?.onVaultStatusChange) return;
 
-    const handleVaultStatusChange = (_event: any, unlocked: boolean) => {
+    const handleVaultStatusChange = (_event: unknown, unlocked: boolean) => {
       setIsLocked(!unlocked);
     };
 
@@ -312,7 +314,8 @@ const useEntryManagement = (
   setEntries: (entries: PasswordEntry[]) => void,
   isElectron: boolean,
   saveSharedEntries?: (entries: PasswordEntry[]) => Promise<boolean>,
-  broadcastEntriesChanged?: () => Promise<boolean>
+  broadcastEntriesChanged?: () => Promise<boolean>,
+  onEntryDeleted?: (entry: PasswordEntry) => void
 ) => {
   const broadcastChange = useCallback(async () => {
     if (isElectron && broadcastEntriesChanged) {
@@ -402,6 +405,7 @@ const useEntryManagement = (
   }, [entries, setEntries, broadcastChange, isElectron, saveSharedEntries]);
 
   const handleDeleteEntry = useCallback(async (id: string) => {
+    const deletedEntry = entries.find((entry) => entry.id === id);
     const updatedEntries = entries.filter((entry) => entry.id !== id);
     setEntries(updatedEntries);
 
@@ -426,13 +430,45 @@ const useEntryManagement = (
       }
 
       await broadcastChange();
+      
+      // Notify that entry was deleted (for undo functionality)
+      if (deletedEntry && onEntryDeleted) {
+        onEntryDeleted(deletedEntry);
+      }
     } catch (error) {
       console.error("Failed to delete entry:", error);
       setEntries(entries); // Rollback on error
     }
+  }, [entries, setEntries, broadcastChange, isElectron, saveSharedEntries, onEntryDeleted]);
+
+  // Restore a deleted entry (for undo)
+  const handleRestoreEntry = useCallback(async (entry: PasswordEntry) => {
+    const updatedEntries = [...entries, entry];
+    setEntries(updatedEntries);
+
+    try {
+      const isFloatingMode = window.location.hash === "#floating";
+      const isVaultLockedLocally = !storageService.isVaultUnlocked();
+
+      if (isElectron && isFloatingMode && isVaultLockedLocally) {
+        if (saveSharedEntries) {
+          await saveSharedEntries(updatedEntries);
+        }
+      } else {
+        await storageService.saveEntries(updatedEntries);
+        if (isElectron && saveSharedEntries) {
+          await saveSharedEntries(updatedEntries);
+        }
+      }
+
+      await broadcastChange();
+    } catch (error) {
+      console.error("Failed to restore entry:", error);
+      setEntries(entries);
+    }
   }, [entries, setEntries, broadcastChange, isElectron, saveSharedEntries]);
 
-  return { handleAddEntry, handleUpdateEntry, handleDeleteEntry };
+  return { handleAddEntry, handleUpdateEntry, handleDeleteEntry, handleRestoreEntry };
 };
 
 function App() {
@@ -506,14 +542,28 @@ function App() {
     window.open('https://localpasswordvault.com/#plans', '_blank');
   }, []);
 
+  // Undo delete state
+  const [deletedEntry, setDeletedEntry] = useState<PasswordEntry | null>(null);
   
-  const { handleAddEntry, handleUpdateEntry, handleDeleteEntry } = useEntryManagement(
+  const handleEntryDeleted = useCallback((entry: PasswordEntry) => {
+    setDeletedEntry(entry);
+  }, []);
+  
+  const { handleAddEntry, handleUpdateEntry, handleDeleteEntry, handleRestoreEntry } = useEntryManagement(
     entries,
     setEntries,
     isElectron,
     saveSharedEntries,
-    broadcastEntriesChanged
+    broadcastEntriesChanged,
+    handleEntryDeleted
   );
+  
+  const handleUndoDelete = useCallback(() => {
+    if (deletedEntry) {
+      handleRestoreEntry(deletedEntry);
+      setDeletedEntry(null);
+    }
+  }, [deletedEntry, handleRestoreEntry]);
 
   const handleLock = useCallback(async () => {
     storageService.lockVault();
@@ -707,7 +757,7 @@ function App() {
           }
         }
 
-        if (result.warnings.length) {
+        if (result.warnings.length && import.meta.env.DEV) {
           console.warn('Import warnings:', result.warnings);
         }
 
@@ -1038,6 +1088,19 @@ function App() {
         <FloatingPanel
           {...floatingPanelProps}
           onMaximize={toggleVaultView}
+        />
+      )}
+
+      {/* Offline indicator */}
+      <OfflineIndicator />
+
+      {/* Undo delete toast */}
+      {deletedEntry && (
+        <UndoToast
+          message={`"${deletedEntry.accountName}" deleted`}
+          onUndo={handleUndoDelete}
+          onDismiss={() => setDeletedEntry(null)}
+          duration={5000}
         />
       )}
 
