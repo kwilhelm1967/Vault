@@ -71,6 +71,10 @@ CREATE TABLE IF NOT EXISTS trials (
     is_converted BOOLEAN DEFAULT FALSE, -- Did they purchase?
     converted_license_id INTEGER REFERENCES licenses(id),
     
+    -- Email tracking (for automated reminders)
+    expiring_email_sent BOOLEAN DEFAULT FALSE,  -- 24hr warning sent
+    expired_email_sent BOOLEAN DEFAULT FALSE,   -- Expired + discount sent
+    
     -- Timestamps
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );

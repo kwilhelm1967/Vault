@@ -302,6 +302,50 @@ backend/
 
 ---
 
+---
+
+## Step 9: Set Up Trial Email Automation
+
+The system sends automated emails:
+- **24-hour warning** — "Your trial expires tomorrow"
+- **Trial expired** — "Come back, here's 10% off"
+
+### Option A: Cron Job
+
+```bash
+# Edit crontab
+crontab -e
+
+# Add this line (runs daily at 9 AM)
+0 9 * * * cd /path/to/Vault/backend && /usr/bin/node jobs/trialEmails.js >> /var/log/trial-emails.log 2>&1
+```
+
+### Option B: PM2 Cron
+
+```bash
+pm2 start jobs/trialEmails.js --name trial-emails --cron "0 9 * * *" --no-autorestart
+pm2 save
+```
+
+### Option C: Run Manually
+
+```bash
+npm run job:trial-emails
+```
+
+### Create Stripe Discount Code
+
+1. Go to [Stripe → Coupons](https://dashboard.stripe.com/coupons)
+2. Click **+ New**
+3. Configure:
+   - Name: `COMEBACK10`
+   - Type: Percentage off
+   - Discount: 10%
+   - Duration: Once
+4. Save
+
+---
+
 ## Support
 
 Contact: support@localpasswordvault.com
