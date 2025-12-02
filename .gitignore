@@ -38,3 +38,11 @@ pnpm-lock.yaml
 pnpm-workspace.yaml
 CLAUDE.md
 mhtawfik-doc/
+
+# Code signing certificates - NEVER commit these
+certs/
+*.pfx
+*.p12
+*.pem
+*.cer
+*.key
