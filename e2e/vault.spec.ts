@@ -268,7 +268,7 @@ test.describe('Navigation', () => {
     // Select category if dropdown exists
     const categorySelect = page.locator('select, [role="combobox"]').first();
     if (await categorySelect.isVisible()) {
-      await categorySelect.selectOption({ label: /Banking/i }).catch(() => {
+      await categorySelect.selectOption({ label: 'Banking' }).catch(() => {
         // Try clicking if it's a custom dropdown
       });
     }
