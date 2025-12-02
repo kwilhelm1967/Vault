@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
   X,
   Eye,
@@ -12,11 +12,63 @@ import {
   FileText,
   Plus,
   Lock,
+  HelpCircle,
+  Shield,
+  User,
+  Key,
+  Settings2,
 } from "lucide-react";
 import { PasswordEntry, Category, CustomField } from "../types";
 import { storageService } from "../utils/storage";
 import { PasswordGenerator } from "./PasswordGenerator";
 import { playSuccessSound } from "../utils/soundEffects";
+
+// Tooltip component
+const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, children }) => {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative inline-flex items-center">
+      <div
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        className="cursor-help"
+      >
+        {children}
+      </div>
+      {show && (
+        <div className="absolute left-full ml-2 z-50 px-2.5 py-1.5 text-xs text-white bg-slate-900 border border-slate-700 rounded-lg shadow-xl whitespace-nowrap animate-in fade-in duration-150">
+          {text}
+          <div className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 w-2 h-2 bg-slate-900 border-l border-b border-slate-700 rotate-45" />
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Password strength calculator
+const calculatePasswordStrength = (password: string): { score: number; label: string; color: string } => {
+  let score = 0;
+  if (password.length >= 8) score += 1;
+  if (password.length >= 12) score += 1;
+  if (password.length >= 16) score += 1;
+  if (/[a-z]/.test(password)) score += 1;
+  if (/[A-Z]/.test(password)) score += 1;
+  if (/[0-9]/.test(password)) score += 1;
+  if (/[^a-zA-Z0-9]/.test(password)) score += 1;
+  
+  if (score <= 2) return { score: 1, label: "Weak", color: "#ef4444" };
+  if (score <= 4) return { score: 2, label: "Fair", color: "#f97316" };
+  if (score <= 5) return { score: 3, label: "Good", color: "#eab308" };
+  return { score: 4, label: "Strong", color: "#22c55e" };
+};
+
+// Section Header component
+const SectionHeader: React.FC<{ icon: React.ReactNode; title: string }> = ({ icon, title }) => (
+  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-700/30">
+    <span className="text-slate-400">{icon}</span>
+    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{title}</span>
+  </div>
+);
 
 // Entry templates for common sites
 interface EntryTemplate {
@@ -80,6 +132,9 @@ export const EntryForm: React.FC<EntryFormProps> = ({
   const [visibleSecretFields, setVisibleSecretFields] = useState<Set<string>>(new Set());
   
   const isSecureNote = entryType === "secure_note";
+  
+  // Password strength
+  const passwordStrength = useMemo(() => calculatePasswordStrength(formData.password), [formData.password]);
   
   // Custom field handlers
   const addCustomField = () => {
@@ -300,15 +355,15 @@ export const EntryForm: React.FC<EntryFormProps> = ({
   };
 
   return (
-    <div className="bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 rounded-2xl overflow-hidden border border-slate-600/50 shadow-2xl">
-      {/* Enhanced Header - Steel Blue to match left nav button */}
-      <div className="border-b border-slate-700/50 p-4" style={{ background: 'linear-gradient(135deg, #5B82B8, #4A6FA5)' }}>
+    <div className="bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 rounded-2xl overflow-hidden border border-slate-600/50 shadow-xl shadow-black/40 flex flex-col max-h-[85vh]">
+      {/* Enhanced Header */}
+      <div className="border-b border-slate-700/50 px-5 py-4 flex-shrink-0" style={{ background: 'linear-gradient(135deg, #5B82B8, #4A6FA5)' }}>
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-white font-bold text-lg">
+            <h3 className="text-white font-bold text-xl tracking-tight">
               {entry ? "Edit Account" : "Add New Account"}
             </h3>
-            <p className="text-slate-200 text-sm mt-1">
+            <p className="text-blue-100/70 text-xs mt-0.5">
               {entry
                 ? "Update your account details"
                 : "Secure your new credentials"}
@@ -316,7 +371,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
           </div>
           <button
             onClick={onCancel}
-            className="p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-all"
+            className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-all"
             title="Close"
           >
             <X className="w-5 h-5" />
@@ -324,32 +379,36 @@ export const EntryForm: React.FC<EntryFormProps> = ({
         </div>
       </div>
 
-      <div className="p-4">
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto p-5 space-y-5">
         {/* Entry Type Selector - Only for new entries */}
         {!entry && (
-          <div className="mb-4">
-            <div className="flex rounded-lg bg-slate-800/50 p-1 mb-3">
+          <div>
+            {/* Enhanced Tab Selector */}
+            <div className="flex rounded-xl bg-slate-900/60 p-1.5 mb-4 border border-slate-700/50">
               <button
                 type="button"
                 onClick={() => setEntryType("password")}
-                className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ${
+                className={`flex-1 py-2.5 px-4 rounded-lg text-sm transition-all flex items-center justify-center gap-2 ${
                   entryType === "password"
-                    ? "bg-[#5B82B8] text-white"
-                    : "text-slate-400 hover:text-white"
+                    ? "bg-gradient-to-r from-[#5B82B8] to-[#4A6FA5] text-white font-bold shadow-lg shadow-blue-500/20"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
                 }`}
               >
-                🔐 Password Entry
+                <span className="text-base">🔐</span>
+                <span>Password Entry</span>
               </button>
               <button
                 type="button"
                 onClick={() => setEntryType("secure_note")}
-                className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ${
+                className={`flex-1 py-2.5 px-4 rounded-lg text-sm transition-all flex items-center justify-center gap-2 ${
                   entryType === "secure_note"
-                    ? "bg-[#5B82B8] text-white"
-                    : "text-slate-400 hover:text-white"
+                    ? "bg-gradient-to-r from-[#5B82B8] to-[#4A6FA5] text-white font-bold shadow-lg shadow-blue-500/20"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
                 }`}
               >
-                📝 Secure Note
+                <span className="text-base">📝</span>
+                <span>Secure Note</span>
               </button>
             </div>
             
@@ -359,16 +418,19 @@ export const EntryForm: React.FC<EntryFormProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowTemplates(!showTemplates)}
-                  className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors"
+                  className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors group"
                 >
                   <FileText className="w-4 h-4" />
                   <span>Use a template</span>
+                  <Tooltip text="Pre-fill common account details">
+                    <HelpCircle className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-400" />
+                  </Tooltip>
                   <ChevronDown className={`w-4 h-4 transition-transform ${showTemplates ? 'rotate-180' : ''}`} />
                 </button>
                 
                 {showTemplates && (
                   <div className="mt-3 bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 animate-in slide-in-from-top-2 duration-200">
-                    <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
+                    <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
                       {ENTRY_TEMPLATES.map((template) => (
                         <button
                           key={template.name}
@@ -388,436 +450,493 @@ export const EntryForm: React.FC<EntryFormProps> = ({
           </div>
         )}
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Account Name / Title */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              {isSecureNote ? "Title" : "Account Name"} <span className="text-red-400">*</span>
-            </label>
-            <input
-              type="text"
-              value={formData.accountName}
-              onChange={(e) => {
-                setFormData((prev) => ({
-                  ...prev,
-                  accountName: e.target.value,
-                }));
-                if (fieldErrors.accountName && e.target.value.trim()) {
-                  setFieldErrors(prev => ({ ...prev, accountName: undefined }));
-                }
-              }}
-              className={`w-full px-4 py-3 rounded-xl text-white placeholder-slate-400 focus:outline-none transition-all text-sm ${
-                fieldErrors.accountName
-                  ? "bg-red-900/20 border-2 border-red-500/50 focus:border-red-500/70 focus:ring-2 focus:ring-red-500/20"
-                  : "bg-slate-700/50 border border-slate-600/50 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
-              }`}
-              placeholder="e.g., Gmail, Bank of America"
+        <form id="entry-form" onSubmit={handleSubmit} className="space-y-5">
+          {/* Account Details Section */}
+          <div className="space-y-3">
+            <SectionHeader 
+              icon={<User className="w-3.5 h-3.5" />} 
+              title="Account Details" 
             />
-            {fieldErrors.accountName && (
-              <p className="mt-1 text-xs text-red-400 font-medium">{fieldErrors.accountName}</p>
-            )}
-          </div>
-
-          {/* Username - Only for password entries */}
-          {!isSecureNote && (
+            
+            {/* Account Name / Title */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Username/Email <span className="text-red-400">*</span>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                {isSecureNote ? "Title" : "Account Name"} <span className="text-red-400">*</span>
               </label>
               <input
                 type="text"
-                value={formData.username}
+                value={formData.accountName}
                 onChange={(e) => {
-                  setFormData((prev) => ({ ...prev, username: e.target.value }));
-                  if (fieldErrors.username && e.target.value.trim()) {
-                    setFieldErrors(prev => ({ ...prev, username: undefined }));
+                  setFormData((prev) => ({
+                    ...prev,
+                    accountName: e.target.value,
+                  }));
+                  if (fieldErrors.accountName && e.target.value.trim()) {
+                    setFieldErrors(prev => ({ ...prev, accountName: undefined }));
                   }
                 }}
-                className={`w-full px-4 py-3 rounded-xl text-white placeholder-slate-400 focus:outline-none transition-all text-sm ${
-                  fieldErrors.username
+                className={`w-full px-4 py-2.5 rounded-xl text-white placeholder-slate-500 focus:outline-none transition-all text-sm ${
+                  fieldErrors.accountName
                     ? "bg-red-900/20 border-2 border-red-500/50 focus:border-red-500/70 focus:ring-2 focus:ring-red-500/20"
                     : "bg-slate-700/50 border border-slate-600/50 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
                 }`}
-                placeholder="username@example.com"
+                placeholder="e.g., Gmail, Bank of America"
               />
-              {fieldErrors.username && (
-                <p className="mt-1 text-xs text-red-400 font-medium">{fieldErrors.username}</p>
+              {fieldErrors.accountName && (
+                <p className="mt-1 text-xs text-red-400 font-medium">{fieldErrors.accountName}</p>
               )}
+            </div>
+
+            {/* Category */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                Category <span className="text-red-400">*</span>
+              </label>
+              <div ref={dropdownRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                  className={`w-full px-4 py-2.5 rounded-xl text-white focus:outline-none transition-all text-sm flex items-center justify-between text-left ${
+                    fieldErrors.category
+                      ? "bg-red-900/20 border-2 border-red-500/50 focus:border-red-500/70 focus:ring-2 focus:ring-red-500/20"
+                      : "bg-slate-700/50 border border-slate-600/50 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
+                  }`}
+                >
+                  <span
+                    className={
+                      formData.category ? "text-white" : "text-slate-500"
+                    }
+                  >
+                    {formData.category
+                      ? categories.find((c) => c.id === formData.category)
+                          ?.name || "Select a category"
+                      : "Select a category"}
+                  </span>
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform duration-200 ${
+                      showCategoryDropdown ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+
+                {showCategoryDropdown && (
+                  <div 
+                    className="absolute z-[9999] top-full left-0 right-0 mt-1 rounded-xl max-h-48 overflow-y-auto isolate"
+                    style={{
+                      backgroundColor: "#1e293b",
+                      border: "1px solid #475569",
+                      boxShadow: "0 10px 40px -10px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.3)",
+                    }}
+                  >
+                    <div className="p-1">
+                      {categories
+                        .filter((c) => c.id !== "all")
+                        .map((category) => {
+                          const isSelected = formData.category === category.id;
+                          return (
+                            <button
+                              key={category.id}
+                              type="button"
+                              onClick={() => {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  category: category.id,
+                                }));
+                                setShowCategoryDropdown(false);
+                                if (fieldErrors.category) {
+                                  setFieldErrors(prev => ({ ...prev, category: undefined }));
+                                }
+                              }}
+                              className="w-full px-3 py-2 text-left text-sm rounded-lg transition-colors flex items-center justify-between"
+                              style={{
+                                backgroundColor: isSelected ? "#334155" : "#1e293b",
+                                color: isSelected ? "#ffffff" : "#cbd5e1",
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!isSelected) {
+                                  e.currentTarget.style.backgroundColor = "#334155";
+                                  e.currentTarget.style.color = "#ffffff";
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!isSelected) {
+                                  e.currentTarget.style.backgroundColor = "#1e293b";
+                                  e.currentTarget.style.color = "#cbd5e1";
+                                }
+                              }}
+                            >
+                              <span>{category.name}</span>
+                              {isSelected && (
+                                <Check className="w-3 h-3 text-blue-400" />
+                              )}
+                            </button>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
+
+                {fieldErrors.category && (
+                  <p className="mt-1 text-xs text-red-400 font-medium">{fieldErrors.category}</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Login Credentials Section - Only for password entries */}
+          {!isSecureNote && (
+            <div className="space-y-3">
+              <SectionHeader 
+                icon={<Key className="w-3.5 h-3.5" />} 
+                title="Login Credentials" 
+              />
+
+              {/* Username */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-1.5">
+                  <span>Username/Email</span>
+                  <span className="text-red-400">*</span>
+                  <Tooltip text="The email or username you use to log in">
+                    <HelpCircle className="w-3.5 h-3.5 text-slate-500 hover:text-slate-400" />
+                  </Tooltip>
+                </label>
+                <input
+                  type="text"
+                  value={formData.username}
+                  onChange={(e) => {
+                    setFormData((prev) => ({ ...prev, username: e.target.value }));
+                    if (fieldErrors.username && e.target.value.trim()) {
+                      setFieldErrors(prev => ({ ...prev, username: undefined }));
+                    }
+                  }}
+                  className={`w-full px-4 py-2.5 rounded-xl text-white placeholder-slate-500 focus:outline-none transition-all text-sm ${
+                    fieldErrors.username
+                      ? "bg-red-900/20 border-2 border-red-500/50 focus:border-red-500/70 focus:ring-2 focus:ring-red-500/20"
+                      : "bg-slate-700/50 border border-slate-600/50 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
+                  }`}
+                  placeholder="username@example.com"
+                />
+                {fieldErrors.username && (
+                  <p className="mt-1 text-xs text-red-400 font-medium">{fieldErrors.username}</p>
+                )}
+              </div>
+
+              {/* Password */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
+                    <span>Password</span>
+                    <span className="text-red-400">*</span>
+                    <Tooltip text="Your password for this account. Use the generator for a strong password.">
+                      <HelpCircle className="w-3.5 h-3.5 text-slate-500 hover:text-slate-400" />
+                    </Tooltip>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordGenerator(!showPasswordGenerator)}
+                    className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                      showPasswordGenerator
+                        ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                        : "bg-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-700 border border-slate-600/50"
+                    }`}
+                  >
+                    <Wand2 className="w-3 h-3" />
+                    <span>{showPasswordGenerator ? "Hide" : "Generate"}</span>
+                  </button>
+                </div>
+
+                {/* Password Generator */}
+                {showPasswordGenerator ? (
+                  <div className="mb-3">
+                    <PasswordGenerator
+                      onPasswordGenerated={handlePasswordGenerated}
+                      initialPassword={formData.password}
+                    />
+                  </div>
+                ) : (
+                  /* Manual Password Input */
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={formData.password}
+                        onChange={(e) => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            password: e.target.value,
+                          }));
+                          if (fieldErrors.password && e.target.value.trim()) {
+                            setFieldErrors(prev => ({ ...prev, password: undefined }));
+                          }
+                        }}
+                        className={`w-full px-4 py-2.5 pr-12 rounded-xl text-white placeholder-slate-500 focus:outline-none transition-all text-sm ${
+                          fieldErrors.password
+                            ? "bg-red-900/20 border-2 border-red-500/50 focus:border-red-500/70 focus:ring-2 focus:ring-red-500/20"
+                            : "bg-slate-700/50 border border-slate-600/50 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
+                        }`}
+                        placeholder="Enter password or use generator"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-white hover:bg-slate-600/50 rounded-lg transition-all"
+                        title={showPassword ? "Hide password" : "Show password"}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                    
+                    {/* Password Strength Meter */}
+                    {formData.password && (
+                      <div className="space-y-1.5">
+                        <div className="flex gap-1">
+                          {[1, 2, 3, 4].map((level) => (
+                            <div
+                              key={level}
+                              className="h-1.5 flex-1 rounded-full transition-all duration-300"
+                              style={{
+                                backgroundColor: level <= passwordStrength.score ? passwordStrength.color : "#334155"
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs" style={{ color: passwordStrength.color }}>
+                            {passwordStrength.label}
+                          </span>
+                          <span className="text-xs text-slate-500">{formData.password.length} characters</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {fieldErrors.password && (
+                  <p className="mt-1 text-xs text-red-400 font-medium">{fieldErrors.password}</p>
+                )}
+                
+                {/* Duplicate Password Warning */}
+                {duplicateEntries.length > 0 && (
+                  <div className="mt-2 p-2 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                    <p className="text-xs text-amber-400 font-medium flex items-center gap-1.5">
+                      <span>⚠️</span>
+                      This password is already used by: {duplicateEntries.map(e => e.accountName).join(", ")}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Website URL */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-1.5">
+                  <Globe className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Website URL</span>
+                  <Tooltip text="The login page URL for quick access">
+                    <HelpCircle className="w-3.5 h-3.5 text-slate-500 hover:text-slate-400" />
+                  </Tooltip>
+                </label>
+                <input
+                  type="url"
+                  value={formData.website}
+                  onChange={(e) => {
+                    setFormData((prev) => ({ ...prev, website: e.target.value }));
+                  }}
+                  className="w-full px-4 py-2.5 rounded-xl text-white placeholder-slate-500 focus:outline-none transition-all text-sm bg-slate-700/50 border border-slate-600/50 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
+                  placeholder="https://example.com"
+                />
+              </div>
             </div>
           )}
 
-          {/* Password - Only for password entries */}
-          {!isSecureNote && (
+          {/* Optional Section */}
+          <div className="space-y-3">
+            <SectionHeader 
+              icon={<Settings2 className="w-3.5 h-3.5" />} 
+              title="Optional" 
+            />
+
+            {/* Account Details */}
             <div>
-              <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                Account Details
+              </label>
+              <textarea
+                value={formData.balance}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, balance: e.target.value }))
+                }
+                className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none text-sm"
+                rows={2}
+                placeholder="Additional account details..."
+              />
+            </div>
+
+            {/* Notes */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                {isSecureNote ? (
+                  <>Secure Note Content <span className="text-red-400">*</span></>
+                ) : (
+                  "Notes"
+                )}
+              </label>
+              <textarea
+                value={formData.notes}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, notes: e.target.value }))
+                }
+                className={`w-full px-4 py-2.5 rounded-xl text-white placeholder-slate-500 focus:outline-none transition-all resize-none text-sm ${
+                  isSecureNote 
+                    ? "bg-slate-700/70 border-2 border-slate-600/70 focus:border-blue-500/70 focus:ring-2 focus:ring-blue-500/30 min-h-[120px]"
+                    : "bg-slate-700/50 border border-slate-600/50 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
+                }`}
+                rows={isSecureNote ? 5 : 2}
+                placeholder={isSecureNote ? "Enter your secure note content here..." : "Additional notes..."}
+              />
+              {isSecureNote && (
+                <p className="mt-1 text-xs text-slate-500">Your note will be encrypted with the same security as passwords</p>
+              )}
+            </div>
+
+            {/* 2FA/TOTP Secret - Only for password entries */}
+            {!isSecureNote && (
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                  <span className="flex items-center gap-1.5">
+                    <Shield className="w-3.5 h-3.5 text-slate-400" />
+                    2FA Secret (TOTP)
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.totpSecret || ""}
+                  onChange={(e) => {
+                    const value = e.target.value.toUpperCase().replace(/[^A-Z2-7]/g, '');
+                    setFormData((prev) => ({ ...prev, totpSecret: value }));
+                  }}
+                  className="w-full px-4 py-2.5 rounded-xl text-white placeholder-slate-500 focus:outline-none transition-all text-sm bg-slate-700/50 border border-slate-600/50 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 font-mono"
+                  placeholder="Enter Base32 secret (e.g., JBSWY3DPEHPK3PXP)"
+                />
+                <p className="mt-1 text-xs text-slate-500">Paste the secret key from your authenticator setup</p>
+              </div>
+            )}
+
+            {/* Custom Fields */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-sm font-medium text-slate-300">
-                  Password <span className="text-red-400">*</span>
+                  Custom Fields
                 </label>
                 <button
                   type="button"
-                  onClick={() => setShowPasswordGenerator(!showPasswordGenerator)}
-                  className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-                    showPasswordGenerator
-                      ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
-                      : "bg-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-700 border border-slate-600/50"
-                  }`}
+                  onClick={addCustomField}
+                  className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
                 >
-                  <Wand2 className="w-3 h-3" />
-                  <span>{showPasswordGenerator ? "Hide Generator" : "Generate"}</span>
+                  <Plus className="w-3 h-3" strokeWidth={2} />
+                  Add
                 </button>
               </div>
-
-              {/* Password Generator */}
-              {showPasswordGenerator ? (
-                <div className="mb-3">
-                  <PasswordGenerator
-                    onPasswordGenerated={handlePasswordGenerated}
-                    initialPassword={formData.password}
-                  />
-                </div>
-              ) : (
-                /* Manual Password Input */
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={formData.password}
-                    onChange={(e) => {
-                      setFormData((prev) => ({
-                        ...prev,
-                        password: e.target.value,
-                      }));
-                      if (fieldErrors.password && e.target.value.trim()) {
-                        setFieldErrors(prev => ({ ...prev, password: undefined }));
-                      }
-                    }}
-                    className={`w-full px-4 py-3 pr-12 rounded-xl text-white placeholder-slate-400 focus:outline-none transition-all text-sm ${
-                      fieldErrors.password
-                        ? "bg-red-900/20 border-2 border-red-500/50 focus:border-red-500/70 focus:ring-2 focus:ring-red-500/20"
-                        : "bg-slate-700/50 border border-slate-600/50 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
-                    }`}
-                    placeholder="Enter password or use generator"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-white hover:bg-slate-600/50 rounded-md transition-all"
-                    title={showPassword ? "Hide password" : "Show password"}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-              )}
-
-              {fieldErrors.password && (
-                <p className="mt-1 text-xs text-red-400 font-medium">{fieldErrors.password}</p>
-              )}
               
-              {/* Duplicate Password Warning */}
-              {duplicateEntries.length > 0 && (
-                <div className="mt-2 p-2 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-                  <p className="text-xs text-amber-400 font-medium flex items-center gap-1.5">
-                    <span>⚠️</span>
-                    This password is already used by: {duplicateEntries.map(e => e.accountName).join(", ")}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Website URL - Only for password entries */}
-          {!isSecureNote && (
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                <span className="flex items-center gap-1.5">
-                  <Globe className="w-3.5 h-3.5 text-slate-400" />
-                  Website URL
-                </span>
-              </label>
-              <input
-                type="url"
-                value={formData.website}
-                onChange={(e) => {
-                  setFormData((prev) => ({ ...prev, website: e.target.value }));
-                }}
-                className="w-full px-4 py-3 rounded-xl text-white placeholder-slate-400 focus:outline-none transition-all text-sm bg-slate-700/50 border border-slate-600/50 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
-                placeholder="https://example.com"
-              />
-              <p className="mt-1 text-xs text-slate-500">Optional - login page URL for quick access</p>
-            </div>
-          )}
-
-          {/* Category */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Category <span className="text-red-400">*</span>
-            </label>
-            <div ref={dropdownRef} className="relative">
-              <button
-                type="button"
-                onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                className={`w-full px-4 py-3 rounded-xl text-white focus:outline-none transition-all text-sm flex items-center justify-between text-left ${
-                  fieldErrors.category
-                    ? "bg-red-900/20 border-2 border-red-500/50 focus:border-red-500/70 focus:ring-2 focus:ring-red-500/20"
-                    : "bg-slate-700/50 border border-slate-600/50 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
-                }`}
-              >
-                <span
-                  className={
-                    formData.category ? "text-white" : "text-slate-400"
-                  }
-                >
-                  {formData.category
-                    ? categories.find((c) => c.id === formData.category)
-                        ?.name || "Select a category"
-                    : "Select a category"}
-                </span>
-                <ChevronDown
-                  className={`w-4 h-4 transition-transform duration-200 ${
-                    showCategoryDropdown ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-
-              {showCategoryDropdown && (
-                <div 
-                  className="absolute z-[9999] top-full left-0 right-0 mt-1 rounded-xl max-h-60 overflow-y-auto isolate"
-                  style={{
-                    backgroundColor: "#1e293b",
-                    border: "1px solid #475569",
-                    boxShadow: "0 10px 40px -10px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.3)",
-                  }}
-                >
-                  <div className="p-1">
-                    {categories
-                      .filter((c) => c.id !== "all")
-                      .map((category) => {
-                        const isSelected = formData.category === category.id;
-                        return (
-                          <button
-                            key={category.id}
-                            type="button"
-                            onClick={() => {
-                              setFormData((prev) => ({
-                                ...prev,
-                                category: category.id,
-                              }));
-                              setShowCategoryDropdown(false);
-                              if (fieldErrors.category) {
-                                setFieldErrors(prev => ({ ...prev, category: undefined }));
-                              }
-                            }}
-                            className="w-full px-3 py-2 text-left text-sm rounded-lg transition-colors flex items-center justify-between"
-                            style={{
-                              backgroundColor: isSelected ? "#334155" : "#1e293b",
-                              color: isSelected ? "#ffffff" : "#cbd5e1",
-                            }}
-                            onMouseEnter={(e) => {
-                              if (!isSelected) {
-                                e.currentTarget.style.backgroundColor = "#334155";
-                                e.currentTarget.style.color = "#ffffff";
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              if (!isSelected) {
-                                e.currentTarget.style.backgroundColor = "#1e293b";
-                                e.currentTarget.style.color = "#cbd5e1";
-                              }
-                            }}
-                          >
-                            <span>{category.name}</span>
-                            {isSelected && (
-                              <Check className="w-3 h-3 text-blue-400" />
-                            )}
-                          </button>
-                        );
-                      })}
-                  </div>
-                </div>
-              )}
-
-              {fieldErrors.category && (
-                <p className="mt-1 text-xs text-red-400 font-medium">{fieldErrors.category}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Account Details */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Account Details
-            </label>
-            <textarea
-              value={formData.balance}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, balance: e.target.value }))
-              }
-              className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none text-sm"
-              rows={3}
-              placeholder="Additional account details..."
-            />
-          </div>
-
-          {/* Notes */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              {isSecureNote ? (
-                <>Secure Note Content <span className="text-red-400">*</span></>
+              {customFields.length === 0 ? (
+                <p className="text-xs text-slate-500 py-1">No custom fields added.</p>
               ) : (
-                "Notes"
-              )}
-            </label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, notes: e.target.value }))
-              }
-              className={`w-full px-4 py-3 rounded-xl text-white placeholder-slate-400 focus:outline-none transition-all resize-none text-sm ${
-                isSecureNote 
-                  ? "bg-slate-700/70 border-2 border-slate-600/70 focus:border-blue-500/70 focus:ring-2 focus:ring-blue-500/30 min-h-[150px]"
-                  : "bg-slate-700/50 border border-slate-600/50 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
-              }`}
-              rows={isSecureNote ? 6 : 3}
-              placeholder={isSecureNote ? "Enter your secure note content here..." : "Additional notes..."}
-            />
-            {isSecureNote && (
-              <p className="mt-1 text-xs text-slate-500">Your note will be encrypted with the same security as passwords</p>
-            )}
-          </div>
-
-          {/* 2FA/TOTP Secret - Only for password entries */}
-          {!isSecureNote && (
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                <span className="flex items-center gap-1.5">
-                  🔐 2FA Secret (TOTP)
-                </span>
-              </label>
-              <input
-                type="text"
-                value={formData.totpSecret || ""}
-                onChange={(e) => {
-                  const value = e.target.value.toUpperCase().replace(/[^A-Z2-7]/g, '');
-                  setFormData((prev) => ({ ...prev, totpSecret: value }));
-                }}
-                className="w-full px-4 py-3 rounded-xl text-white placeholder-slate-400 focus:outline-none transition-all text-sm bg-slate-700/50 border border-slate-600/50 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 font-mono"
-                placeholder="Enter Base32 secret (e.g., JBSWY3DPEHPK3PXP)"
-              />
-              <p className="mt-1 text-xs text-slate-500">Optional - paste the secret key from your authenticator setup</p>
-            </div>
-          )}
-
-          {/* Custom Fields */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-slate-300">
-                Custom Fields
-              </label>
-              <button
-                type="button"
-                onClick={addCustomField}
-                className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
-              >
-                <Plus className="w-3 h-3" strokeWidth={2} />
-                Add Field
-              </button>
-            </div>
-            
-            {customFields.length === 0 ? (
-              <p className="text-xs text-slate-500 py-2">No custom fields. Click "Add Field" to create one.</p>
-            ) : (
-              <div className="space-y-3">
-                {customFields.map((field) => (
-                  <div key={field.id} className="bg-slate-700/30 rounded-xl p-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <input
-                        type="text"
-                        value={field.label}
-                        onChange={(e) => updateCustomField(field.id, { label: e.target.value })}
-                        placeholder="Field name"
-                        className="flex-1 px-3 py-1.5 rounded-lg text-xs text-white placeholder-slate-500 bg-slate-800/50 border border-slate-600/50 focus:outline-none focus:border-blue-500/50"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => updateCustomField(field.id, { isSecret: !field.isSecret })}
-                        className={`p-1.5 rounded-lg transition-colors ${
-                          field.isSecret 
-                            ? "bg-blue-500/20 text-blue-400" 
-                            : "bg-slate-700/50 text-slate-500 hover:text-slate-300"
-                        }`}
-                        title={field.isSecret ? "Secret field (hidden)" : "Make secret"}
-                      >
-                        <Lock className="w-3.5 h-3.5" strokeWidth={1.5} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeCustomField(field.id)}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                        title="Remove field"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
-                      </button>
-                    </div>
-                    <div className="relative">
-                      <input
-                        type={field.isSecret && !visibleSecretFields.has(field.id) ? "password" : "text"}
-                        value={field.value}
-                        onChange={(e) => updateCustomField(field.id, { value: e.target.value })}
-                        placeholder="Field value"
-                        className="w-full px-3 py-2 pr-10 rounded-lg text-sm text-white placeholder-slate-500 bg-slate-800/50 border border-slate-600/50 focus:outline-none focus:border-blue-500/50"
-                      />
-                      {field.isSecret && (
+                <div className="space-y-2">
+                  {customFields.map((field) => (
+                    <div key={field.id} className="bg-slate-700/30 rounded-xl p-2.5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <input
+                          type="text"
+                          value={field.label}
+                          onChange={(e) => updateCustomField(field.id, { label: e.target.value })}
+                          placeholder="Field name"
+                          className="flex-1 px-3 py-1.5 rounded-lg text-xs text-white placeholder-slate-500 bg-slate-800/50 border border-slate-600/50 focus:outline-none focus:border-blue-500/50"
+                        />
                         <button
                           type="button"
-                          onClick={() => toggleSecretFieldVisibility(field.id)}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-white transition-colors"
+                          onClick={() => updateCustomField(field.id, { isSecret: !field.isSecret })}
+                          className={`p-1.5 rounded-lg transition-colors ${
+                            field.isSecret 
+                              ? "bg-blue-500/20 text-blue-400" 
+                              : "bg-slate-700/50 text-slate-500 hover:text-slate-300"
+                          }`}
+                          title={field.isSecret ? "Secret field (hidden)" : "Make secret"}
                         >
-                          {visibleSecretFields.has(field.id) 
-                            ? <EyeOff className="w-4 h-4" strokeWidth={1.5} />
-                            : <Eye className="w-4 h-4" strokeWidth={1.5} />
-                          }
+                          <Lock className="w-3.5 h-3.5" strokeWidth={1.5} />
                         </button>
-                      )}
+                        <button
+                          type="button"
+                          onClick={() => removeCustomField(field.id)}
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                          title="Remove field"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type={field.isSecret && !visibleSecretFields.has(field.id) ? "password" : "text"}
+                          value={field.value}
+                          onChange={(e) => updateCustomField(field.id, { value: e.target.value })}
+                          placeholder="Field value"
+                          className="w-full px-3 py-1.5 pr-10 rounded-lg text-sm text-white placeholder-slate-500 bg-slate-800/50 border border-slate-600/50 focus:outline-none focus:border-blue-500/50"
+                        />
+                        {field.isSecret && (
+                          <button
+                            type="button"
+                            onClick={() => toggleSecretFieldVisibility(field.id)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-white transition-colors"
+                          >
+                            {visibleSecretFields.has(field.id) 
+                              ? <EyeOff className="w-4 h-4" strokeWidth={1.5} />
+                              : <Eye className="w-4 h-4" strokeWidth={1.5} />
+                            }
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-6 border-t border-slate-700/50">
-            <button
-              type="submit"
-              className="flex-1 flex items-center justify-center gap-2 bg-[#5B82B8] hover:bg-[#4A6FA5] text-white py-2.5 px-5 rounded-lg font-medium transition-all text-sm"
-            >
-              <Save className="w-4 h-4" strokeWidth={1.5} />
-              <span>{entry ? "Save Changes" : (isSecureNote ? "Save Note" : "Add Account")}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={onCancel}
-              className="px-5 py-2.5 bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg font-medium transition-all text-sm"
-            >
-              Cancel
-            </button>
-
-            {onDelete && (
-              <button
-                type="button"
-                onClick={handleDeleteClick}
-                className="flex items-center justify-center px-3 py-2.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
-                title="Delete Account"
-              >
-                <Trash2 className="w-4 h-4" strokeWidth={1.5} />
-              </button>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </form>
+      </div>
+
+      {/* Sticky Footer with Actions */}
+      <div className="flex-shrink-0 px-5 py-4 bg-slate-900/80 border-t border-slate-700/50 backdrop-blur-sm">
+        <div className="flex gap-3">
+          <button
+            type="submit"
+            form="entry-form"
+            className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-[#5B82B8] to-[#4A6FA5] hover:from-[#6B92C8] hover:to-[#5A7FB5] text-white py-2.5 px-5 rounded-xl font-semibold transition-all text-sm shadow-lg shadow-blue-500/20"
+          >
+            <Save className="w-4 h-4" strokeWidth={2} />
+            <span>{entry ? "Save Changes" : (isSecureNote ? "Save Note" : "Add Account")}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-5 py-2.5 bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl font-medium transition-all text-sm"
+          >
+            Cancel
+          </button>
+
+          {onDelete && (
+            <button
+              type="button"
+              onClick={handleDeleteClick}
+              className="flex items-center justify-center px-3 py-2.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all"
+              title="Delete Account"
+            >
+              <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Delete Confirmation Modal */}
