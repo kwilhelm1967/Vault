@@ -1,197 +1,147 @@
-# Code Signing Guide
+# Code Signing Guide for Local Password Vault
 
-This guide explains how to sign Local Password Vault for Windows and macOS to remove security warnings.
+This guide explains how to sign your installers for Windows and Mac to make them trusted by users and avoid security warnings.
 
-## Why Code Signing Matters
+## Why Code Sign?
 
-Without code signing:
-- **Windows**: Shows "Windows protected your PC" SmartScreen warning
-- **macOS**: Shows "Cannot be opened because the developer cannot be verified"
-
-With code signing:
-- Users trust the installer immediately
-- No scary security warnings
-- Required for enterprise deployment
+- **Trust**: Users see your company name instead of "Unknown Publisher"
+- **Security**: Prevents tampering with your software
+- **Distribution**: Required for Mac App Store and recommended for Windows
+- **Auto-Updates**: Some update mechanisms require signed apps
 
 ---
 
 ## Windows Code Signing
 
-### Step 1: Purchase an EV Code Signing Certificate
+### Option 1: EV Code Signing Certificate (Recommended)
 
-| Provider | Cost | Link |
-|----------|------|------|
-| DigiCert | ~$400/year | https://www.digicert.com/signing/code-signing-certificates |
-| Sectigo | ~$300/year | https://sectigo.com/ssl-certificates-tls/code-signing |
-| GlobalSign | ~$350/year | https://www.globalsign.com/en/code-signing-certificate |
+EV (Extended Validation) certificates provide instant reputation with SmartScreen.
 
-> ⚠️ **Important**: Get an **EV (Extended Validation)** certificate, not a standard one. EV certificates build SmartScreen reputation immediately.
+**Providers:**
+- DigiCert (~$500/year)
+- Sectigo (~$350/year)
+- GlobalSign (~$400/year)
 
-### Step 2: Receive Your Certificate
+**Steps:**
 
-EV certificates come on a **USB hardware token** (like a YubiKey). This is required for security.
+1. **Purchase Certificate**
+   - Buy an EV code signing certificate
+   - Complete identity verification (requires notarized documents)
+   - Receive hardware token (USB) with private key
 
-### Step 3: Export the Certificate
+2. **Install Certificate**
+   ```powershell
+   # Install certificate to Windows certificate store
+   certutil -csp "eToken Base Cryptographic Provider" -importpfx certificate.pfx
+   ```
 
-1. Insert the USB token
-2. Open the certificate management software (provided by vendor)
-3. Export as `.pfx` file with a strong password
-4. Save to `certs/windows-signing.pfx`
+3. **Configure electron-builder**
+   
+   Create `.env` file:
+   ```env
+   CSC_LINK=path/to/certificate.pfx
+   CSC_KEY_PASSWORD=your_password
+   ```
 
-### Step 4: Configure Environment
+4. **Build Signed Installer**
+   ```bash
+   npm run dist:win
+   ```
 
-Create a `.env` file (or set in your CI/CD):
+### Option 2: Standard Code Signing Certificate
 
-```bash
-WIN_CSC_KEY_PASSWORD=your_certificate_password
+Cheaper but requires time to build SmartScreen reputation.
+
+**Providers:**
+- SSL.com (~$75/year)
+- Sectigo (~$100/year)
+
+### Option 3: Self-Signed (Development Only)
+
+```powershell
+# Create self-signed certificate
+New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=Local Password Vault" -CertStoreLocation Cert:\CurrentUser\My
+
+# Export certificate
+$cert = Get-ChildItem Cert:\CurrentUser\My | Where-Object {$_.Subject -like "*Local Password Vault*"}
+Export-PfxCertificate -Cert $cert -FilePath .\selfsigned.pfx -Password (ConvertTo-SecureString -String "password" -Force -AsPlainText)
 ```
-
-### Step 5: Build Signed Installer
-
-```bash
-npm run dist:win
-```
-
-The certificate settings are already in `electron-builder.json`:
-
-```json
-"win": {
-  "certificateFile": "./certs/windows-signing.pfx",
-  "certificatePassword": "${WIN_CSC_KEY_PASSWORD}",
-  "signingHashAlgorithms": ["sha256"],
-  "publisherName": "Your Company Name"
-}
-```
-
-### Step 6: Update Publisher Name
-
-Edit `electron-builder.json` and replace:
-```json
-"publisherName": "Your Company Name"
-```
-
-With your actual company/developer name as it appears on the certificate.
 
 ---
 
-## macOS Code Signing & Notarization
+## Mac Code Signing
 
-### Step 1: Join Apple Developer Program
+### Requirements
 
-1. Go to https://developer.apple.com/programs/
-2. Enroll ($99/year)
-3. Wait for approval (usually 24-48 hours)
+1. **Apple Developer Account** ($99/year)
+   - Enroll at https://developer.apple.com
 
-### Step 2: Create Developer ID Certificate
+2. **Developer ID Certificate**
+   - Go to Certificates, Identifiers & Profiles
+   - Create "Developer ID Application" certificate
 
-1. Open **Xcode** on a Mac
-2. Go to **Xcode → Settings → Accounts**
-3. Select your Apple ID → Manage Certificates
-4. Click **+** → **Developer ID Application**
-5. Certificate will be added to Keychain
+3. **Notarization**
+   - Required for macOS 10.15+ (Catalina and later)
+   - Apple scans your app for malware
 
-### Step 3: Find Your Team ID
+### Steps:
 
-1. Go to https://developer.apple.com/account
-2. Click **Membership** in the sidebar
-3. Copy your **Team ID** (10-character alphanumeric)
+1. **Install Certificate**
+   - Double-click downloaded certificate
+   - It will be added to Keychain
 
-### Step 4: Configure electron-builder.json
+2. **Create App-Specific Password**
+   - Go to https://appleid.apple.com
+   - Generate app-specific password for notarization
 
-Edit `electron-builder.json` and replace placeholders:
+3. **Configure electron-builder**
 
+   Create `.env` file:
+   ```env
+   APPLE_ID=your@email.com
+   APPLE_ID_PASSWORD=app-specific-password
+   APPLE_TEAM_ID=YOUR_TEAM_ID
+   ```
+
+   Update `electron-builder.json`:
+   ```json
+   {
+     "mac": {
+       "identity": "Developer ID Application: Your Name (TEAM_ID)",
+       "notarize": {
+         "teamId": "YOUR_TEAM_ID"
+       }
+     }
+   }
+   ```
+
+4. **Build Signed & Notarized App**
+   ```bash
+   npm run dist:mac
+   ```
+
+### Hardened Runtime
+
+Already configured in `electron-builder.json`:
 ```json
-"mac": {
-  "identity": "Developer ID Application: John Smith (ABC123XYZ)",
-  "notarize": {
-    "teamId": "ABC123XYZ"
+{
+  "mac": {
+    "hardenedRuntime": true,
+    "entitlements": "build/entitlements.mac.plist",
+    "entitlementsInherit": "build/entitlements.mac.plist"
   }
 }
 ```
 
-Replace:
-- `John Smith` → Your name as registered with Apple
-- `ABC123XYZ` → Your Team ID
-
-### Step 5: Set Up Notarization Credentials
-
-Apple requires **notarization** for apps distributed outside the App Store.
-
-Create an **App-Specific Password**:
-1. Go to https://appleid.apple.com
-2. Sign in → Security → App-Specific Passwords
-3. Generate a password for "electron-builder"
-
-Set environment variables:
-
-```bash
-APPLE_ID=your@email.com
-APPLE_APP_SPECIFIC_PASSWORD=xxxx-xxxx-xxxx-xxxx
-APPLE_TEAM_ID=ABC123XYZ
-```
-
-### Step 6: Build Signed & Notarized App
-
-```bash
-npm run dist:mac
-```
-
-This will:
-1. Build the app
-2. Sign with your Developer ID
-3. Submit to Apple for notarization
-4. Staple the notarization ticket to the app
-
-> ⚠️ Notarization can take 5-15 minutes. Be patient.
-
 ---
 
-## File Structure
+## GitHub Actions CI/CD (Recommended)
 
-After setup, your project should have:
-
-```
-LocalPasswordVault/
-├── certs/
-│   └── windows-signing.pfx    # Windows certificate (DO NOT COMMIT)
-├── build/
-│   └── entitlements.mac.plist # macOS entitlements
-├── electron-builder.json       # Build configuration
-└── .env                        # Environment variables (DO NOT COMMIT)
-```
-
----
-
-## Security: Keep Certificates Safe!
-
-### Add to .gitignore
-
-```gitignore
-# Code signing certificates - NEVER commit these
-certs/
-*.pfx
-*.p12
-*.pem
-
-# Environment variables
-.env
-.env.local
-```
-
-### Best Practices
-
-1. **Never commit certificates** to version control
-2. **Use environment variables** for passwords
-3. **Store certificates securely** (password manager, hardware token)
-4. **Limit access** to signing credentials
-5. **Use CI/CD secrets** for automated builds
-
----
-
-## CI/CD Integration (GitHub Actions Example)
+Automate builds and signing with GitHub Actions:
 
 ```yaml
-name: Build & Sign
+# .github/workflows/build.yml
+name: Build and Release
 
 on:
   push:
@@ -203,23 +153,15 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          
-      - name: Install dependencies
-        run: npm ci
-        
-      - name: Build signed installer
+      - run: npm ci
+      - run: npm run dist:win
         env:
-          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
-          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
-        run: npm run dist:win
-        
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+          CSC_LINK: ${{ secrets.WIN_CERTIFICATE_BASE64 }}
+          CSC_KEY_PASSWORD: ${{ secrets.WIN_CERTIFICATE_PASSWORD }}
+      - uses: actions/upload-artifact@v4
         with:
           name: windows-installer
           path: release/*.exe
@@ -228,81 +170,95 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          
-      - name: Install dependencies
-        run: npm ci
-        
-      - name: Import signing certificate
-        env:
-          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
-          MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
-        run: |
-          echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
-          security create-keychain -p "" build.keychain
-          security import certificate.p12 -k build.keychain -P $MACOS_CERTIFICATE_PWD -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
-          
-      - name: Build signed & notarized app
+      - run: npm ci
+      - run: npm run dist:mac
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: npm run dist:mac
-        
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+          CSC_LINK: ${{ secrets.MAC_CERTIFICATE_BASE64 }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
+      - uses: actions/upload-artifact@v4
         with:
-          name: macos-installer
+          name: mac-installer
           path: release/*.dmg
+```
+
+---
+
+## Verification
+
+### Windows
+```powershell
+# Check signature
+signtool verify /pa "Local Password Vault Setup.exe"
+
+# View certificate details
+signtool verify /v /pa "Local Password Vault Setup.exe"
+```
+
+### Mac
+```bash
+# Check code signature
+codesign -dv --verbose=4 "Local Password Vault.app"
+
+# Verify notarization
+spctl -a -vvv -t install "Local Password Vault.app"
+
+# Check notarization status
+xcrun stapler validate "Local Password Vault.dmg"
 ```
 
 ---
 
 ## Troubleshooting
 
-### Windows: "The file is corrupted" error
-- Ensure the certificate password is correct
-- Check that the USB token is connected
-- Verify the `.pfx` file isn't corrupted
+### Windows SmartScreen Warning
+- **Cause**: No reputation or unsigned
+- **Fix**: Use EV certificate or accumulate reputation
 
-### macOS: "Code signature invalid"
-- Ensure you're using "Developer ID Application" (not "Mac App Distribution")
-- Check that the certificate is in your Keychain
-- Run `security find-identity -v -p codesigning` to verify
+### Mac "App can't be opened"
+- **Cause**: Not notarized or quarantine attribute
+- **Fix**: Notarize app or run:
+  ```bash
+  xattr -cr "Local Password Vault.app"
+  ```
 
-### macOS: Notarization fails
-- Check your Apple ID credentials
-- Ensure app-specific password is correct
-- Review Apple's email for specific rejection reasons
-
-### Both: Certificate expired
-- Certificates expire yearly
-- Renew 30 days before expiration
-- Re-export and update your build environment
+### Certificate Not Found
+- **Cause**: Certificate not in keychain/store
+- **Fix**: Re-import certificate
 
 ---
 
 ## Cost Summary
 
-| Item | Cost | Renewal |
-|------|------|---------|
-| Windows EV Certificate | $300-500 | Yearly |
-| Apple Developer Program | $99 | Yearly |
-| **Total** | ~$400-600 | Yearly |
+| Platform | Option | Cost | Notes |
+|----------|--------|------|-------|
+| Windows | EV Certificate | ~$400/year | Instant trust |
+| Windows | Standard Certificate | ~$100/year | Takes time to build trust |
+| Mac | Developer ID | $99/year | Required for distribution |
+| Both | Self-signed | Free | Development only |
 
 ---
 
-## Next Steps
+## Quick Start (Unsigned Development Builds)
 
-1. [ ] Purchase Windows EV certificate
-2. [ ] Join Apple Developer Program
-3. [ ] Set up certificates locally
-4. [ ] Test signed builds
-5. [ ] Configure CI/CD for automated signing
-6. [ ] Update `.gitignore` to exclude sensitive files
+For testing without code signing:
 
+```bash
+# Windows
+npm run dist:win
+
+# Mac (will show "unidentified developer" warning)
+npm run dist:mac
+
+# Linux (no signing required)
+npm run dist:linux
+```
+
+Users can bypass warnings:
+- **Windows**: Click "More info" → "Run anyway"
+- **Mac**: Right-click → "Open" → "Open"

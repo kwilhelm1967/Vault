@@ -1,8 +1,9 @@
 {
   "appId": "com.localpasswordvault.app",
   "productName": "Local Password Vault",
-  "publish": null,
-  "generateUpdatesFilesForAllChannels": true,
+  "copyright": "Copyright © 2024 Local Password Vault",
+  "asar": true,
+  "compression": "maximum",
   "directories": {
     "output": "release",
     "buildResources": "build"
@@ -16,43 +17,74 @@
   "extraMetadata": {
     "main": "electron/main.js"
   },
+  
+  "publish": {
+    "provider": "github",
+    "owner": "kwilhelm1967",
+    "repo": "Vault",
+    "releaseType": "release"
+  },
+  
   "mac": {
     "category": "public.app-category.productivity",
     "target": [
       {
         "target": "dmg",
-        "arch": ["x64", "arm64"]
+        "arch": ["universal"]
+      },
+      {
+        "target": "zip",
+        "arch": ["universal"]
       }
     ],
     "icon": "assets/icons/icon.icns",
-    "identity": "Developer ID Application: YOUR_NAME (TEAM_ID)",
     "hardenedRuntime": true,
     "gatekeeperAssess": false,
     "entitlements": "build/entitlements.mac.plist",
     "entitlementsInherit": "build/entitlements.mac.plist",
-    "notarize": {
-      "teamId": "TEAM_ID"
-    }
+    "artifactName": "${productName}-${version}-mac.${ext}",
+    "darkModeSupport": true
   },
+  
+  "dmg": {
+    "background": "build/dmg-background.png",
+    "icon": "assets/icons/icon.icns",
+    "iconSize": 100,
+    "window": {
+      "width": 540,
+      "height": 380
+    },
+    "contents": [
+      {
+        "x": 130,
+        "y": 220
+      },
+      {
+        "x": 410,
+        "y": 220,
+        "type": "link",
+        "path": "/Applications"
+      }
+    ]
+  },
+  
   "win": {
     "target": [
       {
         "target": "nsis",
+        "arch": ["x64", "ia32"]
+      },
+      {
+        "target": "portable",
         "arch": ["x64"]
       }
     ],
     "icon": "assets/icons/icon.ico",
-    "requestedExecutionLevel": "asInvoker"
+    "requestedExecutionLevel": "asInvoker",
+    "artifactName": "${productName}-${version}-win-${arch}.${ext}",
+    "publisherName": "Local Password Vault"
   },
-  "linux": {
-    "target": [
-      {
-        "target": "AppImage",
-        "arch": ["x64"]
-      }
-    ],
-    "icon": "assets/icons/png/1024x1024.png"
-  },
+  
   "nsis": {
     "oneClick": false,
     "allowToChangeInstallationDirectory": true,
@@ -60,13 +92,42 @@
     "createStartMenuShortcut": true,
     "perMachine": false,
     "runAfterFinish": true,
-    "artifactName": "${productName} Setup ${version}.${ext}",
+    "artifactName": "${productName}-Setup-${version}.${ext}",
     "installerIcon": "assets/icons/icon.ico",
     "uninstallerIcon": "assets/icons/icon.ico",
     "installerHeaderIcon": "assets/icons/icon.ico",
-    "deleteAppDataOnUninstall": true
+    "deleteAppDataOnUninstall": false,
+    "differentialPackage": true,
+    "license": "LICENSE",
+    "warningsAsErrors": false
   },
+  
   "portable": {
-    "artifactName": "LocalPasswordVault-${version}-Portable.exe"
+    "artifactName": "${productName}-${version}-Portable.exe"
+  },
+  
+  "linux": {
+    "target": [
+      {
+        "target": "AppImage",
+        "arch": ["x64"]
+      },
+      {
+        "target": "deb",
+        "arch": ["x64"]
+      }
+    ],
+    "icon": "assets/icons/png",
+    "category": "Utility",
+    "artifactName": "${productName}-${version}-linux-${arch}.${ext}",
+    "desktop": {
+      "Name": "Local Password Vault",
+      "Comment": "Secure offline password manager",
+      "Categories": "Utility;Security;"
+    }
+  },
+  
+  "appImage": {
+    "artifactName": "${productName}-${version}.AppImage"
   }
 }

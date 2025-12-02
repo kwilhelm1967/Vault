@@ -8,6 +8,16 @@ const { screen, powerMonitor, globalShortcut } = require("electron");
 const SecureFileStorage = require("./secure-storage");
 const Positioner = require("electron-positioner");
 const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
+
+// Auto-updater (only in production)
+let autoUpdaterModule = null;
+if (!isDev) {
+  try {
+    autoUpdaterModule = require("./autoUpdater");
+  } catch (err) {
+    console.log("Auto-updater not available:", err.message);
+  }
+}
 const devToolsEnabled = isDev && process.env.DEV_TOOL === "true";
 
 // SINGLE INSTANCE: Prevent multiple instances
@@ -887,6 +897,12 @@ app.whenReady().then(() => {
 
   createWindow();
   createMenu();
+  
+  // Initialize auto-updater (production only)
+  if (autoUpdaterModule && mainWindow) {
+    autoUpdaterModule.initAutoUpdater(mainWindow);
+  }
+  
   // SECURITY FIX: Don't create floating button automatically
   // It should only be created when vault is unlocked
 
@@ -1769,4 +1785,36 @@ ipcMain.handle("sync-vault-to-floating", async () => {
     console.error("Failed to sync vault to floating window:", error);
     return false;
   }
+});
+
+// Auto-updater IPC handlers
+ipcMain.handle("check-for-updates", async () => {
+  if (autoUpdaterModule) {
+    await autoUpdaterModule.checkForUpdates(true);
+    return { checking: true };
+  }
+  return { error: "Auto-updater not available" };
+});
+
+ipcMain.handle("download-update", async () => {
+  if (autoUpdaterModule) {
+    autoUpdaterModule.downloadUpdate();
+    return { downloading: true };
+  }
+  return { error: "Auto-updater not available" };
+});
+
+ipcMain.handle("install-update", async () => {
+  if (autoUpdaterModule) {
+    autoUpdaterModule.installUpdate();
+    return { installing: true };
+  }
+  return { error: "Auto-updater not available" };
+});
+
+ipcMain.handle("get-update-state", async () => {
+  if (autoUpdaterModule) {
+    return autoUpdaterModule.getUpdateState();
+  }
+  return { updateAvailable: false, updateDownloaded: false };
 });
