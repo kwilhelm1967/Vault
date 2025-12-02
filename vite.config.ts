@@ -3,6 +3,8 @@ import react from "@vitejs/plugin-react";
 import { loadEnv } from "vite";
 import { resolve } from "path";
 
+const __dirname = new URL(".", import.meta.url).pathname.replace(/^\/([A-Z]:)/, "$1");
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   // Load env file based on mode
@@ -11,6 +13,16 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     base: "./",
+    resolve: {
+      alias: {
+        "@": resolve(__dirname, "src"),
+        "@components": resolve(__dirname, "src/components"),
+        "@utils": resolve(__dirname, "src/utils"),
+        "@hooks": resolve(__dirname, "src/hooks"),
+        "@config": resolve(__dirname, "src/config"),
+        "@types": resolve(__dirname, "src/types"),
+      },
+    },
     define: {
       __BUILD_ID__: JSON.stringify(Date.now().toString(36)),
       __VERSION__: JSON.stringify(env.VITE_APP_VERSION || "1.2.0"),
