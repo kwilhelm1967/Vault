@@ -35,13 +35,19 @@ const PORT = process.env.PORT || 3001;
 app.use(helmet());
 
 // CORS - Allow requests from your frontend domains
+const allowedOrigins = [
+  'https://localpasswordvault.com',
+  'https://www.localpasswordvault.com',
+];
+
+// Add localhost only in development
+if (process.env.NODE_ENV === 'development') {
+  allowedOrigins.push('http://localhost:5173');
+  allowedOrigins.push('http://localhost:3000');
+}
+
 app.use(cors({
-  origin: [
-    'https://localpasswordvault.com',
-    'https://www.localpasswordvault.com',
-    'http://localhost:5173', // Vite dev server
-    'http://localhost:3000',
-  ],
+  origin: allowedOrigins,
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));

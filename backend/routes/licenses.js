@@ -158,6 +158,15 @@ router.post('/validate', async (req, res) => {
       isNewActivation = true;
     }
     
+    // Ensure JWT_SECRET is configured
+    if (!process.env.JWT_SECRET) {
+      console.error('CRITICAL: JWT_SECRET not configured');
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Server configuration error' 
+      });
+    }
+
     // Generate JWT token for offline validation
     const token = jwt.sign(
       {
@@ -167,7 +176,7 @@ router.post('/validate', async (req, res) => {
         maxDevices: license.max_devices,
         activatedAt: license.activated_at || new Date().toISOString(),
       },
-      process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+      process.env.JWT_SECRET,
       { expiresIn: '365d' } // Lifetime license - long expiry
     );
     
