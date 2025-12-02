@@ -1,0 +1,137 @@
+{
+  "app": {
+    "name": "Bóveda de Contraseñas Local",
+    "tagline": "Tus contraseñas, 100% sin conexión"
+  },
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "close": "Cerrar",
+    "search": "Buscar",
+    "add": "Agregar",
+    "copy": "Copiar",
+    "copied": "¡Copiado!",
+    "show": "Mostrar",
+    "hide": "Ocultar",
+    "yes": "Sí",
+    "no": "No",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito"
+  },
+  "auth": {
+    "masterPassword": "Contraseña Maestra",
+    "confirmPassword": "Confirmar Contraseña",
+    "createVault": "Crear Bóveda",
+    "unlockVault": "Desbloquear Bóveda",
+    "passwordHint": "Pista de Contraseña",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "incorrectPassword": "Contraseña incorrecta",
+    "passwordsDoNotMatch": "Las contraseñas no coinciden",
+    "passwordTooWeak": "La contraseña es muy débil"
+  },
+  "vault": {
+    "dashboard": "Panel",
+    "allAccounts": "Todas las Cuentas",
+    "favorites": "Favoritos",
+    "settings": "Configuración",
+    "addAccount": "Agregar Cuenta",
+    "editAccount": "Editar Cuenta",
+    "yourAccounts": "Tus Cuentas",
+    "noAccounts": "Aún no hay cuentas",
+    "noResults": "No se encontraron resultados",
+    "searchAccounts": "Buscar cuentas..."
+  },
+  "entry": {
+    "accountName": "Nombre de Cuenta",
+    "username": "Usuario",
+    "password": "Contraseña",
+    "website": "URL del Sitio",
+    "notes": "Notas",
+    "category": "Categoría",
+    "favorite": "Favorito",
+    "customFields": "Campos Personalizados",
+    "addCustomField": "Agregar Campo",
+    "passwordHistory": "Historial de Contraseñas",
+    "twoFactorAuth": "Código 2FA",
+    "totpSecret": "Secreto TOTP"
+  },
+  "categories": {
+    "all": "Todas",
+    "banking": "Banca",
+    "shopping": "Compras",
+    "entertainment": "Entretenimiento",
+    "email": "Correo",
+    "work": "Trabajo",
+    "business": "Negocios",
+    "other": "Otros"
+  },
+  "security": {
+    "lockVault": "Bloquear Bóveda",
+    "autoLock": "Bloqueo Automático",
+    "autoLockTimeout": "Tiempo de Bloqueo",
+    "minutes": "minutos",
+    "clipboardClear": "Limpiar Portapapeles",
+    "seconds": "segundos",
+    "passwordStrength": "Fortaleza",
+    "weak": "Débil",
+    "fair": "Regular",
+    "strong": "Fuerte",
+    "veryStrong": "Muy Fuerte"
+  },
+  "settings": {
+    "title": "Configuración",
+    "security": "Seguridad",
+    "dataManagement": "Gestión de Datos",
+    "exportData": "Exportar Datos",
+    "importData": "Importar Datos",
+    "changePassword": "Cambiar Contraseña Maestra",
+    "clearAllData": "Borrar Todos los Datos",
+    "soundEffects": "Efectos de Sonido",
+    "language": "Idioma"
+  },
+  "actions": {
+    "copyPassword": "Copiar Contraseña",
+    "copyUsername": "Copiar Usuario",
+    "openWebsite": "Abrir Sitio Web",
+    "deleteAccount": "Eliminar Cuenta",
+    "confirmDelete": "¿Estás seguro de que deseas eliminar esta cuenta?",
+    "cannotUndo": "Esta acción no se puede deshacer."
+  },
+  "time": {
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "daysAgo": "hace {{count}} días",
+    "monthsAgo": "hace {{count}} meses",
+    "yearsAgo": "hace {{count}} años"
+  },
+  "validation": {
+    "required": "Este campo es obligatorio",
+    "invalidEmail": "Correo electrónico inválido",
+    "invalidUrl": "URL inválida",
+    "tooShort": "Muy corto",
+    "tooLong": "Muy largo"
+  },
+  "onboarding": {
+    "welcome": "Bienvenido a Bóveda de Contraseñas Local",
+    "step1Title": "Tu Bóveda Segura",
+    "step1Desc": "Tus contraseñas están encriptadas y almacenadas 100% localmente.",
+    "step2Title": "Agrega tu Primera Contraseña",
+    "step2Desc": "Haz clic en el botón + para agregar una nueva cuenta.",
+    "step3Title": "Encuentra Contraseñas Rápidamente",
+    "step3Desc": "Usa la barra de búsqueda para encontrar cualquier cuenta.",
+    "step4Title": "Organiza con Categorías",
+    "step4Desc": "Mantén tus contraseñas organizadas con categorías.",
+    "step5Title": "Marca Favoritos",
+    "step5Desc": "Marca con estrella tus cuentas más usadas.",
+    "step6Title": "Mantente Seguro",
+    "step6Desc": "Tu bóveda se bloquea automáticamente tras inactividad.",
+    "getStarted": "Comenzar",
+    "skip": "Omitir Tutorial",
+    "next": "Siguiente",
+    "back": "Atrás"
+  }
+}
+

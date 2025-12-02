@@ -1,0 +1,137 @@
+{
+  "app": {
+    "name": "Coffre-fort Local",
+    "tagline": "Vos mots de passe, 100% hors ligne"
+  },
+  "common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "close": "Fermer",
+    "search": "Rechercher",
+    "add": "Ajouter",
+    "copy": "Copier",
+    "copied": "Copié !",
+    "show": "Afficher",
+    "hide": "Masquer",
+    "yes": "Oui",
+    "no": "Non",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès"
+  },
+  "auth": {
+    "masterPassword": "Mot de passe principal",
+    "confirmPassword": "Confirmer le mot de passe",
+    "createVault": "Créer le coffre",
+    "unlockVault": "Déverrouiller",
+    "passwordHint": "Indice de mot de passe",
+    "forgotPassword": "Mot de passe oublié ?",
+    "incorrectPassword": "Mot de passe incorrect",
+    "passwordsDoNotMatch": "Les mots de passe ne correspondent pas",
+    "passwordTooWeak": "Mot de passe trop faible"
+  },
+  "vault": {
+    "dashboard": "Tableau de bord",
+    "allAccounts": "Tous les comptes",
+    "favorites": "Favoris",
+    "settings": "Paramètres",
+    "addAccount": "Ajouter un compte",
+    "editAccount": "Modifier le compte",
+    "yourAccounts": "Vos comptes",
+    "noAccounts": "Aucun compte",
+    "noResults": "Aucun résultat",
+    "searchAccounts": "Rechercher..."
+  },
+  "entry": {
+    "accountName": "Nom du compte",
+    "username": "Identifiant",
+    "password": "Mot de passe",
+    "website": "URL du site",
+    "notes": "Notes",
+    "category": "Catégorie",
+    "favorite": "Favori",
+    "customFields": "Champs personnalisés",
+    "addCustomField": "Ajouter un champ",
+    "passwordHistory": "Historique",
+    "twoFactorAuth": "Code 2FA",
+    "totpSecret": "Secret TOTP"
+  },
+  "categories": {
+    "all": "Tous",
+    "banking": "Banque",
+    "shopping": "Achats",
+    "entertainment": "Divertissement",
+    "email": "Email",
+    "work": "Travail",
+    "business": "Entreprise",
+    "other": "Autre"
+  },
+  "security": {
+    "lockVault": "Verrouiller",
+    "autoLock": "Verrouillage auto",
+    "autoLockTimeout": "Délai de verrouillage",
+    "minutes": "minutes",
+    "clipboardClear": "Vider le presse-papiers",
+    "seconds": "secondes",
+    "passwordStrength": "Force du mot de passe",
+    "weak": "Faible",
+    "fair": "Moyen",
+    "strong": "Fort",
+    "veryStrong": "Très fort"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "security": "Sécurité",
+    "dataManagement": "Gestion des données",
+    "exportData": "Exporter",
+    "importData": "Importer",
+    "changePassword": "Changer le mot de passe",
+    "clearAllData": "Effacer toutes les données",
+    "soundEffects": "Sons",
+    "language": "Langue"
+  },
+  "actions": {
+    "copyPassword": "Copier le mot de passe",
+    "copyUsername": "Copier l'identifiant",
+    "openWebsite": "Ouvrir le site",
+    "deleteAccount": "Supprimer le compte",
+    "confirmDelete": "Voulez-vous vraiment supprimer ce compte ?",
+    "cannotUndo": "Cette action est irréversible."
+  },
+  "time": {
+    "today": "Aujourd'hui",
+    "yesterday": "Hier",
+    "daysAgo": "il y a {{count}} jours",
+    "monthsAgo": "il y a {{count}} mois",
+    "yearsAgo": "il y a {{count}} ans"
+  },
+  "validation": {
+    "required": "Ce champ est obligatoire",
+    "invalidEmail": "Adresse email invalide",
+    "invalidUrl": "URL invalide",
+    "tooShort": "Trop court",
+    "tooLong": "Trop long"
+  },
+  "onboarding": {
+    "welcome": "Bienvenue dans Coffre-fort Local",
+    "step1Title": "Votre coffre sécurisé",
+    "step1Desc": "Vos mots de passe sont chiffrés et stockés 100% localement.",
+    "step2Title": "Ajoutez votre premier mot de passe",
+    "step2Desc": "Cliquez sur + pour ajouter un nouveau compte.",
+    "step3Title": "Trouvez rapidement",
+    "step3Desc": "Utilisez la barre de recherche pour trouver n'importe quel compte.",
+    "step4Title": "Organisez par catégories",
+    "step4Desc": "Gardez vos mots de passe organisés avec des catégories.",
+    "step5Title": "Marquez vos favoris",
+    "step5Desc": "Ajoutez une étoile à vos comptes les plus utilisés.",
+    "step6Title": "Restez en sécurité",
+    "step6Desc": "Votre coffre se verrouille automatiquement après inactivité.",
+    "getStarted": "Commencer",
+    "skip": "Passer",
+    "next": "Suivant",
+    "back": "Retour"
+  }
+}
+

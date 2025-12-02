@@ -9,6 +9,17 @@ import { TextEncoder, TextDecoder } from 'util';
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder as typeof global.TextDecoder;
 
+// Extend Window interface for Jest
+declare global {
+  interface Window {
+    electronAPI?: {
+      saveVaultEncrypted?: (data: string) => Promise<boolean>;
+      loadVaultEncrypted?: () => Promise<string | null>;
+      [key: string]: unknown;
+    };
+  }
+}
+
 // Mock localStorage
 const localStorageMock = (() => {
   let store: Record<string, string> = {};

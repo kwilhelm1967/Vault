@@ -48,7 +48,10 @@
     "preview": "vite preview",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^3.7.0",
@@ -61,14 +64,17 @@
     "express": "^4.18.2",
     "express-rate-limit": "^7.1.5",
     "helmet": "^7.1.0",
+    "i18next": "^25.7.1",
     "lucide-react": "^0.542.0",
     "nodemailer": "^6.9.9",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-i18next": "^16.3.5",
     "stripe": "^18.3.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
+    "@playwright/test": "^1.57.0",
     "@types/jest": "^30.0.0",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",

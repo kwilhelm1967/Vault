@@ -2,6 +2,7 @@
  * MainVault Component
  * 
  * Primary vault interface with sidebar navigation and password grid.
+ * Uses extracted vault sub-components for cleaner organization.
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -27,7 +28,6 @@ import {
   Globe,
   ExternalLink,
   History,
-  RotateCcw,
   Clock,
   AlertCircle,
   CheckSquare,
@@ -36,37 +36,13 @@ import {
   Check,
 } from "lucide-react";
 
-// Refined color palette
-const colors = {
-  steelBlue600: "#4A6FA5",
-  steelBlue500: "#5B82B8",
-  steelBlue400: "#6C93C9", // lighter blue variant
-  mutedSky: "#93B4D1",
-  warmIvory: "#F3F4F6",
-  brandGold: "#C9AE66",
-};
-
-// Helper function to get password age text
-const getPasswordAge = (entry: PasswordEntry): { text: string; daysOld: number; isOld: boolean } => {
-  const changeDate = entry.passwordChangedAt || entry.createdAt;
-  const now = new Date();
-  const changed = new Date(changeDate);
-  const diffTime = Math.abs(now.getTime() - changed.getTime());
-  const daysOld = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  
-  let text: string;
-  if (daysOld === 0) text = "Changed today";
-  else if (daysOld === 1) text = "Changed yesterday";
-  else if (daysOld < 30) text = `Changed ${daysOld} days ago`;
-  else if (daysOld < 60) text = "Changed 1 month ago";
-  else if (daysOld < 365) text = `Changed ${Math.floor(daysOld / 30)} months ago`;
-  else text = `Changed ${Math.floor(daysOld / 365)} year${Math.floor(daysOld / 365) > 1 ? 's' : ''} ago`;
-  
-  // Consider password old if > 90 days
-  const isOld = daysOld > 90;
-  
-  return { text, daysOld, isOld };
-};
+// Import from vault components
+import {
+  colors,
+  getPasswordAge,
+  DeleteConfirmModal,
+  BulkDeleteConfirmModal,
+} from "./vault";
 
 // Helper function to find duplicate passwords
 const findDuplicates = (entries: PasswordEntry[], currentEntry: PasswordEntry): PasswordEntry[] => {
@@ -1173,69 +1149,23 @@ export const MainVault: React.FC<MainVaultProps> = ({
       </main>
 
       {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && entryToDelete && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-start justify-center pt-[30vh] p-4 z-50">
-          <div className="bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 w-full max-w-sm shadow-xl">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Trash2 className="w-6 h-6 text-red-400" strokeWidth={1.5} />
-              </div>
-              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-2">Delete Account</h3>
-              <p className="text-slate-400 text-sm mb-6">
-                Delete "<span style={{ color: colors.warmIvory }}>{entryToDelete.accountName}</span>"? This cannot be undone.
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 px-4 py-2.5 bg-slate-700/50 hover:bg-slate-600/50 text-white rounded-lg text-sm font-medium transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleConfirmDelete}
-                  className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-lg text-sm font-medium transition-colors"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteConfirmModal
+        entry={entryToDelete}
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleConfirmDelete}
+      />
 
       {/* Bulk Delete Confirmation Modal */}
-      {showBulkDeleteConfirm && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-start justify-center pt-[30vh] p-4 z-50">
-          <div className="bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 w-full max-w-sm shadow-xl">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Trash2 className="w-6 h-6 text-red-400" strokeWidth={1.5} />
-              </div>
-              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-2">Delete {selectedEntries.size} Accounts</h3>
-              <p className="text-slate-400 text-sm mb-6">
-                This will permanently delete {selectedEntries.size} selected account{selectedEntries.size > 1 ? 's' : ''}. This cannot be undone.
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowBulkDeleteConfirm(false)}
-                  className="flex-1 px-4 py-2.5 bg-slate-700/50 hover:bg-slate-600/50 text-white rounded-lg text-sm font-medium transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    handleBulkDelete();
-                    setShowBulkDeleteConfirm(false);
-                  }}
-                  className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-lg text-sm font-medium transition-colors"
-                >
-                  Delete All
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <BulkDeleteConfirmModal
+        count={selectedEntries.size}
+        isOpen={showBulkDeleteConfirm}
+        onClose={() => setShowBulkDeleteConfirm(false)}
+        onConfirm={() => {
+          handleBulkDelete();
+          setShowBulkDeleteConfirm(false);
+        }}
+      />
 
       {/* View Details Modal */}
       {viewingEntry && (

@@ -1,0 +1,137 @@
+{
+  "app": {
+    "name": "Lokaler Passwort-Tresor",
+    "tagline": "Ihre Passwörter, 100% offline"
+  },
+  "common": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "close": "Schließen",
+    "search": "Suchen",
+    "add": "Hinzufügen",
+    "copy": "Kopieren",
+    "copied": "Kopiert!",
+    "show": "Anzeigen",
+    "hide": "Verbergen",
+    "yes": "Ja",
+    "no": "Nein",
+    "loading": "Laden...",
+    "error": "Fehler",
+    "success": "Erfolg"
+  },
+  "auth": {
+    "masterPassword": "Master-Passwort",
+    "confirmPassword": "Passwort bestätigen",
+    "createVault": "Tresor erstellen",
+    "unlockVault": "Tresor entsperren",
+    "passwordHint": "Passwort-Hinweis",
+    "forgotPassword": "Passwort vergessen?",
+    "incorrectPassword": "Falsches Passwort",
+    "passwordsDoNotMatch": "Passwörter stimmen nicht überein",
+    "passwordTooWeak": "Passwort ist zu schwach"
+  },
+  "vault": {
+    "dashboard": "Übersicht",
+    "allAccounts": "Alle Konten",
+    "favorites": "Favoriten",
+    "settings": "Einstellungen",
+    "addAccount": "Konto hinzufügen",
+    "editAccount": "Konto bearbeiten",
+    "yourAccounts": "Ihre Konten",
+    "noAccounts": "Noch keine Konten",
+    "noResults": "Keine Ergebnisse gefunden",
+    "searchAccounts": "Konten suchen..."
+  },
+  "entry": {
+    "accountName": "Kontoname",
+    "username": "Benutzername",
+    "password": "Passwort",
+    "website": "Website-URL",
+    "notes": "Notizen",
+    "category": "Kategorie",
+    "favorite": "Favorit",
+    "customFields": "Benutzerdefinierte Felder",
+    "addCustomField": "Feld hinzufügen",
+    "passwordHistory": "Passwort-Verlauf",
+    "twoFactorAuth": "2FA-Code",
+    "totpSecret": "TOTP-Geheimnis"
+  },
+  "categories": {
+    "all": "Alle",
+    "banking": "Banking",
+    "shopping": "Einkaufen",
+    "entertainment": "Unterhaltung",
+    "email": "E-Mail",
+    "work": "Arbeit",
+    "business": "Geschäftlich",
+    "other": "Sonstige"
+  },
+  "security": {
+    "lockVault": "Tresor sperren",
+    "autoLock": "Automatische Sperre",
+    "autoLockTimeout": "Sperrzeit",
+    "minutes": "Minuten",
+    "clipboardClear": "Zwischenablage löschen",
+    "seconds": "Sekunden",
+    "passwordStrength": "Passwortstärke",
+    "weak": "Schwach",
+    "fair": "Mittel",
+    "strong": "Stark",
+    "veryStrong": "Sehr Stark"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "security": "Sicherheit",
+    "dataManagement": "Datenverwaltung",
+    "exportData": "Daten exportieren",
+    "importData": "Daten importieren",
+    "changePassword": "Master-Passwort ändern",
+    "clearAllData": "Alle Daten löschen",
+    "soundEffects": "Soundeffekte",
+    "language": "Sprache"
+  },
+  "actions": {
+    "copyPassword": "Passwort kopieren",
+    "copyUsername": "Benutzername kopieren",
+    "openWebsite": "Website öffnen",
+    "deleteAccount": "Konto löschen",
+    "confirmDelete": "Möchten Sie dieses Konto wirklich löschen?",
+    "cannotUndo": "Diese Aktion kann nicht rückgängig gemacht werden."
+  },
+  "time": {
+    "today": "Heute",
+    "yesterday": "Gestern",
+    "daysAgo": "vor {{count}} Tagen",
+    "monthsAgo": "vor {{count}} Monaten",
+    "yearsAgo": "vor {{count}} Jahren"
+  },
+  "validation": {
+    "required": "Dieses Feld ist erforderlich",
+    "invalidEmail": "Ungültige E-Mail-Adresse",
+    "invalidUrl": "Ungültige URL",
+    "tooShort": "Zu kurz",
+    "tooLong": "Zu lang"
+  },
+  "onboarding": {
+    "welcome": "Willkommen beim Lokalen Passwort-Tresor",
+    "step1Title": "Ihr sicherer Tresor",
+    "step1Desc": "Ihre Passwörter werden verschlüsselt und 100% lokal gespeichert.",
+    "step2Title": "Erstes Passwort hinzufügen",
+    "step2Desc": "Klicken Sie auf +, um ein neues Konto hinzuzufügen.",
+    "step3Title": "Schnell finden",
+    "step3Desc": "Nutzen Sie die Suchleiste, um jedes Konto zu finden.",
+    "step4Title": "Mit Kategorien organisieren",
+    "step4Desc": "Halten Sie Ihre Passwörter mit Kategorien organisiert.",
+    "step5Title": "Favoriten markieren",
+    "step5Desc": "Markieren Sie häufig genutzte Konten mit einem Stern.",
+    "step6Title": "Sicher bleiben",
+    "step6Desc": "Ihr Tresor wird nach Inaktivität automatisch gesperrt.",
+    "getStarted": "Loslegen",
+    "skip": "Tutorial überspringen",
+    "next": "Weiter",
+    "back": "Zurück"
+  }
+}
+

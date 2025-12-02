@@ -1,0 +1,137 @@
+{
+  "app": {
+    "name": "Local Password Vault",
+    "tagline": "Your passwords, 100% offline"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "search": "Search",
+    "add": "Add",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "show": "Show",
+    "hide": "Hide",
+    "yes": "Yes",
+    "no": "No",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  },
+  "auth": {
+    "masterPassword": "Master Password",
+    "confirmPassword": "Confirm Password",
+    "createVault": "Create Vault",
+    "unlockVault": "Unlock Vault",
+    "passwordHint": "Password Hint",
+    "forgotPassword": "Forgot Password?",
+    "incorrectPassword": "Incorrect password",
+    "passwordsDoNotMatch": "Passwords do not match",
+    "passwordTooWeak": "Password is too weak"
+  },
+  "vault": {
+    "dashboard": "Dashboard",
+    "allAccounts": "All Accounts",
+    "favorites": "Favorites",
+    "settings": "Settings",
+    "addAccount": "Add Account",
+    "editAccount": "Edit Account",
+    "yourAccounts": "Your Accounts",
+    "noAccounts": "No accounts yet",
+    "noResults": "No results found",
+    "searchAccounts": "Search accounts..."
+  },
+  "entry": {
+    "accountName": "Account Name",
+    "username": "Username",
+    "password": "Password",
+    "website": "Website URL",
+    "notes": "Notes",
+    "category": "Category",
+    "favorite": "Favorite",
+    "customFields": "Custom Fields",
+    "addCustomField": "Add Custom Field",
+    "passwordHistory": "Password History",
+    "twoFactorAuth": "2FA Code",
+    "totpSecret": "TOTP Secret"
+  },
+  "categories": {
+    "all": "All",
+    "banking": "Banking",
+    "shopping": "Shopping",
+    "entertainment": "Entertainment",
+    "email": "Email",
+    "work": "Work",
+    "business": "Business",
+    "other": "Other"
+  },
+  "security": {
+    "lockVault": "Lock Vault",
+    "autoLock": "Auto-Lock",
+    "autoLockTimeout": "Auto-Lock Timeout",
+    "minutes": "minutes",
+    "clipboardClear": "Clear Clipboard",
+    "seconds": "seconds",
+    "passwordStrength": "Password Strength",
+    "weak": "Weak",
+    "fair": "Fair",
+    "strong": "Strong",
+    "veryStrong": "Very Strong"
+  },
+  "settings": {
+    "title": "Settings",
+    "security": "Security",
+    "dataManagement": "Data Management",
+    "exportData": "Export Data",
+    "importData": "Import Data",
+    "changePassword": "Change Master Password",
+    "clearAllData": "Clear All Data",
+    "soundEffects": "Sound Effects",
+    "language": "Language"
+  },
+  "actions": {
+    "copyPassword": "Copy Password",
+    "copyUsername": "Copy Username",
+    "openWebsite": "Open Website",
+    "deleteAccount": "Delete Account",
+    "confirmDelete": "Are you sure you want to delete this account?",
+    "cannotUndo": "This action cannot be undone."
+  },
+  "time": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "daysAgo": "{{count}} days ago",
+    "monthsAgo": "{{count}} months ago",
+    "yearsAgo": "{{count}} years ago"
+  },
+  "validation": {
+    "required": "This field is required",
+    "invalidEmail": "Invalid email address",
+    "invalidUrl": "Invalid URL",
+    "tooShort": "Too short",
+    "tooLong": "Too long"
+  },
+  "onboarding": {
+    "welcome": "Welcome to Local Password Vault",
+    "step1Title": "Your Secure Vault",
+    "step1Desc": "Your passwords are encrypted and stored 100% locally on your device.",
+    "step2Title": "Add Your First Password",
+    "step2Desc": "Click the + button to add a new account.",
+    "step3Title": "Find Passwords Quickly",
+    "step3Desc": "Use the search bar to instantly find any account.",
+    "step4Title": "Organize with Categories",
+    "step4Desc": "Keep your passwords organized with categories.",
+    "step5Title": "Mark Favorites",
+    "step5Desc": "Star your most-used accounts for quick access.",
+    "step6Title": "Stay Secure",
+    "step6Desc": "Your vault automatically locks after inactivity.",
+    "getStarted": "Get Started",
+    "skip": "Skip Tutorial",
+    "next": "Next",
+    "back": "Back"
+  }
+}
+

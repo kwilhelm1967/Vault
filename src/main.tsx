@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import { ErrorBoundary } from './components/ErrorBoundary.tsx';
 import { LiveRegionProvider } from './components/accessibility';
+import './i18n'; // Initialize i18n for localization
 import './index.css';
 
 // Ensure dark background is set immediately
