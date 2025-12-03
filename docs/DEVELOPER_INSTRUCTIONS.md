@@ -277,57 +277,65 @@ Test the TRIAL flow:
 - Mac might completely BLOCK the app from opening
 - Users won't trust the software
 
-**What you need:**
+**GOOD NEWS: I already have the Windows certificate from SSL.com!**
 
-**For Windows:**
-- Buy a code signing certificate (~$100-500/year)
-- Recommended providers: DigiCert, Sectigo, SSL.com
-- EV certificates ($400+) = instant trust, no warnings
-- Standard certificates ($100) = takes time to build trust
+I will give you:
+- The certificate file (.pfx)
+- The password for the certificate
+- The instructions from SSL.com
 
-**For Mac:**
-- Apple Developer Account ($99/year) - https://developer.apple.com
-- Create "Developer ID Application" certificate
-- Set up notarization (Apple scans app for malware)
+---
 
 **What to do:**
 
-1. **Windows Signing:**
-   - Purchase certificate from DigiCert, Sectigo, or SSL.com
-   - Complete identity verification (they'll ask for documents)
-   - Add to `.env` file:
-     ```
-     CSC_LINK=path/to/certificate.pfx
-     CSC_KEY_PASSWORD=your_password
-     ```
-   - Rebuild: `npm run dist:win`
+**1. Windows Signing (I have the certificate):**
 
-2. **Mac Signing:**
-   - Enroll in Apple Developer Program ($99/year)
-   - Create Developer ID certificate in Apple's portal
-   - Generate app-specific password at appleid.apple.com
-   - Add to `.env` file:
-     ```
-     APPLE_ID=your@email.com
-     APPLE_ID_PASSWORD=app-specific-password
-     APPLE_TEAM_ID=YOUR_TEAM_ID
-     ```
-   - Rebuild: `npm run dist:mac`
+   a. I'll send you the certificate file (.pfx) and password
+   
+   b. Put the certificate file somewhere secure on the build machine
+   
+   c. Create/update `.env` file in the project root:
+   ```
+   CSC_LINK=C:/path/to/my-certificate.pfx
+   CSC_KEY_PASSWORD=the_password_I_give_you
+   ```
+   
+   d. Rebuild the Windows installer:
+   ```
+   npm run dist:win
+   ```
+   
+   e. Verify it worked:
+   - Right-click the .exe file
+   - Click "Properties"
+   - Go to "Digital Signatures" tab
+   - Should show our company name!
 
-**Full details:** See `docs/CODE_SIGNING_GUIDE.md`
+**2. Mac Signing (Need Apple Developer Account):**
+
+   For Mac, we still need:
+   - Apple Developer Account ($99/year) - https://developer.apple.com
+   - Create "Developer ID Application" certificate
+   - Set up notarization
+   
+   Add to `.env` file:
+   ```
+   APPLE_ID=your@email.com
+   APPLE_ID_PASSWORD=app-specific-password
+   APPLE_TEAM_ID=YOUR_TEAM_ID
+   ```
+   
+   Rebuild: `npm run dist:mac`
+
+   **NOTE:** If we don't have Apple Developer Account yet, we can skip Mac signing for now. Users can still install by right-clicking and selecting "Open".
+
+---
+
+**Full technical details:** See `docs/CODE_SIGNING_GUIDE.md`
 
 **How I know it's done:** 
 - Windows: Right-click the .exe → Properties → Digital Signatures tab shows our company name
-- Mac: App opens without "unidentified developer" warning
-
-**Cost Summary:**
-| What | Cost | Notes |
-|------|------|-------|
-| Windows EV Certificate | ~$400/year | Best - instant trust |
-| Windows Standard Certificate | ~$100/year | Cheaper but takes time |
-| Apple Developer Account | $99/year | Required for Mac |
-
-**NOTE:** We can release WITHOUT code signing for initial testing, but users will see warnings. For public release, we MUST have code signing.
+- Mac: App opens without "unidentified developer" warning (if we set up Apple signing)
 
 ---
 
@@ -340,6 +348,9 @@ Before you start, I'll send you:
 - [ ] Brevo login (email + password)
 - [ ] Linode SSH access (IP address + SSH key or password)
 - [ ] GitHub repo access (if you don't already have it)
+- [ ] **Windows Code Signing Certificate** (.pfx file from SSL.com)
+- [ ] **Certificate Password** (for the .pfx file)
+- [ ] **SSL.com Instructions** (the setup guide they provided)
 
 ---
 
