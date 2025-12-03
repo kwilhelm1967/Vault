@@ -98,8 +98,11 @@ export const KeyActivationScreen: React.FC<KeyActivationScreenProps> = ({
             <button
               onClick={handleActivate}
               disabled={isActivating || !licenseKey.trim()}
-              className="w-full py-3 px-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ backgroundColor: isActivating || !licenseKey.trim() ? '#475569' : colors.steelBlue500 }}
+              className="w-full py-3 px-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 text-white disabled:cursor-not-allowed"
+              style={{ 
+                backgroundColor: colors.steelBlue500,
+                opacity: isActivating || !licenseKey.trim() ? 0.6 : 1
+              }}
               onMouseOver={(e) => { if (!isActivating && licenseKey.trim()) e.currentTarget.style.backgroundColor = colors.steelBlue600 }}
               onMouseOut={(e) => { if (!isActivating && licenseKey.trim()) e.currentTarget.style.backgroundColor = colors.steelBlue500 }}
             >
