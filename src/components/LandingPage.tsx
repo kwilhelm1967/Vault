@@ -21,6 +21,7 @@ import {
   Terminal,
   Quote,
   Mail,
+  Smartphone,
 } from "lucide-react";
 
 // Distinctive color palette - deep, trustworthy, premium feel
@@ -802,6 +803,16 @@ export const LandingPage: React.FC = () => {
               icon={<Key className="w-6 h-6" />}
               title="Custom Fields"
               description="Add any field to entries—PINs, security questions, notes. You control the data."
+            />
+          </div>
+          
+          {/* Third row of features */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+            <FeatureCard
+              icon={<Smartphone className="w-6 h-6" />}
+              title="Mobile Access"
+              description="View your vault on your phone with secure QR codes. Temporary tokens auto-expire for safety."
+              highlight
             />
           </div>
         </div>
