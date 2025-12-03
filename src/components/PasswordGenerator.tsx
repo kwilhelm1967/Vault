@@ -278,8 +278,8 @@ export const PasswordGenerator: React.FC<PasswordGeneratorProps> = ({
         level: "excellent",
         score,
         label: "Excellent",
-        color: "text-cyan-500",
-        bgColor: "bg-cyan-500",
+        color: "text-[#5B82B8]",
+        bgColor: "bg-[#5B82B8]",
         icon: <Sparkles className="w-4 h-4" />,
       };
     }

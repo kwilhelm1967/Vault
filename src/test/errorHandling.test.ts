@@ -11,7 +11,6 @@ import {
   NetworkError,
   StorageError,
   AuthenticationError,
-  useErrorHandler,
   withErrorHandling,
   withRetry
 } from '../utils/errorHandling';

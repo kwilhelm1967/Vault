@@ -117,6 +117,16 @@ contextBridge.exposeInMainWorld("electronAPI", {
   broadcastEntriesChanged: () => ipcRenderer.invoke("broadcast-entries-changed"),
   syncVaultToFloating: () => ipcRenderer.invoke("sync-vault-to-floating"),
 
+  // SECURE: Trial info persistence for floating button security checks
+  saveTrialInfo: (trialInfo) => {
+    if (typeof trialInfo === 'object' && trialInfo !== null) {
+      return ipcRenderer.invoke("save-trial-info", trialInfo);
+    }
+    return false;
+  },
+  checkTrialStatus: () => ipcRenderer.invoke("check-trial-status"),
+  isTrialExpired: () => ipcRenderer.invoke("is-trial-expired"),
+
   // Secure listeners with memory management - support multiple listeners
   onEntriesChanged: (callback) => {
     if (typeof callback === 'function') {

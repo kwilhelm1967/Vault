@@ -1569,6 +1569,31 @@ ipcMain.handle("vault-exists", () => {
   return secureStorage.vaultExists();
 });
 
+// TRIAL: Save trial info for floating button security checks
+ipcMain.handle("save-trial-info", (event, trialInfo) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const userDataPath = app.getPath("userData");
+    const trialInfoPath = path.join(userDataPath, 'trial-info.json');
+
+    // Validate and sanitize trial info
+    const sanitizedInfo = {
+      expiryTime: trialInfo.expiryTime || null,
+      startTime: trialInfo.startTime || null,
+      hasValidLicense: trialInfo.hasValidLicense === true,
+      licenseType: typeof trialInfo.licenseType === 'string' ? trialInfo.licenseType : null
+    };
+
+    fs.writeFileSync(trialInfoPath, JSON.stringify(sanitizedInfo, null, 2));
+    console.log("Trial info saved:", sanitizedInfo);
+    return true;
+  } catch (error) {
+    console.error('Error saving trial info:', error);
+    return false;
+  }
+});
+
 // TRIAL: Check if trial has expired
 ipcMain.handle("is-trial-expired", () => {
   try {

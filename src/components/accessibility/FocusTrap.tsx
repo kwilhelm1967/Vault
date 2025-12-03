@@ -45,7 +45,6 @@ export const FocusTrap: React.FC<FocusTrapProps> = ({
 
     const focusableElements = getFocusableElements();
     const firstElement = focusableElements[0];
-    const lastElement = focusableElements[focusableElements.length - 1];
 
     // Focus the first element if none is focused
     if (firstElement && !containerRef.current.contains(document.activeElement)) {

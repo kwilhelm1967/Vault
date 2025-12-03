@@ -257,9 +257,8 @@ export class TrialService {
       if (storedExpiryTime) {
         expiryDate = new Date(storedExpiryTime);
       } else {
-        // In development mode, trials expire after 1 hour instead of 7 days
-        const isDevMode = import.meta.env.DEV;
-        const trialDurationMs = isDevMode ? 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000; // 1 hour dev vs 7 days prod
+        // 7 days trial duration
+        const trialDurationMs = 7 * 24 * 60 * 60 * 1000; // 7 days
         expiryDate = new Date(startDate.getTime() + trialDurationMs);
       }
       

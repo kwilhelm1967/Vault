@@ -52,6 +52,23 @@ declare global {
       removeEntriesChangedListener: (callback: (event: any) => void) => void;
       openExternal: (url: string) => Promise<boolean>;
 
+      // Trial/License management for floating button security
+      saveTrialInfo: (trialInfo: {
+        hasTrial?: boolean;
+        isExpired?: boolean;
+        expiryTime?: string | null;
+        startTime?: string | null;
+        hasValidLicense?: boolean;
+        licenseType?: string | null;
+      }) => Promise<boolean>;
+      checkTrialStatus: () => Promise<{
+        hasTrial: boolean;
+        isExpired: boolean;
+        canUnlock: boolean;
+        expiryTime?: string;
+      }>;
+      isTrialExpired: () => Promise<boolean>;
+
       // Allow for dynamic properties
       [key: string]: any;
     };

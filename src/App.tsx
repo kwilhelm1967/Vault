@@ -14,22 +14,14 @@ import { features } from "./config/environment";
 import { useElectron } from "./hooks/useElectron";
 import { LicenseKeyDisplay } from "./components/LicenseKeyDisplay";
 import { DownloadPage } from "./components/DownloadPage";
-import { TrialTestingTools } from "./components/TrialTestingTools";
-// Dev preview imports (for testing trial screens)
-import { KeyActivationScreen } from "./components/KeyActivationScreen";
-import { ExpiredTrialScreen } from "./components/ExpiredTrialScreen";
-import { TrialStatusBanner } from "./components/TrialStatusBanner";
 import { PurchaseSuccessPage } from "./components/PurchaseSuccessPage";
-import { LandingPage } from "./components/LandingPage";
 import { OfflineIndicator } from "./components/OfflineIndicator";
 import { UndoToast } from "./components/UndoToast";
-import { SkeletonLoader } from "./components/SkeletonLoader";
 import { WhatsNewModal, useWhatsNew } from "./components/WhatsNewModal";
 import { SkipLink } from "./components/accessibility";
 import { OnboardingTutorial, useOnboarding } from "./components/OnboardingTutorial";
 import { KeyboardShortcutsModal, useKeyboardShortcuts } from "./components/KeyboardShortcutsModal";
 import { MiniVaultButton } from "./components/MiniVaultButton";
-import { withLazyErrorBoundary } from "./components/LazyErrorBoundary";
 
 // Fixed categories with proper typing
 const FIXED_CATEGORIES: Category[] = [
@@ -97,9 +89,9 @@ const useAppStatus = () => {
     // Set up trial expiration callback
     trialService.addExpirationCallback(handleTrialExpiration);
 
-    // Check trial status every 5 seconds in development mode, every 30 seconds in production
+    // Check trial status every 30 seconds
     // But only if checking is enabled
-    const checkInterval = import.meta.env.DEV ? 5000 : 30000;
+    const checkInterval = 30000;
     const interval = checkingEnabled ? setInterval(async () => {
       try {
         const expirationDetected = await trialService.checkAndHandleExpiration();
@@ -523,7 +515,7 @@ function App() {
   const [currentWarningType, setCurrentWarningType] = useState<'expiring' | 'final'>('expiring');
 
   useDarkTheme();
-  const { entries, setEntries, isInitialized: isVaultDataLoaded } = useVaultData(isLocked, isElectron, loadSharedEntries, saveSharedEntries);
+  const { entries, setEntries } = useVaultData(isLocked, isElectron, loadSharedEntries, saveSharedEntries);
   const isFloatingMode = useFloatingMode(isElectron);
   useVaultStatusSync(isElectron, setIsLocked);
 
@@ -576,8 +568,8 @@ function App() {
     // Add warning popup callback
     trialService.addWarningPopupCallback(handleWarningPopup);
 
-    // Check warning popups every 1 second in development (for precise timing), every 10 seconds in production
-    const checkInterval = import.meta.env.DEV ? 1000 : 10000;
+    // Check warning popups every 10 seconds
+    const checkInterval = 10000;
 
     const warningInterval = setInterval(async () => {
       await trialService.checkWarningPopups();
@@ -769,12 +761,6 @@ function App() {
     }, 100);
   }, [handleExport]);
 
-  // Testing tools handler
-  const handleTestWarning = useCallback((type: 'expiring' | 'final') => {
-    setCurrentWarningType(type);
-    setShowWarningPopup(true);
-  }, []);
-
   const handleImport = useCallback(async () => {
     try {
       if (isLocked || !storageService.isVaultUnlocked()) {
@@ -946,28 +932,10 @@ function App() {
     }
   }, [appStatus?.trialInfo.isExpired, appStatus?.canUseApp, appStatus?.isLicensed, checkStatusImmediately]);
 
-  /**
-   * Dev Preview Mode: Add ?preview=landing, ?preview=success, etc. to see those screens
-   * This runs BEFORE the loading check so previews work immediately
-   */
-  if (import.meta.env.DEV) {
-    const urlParams = new URLSearchParams(window.location.search);
-    const preview = urlParams.get('preview');
-    
-    // Landing page preview - no loading required
-    if (preview === 'landing') {
-      return <LandingPage />;
-    }
-
-    // Purchase success page preview
-    if (preview === 'success' || urlParams.get('key') || urlParams.get('license')) {
-      return <PurchaseSuccessPage />;
-    }
-
-    // Download page preview
-    if (preview === 'download') {
-      return <DownloadPage />;
-    }
+  // Handle purchase success page (when redirected from payment)
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('key') || urlParams.get('license')) {
+    return <PurchaseSuccessPage />;
   }
 
   // Show loading state while app status is being determined
@@ -1001,69 +969,15 @@ function App() {
     );
   }
 
-  /**
-   * Dev Preview Mode: Add ?preview=keyactivation or ?preview=expired to see those screens
-   */
-  if (import.meta.env.DEV) {
-    const urlParams = new URLSearchParams(window.location.search);
-    const preview = urlParams.get('preview');
-    
-    if (preview === 'keyactivation') {
-      return (
-        <KeyActivationScreen
-          onBack={() => window.location.href = '/?dev=1'}
-          onKeyEntered={(key) => alert(`Key entered: ${key}`)}
-          isActivating={false}
-          error={null}
-        />
-      );
-    }
-    
-    if (preview === 'expired') {
-      return (
-        <ExpiredTrialScreen
-          onBuyLifetimeAccess={() => alert('Buy clicked')}
-          onAlreadyPurchased={() => window.location.href = '/?preview=keyactivation'}
-        />
-      );
-    }
-
-    // Trial banner preview
-    const trialBannerPreview = urlParams.get('trialbanner');
-    if (trialBannerPreview === 'active' || trialBannerPreview === 'urgent' || trialBannerPreview === 'expired') {
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-8">
-          <h2 className="text-white text-xl font-bold mb-4">Trial Banner Preview: {trialBannerPreview}</h2>
-          <TrialStatusBanner 
-            previewMode={trialBannerPreview}
-            onPurchase={() => alert('Purchase clicked')}
-            onExport={() => alert('Export clicked')}
-          />
-          <div className="mt-8 space-y-2">
-            <p className="text-slate-400 text-sm">Preview other states:</p>
-            <div className="flex gap-2">
-              <a href="?trialbanner=active" className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm">Active</a>
-              <a href="?trialbanner=urgent" className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm">Urgent</a>
-              <a href="?trialbanner=expired" className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm">Expired</a>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-  }
 
   /**
    * License Gate: Redirect to license screen if:
    * - User cannot use app (no valid license/trial)
    * - Trial has expired
-   * 
-   * Dev Mode: Add ?dev=1 to URL to bypass license check for testing
    */
-  const devBypass = import.meta.env.DEV && window.location.search.includes('dev=1');
   const requiresLicense = !appStatus.canUseApp || appStatus.trialInfo.isExpired;
   
-  if (requiresLicense && !devBypass) {
+  if (requiresLicense) {
     return (
       <LicenseScreen
         onLicenseValid={updateAppStatus}
@@ -1197,15 +1111,6 @@ function App() {
         />
       )}
 
-      {/* Environment indicators */}
-      {features.showTestingTools && (
-        <>
-          <div className="fixed bottom-4 right-4 z-40 bg-amber-600 text-white px-3 py-1 rounded-full text-xs font-medium">
-            Test Environment
-          </div>
-          <TrialTestingTools onShowWarning={handleTestWarning} />
-        </>
-      )}
     </div>
   );
 }

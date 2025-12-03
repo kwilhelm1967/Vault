@@ -101,8 +101,7 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
     const trialStartDate = localStorage.getItem('trial_start_date');
     if (trialStartDate) {
       const startDate = new Date(trialStartDate);
-      const isDevMode = import.meta.env.DEV;
-      const trialDurationMs = isDevMode ? 5 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000;
+      const trialDurationMs = 7 * 24 * 60 * 60 * 1000; // 7 days
       const expiryDate = new Date(startDate.getTime() + trialDurationMs);
       const now = new Date();
       const isExpired = now >= expiryDate;

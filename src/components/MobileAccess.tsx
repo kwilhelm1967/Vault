@@ -9,10 +9,10 @@ import { Smartphone, Clock, Plus, Trash2, Info, Shield, X } from "lucide-react";
 import { mobileService, MobileAccessToken } from "../utils/mobileService";
 
 // Dynamically import qrcode
-let QRCode: any = null;
+let QRCode: { toDataURL: (text: string) => Promise<string> } | null = null;
 const loadQRCode = async () => {
   try {
-    // @ts-ignore - qrcode may not be installed
+    // @ts-expect-error - qrcode may not be installed
     QRCode = (await import("qrcode")).default;
   } catch (error) {
     console.warn("QRCode library not available:", error);
@@ -36,6 +36,7 @@ export const MobileAccess = ({ onClose }: MobileAccessProps) => {
   useEffect(() => {
     loadTokens();
     loadQRCode();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadTokens = async () => {

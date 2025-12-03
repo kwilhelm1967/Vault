@@ -188,7 +188,6 @@ export const EntryForm: React.FC<EntryFormProps> = ({
   const categoryRef = useRef<HTMLButtonElement>(null);
   const usernameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
-  const formContainerRef = useRef<HTMLDivElement>(null);
   
   // Apply a template
   const applyTemplate = (template: EntryTemplate) => {

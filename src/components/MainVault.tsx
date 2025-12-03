@@ -675,11 +675,6 @@ export const MainVault: React.FC<MainVaultProps> = ({
           <TrialStatusBanner 
             onPurchase={onShowPricingPlans}
             onExport={onExport}
-            previewMode={
-              import.meta.env.DEV 
-                ? new URLSearchParams(window.location.search).get('trial') as 'active' | 'urgent' | 'expired' | undefined
-                : undefined
-            }
           />
         </div>
 

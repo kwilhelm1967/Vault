@@ -5,7 +5,7 @@
  * Features AES-256 encryption indicator and secure password entry.
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Lock, Eye, EyeOff, Key, AlertCircle, Info, Shield, Loader2, HelpCircle } from "lucide-react";
 import { storageService } from "../utils/storage";
 import { generateRecoveryPhrase, storeRecoveryPhrase } from "../utils/recoveryPhrase";
@@ -41,7 +41,7 @@ const calculateStrength = (pwd: string): { score: number; label: string; color: 
   if (score <= 2) return { score: 1, label: "Weak", color: "bg-red-500", isValid };
   if (score <= 4) return { score: 2, label: "Fair", color: "bg-amber-500", isValid };
   if (score <= 5) return { score: 3, label: "Good", color: "bg-emerald-500", isValid };
-  return { score: 4, label: "Strong", color: "bg-cyan-500", isValid };
+  return { score: 4, label: "Strong", color: "bg-[#5B82B8]", isValid };
 };
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
