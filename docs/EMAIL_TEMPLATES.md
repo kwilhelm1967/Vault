@@ -49,8 +49,8 @@ These are the polished email templates to use in your Brevo transactional email 
           <!-- Header with Logo -->
           <tr>
             <td style="background:linear-gradient(135deg,#1e293b 0%,#334155 100%);padding:48px 40px;text-align:center;">
-              <!-- Logo placeholder - replace with your logo -->
-              <img src="https://localpasswordvault.com/logo-white.png" alt="Local Password Vault" width="60" style="margin-bottom:20px;">
+              <!-- Your logo -->
+              <img src="https://localpasswordvault.com/image.png" alt="Local Password Vault" width="60" style="margin-bottom:20px;">
               <h1 style="color:#ffffff;margin:0;font-size:32px;font-weight:700;letter-spacing:-0.5px;">Thank You!</h1>
               <p style="color:#94a3b8;margin:16px 0 0;font-size:18px;font-weight:400;">Your purchase is complete</p>
             </td>
@@ -600,7 +600,7 @@ function generateLicenseKeyHtml(licenseKeys) {
           <!-- Header -->
           <tr>
             <td style="background:linear-gradient(135deg,#1e293b 0%,#334155 100%);padding:40px;text-align:center;">
-              <img src="https://localpasswordvault.com/logo-white.png" alt="Local Password Vault" width="50" style="margin-bottom:16px;">
+              <img src="https://localpasswordvault.com/image.png" alt="Local Password Vault" width="50" style="margin-bottom:16px;">
               <h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:600;">Support Response</h1>
             </td>
           </tr>
