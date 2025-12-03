@@ -16,23 +16,32 @@ interface LoginScreenProps {
   onLogin: (password: string) => Promise<void>;
 }
 
-/** Password strength calculation for first-time setup (minimum 12 characters) */
-const calculateStrength = (pwd: string): { score: number; label: string; color: string } => {
-  if (!pwd) return { score: 0, label: "", color: "bg-slate-600" };
-  
+/** Password strength calculation and validation for first-time setup */
+const calculateStrength = (pwd: string): { score: number; label: string; color: string; isValid: boolean } => {
+  if (!pwd) return { score: 0, label: "", color: "bg-slate-600", isValid: false };
+
   let score = 0;
-  if (pwd.length >= 12) score++;
-  if (pwd.length >= 10) score++;
-  if (pwd.length >= 14) score++;
-  if (/[A-Z]/.test(pwd)) score++;
-  if (/[a-z]/.test(pwd)) score++;
-  if (/[0-9]/.test(pwd)) score++;
-  if (/[^A-Za-z0-9]/.test(pwd)) score++;
-  
-  if (score <= 2) return { score: 1, label: "Weak", color: "bg-red-500" };
-  if (score <= 4) return { score: 2, label: "Fair", color: "bg-amber-500" };
-  if (score <= 5) return { score: 3, label: "Good", color: "bg-emerald-500" };
-  return { score: 4, label: "Strong", color: "bg-cyan-500" };
+  const hasMinLength = pwd.length >= 12;
+  const hasUppercase = /[A-Z]/.test(pwd);
+  const hasLowercase = /[a-z]/.test(pwd);
+  const hasNumbers = /[0-9]/.test(pwd);
+  const hasSymbols = /[^A-Za-z0-9]/.test(pwd);
+
+  // Score based on complexity
+  if (hasMinLength) score++;
+  if (hasUppercase) score++;
+  if (hasLowercase) score++;
+  if (hasNumbers) score++;
+  if (hasSymbols) score++;
+  if (pwd.length >= 16) score++; // Bonus for longer passwords
+
+  // Minimum requirements for validity
+  const isValid = hasMinLength && hasUppercase && hasLowercase && hasNumbers;
+
+  if (score <= 2) return { score: 1, label: "Weak", color: "bg-red-500", isValid };
+  if (score <= 4) return { score: 2, label: "Fair", color: "bg-amber-500", isValid };
+  if (score <= 5) return { score: 3, label: "Good", color: "bg-emerald-500", isValid };
+  return { score: 4, label: "Strong", color: "bg-cyan-500", isValid };
 };
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
@@ -57,8 +66,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   const [showHintInput, setShowHintInput] = useState(false);
   const [savedHint, setSavedHint] = useState<string | null>(null);
   const [showSavedHint, setShowSavedHint] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_isLoadingHint, setIsLoadingHint] = useState(false);
+  const [isLoadingHint, setIsLoadingHint] = useState(false);
 
   const strength = useMemo(() => calculateStrength(password), [password]);
 
@@ -96,7 +104,19 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!password.trim() || (isFirstTime && password.length < 12)) return;
+    if (!password.trim()) return;
+
+    // For first-time setup, enforce password complexity requirements
+    if (isFirstTime && !strength.isValid) {
+      setError("Password must be at least 12 characters and contain uppercase, lowercase, and numbers");
+      return;
+    }
+
+    // Validate password meets minimum requirements
+    if (isFirstTime && password.length < 12) {
+      setError("Password must be at least 12 characters long");
+      return;
+    }
     
     if (isFirstTime) {
       // Generate recovery phrase and show setup screen
@@ -205,21 +225,35 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     );
   }
 
-  const isSubmitDisabled = isLoading || !password.trim() || (isFirstTime && password.length < 12) || lockoutSeconds > 0;
+  const isSubmitDisabled = isLoading || !password.trim() || (isFirstTime && !strength.isValid) || lockoutSeconds > 0;
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4 overflow-hidden">
+    <div
+      className="h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4 overflow-hidden"
+      role="main"
+      aria-labelledby="login-title"
+    >
       <div className="w-full max-w-md">
-        
+
         {/* Logo & Title */}
         <header className="text-center mb-5">
-          <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-violet-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/25">
-            <Lock className="w-7 h-7 text-white" />
+          <div
+            className="w-14 h-14 bg-gradient-to-br from-blue-500 to-violet-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/25"
+            role="img"
+            aria-label="Security lock icon"
+          >
+            <Lock className="w-7 h-7 text-white" aria-hidden="true" />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
+          <h1
+            id="login-title"
+            className="text-2xl font-bold text-white tracking-tight"
+          >
             Local Password Vault
           </h1>
-          <p className="text-slate-400 text-sm mt-1">
+          <p
+            className="text-slate-400 text-sm mt-1"
+            id="login-subtitle"
+          >
             {isFirstTime ? "Create your master password" : "Welcome back"}
           </p>
         </header>
@@ -237,8 +271,21 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
         )}
 
         {/* Main Card */}
-        <div className="bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6 shadow-2xl">
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <div
+          className="bg-slate-800/60 backdrop-blur-xl border border-slate-700/50 rounded-xl p-6 shadow-2xl"
+          role="region"
+          aria-labelledby="login-form-title"
+        >
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-4"
+            role="form"
+            aria-labelledby="login-form-title"
+            aria-describedby={error ? "login-error" : strength.isValid ? "password-strength" : undefined}
+          >
+            <h2 id="login-form-title" className="sr-only">
+              {isFirstTime ? "Create Master Password" : "Enter Master Password"}
+            </h2>
             
             {/* Lockout Warning */}
             {lockoutSeconds > 0 && (
@@ -252,19 +299,27 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
             
             {/* Error Alert */}
             {error && !lockoutSeconds && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
-                <p className="text-red-400 text-xs font-medium">{error}</p>
+              <div
+                className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 flex items-center gap-2"
+                role="alert"
+                aria-live="assertive"
+              >
+                <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" aria-hidden="true" />
+                <p id="login-error" className="text-red-400 text-xs font-medium">{error}</p>
               </div>
             )}
 
             {/* Password Field */}
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
+              <label
+                htmlFor="master-password"
+                className="block text-xs font-medium text-slate-300 mb-1.5"
+              >
                 {isFirstTime ? "Create Master Password" : "Master Password"}
               </label>
               <div className="relative">
                 <input
+                  id="master-password"
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -275,6 +330,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                   disabled={isLoading || lockoutSeconds > 0}
                   minLength={isFirstTime ? 12 : 1}
                   autoComplete={isFirstTime ? "new-password" : "current-password"}
+                  aria-describedby={error ? "login-error" : strength.isValid ? "password-strength" : "password-requirements"}
+                  aria-invalid={isFirstTime && !strength.isValid && password.length > 0}
                 />
                 <button
                   type="button"
@@ -282,30 +339,55 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                   className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white rounded transition-all"
                   disabled={isLoading}
                   tabIndex={-1}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4" aria-hidden="true" />}
                 </button>
               </div>
 
               {/* Password Strength (First Time Only) */}
               {isFirstTime && password && (
                 <div className="mt-2 space-y-1">
-                  <div className="flex gap-1">
+                  <div
+                    className="flex gap-1"
+                    role="progressbar"
+                    aria-valuenow={strength.score}
+                    aria-valuemin={0}
+                    aria-valuemax={4}
+                    aria-label="Password strength meter"
+                  >
                     {[1, 2, 3, 4].map((level) => (
                       <div
                         key={level}
                         className={`h-1 flex-1 rounded-full transition-all duration-300 ${
                           level <= strength.score ? strength.color : "bg-slate-700"
                         }`}
+                        aria-hidden="true"
                       />
                     ))}
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] text-slate-400">
-                      {password.length < 12 ? `${12 - password.length} more needed` : strength.label}
+                    <span
+                      id="password-strength"
+                      className="text-[10px] text-slate-400"
+                      aria-live="polite"
+                    >
+                      {password.length < 12 ? `${12 - password.length} more characters needed` : strength.label}
                     </span>
-                    <span className="text-[10px] text-slate-500">{password.length}/12+ chars</span>
+                    <span
+                      className="text-[10px] text-slate-500"
+                      aria-label={`Password length: ${password.length} characters`}
+                    >
+                      {password.length}/12+ chars
+                    </span>
                   </div>
+                </div>
+              )}
+
+              {/* Password Requirements Helper */}
+              {isFirstTime && (
+                <div id="password-requirements" className="sr-only">
+                  Password must be at least 12 characters long and contain uppercase letters, lowercase letters, and numbers.
                 </div>
               )}
 
@@ -315,11 +397,29 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                   {!showSavedHint ? (
                     <button
                       type="button"
-                      onClick={() => setShowSavedHint(true)}
-                      className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-blue-400 transition-colors"
+                      onClick={async () => {
+                        if (savedHint === null) {
+                          setIsLoadingHint(true);
+                          try {
+                            const hint = await storageService.getPasswordHint();
+                            setSavedHint(hint);
+                          } catch (error) {
+                            setError("Failed to load password hint");
+                          } finally {
+                            setIsLoadingHint(false);
+                          }
+                        }
+                        setShowSavedHint(true);
+                      }}
+                      disabled={isLoadingHint}
+                      className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-blue-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <HelpCircle className="w-3.5 h-3.5" />
-                      Show password hint
+                      {isLoadingHint ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <HelpCircle className="w-3.5 h-3.5" />
+                      )}
+                      {isLoadingHint ? "Loading hint..." : "Show password hint"}
                     </button>
                   ) : (
                     <div className="bg-slate-700/30 rounded-lg p-2.5 border border-slate-600/30">

@@ -30,10 +30,12 @@ import {
   Gift,
   BookOpen,
   Keyboard,
+  Smartphone,
 } from "lucide-react";
 import { APP_VERSION } from "../config/changelog";
 import { generateRecoveryPhrase, storeRecoveryPhrase } from "../utils/recoveryPhrase";
 import { storageService } from "../utils/storage";
+import { MobileAccess } from "./MobileAccess";
 
 // Color palette
 const colors = {
@@ -75,6 +77,7 @@ interface SettingsProps {
   onImportEncrypted: (data: string, password: string) => Promise<void>;
   onChangePassword: () => void;
   onClearAllData: () => void;
+  onClose?: () => void;
   totalEntries: number;
 }
 
@@ -316,6 +319,7 @@ export const Settings: React.FC<SettingsProps> = ({
   onImportEncrypted,
   onChangePassword,
   onClearAllData,
+  onClose,
   totalEntries,
 }) => {
   const [settings, setSettings] = useState<VaultSettings>(DEFAULT_SETTINGS);
@@ -344,6 +348,9 @@ export const Settings: React.FC<SettingsProps> = ({
   const [currentHint, setCurrentHint] = useState<string | null>(null);
   const [newHint, setNewHint] = useState("");
   const [showCurrentHint, setShowCurrentHint] = useState(false);
+  
+  // Mobile access state
+  const [showMobileAccess, setShowMobileAccess] = useState(false);
 
   useEffect(() => {
     // Load settings including sound effects from vault_settings JSON
@@ -798,6 +805,27 @@ export const Settings: React.FC<SettingsProps> = ({
             </span>
           </div>
         </BouncyCard>
+
+        <BouncyCard onClick={() => setShowMobileAccess(true)} variant="accent">
+          <div className="flex items-center gap-4">
+            <div 
+              className="w-12 h-12 rounded-xl flex items-center justify-center"
+              style={{ backgroundColor: `${colors.steelBlue500}15` }}
+            >
+              <Smartphone className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.steelBlue400 }} />
+            </div>
+            <div className="flex-1">
+              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-1">Mobile Access</h3>
+              <p className="text-slate-500 text-xs">View vault on your phone</p>
+            </div>
+            <div 
+              className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{ backgroundColor: `${colors.steelBlue500}10` }}
+            >
+              <span style={{ color: colors.steelBlue400 }}>→</span>
+            </div>
+          </div>
+        </BouncyCard>
       </div>
 
       {/* About */}
@@ -881,7 +909,7 @@ export const Settings: React.FC<SettingsProps> = ({
         className="mb-8"
         onClick={() => {
           // Close settings first, then show shortcuts after a brief delay
-          onClose();
+          onClose?.();
           setTimeout(() => {
             window.dispatchEvent(new CustomEvent('show-keyboard-shortcuts'));
           }, 100);
@@ -1349,6 +1377,11 @@ export const Settings: React.FC<SettingsProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Mobile Access Modal */}
+      {showMobileAccess && (
+        <MobileAccess onClose={() => setShowMobileAccess(false)} />
       )}
 
       <style>{`

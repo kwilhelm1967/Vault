@@ -1,10 +1,10 @@
 /**
- * Accessibility Components Index
- * 
- * Export all accessibility-related components.
+ * Accessibility Components
+ *
+ * Collection of components that improve accessibility and user experience
+ * for users with disabilities and keyboard navigation.
  */
 
-export { LiveRegionProvider, useLiveRegion, useAnnouncements } from "./LiveRegion";
-export { FocusTrap } from "./FocusTrap";
-export { SkipLink } from "./SkipLink";
-
+export { LiveRegionProvider, useLiveRegion } from './LiveRegion';
+export { SkipLink, SkipToMain, SkipToNavigation, SkipToSearch } from './SkipLink';
+export { FocusTrap } from './FocusTrap';

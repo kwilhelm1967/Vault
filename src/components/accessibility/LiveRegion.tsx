@@ -1,115 +1,72 @@
 /**
- * LiveRegion Component
- * 
- * ARIA live region for screen reader announcements.
- * Announces dynamic content changes to assistive technologies.
+ * Live Region Provider for Screen Reader Announcements
+ *
+ * Provides a context for announcing dynamic content changes to screen readers.
+ * Useful for form validation errors, status updates, and notifications.
  */
 
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface LiveRegionContextType {
-  announce: (message: string, priority?: "polite" | "assertive") => void;
+  announce: (message: string, priority?: 'polite' | 'assertive') => void;
 }
 
-const LiveRegionContext = createContext<LiveRegionContextType | null>(null);
+const LiveRegionContext = createContext<LiveRegionContextType | undefined>(undefined);
 
 export const useLiveRegion = () => {
   const context = useContext(LiveRegionContext);
   if (!context) {
-    throw new Error("useLiveRegion must be used within LiveRegionProvider");
+    throw new Error('useLiveRegion must be used within a LiveRegionProvider');
   }
   return context;
 };
 
 interface LiveRegionProviderProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export const LiveRegionProvider: React.FC<LiveRegionProviderProps> = ({ children }) => {
-  const [politeMessage, setPoliteMessage] = useState("");
-  const [assertiveMessage, setAssertiveMessage] = useState("");
+  const [politeMessage, setPoliteMessage] = useState('');
+  const [assertiveMessage, setAssertiveMessage] = useState('');
+  const [messageId, setMessageId] = useState(0);
 
-  const announce = useCallback((message: string, priority: "polite" | "assertive" = "polite") => {
-    if (priority === "assertive") {
-      setAssertiveMessage("");
-      // Small delay to ensure screen readers pick up the change
-      setTimeout(() => setAssertiveMessage(message), 50);
+  const announce = (message: string, priority: 'polite' | 'assertive' = 'polite') => {
+    const id = messageId + 1;
+    setMessageId(id);
+
+    if (priority === 'assertive') {
+      setAssertiveMessage(`${message} (${id})`);
+      // Clear after screen reader has time to announce
+      setTimeout(() => setAssertiveMessage(''), 1000);
     } else {
-      setPoliteMessage("");
-      setTimeout(() => setPoliteMessage(message), 50);
+      setPoliteMessage(`${message} (${id})`);
+      // Clear after screen reader has time to announce
+      setTimeout(() => setPoliteMessage(''), 1000);
     }
-
-    // Clear after announcement
-    setTimeout(() => {
-      if (priority === "assertive") {
-        setAssertiveMessage("");
-      } else {
-        setPoliteMessage("");
-      }
-    }, 3000);
-  }, []);
+  };
 
   return (
     <LiveRegionContext.Provider value={{ announce }}>
-      {children}
-      
-      {/* Polite announcements (non-interrupting) */}
+      {/* Hidden live regions for screen readers */}
       <div
-        role="status"
         aria-live="polite"
         aria-atomic="true"
         className="sr-only"
+        role="status"
       >
         {politeMessage}
       </div>
-
-      {/* Assertive announcements (interrupting) */}
       <div
-        role="alert"
         aria-live="assertive"
         aria-atomic="true"
         className="sr-only"
+        role="alert"
       >
         {assertiveMessage}
       </div>
+      {children}
     </LiveRegionContext.Provider>
   );
 };
 
-/**
- * Custom hook for common announcements
- */
-export const useAnnouncements = () => {
-  const { announce } = useLiveRegion();
-
-  return {
-    announceCopied: (what: string = "Content") => {
-      announce(`${what} copied to clipboard`);
-    },
-    announceDeleted: (what: string) => {
-      announce(`${what} deleted`);
-    },
-    announceAdded: (what: string) => {
-      announce(`${what} added successfully`);
-    },
-    announceUpdated: (what: string) => {
-      announce(`${what} updated successfully`);
-    },
-    announceError: (message: string) => {
-      announce(message, "assertive");
-    },
-    announceNavigation: (section: string) => {
-      announce(`Navigated to ${section}`);
-    },
-    announceModalOpened: (title: string) => {
-      announce(`${title} dialog opened`);
-    },
-    announceModalClosed: () => {
-      announce("Dialog closed");
-    },
-    announceUndo: (what: string) => {
-      announce(`${what} restored`);
-    },
-  };
-};
-
+export default LiveRegionProvider;

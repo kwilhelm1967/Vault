@@ -1,121 +1,122 @@
 /**
- * FocusTrap Component
- * 
- * Traps focus within a container for modal dialogs.
- * Ensures keyboard users can't tab outside the modal.
+ * Focus Trap Component
+ *
+ * Traps keyboard focus within a container (like modals or dialogs).
+ * Ensures keyboard navigation stays within the component and
+ * improves accessibility compliance.
  */
 
-import React, { useRef, useEffect, useCallback } from "react";
+import React, { useEffect, useRef, ReactNode } from 'react';
 
 interface FocusTrapProps {
-  children: React.ReactNode;
-  isActive: boolean;
+  children: ReactNode;
+  isActive?: boolean;
+  className?: string;
   onEscape?: () => void;
-  restoreFocusOnUnmount?: boolean;
-  initialFocusRef?: React.RefObject<HTMLElement>;
 }
 
 export const FocusTrap: React.FC<FocusTrapProps> = ({
   children,
-  isActive,
-  onEscape,
-  restoreFocusOnUnmount = true,
-  initialFocusRef,
+  isActive = true,
+  className = '',
+  onEscape
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const previousActiveElement = useRef<HTMLElement | null>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
-  // Get all focusable elements
+  // Get all focusable elements within the container
   const getFocusableElements = useCallback(() => {
     if (!containerRef.current) return [];
-    
-    const focusableSelectors = [
-      'button:not([disabled])',
-      'input:not([disabled])',
-      'select:not([disabled])',
-      'textarea:not([disabled])',
-      'a[href]',
-      '[tabindex]:not([tabindex="-1"])',
-    ].join(', ');
-
     return Array.from(
-      containerRef.current.querySelectorAll<HTMLElement>(focusableSelectors)
-    );
+      containerRef.current.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"]), [role="button"], [role="link"], [role="menuitem"]'
+      )
+    ).filter((el) => {
+      const htmlEl = el as HTMLElement;
+      return htmlEl.offsetWidth > 0 && htmlEl.offsetHeight > 0 && !htmlEl.hasAttribute('disabled');
+    }) as HTMLElement[];
   }, []);
 
-  // Handle keyboard navigation
-  const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    if (!isActive) return;
+  useEffect(() => {
+    if (!isActive || !containerRef.current) return;
 
-    if (event.key === 'Escape' && onEscape) {
-      event.preventDefault();
-      onEscape();
-      return;
-    }
-
-    if (event.key !== 'Tab') return;
+    // Store the currently focused element
+    previousFocusRef.current = document.activeElement as HTMLElement;
 
     const focusableElements = getFocusableElements();
-    if (focusableElements.length === 0) return;
-
     const firstElement = focusableElements[0];
     const lastElement = focusableElements[focusableElements.length - 1];
 
-    // Shift + Tab on first element -> go to last
-    if (event.shiftKey && document.activeElement === firstElement) {
-      event.preventDefault();
-      lastElement.focus();
-      return;
-    }
-
-    // Tab on last element -> go to first
-    if (!event.shiftKey && document.activeElement === lastElement) {
-      event.preventDefault();
+    // Focus the first element if none is focused
+    if (firstElement && !containerRef.current.contains(document.activeElement)) {
       firstElement.focus();
-      return;
     }
-  }, [isActive, onEscape, getFocusableElements]);
 
-  // Set up focus trap
-  useEffect(() => {
-    if (!isActive) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && onEscape) {
+        event.stopPropagation();
+        onEscape();
+        return;
+      }
 
-    // Store current active element
-    previousActiveElement.current = document.activeElement as HTMLElement;
+      if (event.key !== 'Tab') return;
 
-    // Focus initial element or first focusable
-    const focusInitial = () => {
-      if (initialFocusRef?.current) {
-        initialFocusRef.current.focus();
+      const currentFocus = document.activeElement as HTMLElement;
+      if (!containerRef.current?.contains(currentFocus)) return;
+
+      // Update focusable elements in case DOM changed
+      const currentFocusable = getFocusableElements();
+      const currentFirst = currentFocusable[0];
+      const currentLast = currentFocusable[currentFocusable.length - 1];
+
+      if (event.shiftKey) {
+        // Shift + Tab
+        if (currentFocus === currentFirst) {
+          event.preventDefault();
+          currentLast?.focus();
+        }
       } else {
-        const focusableElements = getFocusableElements();
-        if (focusableElements.length > 0) {
-          focusableElements[0].focus();
+        // Tab
+        if (currentFocus === currentLast) {
+          event.preventDefault();
+          currentFirst?.focus();
         }
       }
     };
 
-    // Small delay to ensure DOM is ready
-    const timeoutId = setTimeout(focusInitial, 50);
-
-    // Add keyboard listener
-    document.addEventListener('keydown', handleKeyDown);
+    // Use capture phase to ensure we handle the event before other handlers
+    document.addEventListener('keydown', handleKeyDown, true);
 
     return () => {
-      clearTimeout(timeoutId);
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keydown', handleKeyDown, true);
 
-      // Restore focus on unmount
-      if (restoreFocusOnUnmount && previousActiveElement.current) {
-        previousActiveElement.current.focus();
+      // Restore previous focus when unmounting
+      if (previousFocusRef.current && typeof previousFocusRef.current.focus === 'function') {
+        // Use setTimeout to avoid conflicts with React's focus management
+        setTimeout(() => {
+          try {
+            previousFocusRef.current?.focus();
+          } catch (error) {
+            // Focus might fail if element was removed, ignore silently
+          }
+        }, 0);
       }
     };
-  }, [isActive, initialFocusRef, getFocusableElements, handleKeyDown, restoreFocusOnUnmount]);
+  }, [isActive, onEscape, getFocusableElements]);
 
   return (
-    <div ref={containerRef} role="dialog" aria-modal="true">
+    <div
+      ref={containerRef}
+      className={className}
+      // Ensure the container itself is not focusable
+      tabIndex={-1}
+      // Add ARIA attributes for better accessibility
+      role="dialog"
+      aria-modal={isActive ? "true" : undefined}
+    >
       {children}
     </div>
   );
 };
 
+export default FocusTrap;

@@ -1,70 +1,44 @@
 /**
  * Utilities Index
- * 
- * Centralized exports for all utility functions.
- * 
+ *
+ * Centralized exports for all utility functions in the After I'm Gone application.
+ *
  * Usage:
  *   import { storageService, validateEmail } from '@/utils';
  */
 
-// ==================== Core Services ====================
+// ==================== Storage & Security ====================
 export { storageService, StorageService } from './storage';
-export { licenseService } from './licenseService';
-export { trialService } from './trialService';
+export { memorySecurity, secureWipe, secureCompare } from './memorySecurity';
+export { clipboardSecurity, secureCopyToClipboard } from './clipboardSecurity';
+export { hmacService } from './hmacService';
 
 // ==================== Validation ====================
 export {
   sanitizeInput,
-  escapeHtml,
-  validateMasterPassword,
-  validateLicenseKey,
   validateEmail,
-  validateUrl,
-  validateAccountName,
-  validateUsername,
-  validateNotes,
+  validatePassword,
+  validatePhone,
+  validateRequired,
+  validateDate,
+  validateSSN,
+  validateURL
 } from './validation';
 
-// ==================== Security ====================
+// ==================== Encryption & Security ====================
 export { generateHardwareFingerprint } from './hardwareFingerprint';
-export {
-  SecureString,
-  secureWipe,
-  createSecureString,
-  secureCompare,
-} from './memorySecurity';
-export { sanitizeHtml, sanitizeFilename } from './sanitization';
 
-// ==================== Authentication ====================
-export {
-  generateTOTP,
-  getTOTPTimeRemaining,
-  isValidTOTPSecret,
-} from './totp';
-export {
-  generateRecoveryPhrase,
-  verifyRecoveryPhrase,
-  hashRecoveryPhrase,
-} from './recoveryPhrase';
+// ==================== Rate Limiting ====================
+export { rateLimiter, RateLimitError } from './rateLimiter';
 
-// ==================== License Keys ====================
-export {
-  singleUserLicenses,
-  familyLicenses,
-  type LicenseKey,
-  type LicenseType,
-} from './licenseKeys';
+// ==================== Password Strength ====================
+export { calculatePasswordStrength, PasswordStrength } from './passwordStrength';
 
 // ==================== Import/Export ====================
 export { importService } from './importService';
 
 // ==================== Sound Effects ====================
-export {
-  playSound,
-  playSoundEffect,
-  SoundEffect,
-} from './soundEffects';
+export { playSound, playSoundEffect, SoundEffect } from './soundEffects';
 
-// ==================== Analytics (Dev Only) ====================
-export { analyticsService } from './analyticsService';
-
+// ==================== Re-export commonly used functions ====================
+export { storageService as defaultStorage } from './storage';

@@ -23,10 +23,12 @@ import { PurchaseSuccessPage } from "./components/PurchaseSuccessPage";
 import { LandingPage } from "./components/LandingPage";
 import { OfflineIndicator } from "./components/OfflineIndicator";
 import { UndoToast } from "./components/UndoToast";
+import { SkeletonLoader } from "./components/SkeletonLoader";
 import { WhatsNewModal, useWhatsNew } from "./components/WhatsNewModal";
 import { SkipLink } from "./components/accessibility";
 import { OnboardingTutorial, useOnboarding } from "./components/OnboardingTutorial";
 import { KeyboardShortcutsModal, useKeyboardShortcuts } from "./components/KeyboardShortcutsModal";
+import { withLazyErrorBoundary } from "./components/LazyErrorBoundary";
 
 // Fixed categories with proper typing
 const FIXED_CATEGORIES: Category[] = [
@@ -98,20 +100,28 @@ const useAppStatus = () => {
     // But only if checking is enabled
     const checkInterval = import.meta.env.DEV ? 5000 : 30000;
     const interval = checkingEnabled ? setInterval(async () => {
+      try {
+        const expirationDetected = await trialService.checkAndHandleExpiration();
+        await checkStatusImmediately();
 
-      const expirationDetected = await trialService.checkAndHandleExpiration();
-      await checkStatusImmediately();
+        // Handle trial expiration properly
+        const currentStatus = await licenseService.getAppStatus();
+        if (currentStatus.trialInfo.isExpired && currentStatus.canUseApp) {
+          // Use proper state management instead of force reload
+          await handleTrialExpiration();
+        }
 
-      // Force immediate lock if trial expired
-      const currentStatus = await licenseService.getAppStatus();
-      if (currentStatus.trialInfo.isExpired && currentStatus.canUseApp) {
-        // Force a single reload to ensure proper state reset
-        window.location.reload();
-      }
-
-      // If expiration detected 3+ times, stop checking
-      if (expirationDetected && trialService.isExpirationConfirmed()) {
-        setCheckingEnabled(false);
+        // If expiration detected 3+ times, stop checking
+        if (expirationDetected && trialService.isExpirationConfirmed()) {
+          setCheckingEnabled(false);
+        }
+      } catch (error) {
+        // Log error but don't crash the app
+        if (import.meta.env.DEV) {
+          console.error('Trial status check failed:', error);
+        }
+        // Could optionally disable checking after multiple failures
+        // setCheckingEnabled(false);
       }
     }, checkInterval) : null;
 
@@ -128,31 +138,30 @@ const useAppStatus = () => {
   return { appStatus, updateAppStatus, checkStatusImmediately };
 };
 
-// Custom hook for dark theme enforcement
+// Custom hook for dark theme enforcement (optimized)
 const useDarkTheme = () => {
   useEffect(() => {
-    const applyDarkTheme = () => {
-      document.documentElement.style.backgroundColor = "#0f172a";
-      document.body.style.backgroundColor = "#0f172a";
-      document.documentElement.style.color = "white";
-      document.body.style.color = "white";
+    // Apply dark theme using CSS custom properties for better performance
+    const root = document.documentElement;
+    const body = document.body;
 
-      const elements = document.querySelectorAll("*");
-      elements.forEach((el) => {
-        const computed = window.getComputedStyle(el);
-        if (
-          computed.backgroundColor === "rgb(255, 255, 255)" ||
-          computed.backgroundColor === "white"
-        ) {
-          (el as HTMLElement).style.backgroundColor = "#0f172a";
-        }
-      });
-    };
+    // Set CSS custom properties for consistent theming
+    root.style.setProperty('--bg-primary', '#0f172a');
+    root.style.setProperty('--bg-secondary', '#1e293b');
+    root.style.setProperty('--text-primary', '#ffffff');
+    root.style.setProperty('--text-secondary', '#94a3b8');
 
-    applyDarkTheme();
-    const timeout = setTimeout(applyDarkTheme, 500);
-    return () => clearTimeout(timeout);
-  }, []);
+    // Set basic dark theme colors
+    root.style.backgroundColor = "var(--bg-primary)";
+    root.style.color = "var(--text-primary)";
+    body.style.backgroundColor = "var(--bg-primary)";
+    body.style.color = "var(--text-primary)";
+
+    // Add dark theme class for CSS-based theming
+    root.classList.add('dark-theme');
+
+    // Only run once on mount, not on every render
+  }, []); // Empty dependency array - runs only once
 };
 
 // Custom hook for vault data management
@@ -279,7 +288,12 @@ const useVaultData = (isLocked: boolean, isElectron: boolean, loadSharedEntries?
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLocked, isInitialized]); // Remove loadEntries dependency
 
-  return { entries, setEntries, loadEntries };
+  return useMemo(() => ({
+    entries,
+    setEntries,
+    loadEntries,
+    isInitialized
+  }), [entries, loadEntries, isInitialized]);
 };
 
 
@@ -478,6 +492,17 @@ const useEntryManagement = (
 function App() {
   const { isElectron, isVaultUnlocked, saveSharedEntries, loadSharedEntries, broadcastEntriesChanged } = useElectron();
   const { appStatus, updateAppStatus, checkStatusImmediately } = useAppStatus();
+
+  // Preload critical components after initial render to improve subsequent navigation
+  useEffect(() => {
+    const preloadTimer = setTimeout(() => {
+      // Only preload the most critical components to avoid large initial bundle
+      Dashboard.preload?.();
+      PersonalInfo.preload?.();
+    }, 3000); // Wait 3 seconds after initial render
+
+    return () => clearTimeout(preloadTimer);
+  }, []);
   const [isLocked, setIsLocked] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -497,7 +522,7 @@ function App() {
   const [currentWarningType, setCurrentWarningType] = useState<'expiring' | 'final'>('expiring');
 
   useDarkTheme();
-  const { entries, setEntries } = useVaultData(isLocked, isElectron, loadSharedEntries, saveSharedEntries);
+  const { entries, setEntries, isInitialized: isVaultDataLoaded } = useVaultData(isLocked, isElectron, loadSharedEntries, saveSharedEntries);
   const isFloatingMode = useFloatingMode(isElectron);
   useVaultStatusSync(isElectron, setIsLocked);
 
