@@ -277,12 +277,14 @@ Test the TRIAL flow:
 - Mac might completely BLOCK the app from opening
 - Users won't trust the software
 
-**GOOD NEWS: I already have the Windows certificate from SSL.com!**
+**GOOD NEWS: I already have BOTH certificates!**
+- ✅ Windows: SSL.com code signing certificate
+- ✅ Mac: Apple Developer Program ($99/year) - already enrolled
 
 I will give you:
-- The certificate file (.pfx)
-- The password for the certificate
-- The instructions from SSL.com
+- The Windows certificate file (.pfx) and password
+- The SSL.com instructions
+- My Apple ID credentials for Mac signing
 
 ---
 
@@ -311,23 +313,44 @@ I will give you:
    - Go to "Digital Signatures" tab
    - Should show our company name!
 
-**2. Mac Signing (Need Apple Developer Account):**
+**2. Mac Signing (I have Apple Developer Account):**
 
-   For Mac, we still need:
-   - Apple Developer Account ($99/year) - https://developer.apple.com
-   - Create "Developer ID Application" certificate
-   - Set up notarization
+   a. Log into Apple Developer portal with credentials I give you:
+      https://developer.apple.com
    
-   Add to `.env` file:
+   b. Go to "Certificates, Identifiers & Profiles"
+   
+   c. Create a "Developer ID Application" certificate (if not already created)
+      - This is what lets us distribute outside the App Store
+   
+   d. Download the certificate and install it on the Mac build machine
+   
+   e. Create an app-specific password:
+      - Go to https://appleid.apple.com
+      - Sign in with my Apple ID
+      - Go to "App-Specific Passwords"
+      - Generate one called "LocalPasswordVault Notarization"
+      - Save this password!
+   
+   f. Find the Team ID:
+      - In Apple Developer portal, look at top right or in Membership section
+      - It's a 10-character code like "ABC123XYZ9"
+   
+   g. Add to `.env` file:
    ```
-   APPLE_ID=your@email.com
-   APPLE_ID_PASSWORD=app-specific-password
-   APPLE_TEAM_ID=YOUR_TEAM_ID
+   APPLE_ID=my_apple_id@email.com
+   APPLE_ID_PASSWORD=the-app-specific-password-you-created
+   APPLE_TEAM_ID=MY_TEAM_ID
    ```
    
-   Rebuild: `npm run dist:mac`
-
-   **NOTE:** If we don't have Apple Developer Account yet, we can skip Mac signing for now. Users can still install by right-clicking and selecting "Open".
+   h. Rebuild the Mac installer:
+   ```
+   npm run dist:mac
+   ```
+   
+   i. Verify it worked:
+      - The build process will automatically notarize with Apple
+      - Mac users should be able to open the app without warnings
 
 ---
 
@@ -335,7 +358,7 @@ I will give you:
 
 **How I know it's done:** 
 - Windows: Right-click the .exe → Properties → Digital Signatures tab shows our company name
-- Mac: App opens without "unidentified developer" warning (if we set up Apple signing)
+- Mac: App opens without "unidentified developer" warning, and build log shows "Notarization complete"
 
 ---
 
@@ -349,8 +372,11 @@ Before you start, I'll send you:
 - [ ] Linode SSH access (IP address + SSH key or password)
 - [ ] GitHub repo access (if you don't already have it)
 - [ ] **Windows Code Signing Certificate** (.pfx file from SSL.com)
-- [ ] **Certificate Password** (for the .pfx file)
+- [ ] **Windows Certificate Password** (for the .pfx file)
 - [ ] **SSL.com Instructions** (the setup guide they provided)
+- [ ] **Apple ID** (email for Apple Developer account)
+- [ ] **Apple ID Password** (for logging into developer.apple.com)
+- [ ] **Apple Team ID** (I can look this up, or you can find it in the portal)
 
 ---
 
