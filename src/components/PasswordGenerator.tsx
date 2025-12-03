@@ -242,7 +242,7 @@ export const PasswordGenerator: React.FC<PasswordGeneratorProps> = ({
         level: "weak",
         score,
         label: "Weak",
-        color: "text-red-400",
+        color: "text-red-500",
         bgColor: "bg-red-500",
         icon: <ShieldAlert className="w-4 h-4" />,
       };
@@ -251,7 +251,7 @@ export const PasswordGenerator: React.FC<PasswordGeneratorProps> = ({
         level: "fair",
         score,
         label: "Fair",
-        color: "text-orange-400",
+        color: "text-orange-500",
         bgColor: "bg-orange-500",
         icon: <Shield className="w-4 h-4" />,
       };
@@ -260,7 +260,7 @@ export const PasswordGenerator: React.FC<PasswordGeneratorProps> = ({
         level: "good",
         score,
         label: "Good",
-        color: "text-yellow-400",
+        color: "text-yellow-500",
         bgColor: "bg-yellow-500",
         icon: <Shield className="w-4 h-4" />,
       };
@@ -269,7 +269,7 @@ export const PasswordGenerator: React.FC<PasswordGeneratorProps> = ({
         level: "strong",
         score,
         label: "Strong",
-        color: "text-emerald-400",
+        color: "text-emerald-500",
         bgColor: "bg-emerald-500",
         icon: <ShieldCheck className="w-4 h-4" />,
       };
@@ -278,7 +278,7 @@ export const PasswordGenerator: React.FC<PasswordGeneratorProps> = ({
         level: "excellent",
         score,
         label: "Excellent",
-        color: "text-cyan-400",
+        color: "text-cyan-500",
         bgColor: "bg-cyan-500",
         icon: <Sparkles className="w-4 h-4" />,
       };

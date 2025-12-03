@@ -14,14 +14,9 @@ export const EulaAgreement: React.FC<EulaAgreementProps> = ({
   error,
   isLoading = false,
 }) => {
-  /**
-   * Development Mode Optimization:
-   * In DEV, pre-accept EULA to streamline testing workflow.
-   * Production builds require explicit user consent.
-   */
-  const isDevMode = import.meta.env.DEV;
-  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(isDevMode);
-  const [isAgreed, setIsAgreed] = useState(isDevMode);
+  // User must scroll to bottom before they can check the agreement box
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+  const [isAgreed, setIsAgreed] = useState(false);
   const currentDate = new Date().toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -36,8 +31,8 @@ export const EulaAgreement: React.FC<EulaAgreementProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-sm overflow-y-auto">
-      <div className="bg-slate-800 rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-sm overflow-hidden">
+      <div className="bg-slate-800 rounded-xl shadow-2xl w-full max-w-3xl h-[85vh] flex flex-col">
         <div className="p-6 border-b border-slate-700 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Shield className="w-6 h-6 text-blue-400" />
@@ -185,33 +180,38 @@ export const EulaAgreement: React.FC<EulaAgreementProps> = ({
           </ul>
         </div>
 
-        <div className="p-6 border-t border-slate-700 bg-slate-800/80">
-          <div className="flex items-start mb-4">
+        <div className="p-6 border-t border-slate-700 bg-slate-800/80 flex-shrink-0">
+          {/* Warning message - use visibility instead of conditional render to prevent layout shift */}
+          <div 
+            className={`mb-4 p-3 bg-amber-900/20 border border-amber-800/30 rounded-lg flex items-center space-x-2 transition-opacity duration-200 ${
+              hasScrolledToBottom ? 'opacity-0 h-0 mb-0 p-0 overflow-hidden' : 'opacity-100'
+            }`}
+          >
+            <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0" />
+            <span className="text-amber-300 text-sm">
+              Please scroll through the entire agreement before proceeding
+            </span>
+          </div>
+
+          <div className={`flex items-start mb-4 ${!hasScrolledToBottom ? 'opacity-50' : ''}`}>
             <div className="flex-shrink-0 mt-0.5">
               <input
                 type="checkbox"
                 id="agree-checkbox"
                 checked={isAgreed}
-                onChange={() => setIsAgreed(!isAgreed)}
-                className="w-4 h-4 rounded border-slate-600 text-blue-500 focus:ring-blue-500/30 bg-slate-700"
+                onChange={() => hasScrolledToBottom && setIsAgreed(!isAgreed)}
+                disabled={!hasScrolledToBottom}
+                className="w-4 h-4 rounded border-slate-600 text-blue-500 focus:ring-blue-500/30 bg-slate-700 disabled:cursor-not-allowed"
               />
             </div>
             <label
               htmlFor="agree-checkbox"
-              className="ml-3 text-sm text-slate-300"
+              className={`ml-3 text-sm ${hasScrolledToBottom ? 'text-slate-300' : 'text-slate-500 cursor-not-allowed'}`}
             >
               I have read and agree to the End User License Agreement
             </label>
           </div>
 
-          {!hasScrolledToBottom && (
-            <div className="mb-4 p-3 bg-amber-900/20 border border-amber-800/30 rounded-lg flex items-center space-x-2">
-              <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0" />
-              <span className="text-amber-300 text-sm">
-                Please scroll through the entire agreement before proceeding
-              </span>
-            </div>
-          )}
 
           {error && (
             <div className="mb-4 p-4 bg-red-900/30 border border-red-800/50 rounded-lg">

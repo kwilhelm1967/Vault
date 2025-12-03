@@ -1,0 +1,9 @@
+{
+  "watch": ["electron"],
+  "ext": "js",
+  "exec": "electron ."
+}
+
+
+
+

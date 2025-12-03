@@ -123,31 +123,21 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({
   return (
     <div className="h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4 overflow-auto">
       <div className="w-full max-w-lg">
-        
-        {/* Back Button */}
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-6 text-sm"
-        >
-          <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
-          Back to Login
-        </button>
-
         {/* Header */}
-        <header className="text-center mb-6">
+        <header className="text-center mb-4">
           <div 
-            className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
+            className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3"
             style={{ 
               background: `linear-gradient(135deg, ${colors.steelBlue500}, ${colors.steelBlue600})`,
               boxShadow: `0 8px 32px ${colors.steelBlue500}30`,
             }}
           >
-            <KeyRound className="w-8 h-8 text-white" strokeWidth={1.5} />
+            <KeyRound className="w-6 h-6 text-white" strokeWidth={1.5} />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
+          <h1 className="text-xl font-bold text-white tracking-tight">
             Recover Your Vault
           </h1>
-          <p className="text-slate-400 text-sm mt-2">
+          <p className="text-slate-400 text-xs mt-1">
             Enter your 12-word recovery phrase to reset your password
           </p>
         </header>
@@ -156,22 +146,22 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({
         <form onSubmit={handleSubmit}>
           {/* Error Alert */}
           {error && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-start gap-3 mb-6">
-              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" strokeWidth={1.5} />
-              <p className="text-red-400 text-sm">{error}</p>
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 flex items-start gap-2 mb-4">
+              <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" strokeWidth={1.5} />
+              <p className="text-red-400 text-xs">{error}</p>
             </div>
           )}
 
           {/* Words Input Card */}
           <div 
-            className="rounded-xl p-6 mb-6"
+            className="rounded-xl p-4 mb-4"
             style={{
               backgroundColor: "rgba(30, 41, 59, 0.8)",
               border: `1px solid ${colors.steelBlue500}30`,
             }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <span className="text-slate-400 text-xs uppercase tracking-wider font-medium">
                   Recovery Phrase
@@ -189,7 +179,7 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({
               <button
                 type="button"
                 onClick={() => setShowWords(!showWords)}
-                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg transition-colors"
                 style={{ 
                   backgroundColor: `${colors.steelBlue500}15`,
                   color: colors.steelBlue400,
@@ -201,7 +191,7 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({
             </div>
 
             {/* Words Grid */}
-            <div className="grid grid-cols-3 gap-2" onPaste={handlePaste}>
+            <div className="grid grid-cols-3 gap-1.5" onPaste={handlePaste}>
               {words.map((word, index) => (
                 <div
                   key={index}
@@ -213,21 +203,20 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({
                     type={showWords ? "text" : "password"}
                     value={word}
                     onChange={(e) => handleWordChange(index, e.target.value)}
-                    className="flex-1 bg-transparent py-2.5 pr-2 text-sm font-mono focus:outline-none"
-                    style={{ color: colors.warmIvory }}
+                    className="flex-1 bg-transparent py-2 pr-2 text-sm font-mono focus:outline-none text-slate-300"
                     placeholder="word"
                     autoComplete="off"
                     autoCapitalize="off"
                     spellCheck={false}
                   />
                   {word && (
-                    <Check className="w-3.5 h-3.5 text-emerald-400 mr-2" strokeWidth={2} />
+                    <Check className="w-3 h-3 text-emerald-400 mr-2" strokeWidth={2} />
                   )}
                 </div>
               ))}
             </div>
 
-            <p className="text-slate-500 text-xs mt-4 text-center">
+            <p className="text-slate-500 text-[11px] mt-3 text-center">
               Tip: You can paste your entire phrase at once
             </p>
           </div>
@@ -236,7 +225,7 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({
           <button
             type="submit"
             disabled={isLoading || filledCount !== 12}
-            className="w-full py-3.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2"
             style={{
               background: filledCount === 12
                 ? `linear-gradient(135deg, ${colors.steelBlue500}, ${colors.steelBlue600})`
@@ -260,11 +249,37 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({
           </button>
         </form>
 
-        {/* Info */}
-        <p className="text-center text-slate-500 text-xs mt-6">
-          After recovery, you'll create a new master password.<br />
-          Your saved accounts will remain intact.
-        </p>
+        {/* Info & Back */}
+        <div className="text-center mt-4">
+          <p className="text-slate-500 text-[11px]">
+            After recovery, you'll create a new master password. Your saved accounts will remain intact.
+          </p>
+          <button
+            onClick={onBack}
+            className="text-slate-500 hover:text-slate-300 transition-colors mt-2 text-xs"
+          >
+            ← Back to Login
+          </button>
+        </div>
+
+        {/* Reset Vault Option */}
+        <div className="mt-6 pt-4 border-t border-slate-800">
+          <p className="text-slate-600 text-[10px] text-center mb-2">
+            Lost your recovery phrase? You can reset the vault and start fresh.
+          </p>
+          <button
+            onClick={() => {
+              if (window.confirm("⚠️ WARNING: This will DELETE ALL your saved accounts and passwords permanently. This cannot be undone.\n\nAre you sure you want to reset the vault?")) {
+                localStorage.clear();
+                sessionStorage.clear();
+                window.location.reload();
+              }
+            }}
+            className="w-full py-2 rounded-lg text-xs font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 transition-colors"
+          >
+            Reset Vault & Start Fresh
+          </button>
+        </div>
       </div>
     </div>
   );
