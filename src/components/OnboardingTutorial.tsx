@@ -83,7 +83,7 @@ const steps: OnboardingStep[] = [
     id: 8,
     title: "You're All Set!",
     description:
-      "You're ready to start using Local Password Vault. Your digital life is now more secure than ever. Happy vaulting!",
+      "You're ready to start using Local Password Vault. Your digital life is now more secure than ever.",
     icon: <Sparkles className="w-12 h-12 text-brand-gold" />,
     tip: "Press Shift + / (the ? key) to view all keyboard shortcuts.",
   },

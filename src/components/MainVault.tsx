@@ -671,7 +671,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
       <main className="flex-1 flex flex-col overflow-hidden">
         
         {/* Trial Status Banner */}
-        <div className="px-6 pt-4">
+        <div className="px-6 pt-2">
           <TrialStatusBanner 
             onPurchase={onShowPricingPlans}
             onExport={onExport}

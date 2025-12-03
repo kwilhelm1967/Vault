@@ -472,11 +472,12 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
       <div
         id="floating-panel"
         ref={panelRef}
-        className="fixed bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-96 overflow-hidden"
+        className="fixed bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-96 flex flex-col"
         style={{
           left: position.x,
           top: position.y,
-          maxHeight: "80vh",
+          height: "600px",
+          maxHeight: "85vh",
           ...FLOATING_PANEL_STYLES,
         }}
       >
@@ -564,15 +565,15 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
           </div>
         </div>
 
-        {/* Entries List */}
-        <div className="overflow-y-auto max-h-80 bg-slate-900">
+        {/* Entries List - flex-1 to fill remaining space */}
+        <div className="flex-1 overflow-y-auto bg-slate-900">
           {favoriteEntries.length > 0 && (
             <div className="p-2 border-b border-slate-700">
               <div className="text-xs text-slate-400 mb-2 flex items-center">
                 <Star className="w-3 h-3 mr-1" />
                 Favorites
               </div>
-              {favoriteEntries.slice(0, 5).map((entry) => (
+              {favoriteEntries.map((entry) => (
                 <EntryItem
                   key={entry.id}
                   entry={entry}
@@ -590,7 +591,7 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
           )}
 
           <div className="p-2">
-            {regularEntries.slice(0, 8).map((entry) => (
+            {regularEntries.map((entry) => (
               <EntryItem
                 key={entry.id}
                 entry={entry}

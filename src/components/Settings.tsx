@@ -729,8 +729,8 @@ export const Settings: React.FC<SettingsProps> = ({
               <Download className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.steelBlue400 }} />
             </div>
             <div className="flex-1">
-              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-1">Export (CSV)</h3>
-              <p className="text-slate-500 text-xs">Unencrypted spreadsheet</p>
+              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-1">Export to Excel</h3>
+              <p className="text-slate-500 text-xs">Opens in Excel or Google Sheets</p>
             </div>
             <span 
               className="px-3 py-1.5 rounded-full text-xs font-bold"
@@ -750,8 +750,8 @@ export const Settings: React.FC<SettingsProps> = ({
               <Shield className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.steelBlue400 }} />
             </div>
             <div className="flex-1">
-              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-1">Export (Encrypted)</h3>
-              <p className="text-slate-500 text-xs">Password-protected backup</p>
+              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-1">Secure Backup</h3>
+              <p className="text-slate-500 text-xs">Password-protected file</p>
             </div>
             <span 
               className="px-2 py-1 rounded text-xs font-bold"
@@ -771,8 +771,8 @@ export const Settings: React.FC<SettingsProps> = ({
               <Upload className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.steelBlue400 }} />
             </div>
             <div className="flex-1">
-              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-1">Import (JSON)</h3>
-              <p className="text-slate-500 text-xs">Standard backup file</p>
+              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-1">Import from File</h3>
+              <p className="text-slate-500 text-xs">Restore from backup</p>
             </div>
             <div 
               className="w-8 h-8 rounded-lg flex items-center justify-center"
@@ -792,8 +792,8 @@ export const Settings: React.FC<SettingsProps> = ({
               <Lock className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.steelBlue400 }} />
             </div>
             <div className="flex-1">
-              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-1">Import (Encrypted)</h3>
-              <p className="text-slate-500 text-xs">Restore secure backup</p>
+              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-1">Restore Secure Backup</h3>
+              <p className="text-slate-500 text-xs">Password-protected file</p>
             </div>
             <span 
               className="px-2 py-1 rounded text-xs font-bold"
@@ -877,56 +877,56 @@ export const Settings: React.FC<SettingsProps> = ({
       {/* Help Section */}
       <SectionTitle>Help & Support</SectionTitle>
       
-      {/* Replay Tutorial */}
-      <BouncyCard 
-        variant="accent" 
-        className="mb-4"
-        onClick={() => {
-          localStorage.removeItem("onboarding_completed");
-          window.dispatchEvent(new CustomEvent('replay-onboarding'));
-        }}
-      >
-        <div className="flex items-center gap-4">
-          <div 
-            className="w-10 h-10 rounded-xl flex items-center justify-center"
-            style={{ background: `linear-gradient(135deg, ${colors.steelBlue500}30, ${colors.steelBlue500}10)` }}
-          >
-            <BookOpen className="w-5 h-5" strokeWidth={1.5} style={{ color: colors.steelBlue400 }} />
+      <div className="grid grid-cols-2 gap-4 mb-8">
+        {/* Replay Tutorial */}
+        <BouncyCard 
+          variant="accent" 
+          onClick={() => {
+            localStorage.removeItem("onboarding_completed");
+            window.dispatchEvent(new CustomEvent('replay-onboarding'));
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div 
+              className="w-10 h-10 rounded-xl flex items-center justify-center"
+              style={{ background: `linear-gradient(135deg, ${colors.steelBlue500}30, ${colors.steelBlue500}10)` }}
+            >
+              <BookOpen className="w-5 h-5" strokeWidth={1.5} style={{ color: colors.steelBlue400 }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-0.5 text-sm">Replay Tutorial</h3>
+              <p className="text-slate-500 text-xs truncate">Learn how to use the app</p>
+            </div>
+            <span style={{ color: colors.steelBlue400 }}>→</span>
           </div>
-          <div className="flex-1">
-            <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-0.5">Replay Tutorial</h3>
-            <p className="text-slate-500 text-xs">Learn how to use the app step by step</p>
-          </div>
-          <span style={{ color: colors.steelBlue400 }}>→</span>
-        </div>
-      </BouncyCard>
+        </BouncyCard>
 
-      {/* Keyboard Shortcuts */}
-      <BouncyCard 
-        variant="accent" 
-        className="mb-8"
-        onClick={() => {
-          // Close settings first, then show shortcuts after a brief delay
-          onClose?.();
-          setTimeout(() => {
-            window.dispatchEvent(new CustomEvent('show-keyboard-shortcuts'));
-          }, 100);
-        }}
-      >
-        <div className="flex items-center gap-4">
-          <div 
-            className="w-10 h-10 rounded-xl flex items-center justify-center"
-            style={{ background: `linear-gradient(135deg, ${colors.steelBlue500}30, ${colors.steelBlue500}10)` }}
-          >
-            <Keyboard className="w-5 h-5" strokeWidth={1.5} style={{ color: colors.steelBlue400 }} />
+        {/* Keyboard Shortcuts */}
+        <BouncyCard 
+          variant="accent" 
+          onClick={() => {
+            // Close settings first, then show shortcuts after a brief delay
+            onClose?.();
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('show-keyboard-shortcuts'));
+            }, 100);
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div 
+              className="w-10 h-10 rounded-xl flex items-center justify-center"
+              style={{ background: `linear-gradient(135deg, ${colors.steelBlue500}30, ${colors.steelBlue500}10)` }}
+            >
+              <Keyboard className="w-5 h-5" strokeWidth={1.5} style={{ color: colors.steelBlue400 }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-0.5 text-sm">Keyboard Shortcuts</h3>
+              <p className="text-slate-500 text-xs truncate">Press ? to see all shortcuts</p>
+            </div>
+            <kbd className="px-2 py-1 text-xs font-mono bg-slate-700 text-slate-300 rounded border border-slate-600">?</kbd>
           </div>
-          <div className="flex-1">
-            <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-0.5">Keyboard Shortcuts</h3>
-            <p className="text-slate-500 text-xs">Press ? anytime to see all shortcuts</p>
-          </div>
-          <kbd className="px-2 py-1 text-xs font-mono bg-slate-700 text-slate-300 rounded border border-slate-600">?</kbd>
-        </div>
-      </BouncyCard>
+        </BouncyCard>
+      </div>
 
       {/* Danger Zone */}
       <SectionTitle>Danger Zone</SectionTitle>
@@ -1092,29 +1092,29 @@ export const Settings: React.FC<SettingsProps> = ({
                 <Lock className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.steelBlue400 }} />
               </div>
               <div>
-                <h3 style={{ color: colors.warmIvory }} className="text-lg font-bold">Encrypted Import</h3>
-                <p className="text-slate-400 text-xs">Restore from secure backup</p>
+                <h3 style={{ color: colors.warmIvory }} className="text-lg font-bold">Restore Secure Backup</h3>
+                <p className="text-slate-400 text-xs">Import your password-protected backup file</p>
               </div>
             </div>
             
             <div className="space-y-4">
               <div>
-                <label className="text-xs text-slate-400 mb-1.5 block">Encrypted Backup Data</label>
+                <label className="text-xs text-slate-400 mb-1.5 block">Backup File Contents</label>
                 <textarea
                   value={importData}
                   onChange={(e) => setImportData(e.target.value)}
                   className="w-full px-3 py-2.5 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 h-24 resize-none"
-                  placeholder="Paste encrypted backup content here..."
+                  placeholder="Paste your backup file contents here..."
                 />
               </div>
               <div>
-                <label className="text-xs text-slate-400 mb-1.5 block">Backup Password</label>
+                <label className="text-xs text-slate-400 mb-1.5 block">Password</label>
                 <input
                   type="password"
                   value={importPassword}
                   onChange={(e) => setImportPassword(e.target.value)}
                   className="w-full px-3 py-2.5 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
-                  placeholder="Enter the backup password"
+                  placeholder="Enter the password you used when creating the backup"
                 />
               </div>
               
@@ -1130,7 +1130,7 @@ export const Settings: React.FC<SettingsProps> = ({
                     setImportPassword("");
                     setEncryptError("");
                   }}
-                  className="flex-1 px-4 py-2.5 bg-slate-700/50 hover:bg-slate-600/50 text-white rounded-lg text-sm font-medium transition-all"
+                  className="flex-1 px-4 py-2.5 bg-slate-700/50 hover:bg-slate-600/50 text-white rounded-xl text-sm font-medium transition-all"
                   disabled={isProcessing}
                 >
                   Cancel
@@ -1138,10 +1138,12 @@ export const Settings: React.FC<SettingsProps> = ({
                 <button
                   onClick={handleEncryptedImport}
                   disabled={isProcessing || !importData.trim() || !importPassword}
-                  className="flex-1 px-4 py-2.5 text-white rounded-lg text-sm font-medium transition-all disabled:opacity-50"
-                  style={{ backgroundColor: colors.steelBlue500 }}
+                  className="flex-1 px-4 py-2.5 text-white rounded-xl text-sm font-medium transition-all disabled:opacity-50"
+                  style={{ 
+                    background: `linear-gradient(135deg, ${colors.steelBlue500}, ${colors.steelBlue600})`,
+                  }}
                 >
-                  {isProcessing ? "Importing..." : "Import Secure"}
+                  {isProcessing ? "Restoring..." : "Restore"}
                 </button>
               </div>
             </div>

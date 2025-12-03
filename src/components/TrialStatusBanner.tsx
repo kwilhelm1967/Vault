@@ -393,4 +393,3 @@ export const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
     </div>
   );
 };
-
