@@ -222,5 +222,5 @@ Proprietary software. See LICENSE file for details.
 
 ---
 
-**Version 1.2.0** | Built with ❤️ for privacy-conscious users
+**Version 1.2.0** | © 2024 Local Password Vault. All rights reserved.
 
