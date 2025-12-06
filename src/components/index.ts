@@ -1,111 +1,71 @@
 /**
- * Components Index
+ * Components Index - Local Password Vault
  *
- * Centralized exports for all components in the After I'm Gone application.
+ * Centralized exports for all components.
  * Organized by feature area for cleaner imports.
  *
  * Usage:
- *   import { LoginScreen, Dashboard } from '@/components';
- *   import { ErrorBoundary } from '@/components/ui';
+ *   import { LoginScreen, Dashboard, MainVault } from './components';
  */
 
 // ==================== Core App Components ====================
-export { default as App } from '../App';
-export { default as LoginScreen } from './LoginScreen';
-export { default as MainLayout } from './MainLayout';
-export { default as Dashboard } from './Dashboard';
-export { default as Settings } from './Settings';
-export { default as Sidebar } from './Sidebar';
+export { LoginScreen } from './LoginScreen';
+export { MainVault } from './MainVault';
+export { Dashboard } from './Dashboard';
+export { Settings } from './Settings';
+export { EntryForm } from './EntryForm';
+export { FAQ } from './FAQ';
 
-// ==================== Onboarding & Tutorial ====================
-export { default as OnboardingWizard } from './OnboardingWizard';
-export { default as OnboardingStep } from './OnboardingStep';
-export { default as OnboardingHighlightCards } from './OnboardingHighlightCards';
+// ==================== Authentication ====================
+export { ForgotPassword } from './ForgotPassword';
+export { RecoveryPhraseSetup } from './RecoveryPhraseSetup';
+export { RecoveryOptionsScreen } from './RecoveryOptionsScreen';
 
-// ==================== Form Components ====================
-export { default as RecordForm } from './RecordForm';
-export { default as RecordCard } from './RecordCard';
-export { default as FormComponents } from './FormComponents';
-export { default as FormActionButtons } from './FormActionButtons';
-export { default as UnifiedError } from './UnifiedError';
-export { default as SaveButton } from './SaveButton';
-export { default as ConfirmDialog } from './ConfirmDialog';
+// ==================== License & Activation ====================
+export { LicenseScreen } from './LicenseScreen';
+export { KeyActivationScreen } from './KeyActivationScreen';
+export { LicenseKeyDisplay } from './LicenseKeyDisplay';
+export { LicenseTransferDialog } from './LicenseTransferDialog';
+export { EulaAgreement } from './EulaAgreement';
 
-// ==================== Section Components ====================
-export { default as PersonalInfo } from './PersonalInfo';
-export { default as PersonalProperty } from './PersonalProperty';
-export { default as Financial } from './Financial';
-export { default as Business } from './Business';
-export { default as Insurance } from './Insurance';
-export { default as Household } from './Household';
-export { default as Properties } from './Properties';
-export { default as Vehicles } from './Vehicles';
-export { default as Pets } from './Pets';
-export { default as DigitalLife } from './DigitalLife';
-export { default as TrustedContacts } from './TrustedContacts';
-export { default as FamilyMembers } from './FamilyMembers';
-export { default as LegalDocuments } from './LegalDocuments';
-export { default as EndOfLife } from './EndOfLife';
-export { default as LegacyNotes } from './LegacyNotes';
+// ==================== Trial ====================
+export { TrialStatusBanner } from './TrialStatusBanner';
+export { TrialExpirationBanner } from './TrialExpirationBanner';
+export { TrialWarningPopup } from './TrialWarningPopup';
+export { ExpiredTrialScreen } from './ExpiredTrialScreen';
+export { TrialTestingTools } from './TrialTestingTools';
 
-// ==================== Form Components (Specific) ====================
-export { default as AfterImGoneForm } from './AfterImGoneForm';
-export { default as BusinessForm } from './BusinessForm';
-export { default as DigitalLifeForm } from './DigitalLifeForm';
-export { default as HouseholdForm } from './HouseholdForm';
-export { default as InsuranceForm } from './InsuranceForm';
-export { default as PersonalPropertyForm } from './PersonalPropertyForm';
-export { default as PetsForm } from './PetsForm';
-export { default as PropertiesForm } from './PropertiesForm';
-export { default as VehiclesForm } from './VehiclesForm';
+// ==================== Vault Components ====================
+export * from './vault';
 
-// ==================== Special Forms ====================
-export { default as AssetForm } from './AssetForm';
-export { default as ContactForm } from './ContactForm';
-export { default as DocumentForm } from './DocumentForm';
-export { default as InstructionForm } from './InstructionForm';
-export { default as NoteForm } from './NoteForm';
+// ==================== UI Components ====================
+export { ErrorBoundary } from './ErrorBoundary';
+export { Skeleton, SkeletonCard, SkeletonList } from './Skeleton';
+export { OfflineIndicator } from './OfflineIndicator';
+export { UndoToast } from './UndoToast';
+export { CategoryIcon } from './CategoryIcon';
+export { PasswordGenerator } from './PasswordGenerator';
+export { LanguageSelector } from './LanguageSelector';
 
-// ==================== UI & Feedback ====================
-export { default as ErrorBoundary } from './ErrorBoundary';
-export { default as ErrorMessage } from './ErrorMessage';
-export { default as InlineError } from './InlineError';
-export { default as Toast } from './Toast';
-export { default as SkeletonLoader } from './SkeletonLoader';
-export { default as Tooltip } from './Tooltip';
+// ==================== Modals ====================
+export { KeyboardShortcutsModal, useKeyboardShortcuts } from './KeyboardShortcutsModal';
+export { WhatsNewModal, useWhatsNew } from './WhatsNewModal';
+export { OnboardingTutorial, useOnboarding } from './OnboardingTutorial';
+export { MobileAccess } from './MobileAccess';
 
-// ==================== Utility Components ====================
-export { default as AdvancedSearch } from './AdvancedSearch';
-export { default as AuditTrail } from './AuditTrail';
-export { default as BackupSettings } from './BackupSettings';
-export { default as BackupStatus } from './BackupStatus';
-export { default as BulkOperationsPanel } from './BulkOperationsPanel';
-export { default as CategoryHeader } from './CategoryHeader';
-export { default as CharacterCount } from './CharacterCount';
-export { default as EmergencyAccessGuide } from './EmergencyAccessGuide';
-export { default as ExecutorInfoBanner } from './ExecutorInfoBanner';
-export { default as ExecutorMode } from './ExecutorMode';
-export { default as Export } from './Export';
-export { default as MobileAccess } from './MobileAccess';
-export { default as PasswordHintDisplay } from './PasswordHintDisplay';
-export { default as PrintExportModal } from './PrintExportModal';
-export { default as RecoveryKeyManagement } from './RecoveryKeyManagement';
-export { default as RecoveryKeySetup } from './RecoveryKeySetup';
-export { default as SecurityStatus } from './SecurityStatus';
-export { default as TagManager } from './TagManager';
-export { default as TagSelector } from './TagSelector';
-export { default as TrialStatus } from './TrialStatus';
-export { default as VersionHistory } from './VersionHistory';
+// ==================== Floating Panel (Electron) ====================
+export { FloatingButton } from './FloatingButton';
+export { FloatingPanel } from './FloatingPanel';
+export { ElectronFloatingPanel } from './ElectronFloatingPanel';
 
-// ==================== Activation & Purchase ====================
-export { default as ActivationScreen } from './ActivationScreen';
-export { default as PurchaseScreen } from './PurchaseScreen';
-export { default as ForgotPasswordScreen } from './ForgotPasswordScreen';
-export { default as LandingPage } from './LandingPage';
+// ==================== Landing & Download Pages ====================
+export { LandingPage } from './LandingPage';
+export { DownloadPage } from './DownloadPage';
+export { DownloadInstructions } from './DownloadInstructions';
+export { PurchaseSuccessPage } from './PurchaseSuccessPage';
 
 // ==================== Accessibility ====================
 export * from './accessibility';
 
-// ==================== Re-export commonly used components ====================
-// These can be imported directly from @/components for convenience
-export { ErrorBoundary as AppErrorBoundary } from './ErrorBoundary';
+// ==================== Settings Modals ====================
+export * from './settings';

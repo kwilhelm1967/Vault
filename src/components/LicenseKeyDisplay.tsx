@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Calendar, Copy, CheckCircle } from "lucide-react";
+import { devError } from "../utils/devLog";
 import {
   singleUserLicenses,
   familyLicenses,
@@ -21,7 +22,7 @@ export const LicenseKeyDisplay: React.FC<LicenseKeyDisplayProps> = ({
       setCopiedKey(text);
       setTimeout(() => setCopiedKey(null), 2000);
     } catch (err) {
-      console.error("Failed to copy to clipboard:", err);
+      devError("Failed to copy to clipboard:", err);
     }
   };
 

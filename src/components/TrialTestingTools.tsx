@@ -1,5 +1,9 @@
 import React from "react";
 import { trialService } from "../utils/trialService";
+import { safeParseJWT } from "../utils/safeUtils";
+
+// Constant determined at build time - never changes at runtime
+const IS_DEV = import.meta.env.DEV;
 
 interface TrialTestingToolsProps {
   onShowWarning: (type: 'expiring' | 'final') => void;
@@ -18,8 +22,11 @@ export const TrialTestingTools: React.FC<TrialTestingToolsProps> = ({ onShowWarn
   const [, setCurrentTime] = React.useState(new Date());
   const [trialInfo, setTrialInfo] = React.useState<TrialInfo | null>(null);
 
-  // Update time every second
+  // Update time every second - only in dev mode
+  // IS_DEV is a build-time constant, so empty deps array is correct
   React.useEffect(() => {
+    if (!IS_DEV) return;
+    
     const interval = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
@@ -34,7 +41,12 @@ export const TrialTestingTools: React.FC<TrialTestingToolsProps> = ({ onShowWarn
       clearInterval(interval);
       clearInterval(trialInterval);
     };
-  }, []);
+  }, []); // Empty deps - IS_DEV never changes at runtime
+  
+  // Only render in development mode - hidden in production
+  if (!IS_DEV) {
+    return null;
+  }
 
   const handleTriggerExpiringWarning = () => {
     // Simulate the expiring warning state
@@ -69,8 +81,14 @@ export const TrialTestingTools: React.FC<TrialTestingToolsProps> = ({ onShowWarn
   const handleDecodeJWT = () => {
     const token = localStorage.getItem('license_token');
     if (token) {
-      try {
-        const tokenData = JSON.parse(atob(token.split('.')[1]));
+      const tokenData = safeParseJWT<{
+        warningPopup1Timestamp?: string;
+        warningPopup2Timestamp?: string;
+        trialExpiryDate?: string;
+        isTrial?: boolean;
+      }>(token);
+      
+      if (tokenData) {
         console.log('🔑 JWT TOKEN DECODED:', tokenData);
         console.log('⚠️ WARNING TIMESTAMPS:', {
           warning1: tokenData.warningPopup1Timestamp,
@@ -78,8 +96,8 @@ export const TrialTestingTools: React.FC<TrialTestingToolsProps> = ({ onShowWarn
           expiry: tokenData.trialExpiryDate,
           isTrial: tokenData.isTrial
         });
-      } catch (error) {
-        console.error('❌ FAILED TO DECODE JWT:', error);
+      } else {
+        console.log('❌ FAILED TO DECODE JWT - invalid format');
       }
     } else {
       console.log('❌ NO LICENSE TOKEN FOUND');

@@ -4,18 +4,19 @@
  * Manages mobile companion app access with QR codes and view-only tokens.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Smartphone, Clock, Plus, Trash2, Info, Shield, X } from "lucide-react";
 import { mobileService, MobileAccessToken } from "../utils/mobileService";
+import { devError, devWarn } from "../utils/devLog";
 
 // Dynamically import qrcode
 let QRCode: { toDataURL: (text: string) => Promise<string> } | null = null;
-const loadQRCode = async () => {
+const loadQRCodeLib = async () => {
   try {
     // @ts-expect-error - qrcode may not be installed
     QRCode = (await import("qrcode")).default;
   } catch (error) {
-    console.warn("QRCode library not available:", error);
+    devWarn("QRCode library not available:", error);
   }
 };
 
@@ -33,30 +34,9 @@ export const MobileAccess = ({ onClose }: MobileAccessProps) => {
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<Record<string, string>>({});
   const [revokeConfirmToken, setRevokeConfirmToken] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadTokens();
-    loadQRCode();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const loadTokens = async () => {
-    setIsLoading(true);
-    try {
-      await mobileService.loadTokens();
-      const activeTokens = mobileService.getActiveTokens();
-      setTokens(activeTokens);
-      
-      // Generate QR codes for active tokens
-      await generateQRCodes(activeTokens);
-    } catch (error) {
-      console.error("Failed to load tokens:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const generateQRCodes = async (tokenList: MobileAccessToken[]) => {
-    await loadQRCode();
+  // Generate QR codes for a list of tokens
+  const generateQRCodes = useCallback(async (tokenList: MobileAccessToken[]) => {
+    await loadQRCodeLib();
     if (!QRCode) return;
 
     const qrCodes: Record<string, string> = {};
@@ -74,12 +54,35 @@ export const MobileAccess = ({ onClose }: MobileAccessProps) => {
         });
         qrCodes[token.token] = dataUrl;
       } catch (error) {
-        console.error(`Failed to generate QR code for token ${token.token}:`, error);
+        devError(`Failed to generate QR code for token ${token.token}:`, error);
       }
     }
     
     setQrCodeDataUrl(qrCodes);
-  };
+  }, []);
+
+  // Load tokens from storage
+  const loadTokens = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      await mobileService.loadTokens();
+      const activeTokens = mobileService.getActiveTokens();
+      setTokens(activeTokens);
+      
+      // Generate QR codes for active tokens
+      await generateQRCodes(activeTokens);
+    } catch (error) {
+      devError("Failed to load tokens:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [generateQRCodes]);
+
+  // Initialize on mount
+  useEffect(() => {
+    loadTokens();
+    loadQRCodeLib();
+  }, [loadTokens]);
 
   const handleCreateToken = async () => {
     try {
@@ -96,7 +99,7 @@ export const MobileAccess = ({ onClose }: MobileAccessProps) => {
       setNewTokenPermissions('view-only');
       setError("");
     } catch (error) {
-      console.error("Failed to create token:", error);
+      devError("Failed to create token:", error);
       setError("Unable to create token. Please ensure your vault is unlocked and try again.");
     }
   };
@@ -108,7 +111,7 @@ export const MobileAccess = ({ onClose }: MobileAccessProps) => {
       await loadTokens();
       setRevokeConfirmToken(null);
     } catch (error) {
-      console.error("Failed to revoke token:", error);
+      devError("Failed to revoke token:", error);
       setError("Unable to revoke token. Please try again.");
     }
   };
@@ -127,8 +130,7 @@ export const MobileAccess = ({ onClose }: MobileAccessProps) => {
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ backgroundColor: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(4px)' }}
+      className="form-modal-backdrop"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div 
@@ -161,6 +163,7 @@ export const MobileAccess = ({ onClose }: MobileAccessProps) => {
           <button
             type="button"
             onClick={onClose}
+            aria-label="Close mobile access"
             className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-white transition-colors"
             style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
           >
@@ -202,6 +205,7 @@ export const MobileAccess = ({ onClose }: MobileAccessProps) => {
               <button
                 type="button"
                 onClick={() => setError("")}
+                aria-label="Dismiss error"
                 className="ml-auto text-red-400 hover:text-red-300"
               >
                 <X className="w-4 h-4" />
@@ -248,6 +252,7 @@ export const MobileAccess = ({ onClose }: MobileAccessProps) => {
                         setShowCreateForm(false);
                         setError("");
                       }}
+                      aria-label="Cancel creating session"
                       className="text-gray-400 hover:text-white"
                     >
                       <X className="w-4 h-4" />

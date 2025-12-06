@@ -16,6 +16,8 @@
 import environment from "../config/environment";
 import { trialService, TrialInfo } from "./trialService";
 import { getLPVDeviceFingerprint, isValidDeviceId } from "./deviceFingerprint";
+import { safeParseJWT } from "./safeUtils";
+import { devError } from "./devLog";
 
 export type LicenseType = "personal" | "family" | "trial";
 
@@ -205,26 +207,22 @@ export class LicenseService {
 
     // For trial licenses, check expiration
     if (type === 'trial') {
-      try {
-        const storedData = localStorage.getItem('license_token');
-        if (storedData) {
-          const tokenData = JSON.parse(atob(storedData.split('.')[1]));
-          if (tokenData.trialExpiryDate) {
-            const trialExpiryDate = new Date(tokenData.trialExpiryDate);
-            if (new Date() > trialExpiryDate) {
-              this.removeLicense();
-              trialService.endTrial();
-              return {
-                isValid: false,
-                type: null,
-                key: null,
-                activatedDate: null,
-              };
-            }
+      const storedData = localStorage.getItem('license_token');
+      if (storedData) {
+        const tokenData = safeParseJWT<{ trialExpiryDate?: string }>(storedData);
+        if (tokenData?.trialExpiryDate) {
+          const trialExpiryDate = new Date(tokenData.trialExpiryDate);
+          if (new Date() > trialExpiryDate) {
+            this.removeLicense();
+            trialService.endTrial();
+            return {
+              isValid: false,
+              type: null,
+              key: null,
+              activatedDate: null,
+            };
           }
         }
-      } catch {
-        // Token parsing error
       }
     }
 
@@ -368,7 +366,7 @@ export class LicenseService {
       };
 
     } catch (error) {
-      console.error("License activation error:", error);
+      devError("License activation error:", error);
 
       if (error instanceof TypeError && error.message.includes("fetch")) {
         return {
@@ -444,7 +442,7 @@ export class LicenseService {
       };
 
     } catch (error) {
-      console.error("License transfer error:", error);
+      devError("License transfer error:", error);
 
       if (error instanceof TypeError && error.message.includes("fetch")) {
         return {

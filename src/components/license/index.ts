@@ -4,8 +4,7 @@
  * Components for license activation and management.
  */
 
-export { default as LicenseScreen } from '../LicenseScreen';
-export { default as LicenseKeyDisplay } from '../LicenseKeyDisplay';
-export { default as KeyActivationScreen } from '../KeyActivationScreen';
-export { default as EulaAgreement } from '../EulaAgreement';
-
+export { LicenseScreen } from '../LicenseScreen';
+export { LicenseKeyDisplay } from '../LicenseKeyDisplay';
+export { KeyActivationScreen } from '../KeyActivationScreen';
+export { EulaAgreement } from '../EulaAgreement';

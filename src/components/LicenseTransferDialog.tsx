@@ -81,8 +81,8 @@ export const LicenseTransferDialog: React.FC<LicenseTransferDialogProps> = ({
   // Transfer limit reached state
   if (transferResult?.status === "transfer_limit_reached") {
     return (
-      <div className="fixed inset-0 bg-slate-900/95 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
-        <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 max-w-md w-full shadow-2xl animate-slideUp">
+      <div className="form-modal-backdrop">
+        <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 max-w-md w-full shadow-2xl">
           {/* Icon */}
           <div className="flex justify-center mb-6">
             <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center">
@@ -126,8 +126,8 @@ export const LicenseTransferDialog: React.FC<LicenseTransferDialogProps> = ({
   // Success state
   if (transferResult?.success) {
     return (
-      <div className="fixed inset-0 bg-slate-900/95 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
-        <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 max-w-md w-full shadow-2xl animate-slideUp">
+      <div className="form-modal-backdrop">
+        <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 max-w-md w-full shadow-2xl">
           <div className="flex justify-center mb-6">
             <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center">
               <CheckCircle className="w-8 h-8 text-emerald-400" />
@@ -150,8 +150,8 @@ export const LicenseTransferDialog: React.FC<LicenseTransferDialogProps> = ({
   // Error state (non-transfer-limit)
   if (transferResult && !transferResult.success) {
     return (
-      <div className="fixed inset-0 bg-slate-900/95 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
-        <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 max-w-md w-full shadow-2xl animate-slideUp">
+      <div className="form-modal-backdrop">
+        <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 max-w-md w-full shadow-2xl">
           <div className="flex justify-center mb-6">
             <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center">
               <XCircle className="w-8 h-8 text-red-400" />
@@ -184,12 +184,13 @@ export const LicenseTransferDialog: React.FC<LicenseTransferDialogProps> = ({
 
   // Main transfer confirmation dialog
   return (
-    <div className="fixed inset-0 bg-slate-900/95 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
-      <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 max-w-lg w-full shadow-2xl animate-slideUp">
+    <div className="form-modal-backdrop">
+      <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 max-w-lg w-full shadow-2xl relative">
         {/* Close button */}
         <button
           onClick={onCancel}
           disabled={isTransferring}
+          aria-label="Close dialog"
           className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700/50 transition-all disabled:opacity-50"
         >
           <X className="w-5 h-5" />

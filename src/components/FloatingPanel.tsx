@@ -16,6 +16,7 @@ import {
   Clock,
 } from "lucide-react";
 import { PasswordEntry, Category } from "../types";
+import { devError } from "../utils/devLog";
 import { CategoryIcon } from "./CategoryIcon";
 import { EntryForm } from "./EntryForm";
 
@@ -36,9 +37,9 @@ interface FloatingPanelProps {
   categories: Category[];
   onAddEntry: (
     entry: Omit<PasswordEntry, "id" | "createdAt" | "updatedAt">
-  ) => void;
-  onUpdateEntry: (entry: PasswordEntry) => void;
-  onDeleteEntry: (id: string) => void;
+  ) => Promise<void>;
+  onUpdateEntry: (entry: PasswordEntry) => Promise<void>;
+  onDeleteEntry: (id: string) => Promise<void>;
   onLock: () => void;
   onExport: () => void;
   searchTerm: string;
@@ -133,7 +134,7 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
       try {
         setFavorites(new Set(JSON.parse(stored)));
       } catch (error) {
-        console.error("Failed to parse favorites:", error);
+        devError("Failed to parse favorites:", error);
       }
     }
   }, []);
@@ -166,8 +167,8 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
         setLastPosition(validatedPosition);
         setPositionLoaded(true);
         setIsInitialized(true);
-      } catch {
-        // Silent error handling to prevent console noise
+      } catch (error) {
+        devError("FloatingPanel position load failed:", error);
         setIsInitialized(true);
       }
     }
@@ -237,8 +238,8 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
         if (newX !== position.x || newY !== position.y) {
           setPosition({ x: newX, y: newY });
         }
-      } catch {
-        // Silent error handling to prevent crashes
+      } catch (error) {
+        devError("FloatingPanel drag position update failed:", error);
       }
     }
   }, [position, windowDimensions, isMinimized]);
@@ -293,7 +294,7 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
         navigator.clipboard.writeText("");
       }, 30000);
     } catch (err) {
-      console.error("Failed to copy to clipboard:", err);
+      devError("Failed to copy to clipboard:", err);
     }
   };
 
@@ -307,18 +308,18 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
     setFavorites(newFavorites);
   };
 
-  const handleAddEntry = (
+  const handleAddEntry = async (
     entryData: Omit<PasswordEntry, "id" | "createdAt" | "updatedAt">
   ) => {
-    onAddEntry(entryData);
+    await onAddEntry(entryData);
     setShowAddForm(false);
   };
 
-  const handleUpdateEntry = (
+  const handleUpdateEntry = async (
     entryData: Omit<PasswordEntry, "id" | "createdAt" | "updatedAt">
   ) => {
     if (editingEntry) {
-      onUpdateEntry({ ...editingEntry, ...entryData, updatedAt: new Date() });
+      await onUpdateEntry({ ...editingEntry, ...entryData, updatedAt: new Date() });
       setEditingEntry(null);
     }
   };
@@ -392,7 +393,7 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
 
         setPosition({ x: newX, y: newY });
       } catch (error) {
-        console.error("Error during drag:", error);
+        devError("Error during drag:", error);
         setIsDragging(false);
       }
     };

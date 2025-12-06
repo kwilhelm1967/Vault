@@ -4,8 +4,7 @@
  * Dialog and modal components.
  */
 
-export { default as KeyboardShortcutsModal } from '../KeyboardShortcutsModal';
-export { default as WhatsNewModal } from '../WhatsNewModal';
-export { default as OnboardingTutorial } from '../OnboardingTutorial';
-export { default as EntryForm } from '../EntryForm';
-
+export { KeyboardShortcutsModal, useKeyboardShortcuts } from '../KeyboardShortcutsModal';
+export { WhatsNewModal, useWhatsNew } from '../WhatsNewModal';
+export { OnboardingTutorial, useOnboarding } from '../OnboardingTutorial';
+export { EntryForm } from '../EntryForm';

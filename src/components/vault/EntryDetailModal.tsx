@@ -122,7 +122,7 @@ export const EntryDetailModal: React.FC<EntryDetailModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 bg-slate-900/90 backdrop-blur-sm flex items-start justify-center pt-[10vh] p-4 z-50 overflow-y-auto animate-fadeIn"
+      className="form-modal-backdrop"
       onClick={onClose}
     >
       <div 
@@ -162,6 +162,7 @@ export const EntryDetailModal: React.FC<EntryDetailModalProps> = ({
             </button>
             <button
               onClick={onClose}
+              aria-label="Close entry details"
               className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700/50 transition-colors"
             >
               <X className="w-5 h-5" />

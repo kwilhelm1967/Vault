@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { PasswordEntry } from "../types";
+import { devError } from "../utils/devLog";
 
 // Using the global ElectronAPI type from vite-env.d.ts
 
@@ -22,7 +23,7 @@ export const useElectron = () => {
           setPlatform(appPlatform);
           setIsVaultUnlocked(vaultUnlocked);
         } catch (error) {
-          console.error("Failed to get electron info:", error);
+          devError("Failed to get electron info:", error);
         }
       }
     };

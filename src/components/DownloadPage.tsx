@@ -19,6 +19,7 @@ import {
   ChevronRight,
   ExternalLink
 } from 'lucide-react';
+import { devError } from "../utils/devLog";
 
 // Color palette matching LPV design system
 const colors = {
@@ -185,7 +186,7 @@ export const DownloadPage: React.FC = () => {
       
       setDownloadComplete(platform);
     } catch (err) {
-      console.error('Download failed:', err);
+      devError('Download failed:', err);
     } finally {
       setDownloading(null);
     }

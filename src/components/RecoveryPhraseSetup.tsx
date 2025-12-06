@@ -39,7 +39,7 @@ export const RecoveryPhraseSetup: React.FC<RecoveryPhraseSetupProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="form-modal-backdrop">
       <div className="w-full max-w-lg mx-4">
         <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl border border-slate-700/50 overflow-hidden">
           {/* Content */}

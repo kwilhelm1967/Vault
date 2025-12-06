@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { Clock, ShoppingCart, AlertTriangle, Download, Shield } from "lucide-react";
+import { Clock, ShoppingCart, AlertTriangle, Download } from "lucide-react";
 import { trialService } from "../utils/trialService";
 
 // Consistent color palette
@@ -182,7 +182,6 @@ export const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
     const baseTime = currentExpiry ? new Date(currentExpiry).getTime() : Date.now();
     const newExpiry = new Date(baseTime + 60 * 60 * 1000); // Add 1 hour
     localStorage.setItem('trial_expiry_time', newExpiry.toISOString());
-    console.log('Trial extended to:', newExpiry.toISOString());
     window.location.reload();
   };
 

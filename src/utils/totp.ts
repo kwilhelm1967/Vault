@@ -5,6 +5,8 @@
  * Uses Web Crypto API for HMAC-SHA1.
  */
 
+import { devError } from "./devLog";
+
 // Base32 alphabet (RFC 4648)
 const BASE32_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
@@ -106,7 +108,7 @@ export async function generateTOTP(
     const hmac = await hmacSha1(key, counterBytes);
     return dynamicTruncate(hmac, digits);
   } catch (error) {
-    console.error('TOTP generation error:', error);
+    devError('TOTP generation error:', error);
     throw new Error('Invalid TOTP secret');
   }
 }

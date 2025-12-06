@@ -7,6 +7,8 @@
  * - Mobile session management
  */
 
+import { devError } from "./devLog";
+
 export interface MobileAccessToken {
   token: string;
   createdAt: Date;
@@ -181,7 +183,7 @@ class MobileService {
       }));
       localStorage.setItem(MOBILE_TOKENS_KEY, JSON.stringify(tokensToSave));
     } catch (error) {
-      console.error("Failed to save mobile tokens:", error);
+      devError("Failed to save mobile tokens:", error);
     }
   }
 
@@ -203,7 +205,7 @@ class MobileService {
         this.activeTokens = [];
       }
     } catch (error) {
-      console.error("Failed to load mobile tokens:", error);
+      devError("Failed to load mobile tokens:", error);
       this.activeTokens = [];
     }
   }

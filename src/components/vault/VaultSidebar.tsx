@@ -223,10 +223,10 @@ export const VaultSidebar: React.FC<VaultSidebarProps> = ({
 
         {/* Weak Passwords */}
         <NavItem
-          icon={<AlertTriangle className="w-4 h-4 opacity-70 text-amber-400" strokeWidth={1.5} />}
+          icon={<AlertTriangle className="w-4 h-4 opacity-70" strokeWidth={1.5} style={{ color: '#C9AE66' }} />}
           label="Weak Passwords"
           count={weakPasswordCount > 0 ? weakPasswordCount : undefined}
-          countColor={weakPasswordCount > 0 ? "text-amber-400" : undefined}
+          countColor={weakPasswordCount > 0 ? "text-[#C9AE66]" : undefined}
           isActive={currentView === "passwords" && showWeakOnly}
           onClick={() => {
             onShowWeakOnly(true);

@@ -1,162 +1,23 @@
 // ============================================
-// ESTATE PLANNING TYPES
+// LOCAL PASSWORD VAULT TYPES
 // ============================================
 
-export interface Person {
-  id: string;
-  firstName: string;
-  lastName: string;
-  dateOfBirth?: string;
-  ssn?: string;
-  relationship?: string;
-  contactInfo: ContactInfo;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface ContactInfo {
-  email?: string;
-  phone?: string;
-  address?: Address;
-  emergencyContact?: boolean;
-}
-
-export interface Address {
-  street: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country?: string;
-}
-
-export interface Asset {
-  id: string;
-  name: string;
-  type: AssetType;
-  value?: number;
-  description?: string;
-  location?: string;
-  accountNumber?: string;
-  beneficiary?: string;
-  documents?: Document[];
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export type AssetType =
-  | 'bank_account'
-  | 'investment'
-  | 'real_estate'
-  | 'vehicle'
-  | 'personal_property'
-  | 'insurance'
-  | 'business'
-  | 'other';
-
-export interface Document {
-  id: string;
-  name: string;
-  type: DocumentType;
-  filePath?: string;
-  url?: string;
-  description?: string;
-  uploadedAt: Date;
-}
-
-export type DocumentType =
-  | 'will'
-  | 'trust'
-  | 'insurance_policy'
-  | 'deed'
-  | 'tax_return'
-  | 'bank_statement'
-  | 'other';
-
-export interface Insurance {
-  id: string;
-  provider: string;
-  policyNumber: string;
-  type: InsuranceType;
-  coverage: number;
-  beneficiaries: string[];
-  contactInfo: ContactInfo;
-  documents?: Document[];
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export type InsuranceType =
-  | 'life'
-  | 'health'
-  | 'auto'
-  | 'home'
-  | 'disability'
-  | 'long_term_care'
-  | 'other';
-
-export interface Pet {
-  id: string;
-  name: string;
-  type: string;
-  breed?: string;
-  age?: number;
-  veterinarian?: ContactInfo;
-  caretaker?: string;
-  specialNeeds?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface Vehicle {
-  id: string;
-  make: string;
-  model: string;
-  year: number;
-  vin?: string;
-  licensePlate?: string;
-  location?: string;
-  beneficiary?: string;
-  documents?: Document[];
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface LegacyMessage {
-  id: string;
-  recipient: string;
-  message: string;
-  deliveryTrigger: DeliveryTrigger;
-  isPrivate: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export type DeliveryTrigger =
-  | 'immediately'
-  | 'after_death'
-  | 'anniversary'
-  | 'birthday'
-  | 'custom_date';
-
-export interface ExecutorInfo {
-  primaryExecutor: Person;
-  alternateExecutor?: Person;
-  attorney?: Person;
-  accountant?: Person;
-  notes?: string;
-}
-
-// ============================================
-// LEGACY PASSWORD VAULT TYPES (for compatibility)
-// ============================================
-
+/**
+ * Entry type - password entry or secure note
+ */
 export type EntryType = "password" | "secure_note";
 
+/**
+ * Password history item for tracking previous passwords
+ */
 export interface PasswordHistoryItem {
   password: string;
   changedAt: Date;
 }
 
+/**
+ * Custom field for user-defined data
+ */
 export interface CustomField {
   id: string;
   label: string;
@@ -164,6 +25,9 @@ export interface CustomField {
   isSecret?: boolean; // If true, value is hidden by default (like a password)
 }
 
+/**
+ * Main password entry interface
+ */
 export interface PasswordEntry {
   id: string;
   entryType?: EntryType; // defaults to "password" for backwards compatibility
@@ -177,12 +41,15 @@ export interface PasswordEntry {
   createdAt: Date;
   updatedAt: Date;
   isFavorite?: boolean;
-  passwordChangedAt?: Date;
+  lastPasswordChange?: Date;
   passwordHistory?: PasswordHistoryItem[]; // Previous passwords
   totpSecret?: string; // 2FA TOTP secret key (Base32 encoded)
   customFields?: CustomField[]; // User-defined fields
 }
 
+/**
+ * Category for organizing entries
+ */
 export interface Category {
   id: string;
   name: string;
@@ -205,6 +72,34 @@ export type RawPasswordEntry = Record<string, unknown> & {
 };
 
 // ============================================
+// LICENSE & TRIAL TYPES
+// ============================================
+
+export interface LicenseInfo {
+  licenseKey: string;
+  planType: "personal" | "family" | "trial";
+  isValid: boolean;
+  activatedAt?: Date;
+  expiresAt?: Date;
+}
+
+export interface TrialInfo {
+  isActive: boolean;
+  isExpired: boolean;
+  daysRemaining: number;
+  hoursRemaining?: number;
+  startDate?: Date;
+  endDate?: Date;
+}
+
+export interface AppLicenseStatus {
+  canUseApp: boolean;
+  requiresPurchase: boolean;
+  licenseInfo: LicenseInfo | null;
+  trialInfo: TrialInfo;
+}
+
+// ============================================
 // UTILITY TYPES
 // ============================================
 
@@ -215,12 +110,10 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-  hasMore: boolean;
+export interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+  warnings?: string[];
 }
 
 export interface FormState<T> {
@@ -234,12 +127,6 @@ export interface SelectOption {
   value: string;
   label: string;
   disabled?: boolean;
-}
-
-export interface ValidationResult {
-  isValid: boolean;
-  errors: string[];
-  warnings?: string[];
 }
 
 // ============================================
@@ -270,10 +157,13 @@ export interface ModalProps extends BaseComponentProps {
   showCloseButton?: boolean;
 }
 
-export interface TableColumn<T> {
-  key: keyof T;
-  header: string;
-  render?: (value: any, item: T) => React.ReactNode;
-  sortable?: boolean;
-  width?: string;
+// ============================================
+// VAULT SETTINGS
+// ============================================
+
+export interface VaultSettings {
+  autoLockTimeout: number; // minutes
+  clipboardClearTimeout: number; // seconds
+  showPasswordsDefault: boolean;
+  soundEffectsEnabled: boolean;
 }

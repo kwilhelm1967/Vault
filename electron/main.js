@@ -513,17 +513,19 @@ const createFloatingButton = () => {
     const primaryDisplay = screen.getPrimaryDisplay();
     const { width, height } = primaryDisplay.workAreaSize;
 
-    // Button size - match Tailwind w-12 h-12 (48px)
-    const buttonSize = 48;
+    // Button visual size is 48px (w-12 h-12), but window needs extra room
+    // for hover scale (1.15x = 55px) + shadow (extends ~20px) = ~75px minimum
+    const buttonVisualSize = 48;
+    const windowSize = 80; // Extra padding for hover effects and shadows
 
     // Determine button position (default to bottom-right corner)
     const windowOptions = {
-      width: buttonSize,
-      height: buttonSize,
-      minWidth: buttonSize,
-      maxWidth: buttonSize,
-      minHeight: buttonSize,
-      maxHeight: buttonSize,
+      width: windowSize,
+      height: windowSize,
+      minWidth: windowSize,
+      maxWidth: windowSize,
+      minHeight: windowSize,
+      maxHeight: windowSize,
       alwaysOnTop: true,
       focusable: true,
       skipTaskbar: true,
@@ -564,8 +566,8 @@ const createFloatingButton = () => {
       floatingButtonPosition = { x: validX, y: validY };
     } else {
       // Default to bottom-right corner
-      windowOptions.x = width - buttonSize - 20;
-      windowOptions.y = height - buttonSize - 20;
+      windowOptions.x = width - windowSize - 20;
+      windowOptions.y = height - windowSize - 20;
       floatingButtonPosition = { x: windowOptions.x, y: windowOptions.y };
     }
 
@@ -597,8 +599,8 @@ const createFloatingButton = () => {
     floatingButton.once("ready-to-show", () => {
       // Force window bounds to prevent phantom resize bug on Windows
       floatingButton.setBounds({
-        width: buttonSize,
-        height: buttonSize,
+        width: windowSize,
+        height: windowSize,
         x: floatingButton.getBounds().x,
         y: floatingButton.getBounds().y,
       });
@@ -618,14 +620,14 @@ const createFloatingButton = () => {
     floatingButton.on("resize", () => {
       const currentBounds = floatingButton.getBounds();
       if (
-        currentBounds.width !== buttonSize ||
-        currentBounds.height !== buttonSize
+        currentBounds.width !== windowSize ||
+        currentBounds.height !== windowSize
       ) {
         floatingButton.setBounds({
           x: currentBounds.x,
           y: currentBounds.y,
-          width: buttonSize,
-          height: buttonSize,
+          width: windowSize,
+          height: windowSize,
         });
       }
     });
@@ -1490,10 +1492,10 @@ ipcMain.handle("move-floating-button", (event, x, y) => {
       // Ensure position is within screen bounds
       const primaryDisplay = screen.getPrimaryDisplay();
       const { width, height } = primaryDisplay.workAreaSize;
-      const buttonSize = 48; // Match Tailwind w-12 h-12
+      const windowSize = 80; // Match the window size (includes padding for hover effects)
 
-      const validX = Math.max(0, Math.min(width - buttonSize, x));
-      const validY = Math.max(0, Math.min(height - buttonSize, y));
+      const validX = Math.max(0, Math.min(width - windowSize, x));
+      const validY = Math.max(0, Math.min(height - windowSize, y));
 
       floatingButton.setPosition(validX, validY);
       return true;

@@ -19,6 +19,7 @@
  */
 
 import React, { useState, useCallback, useEffect } from "react";
+import { devError } from "../utils/devLog";
 import {
   RefreshCw,
   Copy,
@@ -295,7 +296,7 @@ export const PasswordGenerator: React.FC<PasswordGeneratorProps> = ({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Failed to copy:", err);
+      devError("Failed to copy:", err);
     }
   };
 

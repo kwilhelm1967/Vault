@@ -112,11 +112,11 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose })
 
   return (
     <div 
-      className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn"
+      className="form-modal-backdrop"
       onClick={onClose}
     >
       <div 
-        className="bg-slate-800/95 backdrop-blur-sm border border-slate-700/50 rounded-2xl w-full max-w-lg max-h-[80vh] overflow-hidden shadow-2xl animate-slideUp"
+        className="bg-slate-800/95 backdrop-blur-sm border border-slate-700/50 rounded-2xl w-full max-w-lg max-h-[80vh] overflow-hidden shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -137,6 +137,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ isOpen, onClose })
           </div>
           <button
             onClick={onClose}
+            aria-label="Close what's new"
             className="p-2 text-slate-500 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" strokeWidth={1.5} />

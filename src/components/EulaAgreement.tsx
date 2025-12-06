@@ -31,7 +31,7 @@ export const EulaAgreement: React.FC<EulaAgreementProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-sm overflow-hidden">
+    <div className="form-modal-backdrop">
       <div className="bg-slate-800 rounded-xl shadow-2xl w-full max-w-3xl h-[85vh] flex flex-col">
         <div className="p-6 border-b border-slate-700 flex items-center justify-between">
           <div className="flex items-center space-x-3">

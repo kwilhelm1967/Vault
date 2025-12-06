@@ -15,15 +15,17 @@ import { PasswordEntry, Category, RawPasswordEntry } from "../types";
 import { CategoryIcon } from "./CategoryIcon";
 import { EntryForm } from "./EntryForm";
 import { storageService } from "../utils/storage";
+import { safeParseJWT } from "../utils/safeUtils";
+import { devError } from "../utils/devLog";
 
 interface ElectronFloatingPanelProps {
   entries: PasswordEntry[];
   categories: Category[];
   onAddEntry: (
     entry: Omit<PasswordEntry, "id" | "createdAt" | "updatedAt">
-  ) => void;
-  onUpdateEntry: (entry: PasswordEntry) => void;
-  onDeleteEntry: (id: string) => void;
+  ) => Promise<void>;
+  onUpdateEntry: (entry: PasswordEntry) => Promise<void>;
+  onDeleteEntry: (id: string) => Promise<void>;
   onLock: () => void;
   onExport: () => void;
   onImport: () => void;
@@ -76,24 +78,20 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
 
     // Check license token for trial status
     if (licenseToken) {
-      try {
-        const tokenData = JSON.parse(atob(licenseToken.split('.')[1]));
-        if (tokenData.isTrial && tokenData.trialExpiryDate) {
-          const now = new Date();
-          const expiryDate = new Date(tokenData.trialExpiryDate);
-          const isExpired = now >= expiryDate;
+      const tokenData = safeParseJWT<{ isTrial?: boolean; trialExpiryDate?: string }>(licenseToken);
+      if (tokenData?.isTrial && tokenData.trialExpiryDate) {
+        const now = new Date();
+        const expiryDate = new Date(tokenData.trialExpiryDate);
+        const isExpired = now >= expiryDate;
 
-          return {
-            hasTrialBeenUsed: true,
-            isExpired,
-            isTrialActive: !isExpired,
-            daysRemaining: isExpired ? 0 : Math.max(0, Math.floor((expiryDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))),
-            startDate: new Date(localStorage.getItem('trial_start_date') || now.toISOString()),
-            endDate: expiryDate,
-          };
-        }
-      } catch (error) {
-        console.error('Error parsing license token:', error);
+        return {
+          hasTrialBeenUsed: true,
+          isExpired,
+          isTrialActive: !isExpired,
+          daysRemaining: isExpired ? 0 : Math.max(0, Math.floor((expiryDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))),
+          startDate: new Date(localStorage.getItem('trial_start_date') || now.toISOString()),
+          endDate: expiryDate,
+        };
       }
     }
 
@@ -174,7 +172,7 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
             }
           }
         } catch (error) {
-          console.error("Failed to initialize floating vault:", error);
+          devError("Failed to initialize floating vault:", error);
         }
       }
     };
@@ -204,7 +202,7 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
             onEntriesReload?.(mappedEntries);
           }
         } catch (error) {
-          console.error("Failed to handle vault unlock in floating panel:", error);
+          devError("Failed to handle vault unlock in floating panel:", error);
         }
       }
     };
@@ -245,7 +243,7 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
           onEntriesReload?.(loadedEntries || []);
         }
       } catch (error) {
-        console.error("Failed to reload entries in floating panel:", error);
+        devError("Failed to reload entries in floating panel:", error);
       }
     };
 
@@ -255,7 +253,7 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
         // Remove the specific listener
         window.electronAPI?.removeEntriesChangedListener?.(handleEntriesChanged);
       } catch (error) {
-        console.error("Error removing entries changed listener:", error);
+        devError("Error removing entries changed listener:", error);
       }
     };
   }, [onEntriesReload]);
@@ -286,27 +284,6 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
 
     return () => clearInterval(interval);
   }, []);
-
-  
-  // Load favorites from localStorage
-  // useEffect(() => {
-  //   const stored = localStorage.getItem("floating_panel_favorites");
-  //   if (stored) {
-  //     try {
-  //       setFavorites(new Set(JSON.parse(stored)));
-  //     } catch (error) {
-  //       console.error("Failed to parse favorites:", error);
-  //     }
-  //   }
-  // }, []);
-
-  // Save favorites to localStorage
-  // useEffect(() => {
-  //   localStorage.setItem(
-  //     "floating_panel_favorites",
-  //     JSON.stringify([...favorites])
-  //   );
-  // }, [favorites]);
 
   const filteredEntries = useMemo(() => {
     return entries.filter((entry) => {
@@ -359,7 +336,7 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
         navigator.clipboard.writeText("");
       }, 30000);
     } catch (err) {
-      console.error("Failed to copy to clipboard:", err);
+      devError("Failed to copy to clipboard:", err);
     }
   };
 
@@ -388,13 +365,13 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
   ) => {
     // Check if trial is expired
     if (isTrialExpired) {
-      console.error("Cannot add entry: Trial has expired");
+      devError("Cannot add entry: Trial has expired");
       return;
     }
 
     // Check if main vault is unlocked (floating panel relies on main window's vault state)
     if (!isMainVaultUnlocked) {
-      console.error("Cannot add entry: Main vault is locked");
+      devError("Cannot add entry: Main vault is locked");
       return;
     }
 
@@ -407,13 +384,13 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
   ) => {
     // Check if trial is expired
     if (isTrialExpired) {
-      console.error("Cannot update entry: Trial has expired");
+      devError("Cannot update entry: Trial has expired");
       return;
     }
 
     // Check if main vault is unlocked (floating panel relies on main window's vault state)
     if (!isMainVaultUnlocked) {
-      console.error("Cannot update entry: Main vault is locked");
+      devError("Cannot update entry: Main vault is locked");
       return;
     }
 
@@ -644,7 +621,7 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && entryToDelete && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-start justify-center pt-[30vh] p-4 z-[9999]">
+        <div className="form-modal-backdrop" style={{ zIndex: 9999 }}>
           <div className="bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 rounded-2xl p-6 w-full max-w-md border border-slate-600/50 shadow-2xl">
             <div className="text-center">
               <div className="p-3 bg-red-500/20 rounded-full w-fit mx-auto mb-4 border border-red-500/30">

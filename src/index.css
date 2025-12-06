@@ -20,7 +20,7 @@
   --color-primary-500: #5B82B8;
   --color-primary-400: #7A9DC7;
   
-  /* Legacy aliases */
+  /* Color aliases */
   --color-deep-navy: #0F172A;
   --color-soft-steel: #334155;
   --color-muted-sky: #93B4D1;
@@ -47,6 +47,8 @@
   --color-border-default: rgba(71, 85, 105, 0.5);
   --color-border-light: rgba(71, 85, 105, 0.3);
   --color-border-focus: rgba(91, 130, 184, 0.5);
+  --color-border-gold: rgba(201, 174, 102, 0.3);
+  --color-border-gold-strong: rgba(201, 174, 102, 0.5);
   
   /* Status Colors */
   --color-success: #10B981;
@@ -191,7 +193,7 @@ body::before {
 }
 
 /* ============================================
-   FORM STYLES (Legacy Vault Matching)
+   FORM STYLES
    ============================================ */
 
 .form-container {
@@ -209,26 +211,24 @@ body::before {
   position: fixed;
   inset: 0;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  padding-top: 5vh;
   padding: 1rem;
   z-index: 50;
   overflow-y: auto;
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+  background: 
+    url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2393B4D1' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"),
+    linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+}
+
+/* Modal content wrapper - ensures scrolling works */
+.form-modal-backdrop > div {
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
 }
 
 .form-modal-backdrop::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  opacity: 0.06;
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2393B4D1' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-  z-index: 0;
+  display: none;
 }
 
 .form-modal-content {
@@ -244,7 +244,7 @@ body::before {
   gap: 12px;
   margin-bottom: 24px;
   padding-bottom: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--color-border-gold);
 }
 
 .form-back-button {
@@ -291,7 +291,7 @@ body::before {
   letter-spacing: 0.05em;
   margin: 0 0 16px 0;
   padding-bottom: 8px;
-  border-bottom: 1px solid rgba(91, 130, 184, 0.2);
+  border-bottom: 1px solid var(--color-border-gold);
 }
 
 .form-field {
@@ -370,7 +370,7 @@ body::before {
   display: flex;
   gap: 12px;
   padding-top: 24px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--color-border-gold);
   margin-top: 24px;
 }
 
@@ -518,7 +518,7 @@ body::before {
 }
 
 /* Password Vault Navigation Styles - Left Accent Bar on Hover */
-/* Premium style matching Legacy Vault (Notion, VS Code, Discord pattern) */
+/* Premium style inspired by Notion, VS Code, Discord */
 .nav-item-hover {
   position: relative;
   overflow: visible;
@@ -819,21 +819,19 @@ body::before {
    ENHANCED MICRO-INTERACTIONS
    ============================================ */
 
-/* Bounce animation for success states */
-.animate-bounce-in {
-  animation: bounceIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+/* Smooth fade-in animation for modals */
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
 }
 
-@keyframes bounceIn {
+@keyframes fadeIn {
   0% {
     opacity: 0;
-    transform: scale(0.3);
+    transform: translateY(-8px);
   }
-  50% {
-    transform: scale(1.05);
-  }
-  70% {
-    transform: scale(0.9);
+  100% {
+    opacity: 1;
+    transform: translateY(0);
   }
   100% {
     opacity: 1;
@@ -1199,7 +1197,7 @@ select:focus:not(.input-error) {
   align-items: center;
   justify-content: space-between;
   padding: var(--spacing-lg, 1rem) var(--spacing-xl, 1.25rem);
-  border-bottom: 1px solid var(--color-border-light, rgba(71, 85, 105, 0.3));
+  border-bottom: 1px solid var(--color-border-gold);
 }
 
 /* Modal Title */
@@ -1239,7 +1237,7 @@ select:focus:not(.input-error) {
   justify-content: flex-end;
   gap: var(--spacing-md, 0.75rem);
   padding: var(--spacing-lg, 1rem) var(--spacing-xl, 1.25rem);
-  border-top: 1px solid var(--color-border-light, rgba(71, 85, 105, 0.3));
+  border-top: 1px solid var(--color-border-gold);
   background-color: rgba(30, 41, 59, 0.5);
 }
 

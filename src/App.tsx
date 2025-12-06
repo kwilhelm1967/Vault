@@ -8,6 +8,7 @@ import { TrialWarningPopup } from "./components/TrialWarningPopup";
 import { PasswordEntry, Category, RawPasswordEntry } from "./types";
 import { storageService } from "./utils/storage";
 import { importService } from "./utils/importService";
+import { devError } from "./utils/devLog";
 import { licenseService, AppLicenseStatus } from "./utils/licenseService";
 import { trialService, WarningPopupState } from "./utils/trialService";
 import { features } from "./config/environment";
@@ -17,11 +18,12 @@ import { DownloadPage } from "./components/DownloadPage";
 import { PurchaseSuccessPage } from "./components/PurchaseSuccessPage";
 import { OfflineIndicator } from "./components/OfflineIndicator";
 import { UndoToast } from "./components/UndoToast";
+import { Notification, useNotification } from "./components/Notification";
 import { WhatsNewModal, useWhatsNew } from "./components/WhatsNewModal";
 import { SkipLink } from "./components/accessibility";
 import { OnboardingTutorial, useOnboarding } from "./components/OnboardingTutorial";
 import { KeyboardShortcutsModal, useKeyboardShortcuts } from "./components/KeyboardShortcutsModal";
-import { MiniVaultButton } from "./components/MiniVaultButton";
+// MiniVaultButton removed - using Electron's FloatingButton instead
 
 // Fixed categories with proper typing
 const FIXED_CATEGORIES: Category[] = [
@@ -49,6 +51,12 @@ const useAppStatus = () => {
   // Initialize app status on mount
   useEffect(() => {
     updateAppStatus();
+    
+    // Fix for existing users: if vault exists but onboarding_completed isn't set,
+    // set it now to prevent tutorial from showing on every login
+    if (storageService.vaultExists() && !localStorage.getItem("onboarding_completed")) {
+      localStorage.setItem("onboarding_completed", "true");
+    }
   }, [updateAppStatus]);
 
   // Handle trial expiration with immediate redirect
@@ -185,8 +193,9 @@ const useVaultData = (isLocked: boolean, isElectron: boolean, loadSharedEntries?
             // Also save to localStorage as backup
             await storageService.saveEntries(loadedEntries);
           }
-        } catch {
+        } catch (error) {
           // Fallback to localStorage
+          devError("Shared entries load failed, using localStorage:", error);
         }
       }
 
@@ -198,8 +207,9 @@ const useVaultData = (isLocked: boolean, isElectron: boolean, loadSharedEntries?
         if (isElectron && saveSharedEntries && loadedEntries && loadedEntries.length > 0) {
           try {
             await saveSharedEntries(loadedEntries);
-          } catch {
+          } catch (error) {
             // Shared storage unavailable
+            devError("Failed to sync to shared storage:", error);
           }
         }
       }
@@ -210,7 +220,7 @@ const useVaultData = (isLocked: boolean, isElectron: boolean, loadSharedEntries?
       // Ensure fixed categories are saved
       await storageService.saveCategories(FIXED_CATEGORIES);
     } catch (error) {
-      console.error("Failed to load entries:", error);
+      devError("Failed to load entries:", error);
       setEntries([]);
       setIsInitialized(true);
       if (error instanceof Error && error.message?.includes("locked")) {
@@ -256,7 +266,7 @@ const useVaultData = (isLocked: boolean, isElectron: boolean, loadSharedEntries?
           setEntries(loadedEntries || []);
         }
       } catch (error) {
-        console.error("Failed to reload entries:", error);
+        devError("Failed to reload entries:", error);
         setEntries([]);
       }
     };
@@ -337,9 +347,27 @@ const useEntryManagement = (
   const handleAddEntry = useCallback(async (
     entryData: Omit<PasswordEntry, "id" | "createdAt" | "updatedAt">
   ) => {
-    if (!entryData.accountName || !entryData.username || !entryData.password || !entryData.category) {
-      console.error("Invalid entry data:", entryData);
-      return;
+    // Validate required fields based on entry type
+    const isSecureNote = entryData.entryType === "secure_note";
+    
+    if (!entryData.accountName || !entryData.accountName.trim()) {
+      const error = new Error("Account name is required");
+      devError("Invalid entry data: missing accountName", entryData);
+      throw error;
+    }
+    
+    // For password entries, require username and password (must have content, not just whitespace)
+    if (!isSecureNote) {
+      if (!entryData.username || !entryData.username.trim()) {
+        const error = new Error("Username is required");
+        devError("Invalid entry data: password entries require username", entryData);
+        throw error;
+      }
+      if (!entryData.password || !entryData.password.trim()) {
+        const error = new Error("Password is required");
+        devError("Invalid entry data: password entries require password", entryData);
+        throw error;
+      }
     }
 
     const newEntry: PasswordEntry = {
@@ -374,8 +402,10 @@ const useEntryManagement = (
 
       await broadcastChange();
     } catch (error) {
-      console.error("Failed to add entry:", error);
+      devError("Failed to add entry:", error);
       setEntries(entries); // Rollback on error
+      // Re-throw so the form knows the save failed
+      throw error;
     }
   }, [entries, setEntries, broadcastChange, isElectron, saveSharedEntries]);
 
@@ -410,8 +440,9 @@ const useEntryManagement = (
 
       await broadcastChange();
     } catch (error) {
-      console.error("Failed to update entry:", error);
+      devError("Failed to update entry:", error);
       setEntries(entries); // Rollback on error
+      throw error;
     }
   }, [entries, setEntries, broadcastChange, isElectron, saveSharedEntries]);
 
@@ -447,7 +478,7 @@ const useEntryManagement = (
         onEntryDeleted(deletedEntry);
       }
     } catch (error) {
-      console.error("Failed to delete entry:", error);
+      devError("Failed to delete entry:", error);
       setEntries(entries); // Rollback on error
     }
   }, [entries, setEntries, broadcastChange, isElectron, saveSharedEntries, onEntryDeleted]);
@@ -474,7 +505,7 @@ const useEntryManagement = (
 
       await broadcastChange();
     } catch (error) {
-      console.error("Failed to restore entry:", error);
+      devError("Failed to restore entry:", error);
       setEntries(entries);
     }
   }, [entries, setEntries, broadcastChange, isElectron, saveSharedEntries]);
@@ -514,6 +545,10 @@ function App() {
   const [showWarningPopup, setShowWarningPopup] = useState(false);
   const [currentWarningType, setCurrentWarningType] = useState<'expiring' | 'final'>('expiring');
 
+  // Loading states for async operations
+  const [isImporting, setIsImporting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
   useDarkTheme();
   const { entries, setEntries } = useVaultData(isLocked, isElectron, loadSharedEntries, saveSharedEntries);
   const isFloatingMode = useFloatingMode(isElectron);
@@ -523,11 +558,14 @@ function App() {
   const { shouldShow: showWhatsNew, dismiss: dismissWhatsNew } = useWhatsNew();
   const [whatsNewOpen, setWhatsNewOpen] = useState(showWhatsNew);
 
-  // Onboarding tutorial state
-  const { showOnboarding, setShowOnboarding, completeOnboarding } = useOnboarding();
+  // Onboarding tutorial state - only show after vault is unlocked
+  const { showOnboarding, setShowOnboarding, completeOnboarding } = useOnboarding(!isLocked);
 
   // Keyboard shortcuts modal state
   const { isShortcutsOpen, openShortcuts, closeShortcuts } = useKeyboardShortcuts();
+
+  // Notification system (replaces browser alert())
+  const { notification, dismissNotification, notify } = useNotification();
 
   // Listen for "What's New" open event from Settings
   useEffect(() => {
@@ -730,12 +768,13 @@ function App() {
         throw new Error("Invalid password");
       }
     } catch (error) {
-      console.error("Login failed:", error);
+      devError("Login failed:", error);
       throw error;
     }
   }, [isElectron]);
 
   const handleExport = useCallback(async () => {
+    setIsExporting(true);
     try {
       const data = await storageService.exportData();
       const blob = new Blob([data], { type: "text/csv" });
@@ -747,11 +786,14 @@ function App() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      notify.success("Data exported successfully!");
     } catch (error) {
-      console.error("Export failed:", error);
-      alert("Failed to export data");
+      devError("Export failed:", error);
+      notify.error("Failed to export data. Please try again.");
+    } finally {
+      setIsExporting(false);
     }
-  }, []);
+  }, [notify]);
 
   const handleDownloadContent = useCallback(() => {
     setShowWarningPopup(false);
@@ -762,29 +804,32 @@ function App() {
   }, [handleExport]);
 
   const handleImport = useCallback(async () => {
-    try {
-      if (isLocked || !storageService.isVaultUnlocked()) {
-        alert("Unlock the vault first.");
-        return;
-      }
+    // If user is viewing Settings, they must already be logged in
+    if (isLocked) {
+      notify.warning("Please log in first to import data.");
+      return;
+    }
 
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = '.csv,.json,text/csv,application/json';
-      input.onchange = async () => {
-        const file = input.files?.[0];
-        if (!file) return;
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv,.json,text/csv,application/json';
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
 
+      setIsImporting(true);
+      try {
         const text = await file.text();
         const result = importService.importContent(text);
 
         if (!result.entries.length) {
-          alert('No valid entries found in file.');
+          notify.warning('No valid entries found in the file.');
           return;
         }
 
-        const existingKey = new Set(entries.map(e => `${e.accountName}||${e.username}||${e.password}`));
-        const newEntries = result.entries.filter(e => !existingKey.has(`${e.accountName}||${e.username}||${e.password}`));
+        // Deduplicate by accountName + username (not password - password changes shouldn't create duplicates)
+        const existingKey = new Set(entries.map(e => `${e.accountName}||${e.username}`));
+        const newEntries = result.entries.filter(e => !existingKey.has(`${e.accountName}||${e.username}`));
         const merged = [...entries, ...newEntries];
 
         await storageService.saveEntries(merged);
@@ -800,7 +845,7 @@ function App() {
               await window.electronAPI.broadcastEntriesChanged();
             }
           } catch (error) {
-            console.error("Failed to update shared storage after import:", error);
+            devError("Failed to update shared storage after import:", error);
           }
         }
 
@@ -808,14 +853,16 @@ function App() {
           console.warn('Import warnings:', result.warnings);
         }
 
-        alert(`Imported ${newEntries.length} new entr${newEntries.length === 1 ? 'y' : 'ies'} (${result.format.toUpperCase()}).`);
-      };
-      input.click();
-    } catch (error) {
-      console.error('Import failed:', error);
-      alert('Failed to import data');
-    }
-  }, [isLocked, entries, setEntries, isElectron, saveSharedEntries]);
+        notify.success(`Imported ${newEntries.length} new entr${newEntries.length === 1 ? 'y' : 'ies'} (${result.format.toUpperCase()}).`);
+      } catch (error) {
+        devError('Import failed:', error);
+        notify.error('Failed to import data. Please check the file format.');
+      } finally {
+        setIsImporting(false);
+      }
+    };
+    input.click();
+  }, [isLocked, entries, setEntries, isElectron, saveSharedEntries, notify]);
 
   const handleExportEncrypted = useCallback(async (password: string) => {
     try {
@@ -829,16 +876,18 @@ function App() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      notify.success("Encrypted backup exported successfully!");
     } catch (error) {
-      console.error("Encrypted export failed:", error);
+      devError("Encrypted export failed:", error);
+      notify.error("Failed to export encrypted backup.");
       throw error;
     }
-  }, []);
+  }, [notify]);
 
   const handleImportEncrypted = useCallback(async (data: string, password: string) => {
     try {
-      if (isLocked || !storageService.isVaultUnlocked()) {
-        throw new Error("Unlock the vault first.");
+      if (isLocked) {
+        throw new Error("Please log in first.");
       }
 
       await storageService.importEncrypted(data, password);
@@ -855,12 +904,12 @@ function App() {
         }
       }
 
-      alert(`Successfully imported encrypted backup.`);
+      notify.success('Successfully imported encrypted backup.');
     } catch (error) {
-      console.error('Encrypted import failed:', error);
+      devError('Encrypted import failed:', error);
       throw error;
     }
-  }, [isLocked, setEntries, isElectron, saveSharedEntries]);
+  }, [isLocked, setEntries, isElectron, saveSharedEntries, notify]);
 
   const toggleVaultView = useCallback(() => {
     if (isElectron) {
@@ -1093,13 +1142,13 @@ function App() {
         />
       )}
 
-      {/* Mini Vault Floating Button - Always visible when vault is unlocked and main vault is shown */}
-      {!isElectron && !isLocked && showMainVault && !showFloatingPanel && (
-        <MiniVaultButton onClick={toggleVaultView} />
-      )}
+      {/* Mini Vault Floating Button removed - using Electron's FloatingButton instead */}
 
       {/* Offline indicator */}
       <OfflineIndicator />
+
+      {/* Toast notifications */}
+      <Notification notification={notification} onDismiss={dismissNotification} />
 
       {/* Undo delete toast */}
       {deletedEntry && (

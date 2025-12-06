@@ -154,7 +154,7 @@ describe('ErrorBoundary', () => {
 
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const { rerender } = render(<TestComponent />);
+    const { rerender: _rerender } = render(<TestComponent />);
 
     // Should show error UI
     expect(screen.getByText('Something went wrong')).toBeInTheDocument();

@@ -1,33 +1,15 @@
 /**
- * Hooks Index
+ * Hooks Index - Local Password Vault
  *
- * Custom React hooks for the After I'm Gone application.
+ * Custom React hooks for the Local Password Vault application.
  *
  * Usage:
- *   import { useAuth, useAutoLock } from '@/hooks';
+ *   import { useElectron, useEntryManagement } from './hooks';
  */
 
-// ==================== Authentication & Security ====================
-export { useAuth } from './useAuth';
-export { useAutoLock } from './useAutoLock';
-export { useSecureClipboard } from './useSecureClipboard';
-export { useKeyboardShortcuts } from './useKeyboardShortcuts';
-
-// ==================== UI & Navigation ====================
-export { useToast } from './useToast';
-export { useOnboarding } from './useOnboarding';
-export { usePersonalInfo } from './usePersonalInfo';
-export { useRecordSelection } from './useRecordSelection';
-export { useVersionHistory } from './useVersionHistory';
-
-// ==================== Data Management ====================
-export { useCategoryPage } from './useCategoryPage';
-export { useBackupReminders } from './useBackupReminders';
-export { useExecutorMode } from './useExecutorMode';
+// ==================== Vault State Management ====================
+export { useEntryManagement } from './useEntryManagement';
+export { useVaultState, DEFAULT_CATEGORIES } from './useVaultState';
 
 // ==================== Electron Integration ====================
 export { useElectron } from './useElectron';
-
-// ==================== Re-export commonly used hooks ====================
-export { useAuth as useAuthentication } from './useAuth';
-export { useToast as useNotifications } from './useToast';

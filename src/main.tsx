@@ -6,7 +6,7 @@ import { LiveRegionProvider } from './components/accessibility';
 import './i18n'; // Initialize i18n for localization
 import './index.css';
 
-// Ensure dark background is set immediately (Legacy Vault style)
+// Ensure dark background is set immediately
 document.documentElement.style.backgroundColor = '#1F2534';
 document.body.style.backgroundColor = '#1F2534';
 

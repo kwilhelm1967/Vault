@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { analyticsService } from "../utils/analyticsService";
 import { licenseService, AppLicenseStatus } from "../utils/licenseService";
+import { devError } from "../utils/devLog";
 import { EulaAgreement } from "./EulaAgreement";
 import { DownloadInstructions } from "./DownloadInstructions";
 import { DownloadPage } from "./DownloadPage";
@@ -42,10 +43,8 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
   const [licenseKey, setLicenseKey] = useState("");
   const [isActivating, setIsActivating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // const [appStatus, setAppStatus] = useState<AppLicenseStatus | null>(null); // Removed
-  // const [isLoading, setIsLoading] = useState(true); // Removed
 
-  // New flow state variables
+  // Flow state variables
   const [showExpiredTrialScreen, setShowExpiredTrialScreen] = useState(false);
   const [showKeyActivationScreen, setShowKeyActivationScreen] = useState(false);
   const [showRecoveryOptions, setShowRecoveryOptions] = useState(false);
@@ -60,32 +59,12 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
   const [trialError, setTrialError] = useState<string | null>(null);
   const [trialSuccess, setTrialSuccess] = useState<string | null>(null);
 
-  // Initialize app status on mount - Removed
-  // useEffect(() => {
-  //   const initAppStatus = async () => {
-  //     try {
-  //       const status = await licenseService.getAppStatus();
-  //       setAppStatus(status);
-  //     } catch (error) {
-  //       console.error('Error initializing app status:', error);
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
-  //   initAppStatus();
-  // }, []);
-
   const updateAppStatus = useCallback(async () => {
     try {
-      // We call onLicenseValid, which is updateAppStatus from App.tsx
-      // This will trigger a re-render with a new appStatus prop
+      // Trigger re-render with new appStatus prop via parent
       onLicenseValid();
-      // No need to fetch status internally anymore
-      // const status = await licenseService.getAppStatus();
-      // setAppStatus(status);
-      // return status;
     } catch (error) {
-      console.error('Error updating app status:', error);
+      devError('Error updating app status:', error);
       return null;
     }
   }, [onLicenseValid]);
@@ -133,7 +112,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
         endDate,
       };
     } catch (error) {
-      console.error('Error reading trial info from localStorage:', error);
+      devError('Error reading trial info from localStorage:', error);
       return {
         hasTrialBeenUsed: false,
         isExpired: false,
@@ -156,6 +135,12 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
 
   // Handle trial signup
   const handleStartTrial = async () => {
+    // Check if online first
+    if (!navigator.onLine) {
+      setTrialError("No internet connection. Please check your network and try again.");
+      return;
+    }
+
     if (!trialEmail.trim()) {
       setTrialError("Please enter your email address");
       return;
@@ -202,7 +187,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
         }
       }
     } catch (error) {
-      console.error("Trial signup error:", error);
+      devError("Trial signup error:", error);
       if (error instanceof TypeError && error.message.includes("fetch")) {
         setTrialError("Unable to connect to server. Please check your internet connection.");
       } else {
@@ -551,7 +536,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
       )}
 
       {showDownloadPage && (
-        <div className="fixed inset-0 z-50 bg-slate-900/95 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div className="form-modal-backdrop">
           <div className="max-w-4xl w-full">
             <DownloadPage />
             <button

@@ -26,11 +26,11 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-start justify-center pt-[30vh] p-4 z-50 animate-fadeIn"
+      className="form-modal-backdrop"
       onClick={onClose}
     >
       <div 
-        className="bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 w-full max-w-sm shadow-xl animate-slideUp"
+        className="bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 w-full max-w-sm shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="text-center">
@@ -81,11 +81,11 @@ export const BulkDeleteConfirmModal: React.FC<BulkDeleteConfirmModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-start justify-center pt-[30vh] p-4 z-50 animate-fadeIn"
+      className="form-modal-backdrop"
       onClick={onClose}
     >
       <div 
-        className="bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 w-full max-w-sm shadow-xl animate-slideUp"
+        className="bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 w-full max-w-sm shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="text-center">

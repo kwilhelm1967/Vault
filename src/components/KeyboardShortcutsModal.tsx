@@ -80,15 +80,9 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-enter">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/60"
-        onClick={onClose}
-      />
-
+    <div className="form-modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
       {/* Modal */}
-      <div className="relative w-full max-w-2xl mx-4 max-h-[85vh] overflow-hidden animate-slideUp">
+      <div className="relative w-full max-w-2xl mx-4 max-h-[85vh] overflow-hidden">
         <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl border border-slate-700/50">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-slate-700/50">
@@ -107,6 +101,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
             </div>
             <button
               onClick={onClose}
+              aria-label="Close keyboard shortcuts"
               className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700/50 transition-colors"
             >
               <X className="w-5 h-5" />

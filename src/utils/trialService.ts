@@ -1,4 +1,6 @@
 import { generateHardwareFingerprint } from "./hardwareFingerprint";
+import { safeParseJWT } from "./safeUtils";
+import { devError } from "./devLog";
 
 export interface TrialInfo {
   isTrialActive: boolean;
@@ -110,33 +112,29 @@ export class TrialService {
         return quickResult;
       }
 
-      try {
-        const tokenData = JSON.parse(atob(licenseToken.split('.')[1]));
-        if (tokenData.planType && tokenData.planType !== 'trial') {
-          // Clear any remaining trial data
-          localStorage.removeItem(TrialService.TRIAL_USED_KEY);
-          localStorage.removeItem(TrialService.TRIAL_LICENSE_KEY);
-          localStorage.removeItem(TrialService.TRIAL_START_KEY);
-          return {
-            isTrialActive: false,
-            daysRemaining: 0,
-            hoursRemaining: 0,
-            minutesRemaining: 0,
-            secondsRemaining: 0,
-            isExpired: false,
-            startDate: null,
-            endDate: null,
-            hasTrialBeenUsed: false,
-            timeRemaining: 'No trial needed',
-            trialDurationDisplay: 'None',
-            licenseKey: null,
-            securityHash: null,
-            activationTime: null,
-            lastChecked: new Date(),
-          };
-        }
-      } catch (error) {
-        console.error('Error parsing license token in trial service:', error);
+      const tokenData = safeParseJWT<{ planType?: string }>(licenseToken);
+      if (tokenData?.planType && tokenData.planType !== 'trial') {
+        // Clear any remaining trial data
+        localStorage.removeItem(TrialService.TRIAL_USED_KEY);
+        localStorage.removeItem(TrialService.TRIAL_LICENSE_KEY);
+        localStorage.removeItem(TrialService.TRIAL_START_KEY);
+        return {
+          isTrialActive: false,
+          daysRemaining: 0,
+          hoursRemaining: 0,
+          minutesRemaining: 0,
+          secondsRemaining: 0,
+          isExpired: false,
+          startDate: null,
+          endDate: null,
+          hasTrialBeenUsed: false,
+          timeRemaining: 'No trial needed',
+          trialDurationDisplay: 'None',
+          licenseKey: null,
+          securityHash: null,
+          activationTime: null,
+          lastChecked: new Date(),
+        };
       }
     }
 
@@ -164,7 +162,7 @@ export class TrialService {
     // Verify hardware hash matches
     const currentHardwareHash = await generateHardwareFingerprint();
     if (storedHardwareHash && storedHardwareHash !== currentHardwareHash) {
-      console.error('Hardware hash mismatch detected');
+      if (import.meta.env.DEV) console.error('Hardware hash mismatch detected');
       return {
         isTrialActive: false,
         daysRemaining: 0,
@@ -324,9 +322,15 @@ export class TrialService {
         return null;
       }
 
-      const tokenData = JSON.parse(atob(licenseToken.split('.')[1]));
+      const tokenData = safeParseJWT<{
+        isTrial?: boolean;
+        trialExpiryDate?: string;
+        activationTime?: string;
+        warningPopup1Timestamp?: string;
+        warningPopup2Timestamp?: string;
+      }>(licenseToken);
 
-      if (!tokenData.isTrial || !tokenData.trialExpiryDate) {
+      if (!tokenData?.isTrial || !tokenData.trialExpiryDate) {
         return null;
       }
 
@@ -361,7 +365,7 @@ export class TrialService {
         warningPopup2Timestamp: tokenData.warningPopup2Timestamp || null,
       };
     } catch (error) {
-      console.error('❌ QUICK JWT PARSE ERROR:', error);
+      if (import.meta.env.DEV) console.error('QUICK JWT PARSE ERROR:', error);
       return null;
     }
   }
@@ -531,7 +535,7 @@ export class TrialService {
       try {
         callback();
       } catch (error) {
-        console.error("Error in expiration callback:", error);
+        devError("Error in expiration callback:", error);
       }
     });
   }
@@ -561,7 +565,7 @@ export class TrialService {
       try {
         callback(state);
       } catch (error) {
-        console.error("Error in warning popup callback:", error);
+        devError("Error in warning popup callback:", error);
       }
     });
   }
@@ -609,7 +613,7 @@ export class TrialService {
         }
       }
     } catch (error) {
-      console.error('❌ ERROR checking warning popups:', error);
+      if (import.meta.env.DEV) console.error('Error checking warning popups:', error);
     }
   }
 
@@ -666,7 +670,7 @@ export async function checkTrialExpiredInMainProcess(): Promise<boolean> {
     // Fallback to local check if main process API not available
     return await trialService.isTrialExpired();
   } catch (error) {
-    console.error('Error checking trial status in main process:', error);
+    devError('Error checking trial status in main process:', error);
     return true; // Assume expired for security
   }
 }
@@ -694,7 +698,7 @@ export async function getTrialStatusFromMainProcess(): Promise<{
       expiryTime: trialInfo.endDate?.toISOString()
     };
   } catch (error) {
-    console.error('Error getting trial status from main process:', error);
+    devError('Error getting trial status from main process:', error);
     return {
       hasTrial: false,
       isExpired: true,
@@ -723,7 +727,7 @@ export async function syncTrialStatusToMainProcess(): Promise<boolean> {
 
     return false;
   } catch (error) {
-    console.error('Error syncing trial status to main process:', error);
+    devError('Error syncing trial status to main process:', error);
     return false;
   }
 }
@@ -746,7 +750,7 @@ export async function validateTrialStatusAcrossProcesses(): Promise<boolean> {
 
     return rendererValid && mainProcessValid;
   } catch (error) {
-    console.error('Error validating trial status across processes:', error);
+    devError('Error validating trial status across processes:', error);
     return false; // Assume invalid for security
   }
 }

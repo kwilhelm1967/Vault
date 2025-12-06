@@ -10,4 +10,6 @@ export { EntryCard, getPasswordAge, calculatePasswordStrength } from "./EntryCar
 export { DeleteConfirmModal, BulkDeleteConfirmModal } from "./DeleteConfirmModal";
 export { VaultHeader, BulkActionsBar } from "./VaultHeader";
 export { EntryDetailModal } from "./EntryDetailModal";
+export { VaultEmptyState } from "./VaultEmptyStates";
+export { CustomFieldDisplay } from "./CustomFieldDisplay";
 

@@ -5,7 +5,7 @@
  */
 
 import React, { useState } from "react";
-import { KeyRound, AlertCircle, Loader2, ArrowLeft, Check, Eye, EyeOff, Shield } from "lucide-react";
+import { KeyRound, AlertCircle, Loader2, ArrowLeft, Check, Eye, EyeOff, Shield, Trash2, X } from "lucide-react";
 import { verifyRecoveryPhrase, hasRecoveryPhrase } from "../utils/recoveryPhrase";
 
 const colors = {
@@ -28,8 +28,16 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [showWords, setShowWords] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetConfirmText, setResetConfirmText] = useState("");
 
   const hasRecovery = hasRecoveryPhrase();
+
+  const handleResetVault = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.reload();
+  };
 
   const handleWordChange = (index: number, value: string) => {
     const newWords = [...words];
@@ -268,19 +276,109 @@ export const ForgotPassword: React.FC<ForgotPasswordProps> = ({
             Lost your recovery phrase? You can reset the vault and start fresh.
           </p>
           <button
-            onClick={() => {
-              if (window.confirm("⚠️ WARNING: This will DELETE ALL your saved accounts and passwords permanently. This cannot be undone.\n\nAre you sure you want to reset the vault?")) {
-                localStorage.clear();
-                sessionStorage.clear();
-                window.location.reload();
-              }
-            }}
+            onClick={() => setShowResetConfirm(true)}
             className="w-full py-2 rounded-lg text-xs font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 transition-colors"
           >
             Reset Vault & Start Fresh
           </button>
         </div>
       </div>
+
+      {/* Reset Confirmation Modal */}
+      {showResetConfirm && (
+        <div className="form-modal-backdrop" style={{ zIndex: 9999 }}>
+          <div 
+            className="w-full max-w-md rounded-2xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+            style={{
+              backgroundColor: "rgba(30, 41, 59, 0.98)",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+            }}
+          >
+            {/* Header */}
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div 
+                  className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: "rgba(239, 68, 68, 0.15)" }}
+                >
+                  <Trash2 className="w-6 h-6 text-red-400" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Reset Vault?</h3>
+                  <p className="text-xs text-slate-400">This action cannot be undone</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowResetConfirm(false);
+                  setResetConfirmText("");
+                }}
+                aria-label="Close dialog"
+                className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700/50 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Warning Content */}
+            <div 
+              className="rounded-xl p-4 mb-4"
+              style={{ backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)" }}
+            >
+              <h4 className="text-red-400 font-semibold text-sm mb-2 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4" strokeWidth={1.5} />
+                Warning: Permanent Data Loss
+              </h4>
+              <ul className="text-slate-300 text-xs space-y-1.5 ml-6">
+                <li className="list-disc">All saved passwords will be permanently deleted</li>
+                <li className="list-disc">All account information will be erased</li>
+                <li className="list-disc">Your master password will be removed</li>
+                <li className="list-disc">Your recovery phrase will be deleted</li>
+                <li className="list-disc">This cannot be recovered or undone</li>
+              </ul>
+            </div>
+
+            {/* Confirmation Input */}
+            <div className="mb-4">
+              <label className="block text-xs text-slate-400 mb-2">
+                Type <span className="font-mono font-bold text-red-400">DELETE</span> to confirm:
+              </label>
+              <input
+                type="text"
+                value={resetConfirmText}
+                onChange={(e) => setResetConfirmText(e.target.value.toUpperCase())}
+                placeholder="Type DELETE"
+                className="w-full px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700 text-white text-sm font-mono focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/30 transition-all"
+                autoComplete="off"
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowResetConfirm(false);
+                  setResetConfirmText("");
+                }}
+                className="flex-1 py-3 rounded-xl text-sm font-medium text-slate-300 hover:text-white bg-slate-700/50 hover:bg-slate-700 border border-slate-600 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleResetVault}
+                disabled={resetConfirmText !== "DELETE"}
+                className="flex-1 py-3 rounded-xl text-sm font-semibold text-white transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{
+                  backgroundColor: resetConfirmText === "DELETE" ? "rgba(239, 68, 68, 0.8)" : "rgba(239, 68, 68, 0.3)",
+                }}
+              >
+                <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+                Reset Vault
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

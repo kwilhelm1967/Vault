@@ -19,8 +19,8 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ className = 
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     changeLanguage(e.target.value);
-    // Force re-render by reloading (optional - can be handled with context)
-    window.location.reload();
+    // i18n.changeLanguage() triggers automatic re-render via react-i18next
+    // No reload needed - useTranslation hook subscribes to language changes
   };
 
   return (

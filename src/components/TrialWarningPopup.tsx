@@ -44,7 +44,7 @@ export const TrialWarningPopup: React.FC<TrialWarningPopupProps> = ({
   const IconComponent = currentContent.icon;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4 z-[9999]">
+    <div className="form-modal-backdrop" style={{ zIndex: 9999 }}>
       <div className="bg-slate-800/95 backdrop-blur-sm rounded-2xl overflow-hidden border border-slate-600/50 shadow-2xl w-full max-w-md">
         <div className="p-8 relative flex flex-col items-center text-center">
           {/* Close Button */}

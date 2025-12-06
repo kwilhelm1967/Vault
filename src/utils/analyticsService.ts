@@ -1,9 +1,27 @@
 // Simple analytics service for tracking user actions
+
+interface AnalyticsEventProperties {
+  timestamp?: number;
+  sessionId?: string;
+  userId?: string;
+  action?: string;
+  feature?: string;
+  licenseEvent?: string;
+  licenseType?: string;
+  step?: string;
+  [key: string]: string | number | boolean | undefined;
+}
+
+interface AnalyticsEvent {
+  event: string;
+  properties: AnalyticsEventProperties;
+}
+
 class AnalyticsService {
   private static instance: AnalyticsService;
   private sessionId: string = '';
   private userId: string = '';
-  private events: any[] = [];
+  private events: AnalyticsEvent[] = [];
 
   static getInstance(): AnalyticsService {
     if (!AnalyticsService.instance) {
@@ -35,13 +53,13 @@ class AnalyticsService {
   }
 
   // Track events
-  track(event: string, properties: any = {}): void {
+  track(event: string, properties: AnalyticsEventProperties = {}): void {
     // Skip tracking if analytics is disabled
     if (!environment.analyticsEnabled) {
       return;
     }
     
-    const eventData = {
+    const eventData: AnalyticsEvent = {
       event,
       properties: {
         ...properties,
@@ -60,7 +78,7 @@ class AnalyticsService {
   }
 
   // Track user actions
-  trackUserAction(action: string, details: any = {}): void {
+  trackUserAction(action: string, details: AnalyticsEventProperties = {}): void {
     this.track('user_action', {
       action,
       ...details
@@ -68,7 +86,7 @@ class AnalyticsService {
   }
 
   // Track feature usage
-  trackFeatureUsage(feature: string, details: any = {}): void {
+  trackFeatureUsage(feature: string, details: AnalyticsEventProperties = {}): void {
     this.track('feature_usage', {
       feature,
       ...details
@@ -76,7 +94,7 @@ class AnalyticsService {
   }
 
   // Track license events
-  trackLicenseEvent(event: string, licenseType?: string, details: any = {}): void {
+  trackLicenseEvent(event: string, licenseType?: string, details: AnalyticsEventProperties = {}): void {
     this.track('license_event', {
       licenseEvent: event,
       licenseType,
@@ -85,7 +103,7 @@ class AnalyticsService {
   }
 
   // Track conversion events
-  trackConversion(step: string, details: any = {}): void {
+  trackConversion(step: string, details: AnalyticsEventProperties = {}): void {
     this.track('conversion', {
       step,
       ...details

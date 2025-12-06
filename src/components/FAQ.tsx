@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Search, HelpCircle, Shield, Key, Lock, Database, Clock, Smartphone, AlertTriangle, CreditCard, FileText, RefreshCw } from "lucide-react";
+import { ChevronDown, ChevronRight, Search, HelpCircle, Shield, Key, Lock, Database, Smartphone, AlertTriangle, CreditCard, FileText, RefreshCw } from "lucide-react";
 
 // Design System Colors - Consistent with app
 const COLORS = {
@@ -40,7 +40,7 @@ const FAQ_DATA: FAQSection[] = [
       },
       { 
         question: "How do I create my vault?", 
-        answer: "When you first open the app, you'll be prompted to create a master password. This is the only password you'll need to remember—it encrypts all your other passwords. Choose a strong password with at least 8 characters, including uppercase, lowercase, numbers, and symbols." 
+        answer: "When you first open the app, you'll be prompted to create a master password. This is the only password you'll need to remember—it encrypts all your other passwords. Choose a strong password with at least 12 characters, including uppercase, lowercase, and numbers. Special characters are recommended for extra security." 
       },
       { 
         question: "What can I store in the vault?", 
@@ -58,7 +58,7 @@ const FAQ_DATA: FAQSection[] = [
   },
   {
     id: 'security',
-    title: 'Security & Privacy',
+    title: 'Security and Privacy',
     icon: Shield,
     questions: [
       { 
@@ -120,7 +120,7 @@ const FAQ_DATA: FAQSection[] = [
   },
   {
     id: 'backup',
-    title: 'Backup & Export',
+    title: 'Backup and Export',
     icon: Database,
     questions: [
       { 
@@ -196,12 +196,12 @@ const FAQ_DATA: FAQSection[] = [
   },
   {
     id: 'license',
-    title: 'Trial & License',
+    title: 'Trial and License',
     icon: CreditCard,
     questions: [
       { 
         question: "How long is the free trial?", 
-        answer: "The free trial is 7 days with full access to all features. After the trial, you'll need to purchase a license to continue adding and editing passwords." 
+        answer: "The free trial is 7 days with full access to all features. After the trial, you'll need to purchase a license to continue adding and editing passwords. Good news: when you upgrade to a paid license, all your passwords and data stay exactly where they are—no import needed! Just enter your new license key and keep going." 
       },
       { 
         question: "What happens when the trial ends?", 
@@ -231,10 +231,6 @@ const FAQ_DATA: FAQSection[] = [
         answer: "Use your recovery words to reset your password. Go to the login screen and click 'Forgot Password'. Without recovery words, your vault cannot be accessed—this is the security tradeoff for true encryption." 
       },
       { 
-        question: "The app is running slowly.", 
-        answer: "Try restarting the app. If you have thousands of entries, searching may take a moment. Ensure your computer meets minimum requirements. Contact support if the issue persists." 
-      },
-      { 
         question: "My backup won't restore.", 
         answer: "Ensure you're using the correct password for the backup. The file must be a valid .lpvbackup file created by Local Password Vault. Try an older backup if available." 
       },
@@ -250,7 +246,7 @@ const FAQ_DATA: FAQSection[] = [
   },
   {
     id: 'updates',
-    title: 'Updates & Sync',
+    title: 'Updates and Sync',
     icon: RefreshCw,
     questions: [
       { 
@@ -361,13 +357,13 @@ export const FAQ = () => {
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
                 <div className="flex items-center gap-3">
-                  <Icon className="w-5 h-5" style={{ color: COLORS.accentBlue }} strokeWidth={1.75} />
+                  <Icon className="w-5 h-5" style={{ color: COLORS.accentGold }} strokeWidth={1.75} />
                   <span className="text-sm font-semibold" style={{ color: COLORS.textPrimary }}>
                     {section.title}
                   </span>
                 </div>
                 {isExpanded ? (
-                  <ChevronDown className="w-4 h-4" style={{ color: COLORS.accentBlue }} />
+                  <ChevronDown className="w-4 h-4" style={{ color: COLORS.accentGold }} />
                 ) : (
                   <ChevronRight className="w-4 h-4" style={{ color: COLORS.textMuted }} />
                 )}
@@ -404,7 +400,7 @@ export const FAQ = () => {
                             {item.question}
                           </span>
                           {isOpen ? (
-                            <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" style={{ color: COLORS.accentBlue }} />
+                            <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" style={{ color: COLORS.accentGold }} />
                           ) : (
                             <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" style={{ color: COLORS.textMuted }} />
                           )}
@@ -467,7 +463,7 @@ export const FAQ = () => {
           border: `1px solid ${COLORS.accentBlue}30`,
         }}
       >
-        <HelpCircle className="w-5 h-5 flex-shrink-0" style={{ color: COLORS.accentBlue }} />
+        <HelpCircle className="w-5 h-5 flex-shrink-0" style={{ color: COLORS.accentGold }} />
         <p className="text-sm" style={{ color: COLORS.textSecondary }}>
           Need more help? Email{' '}
           <span style={{ color: COLORS.accentBlue }}>support@localpasswordvault.com</span>

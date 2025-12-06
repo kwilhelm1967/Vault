@@ -8,7 +8,7 @@
 export interface AppError {
   code: string;
   message: string;
-  details?: any;
+  details?: unknown;
   recoverable: boolean;
   userMessage?: string;
 }
@@ -17,7 +17,7 @@ export class ValidationError extends Error implements AppError {
   code = 'VALIDATION_ERROR';
   recoverable = true;
 
-  constructor(message: string, public details?: any) {
+  constructor(message: string, public details?: unknown) {
     super(message);
     this.name = 'ValidationError';
     this.userMessage = message;
@@ -28,7 +28,7 @@ export class NetworkError extends Error implements AppError {
   code = 'NETWORK_ERROR';
   recoverable = true;
 
-  constructor(message: string, public details?: any) {
+  constructor(message: string, public details?: unknown) {
     super(message);
     this.name = 'NetworkError';
     this.userMessage = 'Network connection issue. Please check your connection and try again.';
@@ -39,7 +39,7 @@ export class StorageError extends Error implements AppError {
   code = 'STORAGE_ERROR';
   recoverable = false;
 
-  constructor(message: string, public details?: any) {
+  constructor(message: string, public details?: unknown) {
     super(message);
     this.name = 'StorageError';
     this.userMessage = 'Storage error occurred. Your data may not be saved properly.';
@@ -50,7 +50,7 @@ export class AuthenticationError extends Error implements AppError {
   code = 'AUTH_ERROR';
   recoverable = true;
 
-  constructor(message: string, public details?: any) {
+  constructor(message: string, public details?: unknown) {
     super(message);
     this.name = 'AuthenticationError';
     this.userMessage = message;

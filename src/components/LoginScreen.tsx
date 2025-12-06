@@ -183,6 +183,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     // Store the recovery phrase hash
     await storeRecoveryPhrase(recoveryPhrase);
     
+    // Mark onboarding as completed - user has set up their vault
+    // This prevents the tutorial from showing on every login
+    localStorage.setItem("onboarding_completed", "true");
+    
     // Store password hint if provided (before vault is created, so don't require unlock)
     if (passwordHint.trim()) {
       await storageService.setPasswordHint(passwordHint.trim(), false);

@@ -23,7 +23,7 @@ export const DownloadInstructions: React.FC<DownloadInstructionsProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-sm overflow-y-auto">
+    <div className="form-modal-backdrop">
       <div className="bg-slate-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col my-8">
         <div className="p-6 border-b border-slate-700 flex items-center justify-between">
           <div className="flex items-center space-x-3">

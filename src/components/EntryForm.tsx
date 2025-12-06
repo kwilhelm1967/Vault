@@ -18,6 +18,7 @@ import {
   StickyNote,
 } from "lucide-react";
 import { PasswordEntry, Category, CustomField } from "../types";
+import { devError } from "../utils/devLog";
 import { storageService } from "../utils/storage";
 import { PasswordGenerator } from "./PasswordGenerator";
 import { playSuccessSound } from "../utils/soundEffects";
@@ -61,7 +62,7 @@ const calculatePasswordStrength = (password: string): { score: number; label: st
   return { score: 4, label: "Strong", color: "#22c55e" };
 };
 
-// Section Header component - Legacy Vault style
+// Section Header component
 const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
   <h3 className="form-section-title">{title}</h3>
 );
@@ -99,17 +100,19 @@ interface EntryFormProps {
   entry?: PasswordEntry | null;
   categories: Category[];
   allEntries?: PasswordEntry[];
+  defaultCategory?: string;
   onSubmit: (
     data: Omit<PasswordEntry, "id" | "createdAt" | "updatedAt">
-  ) => void;
+  ) => Promise<void>;
   onCancel: () => void;
-  onDelete?: () => void;
+  onDelete?: () => Promise<void>;
 }
 
 export const EntryForm: React.FC<EntryFormProps> = ({
   entry,
   categories,
   allEntries = [],
+  defaultCategory,
   onSubmit,
   onCancel,
   onDelete,
@@ -122,11 +125,51 @@ export const EntryForm: React.FC<EntryFormProps> = ({
     website: entry?.website || "",
     notes: entry?.notes || "",
     balance: entry?.balance || "",
-    category: entry?.category || "",
+    category: entry?.category || defaultCategory || "",
     totpSecret: entry?.totpSecret || "",
   });
   const [customFields, setCustomFields] = useState<CustomField[]>(entry?.customFields || []);
   const [visibleSecretFields, setVisibleSecretFields] = useState<Set<string>>(new Set());
+  
+  // Reset form when entry changes to null (e.g., closing and reopening add form)
+  useEffect(() => {
+    if (!entry) {
+      // Reset to initial state for new entry
+      setEntryType("password");
+      setFormData({
+        accountName: "",
+        username: "",
+        password: "",
+        website: "",
+        notes: "",
+        balance: "",
+        category: defaultCategory || "",
+        totpSecret: "",
+      });
+      setCustomFields([]);
+      setVisibleSecretFields(new Set());
+      setFieldErrors({});
+      setShowPassword(false);
+      setShowCategoryDropdown(false);
+      setShowDeleteConfirm(false);
+      setShowPasswordGenerator(false);
+      setShowTemplates(false);
+    } else {
+      // Populate form with entry data for editing
+      setEntryType(entry.entryType || "password");
+      setFormData({
+        accountName: entry.accountName || "",
+        username: entry.username || "",
+        password: entry.password || "",
+        website: entry.website || "",
+        notes: entry.notes || "",
+        balance: entry.balance || "",
+        category: entry.category || defaultCategory || "",
+        totpSecret: entry.totpSecret || "",
+      });
+      setCustomFields(entry.customFields || []);
+    }
+  }, [entry, defaultCategory]);
   
   const isSecureNote = entryType === "secure_note";
   
@@ -322,23 +365,37 @@ export const EntryForm: React.FC<EntryFormProps> = ({
 
       // Submit to parent component (awaits storage save)
       await onSubmit(entryData);
+      
+      // Verify the entry was actually saved by checking storage
+      try {
+        const savedEntries = await storageService.loadEntries();
+        const wasSaved = savedEntries.some(e => e.accountName === entryData.accountName);
+        if (!wasSaved) {
+          throw new Error("Entry was not found in storage after save");
+        }
+      } catch (verifyError) {
+        devError("Save verification failed:", verifyError);
+        throw new Error("Entry may not have been saved correctly");
+      }
+      
       playSuccessSound();
 
       // Sync to floating panel (Electron only)
-      // Parent's onSubmit already awaited storage save, so entries are ready
       if (window.electronAPI) {
         try {
           const currentEntries = await storageService.loadEntries();
           await window.electronAPI.saveSharedEntries?.(currentEntries);
           await window.electronAPI.broadcastEntriesChanged?.();
           await window.electronAPI.syncVaultToFloating?.();
-        } catch {
+        } catch (error) {
           // Floating panel sync failed - non-critical
+          devError("Floating panel sync failed:", error);
         }
       }
     } catch (error) {
-      console.error("Error submitting form:", error);
-      setFieldErrors({ accountName: "Failed to save entry. Please try again." });
+      devError("Error submitting form:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to save entry";
+      setFieldErrors({ accountName: errorMessage + ". Please try again." });
     }
   };
 
@@ -360,11 +417,13 @@ export const EntryForm: React.FC<EntryFormProps> = ({
             await window.electronAPI.saveSharedEntries?.(currentEntries);
             await window.electronAPI.broadcastEntriesChanged?.();
             await window.electronAPI.syncVaultToFloating?.();
-          } catch {
+          } catch (error) {
             // Floating panel sync failed - non-critical
+            devError("Floating panel sync on delete failed:", error);
           }
         }
-      } catch {
+      } catch (error) {
+        devError("Delete operation failed:", error);
         setShowDeleteConfirm(false);
       }
     }
@@ -373,7 +432,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
   return (
     <div className="p-4 md:p-6 min-h-full" style={{ backgroundColor: 'transparent' }}>
       <div className="form-container">
-        {/* Header - Legacy Vault Style */}
+        {/* Header */}
         <div className="form-header">
           <button
             type="button"
@@ -863,7 +922,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
               </div>
             </div>
 
-            {/* Action Buttons - Legacy Vault Style */}
+            {/* Action Buttons */}
             <div className="form-actions">
               <button
                 type="button"
@@ -896,7 +955,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 z-[9999]" style={{ backgroundColor: 'rgba(15, 23, 42, 0.9)' }}>
+        <div className="form-modal-backdrop" style={{ zIndex: 9999 }}>
           <div className="w-full max-w-sm rounded-xl p-6" style={{ backgroundColor: '#1F2534', border: '1px solid rgba(91, 130, 184, 0.4)' }}>
             <div className="text-center">
               <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)' }}>

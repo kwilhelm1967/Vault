@@ -12,6 +12,7 @@ import {
   X,
   Check,
   Sparkles,
+  Smartphone,
 } from "lucide-react";
 
 interface OnboardingStep {
@@ -81,9 +82,17 @@ const steps: OnboardingStep[] = [
   },
   {
     id: 8,
+    title: "Mobile Access",
+    description:
+      "Need your passwords on your phone? Go to Settings > Mobile Access or use the Dashboard quick action. Scan the QR code with your phone to view your vault securely in any mobile browser.",
+    icon: <Smartphone className="w-12 h-12 text-blue-400" />,
+    tip: "Mobile tokens auto-expire for security. Generate new ones anytime you need access.",
+  },
+  {
+    id: 9,
     title: "You're All Set!",
     description:
-      "You're ready to start using Local Password Vault. Your digital life is now more secure than ever.",
+      "You're ready to start using Local Password Vault. Your digital life is now more secure than ever!",
     icon: <Sparkles className="w-12 h-12 text-brand-gold" />,
     tip: "Press Shift + / (the ? key) to view all keyboard shortcuts.",
   },
@@ -141,19 +150,14 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-enter">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/60"
-        onClick={onClose}
-      />
-
+    <div className="form-modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
       {/* Modal */}
-      <div className="relative w-full max-w-lg mx-4 animate-slideUp">
+      <div className="relative w-full max-w-lg mx-4">
         <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl border border-slate-700/50 overflow-hidden">
           {/* Close button */}
           <button
             onClick={onClose}
+            aria-label="Close tutorial"
             className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700/50 transition-colors z-10"
           >
             <X className="w-5 h-5" />
@@ -264,18 +268,37 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
 };
 
 // Hook to manage onboarding state
-export const useOnboarding = () => {
+// Pass isVaultUnlocked to only show onboarding after user logs in
+export const useOnboarding = (isVaultUnlocked: boolean = false) => {
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [hasTriggered, setHasTriggered] = useState(false);
 
   useEffect(() => {
+    // Only trigger onboarding once per session, after vault is unlocked
+    if (!isVaultUnlocked || hasTriggered) return;
+    
     const hasSeenOnboarding = localStorage.getItem("onboarding_completed");
     if (!hasSeenOnboarding) {
-      // Delay showing onboarding to let the app load
+      // Delay showing onboarding to let the app settle after login
       const timer = setTimeout(() => {
         setShowOnboarding(true);
-      }, 1000);
+        setHasTriggered(true);
+      }, 500);
       return () => clearTimeout(timer);
+    } else {
+      // Mark as triggered so we don't check again
+      setHasTriggered(true);
     }
+  }, [isVaultUnlocked, hasTriggered]);
+
+  // Listen for replay-onboarding event (from Settings)
+  useEffect(() => {
+    const handleReplayOnboarding = () => {
+      setShowOnboarding(true);
+    };
+    
+    window.addEventListener('replay-onboarding', handleReplayOnboarding);
+    return () => window.removeEventListener('replay-onboarding', handleReplayOnboarding);
   }, []);
 
   const completeOnboarding = () => {

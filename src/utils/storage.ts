@@ -1,6 +1,7 @@
 import { PasswordEntry, Category, RawPasswordEntry } from "../types";
 import { memorySecurity } from "./memorySecurity";
 import { sanitizeTextField, sanitizePassword, sanitizeNotes } from "./sanitization";
+import { devError, devWarn } from "./devLog";
 
 // FIXED CATEGORIES - SINGLE SOURCE OF TRUTH (must match App.tsx)
 const FIXED_CATEGORIES: Category[] = [
@@ -344,7 +345,7 @@ export class StorageService {
       this.resetLoginAttempts();
       return true; // Password verified and vault unlocked successfully
     } catch (error) {
-      console.error("Failed to unlock vault:", error);
+      devError("Failed to unlock vault:", error);
       this.encryption.lockVault(); // Ensure key is cleared on any error
       throw error; // Re-throw to show error message to user
     }
@@ -372,34 +373,51 @@ export class StorageService {
 
     // Ensure we have valid entries array
     if (!Array.isArray(entries)) {
-      console.warn("Invalid entries array provided to saveEntries");
-      return;
+      throw new Error("Invalid entries array provided to saveEntries");
     }
 
     try {
+      const inputCount = entries.length;
+      
       // Validate and sanitize each entry before saving
-      const validEntries = entries
-        .filter((entry) => {
-          return (
-            entry &&
-            typeof entry.id === "string" &&
-            typeof entry.accountName === "string" &&
-            typeof entry.username === "string" &&
-            typeof entry.password === "string" &&
-            typeof entry.category === "string"
-          );
-        })
-        .map((entry) => ({
-          ...entry,
-          // Sanitize text fields to prevent XSS and ensure data integrity
-          accountName: sanitizeTextField(entry.accountName, 200),
-          username: sanitizeTextField(entry.username, 200),
-          password: sanitizePassword(entry.password),
-          website: entry.website ? sanitizeTextField(entry.website, 500) : undefined,
-          category: sanitizeTextField(entry.category, 50),
-          notes: entry.notes ? sanitizeNotes(entry.notes) : undefined,
-          balance: entry.balance ? sanitizeTextField(entry.balance, 100) : undefined,
-        }));
+      const filteredEntries = entries.filter((entry) => {
+        // Basic validation - id and accountName are always required
+        if (!entry || typeof entry.id !== "string" || typeof entry.accountName !== "string") {
+          devWarn("Entry filtered out - missing id or accountName", entry?.accountName);
+          return false;
+        }
+        
+        // For secure notes, username and password can be empty strings
+        const isSecureNote = entry.entryType === "secure_note";
+        if (isSecureNote) {
+          return true; // Secure notes just need id and accountName
+        }
+        
+        // For password entries, require username and password to be strings (can be empty for drafts)
+        const valid = typeof entry.username === "string" && typeof entry.password === "string";
+        if (!valid) {
+          devWarn("Entry filtered out - invalid username/password type", entry?.accountName);
+        }
+        return valid;
+      });
+      
+      // Check if entries were unexpectedly filtered out
+      if (filteredEntries.length < inputCount) {
+        devWarn(`${inputCount - filteredEntries.length} entries filtered out during save`);
+      }
+      
+      // Sanitize all entries
+      const validEntries = filteredEntries.map((entry) => ({
+        ...entry,
+        // Sanitize text fields to prevent XSS and ensure data integrity
+        accountName: sanitizeTextField(entry.accountName, 200),
+        username: sanitizeTextField(entry.username, 200),
+        password: sanitizePassword(entry.password),
+        website: entry.website ? sanitizeTextField(entry.website, 500) : undefined,
+        category: sanitizeTextField(entry.category, 50),
+        notes: entry.notes ? sanitizeNotes(entry.notes) : undefined,
+        balance: entry.balance ? sanitizeTextField(entry.balance, 100) : undefined,
+      }));
 
       // Encrypt the entries before saving
       const entriesJson = JSON.stringify(validEntries);
@@ -410,7 +428,7 @@ export class StorageService {
         // For Electron app, we need the master password for secure file storage
         // This is a security limitation - master password should never be exposed
         // to renderer process in production. For now, fallback to localStorage.
-        console.warn("Secure file storage requires master password in renderer - using localStorage fallback");
+        devWarn("Secure file storage requires master password in renderer - using localStorage fallback");
       }
 
       // Fallback: localStorage with encryption (less secure than file storage)
@@ -429,7 +447,7 @@ export class StorageService {
         localStorage.removeItem("password_entries");
       }
     } catch (error) {
-      console.error("Failed to save encrypted entries:", error);
+      devError("Failed to save encrypted entries:", error);
       throw error;
     }
   }
@@ -449,7 +467,7 @@ export class StorageService {
 
           // Ensure entries is an array and has proper date objects
           if (!Array.isArray(entries)) {
-            console.warn("Loaded entries is not an array, returning empty array");
+            devWarn("Loaded entries is not an array, returning empty array");
             return [];
           }
 
@@ -459,7 +477,7 @@ export class StorageService {
             updatedAt: new Date(entry.updatedAt),
           }));
         } catch (decryptError) {
-          console.error("Failed to decrypt main data, trying backup:", decryptError);
+          devError("Failed to decrypt main data, trying backup:", decryptError);
           // Try to recover from backup
           const backupData = localStorage.getItem("password_entries_v2_backup");
           if (backupData) {
@@ -477,7 +495,7 @@ export class StorageService {
                 }));
               }
             } catch (backupError) {
-              console.error("Backup recovery failed:", backupError);
+              devError("Backup recovery failed:", backupError);
             }
           }
         }
@@ -504,7 +522,7 @@ export class StorageService {
 
       return [];
     } catch (error) {
-      console.error("Failed to load entries:", error);
+      devError("Failed to load entries:", error);
       return [];
     }
   }
@@ -520,7 +538,7 @@ export class StorageService {
       const encryptedData = await this.encryption.encryptData(categoriesJson);
       localStorage.setItem("password_categories_v2", encryptedData);
     } catch (error) {
-      console.error("Failed to save encrypted categories:", error);
+      devError("Failed to save encrypted categories:", error);
       throw error;
     }
   }
@@ -751,7 +769,7 @@ export class StorageService {
       const hint = localStorage.getItem("vault_password_hint_v2");
       return hint || null;
     } catch (error) {
-      console.error("Failed to load password hint:", error);
+      devError("Failed to load password hint:", error);
       return null;
     }
   }
@@ -769,7 +787,7 @@ export class StorageService {
         localStorage.removeItem("vault_password_hint_v2");
       }
     } catch (error) {
-      console.error("Failed to save password hint:", error);
+      devError("Failed to save password hint:", error);
       throw error;
     }
   }

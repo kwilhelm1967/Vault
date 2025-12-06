@@ -134,13 +134,14 @@ import { FAQ } from "./FAQ";
 import { generateTOTP, getTimeRemaining, isValidTOTPSecret } from "../utils/totp";
 import { TrialStatusBanner } from "./TrialStatusBanner";
 import { playLockSound, playCopySound, playDeleteSound } from "../utils/soundEffects";
+import { devError } from "../utils/devLog";
 
 interface MainVaultProps {
   entries: PasswordEntry[];
   categories: Category[];
-  onAddEntry: (entry: Omit<PasswordEntry, "id" | "createdAt" | "updatedAt">) => void;
-  onUpdateEntry: (entry: PasswordEntry) => void;
-  onDeleteEntry: (id: string) => void;
+  onAddEntry: (entry: Omit<PasswordEntry, "id" | "createdAt" | "updatedAt">) => Promise<void>;
+  onUpdateEntry: (entry: PasswordEntry) => Promise<void>;
+  onDeleteEntry: (id: string) => Promise<void>;
   onLock: () => void;
   onExport: () => void;
   onExportEncrypted: (password: string) => Promise<void>;
@@ -268,7 +269,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
         return next;
       });
     } catch (error) {
-      console.error("Error toggling entry expansion:", error);
+      devError("Error toggling entry expansion:", error);
     }
   };
 
@@ -479,10 +480,10 @@ export const MainVault: React.FC<MainVaultProps> = ({
     <div className="h-screen flex overflow-hidden">
       
       {/* Left Sidebar */}
-      <aside className="w-64 bg-slate-800/50 backdrop-blur-sm border-r border-slate-700/50 flex flex-col">
+      <aside className="w-64 bg-slate-800/50 backdrop-blur-sm border-r flex flex-col" style={{ borderColor: 'rgba(201, 174, 102, 0.2)' }}>
         
         {/* Brand */}
-        <div className="p-4 border-b border-slate-700/50">
+        <div className="p-4 border-b" style={{ borderColor: 'rgba(201, 174, 102, 0.2)' }}>
           <div className="flex items-center gap-3">
             <div 
               className="w-9 h-9 rounded-lg flex items-center justify-center"
@@ -523,6 +524,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
             {localSearchTerm && (
               <button
                 onClick={() => handleSearchInput("")}
+                aria-label="Clear search"
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
               >
                 <X className="w-3.5 h-3.5" strokeWidth={1.5} />
@@ -583,7 +585,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
             )}
           </button>
 
-          <p className="pl-5 pr-2 mb-2 mt-3 text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#A08850' }}>
+          <p className="pl-5 pr-2 mb-2 mt-3 text-[11px] font-semibold uppercase tracking-wider" style={{ color: colors.brandGold }}>
             Categories
           </p>
           
@@ -601,7 +603,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
                 : "text-slate-400"
             }`}
           >
-            <Shield className="w-4 h-4 opacity-70" strokeWidth={1.5} style={{ color: colors.brandGold }} />
+            <Grid3X3 className="w-4 h-4 opacity-70" strokeWidth={1.5} style={{ color: colors.brandGold }} />
             All Accounts
             <span className="ml-auto text-xs text-slate-500">{entries.length}</span>
           </button>
@@ -629,7 +631,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
         </nav>
 
         {/* Bottom Actions */}
-        <div className="pr-3 pb-3 pt-3 border-t border-slate-700/50 space-y-1">
+        <div className="pr-3 pb-3 pt-3 border-t space-y-1" style={{ borderColor: 'rgba(201, 174, 102, 0.2)' }}>
           <button
             onClick={() => setCurrentView("settings")}
             className={`nav-item-hover w-full pl-5 pr-3 py-2 rounded-r-lg text-sm flex items-center gap-2.5 transition-colors ${
@@ -709,6 +711,8 @@ export const MainVault: React.FC<MainVaultProps> = ({
                 setCurrentView("passwords");
               }}
               onViewEntry={(entry) => setViewingEntry(entry)}
+              onEditEntry={(entry) => setEditingEntry(entry)}
+              onDeleteEntry={onDeleteEntry}
               onViewWeakPasswords={() => {
                 onCategoryChange("all");
                 setShowWeakOnly(true);
@@ -721,6 +725,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
                 setShowReusedOnly(true);
                 setCurrentView("passwords");
               }}
+              onImport={onImport}
             />
           </div>
         ) : currentView === "settings" ? (
@@ -747,13 +752,13 @@ export const MainVault: React.FC<MainVaultProps> = ({
         ) : (
           <div key={`passwords-${selectedCategory}-${showWeakOnly}-${showReusedOnly}-${showFavoritesOnly}`} className="page-transition-enter flex-1 flex flex-col overflow-hidden">
             {/* Header */}
-            <header className="px-6 py-5 border-b border-slate-800 flex items-center justify-between">
+            <header className="px-6 py-5 border-b flex items-center justify-between" style={{ borderColor: 'rgba(201, 174, 102, 0.2)' }}>
               <div>
                 <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2" style={{ color: colors.warmIvory }}>
                   {showWeakOnly ? (
                     <>
-                      <AlertTriangle className="w-6 h-6 text-amber-400" strokeWidth={1.5} />
-                      <span className="text-amber-400">Weak Passwords</span>
+                      <AlertTriangle className="w-6 h-6" strokeWidth={1.5} style={{ color: '#C9AE66' }} />
+                      <span style={{ color: '#C9AE66' }}>Weak Passwords</span>
                     </>
                   ) : showReusedOnly ? (
                     <>
@@ -917,7 +922,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
             
             {/* Bulk Select Actions Bar */}
             {bulkSelectMode && (
-              <div className="px-6 py-2 bg-slate-800/80 border-b border-slate-700/50 flex items-center justify-between">
+              <div className="px-6 py-2 bg-slate-800/80 border-b flex items-center justify-between" style={{ borderColor: 'rgba(201, 174, 102, 0.2)' }}>
                 <div className="flex items-center gap-3">
                   <span className="text-sm text-slate-400">
                     {selectedEntries.size} selected
@@ -953,27 +958,38 @@ export const MainVault: React.FC<MainVaultProps> = ({
             <div className="flex-1 overflow-y-auto p-6">
           {filteredEntries.length === 0 ? (
             (() => {
-              // Handle Weak Passwords empty state - this is a GOOD thing!
+              // First check if there are NO accounts at all
+              const hasAnyAccounts = entries.length > 0;
+
+              // Handle Weak Passwords empty state
               if (showWeakOnly) {
                 return (
                   <div className="flex flex-col items-center justify-center h-full text-center pb-24">
-                    <div 
-                      className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
-                      style={{ 
-                        backgroundColor: 'rgba(34, 197, 94, 0.15)',
-                        border: '1px solid rgba(34, 197, 94, 0.3)'
-                      }}
-                    >
-                      <AlertTriangle 
-                        className="w-8 h-8" 
-                        strokeWidth={1.5} 
-                        style={{ color: '#22c55e' }}
-                      />
-                    </div>
-                    <h3 style={{ color: '#22c55e' }} className="font-medium mb-1">All passwords are strong!</h3>
-                    <p className="text-slate-500 text-sm mb-4">
-                      Great job! None of your passwords need attention.
-                    </p>
+                    {hasAnyAccounts ? (
+                      <>
+                        <AlertTriangle 
+                          className="w-10 h-10 mb-4" 
+                          strokeWidth={1.5} 
+                          style={{ color: '#22c55e' }}
+                        />
+                        <h3 style={{ color: '#22c55e' }} className="font-medium mb-1">All passwords are strong!</h3>
+                        <p className="text-slate-500 text-sm mb-4">
+                          Great job! None of your passwords need attention.
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <Key 
+                          className="w-10 h-10 mb-4" 
+                          strokeWidth={1.5} 
+                          style={{ color: colors.slate400 }}
+                        />
+                        <h3 style={{ color: colors.warmIvory }} className="font-medium mb-1">No passwords yet</h3>
+                        <p className="text-slate-500 text-sm mb-4">
+                          Add some accounts to check their strength.
+                        </p>
+                      </>
+                    )}
                     <button
                       onClick={() => {
                         setShowWeakOnly(false);
@@ -991,27 +1007,35 @@ export const MainVault: React.FC<MainVaultProps> = ({
                 );
               }
 
-              // Handle Reused Passwords empty state - this is a GOOD thing!
+              // Handle Reused Passwords empty state
               if (showReusedOnly) {
                 return (
                   <div className="flex flex-col items-center justify-center h-full text-center pb-24">
-                    <div 
-                      className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
-                      style={{ 
-                        backgroundColor: 'rgba(34, 197, 94, 0.15)',
-                        border: '1px solid rgba(34, 197, 94, 0.3)'
-                      }}
-                    >
-                      <AlertTriangle 
-                        className="w-8 h-8" 
-                        strokeWidth={1.5} 
-                        style={{ color: '#22c55e' }}
-                      />
-                    </div>
-                    <h3 style={{ color: '#22c55e' }} className="font-medium mb-1">All passwords are unique!</h3>
-                    <p className="text-slate-500 text-sm mb-4">
-                      Great job! You're not reusing any passwords.
-                    </p>
+                    {hasAnyAccounts ? (
+                      <>
+                        <AlertTriangle 
+                          className="w-10 h-10 mb-4" 
+                          strokeWidth={1.5} 
+                          style={{ color: '#22c55e' }}
+                        />
+                        <h3 style={{ color: '#22c55e' }} className="font-medium mb-1">All passwords are unique!</h3>
+                        <p className="text-slate-500 text-sm mb-4">
+                          Great job! You're not reusing any passwords.
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <Key 
+                          className="w-10 h-10 mb-4" 
+                          strokeWidth={1.5} 
+                          style={{ color: colors.slate400 }}
+                        />
+                        <h3 style={{ color: colors.warmIvory }} className="font-medium mb-1">No passwords yet</h3>
+                        <p className="text-slate-500 text-sm mb-4">
+                          Add some accounts to check for reused passwords.
+                        </p>
+                      </>
+                    )}
                     <button
                       onClick={() => {
                         setShowReusedOnly(false);
@@ -1033,22 +1057,14 @@ export const MainVault: React.FC<MainVaultProps> = ({
               if (showFavoritesOnly) {
                 return (
                   <div className="flex flex-col items-center justify-center h-full text-center pb-24">
-                    <div 
-                      className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
-                      style={{ 
-                        backgroundColor: `${colors.brandGold}15`,
-                        border: `1px solid ${colors.brandGold}30`
-                      }}
-                    >
-                      <Star 
-                        className="w-8 h-8" 
-                        strokeWidth={1.5} 
-                        style={{ color: colors.brandGold }}
-                      />
-                    </div>
+                    <Star 
+                      className="w-10 h-10 mb-4" 
+                      strokeWidth={1.5} 
+                      style={{ color: colors.brandGold }}
+                    />
                     <h3 style={{ color: colors.warmIvory }} className="font-medium mb-1">No favorites yet</h3>
                     <p className="text-slate-500 text-sm mb-4">
-                      Mark accounts as favorites from All Accounts
+                      {hasAnyAccounts ? "Mark accounts as favorites from All Accounts" : "Add some accounts first"}
                     </p>
                     <button
                       onClick={() => {
@@ -1072,26 +1088,14 @@ export const MainVault: React.FC<MainVaultProps> = ({
               const CategoryIcon = currentCategory?.icon 
                 ? getCategoryIcon(currentCategory.icon) 
                 : (selectedCategory === "all" ? Grid3X3 : Key);
-              // Use yellow/gold for "Other" category, otherwise use category color
-              const categoryColor = selectedCategory === "other" 
-                ? "#EAB308" 
-                : (currentCategory?.color || "#64748B");
               
               return (
                 <div className="flex flex-col items-center justify-center h-full text-center pb-24">
-                  <div 
-                    className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
-                    style={{ 
-                      backgroundColor: `${categoryColor}15`,
-                      border: `1px solid ${categoryColor}30`
-                    }}
-                  >
-                    <CategoryIcon 
-                      className="w-8 h-8" 
-                      strokeWidth={1.5} 
-                      style={{ color: categoryColor }}
-                    />
-                  </div>
+                  <CategoryIcon 
+                    className="w-10 h-10 mb-4" 
+                    strokeWidth={1.5} 
+                    style={{ color: colors.brandGold }}
+                  />
                   <h3 style={{ color: colors.warmIvory }} className="font-medium mb-1">No accounts found</h3>
                   <p className="text-slate-500 text-sm mb-4">
                     {searchTerm ? "Try a different search term" : "Add your first account to get started"}
@@ -1112,7 +1116,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
               );
             })()
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
               {filteredEntries.map((entry) => {
                 const category = categories.find((c) => c.id === entry.category);
                 const isPasswordVisible = visiblePasswords.has(entry.id);
@@ -1190,7 +1194,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
                           {entry.entryType === "secure_note" ? "Secure Note" : entry.username}
                         </p>
                       </div>
-                      <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex gap-1 items-center" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={() => toggleFavorite(entry)}
                           className={`p-1.5 rounded-lg transition-colors ${
@@ -1222,6 +1226,17 @@ export const MainVault: React.FC<MainVaultProps> = ({
                           title="Delete"
                         >
                           <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+                        </button>
+                        {/* Expand/Collapse Arrow */}
+                        <button
+                          onClick={() => toggleEntryExpanded(entry.id)}
+                          className="p-1.5 text-slate-500 hover:text-white hover:bg-slate-700/50 rounded-lg transition-all ml-1"
+                          title={isExpanded ? "Collapse" : "Expand"}
+                        >
+                          <ChevronDown 
+                            className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} 
+                            strokeWidth={1.5} 
+                          />
                         </button>
                       </div>
                     </div>
@@ -1353,13 +1368,14 @@ export const MainVault: React.FC<MainVaultProps> = ({
 
       {/* View Details Modal */}
       {viewingEntry && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-start justify-center pt-[15vh] p-4 z-50">
+        <div className="form-modal-backdrop">
           <div className="bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold tracking-tight" style={{ color: colors.warmIvory }}>{viewingEntry.accountName}</h3>
                 <button
                   onClick={() => setViewingEntry(null)}
+                  aria-label="Close entry details"
                   className="p-2 text-slate-500 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors"
                 >
                   <X className="w-5 h-5" strokeWidth={1.5} />
@@ -1653,12 +1669,13 @@ export const MainVault: React.FC<MainVaultProps> = ({
               entry={editingEntry}
               categories={categories}
               allEntries={entries}
-              onSubmit={(data) => {
+              defaultCategory={!editingEntry && selectedCategory !== "all" ? selectedCategory : undefined}
+              onSubmit={async (data) => {
                 if (editingEntry) {
-                  onUpdateEntry({ ...editingEntry, ...data, updatedAt: new Date() });
+                  await onUpdateEntry({ ...editingEntry, ...data, updatedAt: new Date() });
                   setEditingEntry(null);
                 } else {
-                  onAddEntry(data);
+                  await onAddEntry(data);
                   setShowAddForm(false);
                 }
               }}
@@ -1666,8 +1683,8 @@ export const MainVault: React.FC<MainVaultProps> = ({
                 setShowAddForm(false);
                 setEditingEntry(null);
               }}
-              onDelete={editingEntry ? () => {
-                onDeleteEntry(editingEntry.id);
+              onDelete={editingEntry ? async () => {
+                await onDeleteEntry(editingEntry.id);
                 setEditingEntry(null);
                 setViewingEntry(null);
               } : undefined}
@@ -1678,7 +1695,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
 
       {/* Change Password Modal */}
       {showChangePassword && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-start justify-center pt-[30vh] p-4 z-50">
+        <div className="form-modal-backdrop">
           <div className="bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 w-full max-w-sm shadow-xl">
             <div className="text-center">
               <div 
@@ -1716,6 +1733,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
           </div>
         </div>
       )}
+
     </div>
   );
 };

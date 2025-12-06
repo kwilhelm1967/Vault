@@ -7,6 +7,8 @@
  * protection against memory inspection attacks.
  */
 
+import { devError, devWarn } from "./devLog";
+
 export class MemorySecurity {
   private static sensitiveStrings = new Set<string>();
   private static sensitiveArrays = new WeakSet<Uint8Array>();
@@ -102,7 +104,7 @@ export class MemorySecurity {
       
       // Note: WeakSet doesn't have forEach, arrays are cleaned when dereferenced
     } catch (error) {
-      console.warn('Failed to clear sensitive data:', error);
+      devWarn('Failed to clear sensitive data:', error);
     }
   }
 
@@ -215,7 +217,7 @@ export class MemorySecurity {
 
       return hash;
     } catch (error) {
-      console.error('Password hashing failed:', error);
+      devError('Password hashing failed:', error);
       throw error;
     }
   }

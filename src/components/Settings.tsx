@@ -1,7 +1,7 @@
 /**
  * Settings Component
  * 
- * Legacy Vault style settings with bouncing cards and blue accents.
+ * Settings page with bouncing cards and blue accents.
  */
 
 import React, { useState, useEffect } from "react";
@@ -35,6 +35,7 @@ import {
 import { APP_VERSION } from "../config/changelog";
 import { generateRecoveryPhrase, storeRecoveryPhrase } from "../utils/recoveryPhrase";
 import { storageService } from "../utils/storage";
+import { devError } from "../utils/devLog";
 import { MobileAccess } from "./MobileAccess";
 
 // Color palette
@@ -108,7 +109,7 @@ const BouncyCard: React.FC<{
     <div
       onClick={onClick}
       className={`
-        relative rounded-xl p-5 cursor-pointer
+        relative rounded-xl p-3 sm:p-4 lg:p-5 cursor-pointer
         transition-all duration-200 ease-out
         ${className}
       `}
@@ -316,7 +317,6 @@ export const Settings: React.FC<SettingsProps> = ({
   const [showEncryptedExportModal, setShowEncryptedExportModal] = useState(false);
   const [showEncryptedImportModal, setShowEncryptedImportModal] = useState(false);
   const [encryptPassword, setEncryptPassword] = useState("");
-  const [encryptPasswordConfirm, setEncryptPasswordConfirm] = useState("");
   const [importPassword, setImportPassword] = useState("");
   const [importData, setImportData] = useState("");
   const [encryptError, setEncryptError] = useState("");
@@ -347,7 +347,9 @@ export const Settings: React.FC<SettingsProps> = ({
         const parsed = JSON.parse(vaultSettings);
         soundEffectsEnabled = parsed.soundEffectsEnabled ?? false;
       }
-    } catch { /* ignore */ }
+    } catch (error) {
+      devError("Failed to parse vault settings:", error);
+    }
     
     const loadedSettings: VaultSettings = {
       autoLockTimeout: parseInt(localStorage.getItem(SETTINGS_KEYS.AUTO_LOCK_TIMEOUT) || String(DEFAULT_SETTINGS.autoLockTimeout)),
@@ -382,7 +384,7 @@ export const Settings: React.FC<SettingsProps> = ({
       setNewRecoveryPhrase("");
       showSavedIndicator("Recovery phrase updated!");
     } catch (error) {
-      console.error("Failed to store recovery phrase:", error);
+      devError("Failed to store recovery phrase:", error);
     }
   };
   
@@ -400,7 +402,7 @@ export const Settings: React.FC<SettingsProps> = ({
       setShowHintModal(false);
       showSavedIndicator(newHint.trim() ? "Hint saved!" : "Hint removed!");
     } catch (error) {
-      console.error("Failed to save hint:", error);
+      devError("Failed to save hint:", error);
     }
   };
   
@@ -412,7 +414,7 @@ export const Settings: React.FC<SettingsProps> = ({
       setShowHintModal(false);
       showSavedIndicator("Hint removed!");
     } catch (error) {
-      console.error("Failed to remove hint:", error);
+      devError("Failed to remove hint:", error);
     }
   };
 
@@ -437,12 +439,8 @@ export const Settings: React.FC<SettingsProps> = ({
   };
 
   const handleEncryptedExport = async () => {
-    if (encryptPassword.length < 8) {
-      setEncryptError("Password must be at least 8 characters");
-      return;
-    }
-    if (encryptPassword !== encryptPasswordConfirm) {
-      setEncryptError("Passwords do not match");
+    if (!encryptPassword) {
+      setEncryptError("Please enter your master password");
       return;
     }
     
@@ -452,7 +450,6 @@ export const Settings: React.FC<SettingsProps> = ({
       await onExportEncrypted(encryptPassword);
       setShowEncryptedExportModal(false);
       setEncryptPassword("");
-      setEncryptPasswordConfirm("");
     } catch (err) {
       setEncryptError(err instanceof Error ? err.message : "Export failed");
     } finally {
@@ -498,7 +495,9 @@ export const Settings: React.FC<SettingsProps> = ({
       parsed.soundEffectsEnabled = value;
       localStorage.setItem('vault_settings', JSON.stringify(parsed));
       showSavedIndicator("soundEffects");
-    } catch { /* ignore */ }
+    } catch (error) {
+      devError("Failed to save sound effects setting:", error);
+    }
   };
 
   const autoLockOptions = [
@@ -540,15 +539,15 @@ export const Settings: React.FC<SettingsProps> = ({
 
       {/* Security Settings */}
       <SectionTitle>Security</SectionTitle>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-8">
         <BouncyCard variant="accent">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 flex items-center justify-center">
-                <Clock className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center flex-shrink-0">
+                <Clock className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
               </div>
-              <div>
-                <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-1">Auto-Lock</h3>
+              <div className="min-w-0">
+                <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-0.5 sm:mb-1 text-sm sm:text-base">Auto-Lock</h3>
                 <p className="text-slate-500 text-xs">Lock after inactivity</p>
               </div>
             </div>
@@ -562,13 +561,13 @@ export const Settings: React.FC<SettingsProps> = ({
         </BouncyCard>
 
         <BouncyCard variant="accent">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 flex items-center justify-center">
-                <Clipboard className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center flex-shrink-0">
+                <Clipboard className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
               </div>
-              <div>
-                <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-1">Clipboard</h3>
+              <div className="min-w-0">
+                <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-0.5 sm:mb-1 text-sm sm:text-base">Clipboard</h3>
                 <p className="text-slate-500 text-xs">Auto-clear copied data</p>
               </div>
             </div>
@@ -582,16 +581,16 @@ export const Settings: React.FC<SettingsProps> = ({
         </BouncyCard>
 
         <BouncyCard variant="accent">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 flex items-center justify-center">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center flex-shrink-0">
                 {settings.showPasswordsDefault 
-                  ? <Eye className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
-                  : <EyeOff className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
+                  ? <Eye className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
+                  : <EyeOff className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
                 }
               </div>
-              <div>
-                <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-1">Show Passwords</h3>
+              <div className="min-w-0">
+                <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-0.5 sm:mb-1 text-sm sm:text-base">Show Passwords</h3>
                 <p className="text-slate-500 text-xs">Visible by default</p>
               </div>
             </div>
@@ -604,16 +603,16 @@ export const Settings: React.FC<SettingsProps> = ({
         </BouncyCard>
 
         <BouncyCard variant="accent">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 flex items-center justify-center">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center flex-shrink-0">
                 {settings.soundEffectsEnabled 
-                  ? <Volume2 className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
-                  : <VolumeX className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
+                  ? <Volume2 className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
+                  : <VolumeX className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
                 }
               </div>
-              <div>
-                <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-1">Sound Effects</h3>
+              <div className="min-w-0">
+                <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-0.5 sm:mb-1 text-sm sm:text-base">Sound Effects</h3>
                 <p className="text-slate-500 text-xs">Subtle audio feedback</p>
               </div>
             </div>
@@ -626,75 +625,75 @@ export const Settings: React.FC<SettingsProps> = ({
         </BouncyCard>
 
         <BouncyCard variant="accent" onClick={onChangePassword}>
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 flex items-center justify-center">
-              <Key className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center flex-shrink-0">
+              <Key className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
             </div>
-            <div className="flex-1">
-              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-1">Master Password</h3>
+            <div className="flex-1 min-w-0">
+              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-0.5 sm:mb-1 text-sm sm:text-base">Master Password</h3>
               <p className="text-slate-500 text-xs">Change encryption key</p>
             </div>
-            <span style={{ color: colors.brandGold }}>→</span>
+            <span style={{ color: colors.brandGold }} className="flex-shrink-0">→</span>
           </div>
         </BouncyCard>
 
         {/* Recovery Phrase */}
         <BouncyCard onClick={handleStartRegenerate} variant="accent">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 flex items-center justify-center">
-              <RefreshCw className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center flex-shrink-0">
+              <RefreshCw className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
             </div>
-            <div className="flex-1">
-              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-1">Recovery Phrase</h3>
+            <div className="flex-1 min-w-0">
+              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-0.5 sm:mb-1 text-sm sm:text-base">Recovery Phrase</h3>
               <p className="text-slate-500 text-xs">Generate new 12-word phrase</p>
             </div>
-            <span style={{ color: colors.brandGold }}>→</span>
+            <span style={{ color: colors.brandGold }} className="flex-shrink-0">→</span>
           </div>
         </BouncyCard>
 
         {/* Password Hint */}
         <BouncyCard onClick={() => setShowHintModal(true)} variant="accent">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 flex items-center justify-center">
-              <HelpCircle className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center flex-shrink-0">
+              <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
             </div>
-            <div className="flex-1">
-              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-1">Password Hint</h3>
+            <div className="flex-1 min-w-0">
+              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-0.5 sm:mb-1 text-sm sm:text-base">Password Hint</h3>
               <p className="text-slate-500 text-xs">
                 {currentHint ? "Hint is set" : "No hint configured"}
               </p>
             </div>
-            <Edit3 className="w-5 h-5" style={{ color: colors.brandGold }} />
+            <Edit3 className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" style={{ color: colors.brandGold }} />
           </div>
         </BouncyCard>
       </div>
 
       {/* Quick Actions */}
       <SectionTitle>Quick Actions</SectionTitle>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-8">
         <BouncyCard onClick={onExport} variant="accent">
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 flex items-center justify-center">
-                <Download className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
+          <div className="flex flex-col gap-2 sm:gap-3">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center flex-shrink-0">
+                <Download className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
               </div>
-              <div className="flex-1">
-                <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-1">Export to Excel</h3>
+              <div className="flex-1 min-w-0">
+                <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-0.5 sm:mb-1 text-sm sm:text-base">Export to Excel</h3>
                 <p className="text-slate-500 text-xs">Opens in Excel or Google Sheets</p>
               </div>
               <span 
-                className="px-3 py-1.5 rounded-full text-xs font-bold"
+                className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-bold flex-shrink-0"
                 style={{ backgroundColor: `${colors.steelBlue500}20`, color: colors.steelBlue400 }}
               >
                 {totalEntries}
               </span>
             </div>
             <div 
-              className="flex items-center gap-2 px-3 py-2 rounded-lg"
+              className="flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg"
               style={{ backgroundColor: 'rgba(201, 174, 102, 0.1)', border: '1px solid rgba(201, 174, 102, 0.2)' }}
             >
-              <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.5} style={{ color: colors.brandGold }} />
-              <span className="text-[11px]" style={{ color: '#9CA3AF' }}>
+              <AlertTriangle className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" strokeWidth={1.5} style={{ color: colors.brandGold }} />
+              <span className="text-[10px] sm:text-[11px]" style={{ color: '#9CA3AF' }}>
                 Contains sensitive data. Store securely.
               </span>
             </div>
@@ -702,29 +701,29 @@ export const Settings: React.FC<SettingsProps> = ({
         </BouncyCard>
 
         <BouncyCard onClick={onImport} variant="accent">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 flex items-center justify-center">
-              <Upload className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center flex-shrink-0">
+              <Upload className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
             </div>
-            <div className="flex-1">
-              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-1">Import from File</h3>
+            <div className="flex-1 min-w-0">
+              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-0.5 sm:mb-1 text-sm sm:text-base">Import from File</h3>
               <p className="text-slate-500 text-xs">Restore from backup</p>
             </div>
-            <span style={{ color: colors.brandGold }}>→</span>
+            <span style={{ color: colors.brandGold }} className="flex-shrink-0">→</span>
           </div>
         </BouncyCard>
 
         <BouncyCard onClick={() => setShowEncryptedExportModal(true)} variant="accent">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 flex items-center justify-center">
-              <Shield className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center flex-shrink-0">
+              <Shield className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
             </div>
-            <div className="flex-1">
-              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-1">Secure Backup</h3>
+            <div className="flex-1 min-w-0">
+              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-0.5 sm:mb-1 text-sm sm:text-base">Secure Backup</h3>
               <p className="text-slate-500 text-xs">Password-protected file</p>
             </div>
             <span 
-              className="px-2 py-1 rounded text-xs font-bold"
+              className="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-bold flex-shrink-0"
               style={{ backgroundColor: "rgba(34, 197, 94, 0.2)", color: "rgb(34, 197, 94)" }}
             >
               SECURE
@@ -733,16 +732,16 @@ export const Settings: React.FC<SettingsProps> = ({
         </BouncyCard>
 
         <BouncyCard onClick={() => setShowEncryptedImportModal(true)} variant="accent">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 flex items-center justify-center">
-              <Lock className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center flex-shrink-0">
+              <Lock className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
             </div>
-            <div className="flex-1">
-              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-1">Restore Secure Backup</h3>
+            <div className="flex-1 min-w-0">
+              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-0.5 sm:mb-1 text-sm sm:text-base">Restore Secure Backup</h3>
               <p className="text-slate-500 text-xs">Upload .csv file</p>
             </div>
             <span 
-              className="px-2 py-1 rounded text-xs font-bold"
+              className="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-bold flex-shrink-0"
               style={{ backgroundColor: "rgba(34, 197, 94, 0.2)", color: "rgb(34, 197, 94)" }}
             >
               SECURE
@@ -751,12 +750,12 @@ export const Settings: React.FC<SettingsProps> = ({
         </BouncyCard>
 
         <BouncyCard onClick={() => setShowMobileAccess(true)} variant="accent">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 flex items-center justify-center">
-              <Smartphone className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center flex-shrink-0">
+              <Smartphone className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
             </div>
-            <div className="flex-1">
-              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-1">Mobile Access</h3>
+            <div className="flex-1 min-w-0">
+              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-0.5 sm:mb-1 text-sm sm:text-base">Mobile Access</h3>
               <p className="text-slate-500 text-xs">View vault on your phone</p>
             </div>
             <span style={{ color: colors.brandGold }}>→</span>
@@ -766,7 +765,7 @@ export const Settings: React.FC<SettingsProps> = ({
 
       {/* About */}
       <SectionTitle>About</SectionTitle>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 mb-4">
         {[
           { label: "Version", value: APP_VERSION, icon: Info },
           { label: "Encryption", value: "AES-256", icon: Shield },
@@ -798,12 +797,7 @@ export const Settings: React.FC<SettingsProps> = ({
         }}
       >
         <div className="flex items-center gap-4">
-          <div 
-            className="w-10 h-10 rounded-xl flex items-center justify-center"
-            style={{ background: `linear-gradient(135deg, ${colors.brandGold}30, ${colors.brandGold}10)` }}
-          >
-            <Lightbulb className="w-5 h-5" strokeWidth={1.5} style={{ color: colors.brandGold }} />
-          </div>
+          <Lightbulb className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
           <div className="flex-1">
             <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-0.5">What's New in v{APP_VERSION}</h3>
             <p className="text-slate-500 text-xs">See the latest features and improvements</p>
@@ -815,7 +809,7 @@ export const Settings: React.FC<SettingsProps> = ({
       {/* Help Section */}
       <SectionTitle>Help & Support</SectionTitle>
       
-      <div className="grid grid-cols-2 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-8">
         {/* Replay Tutorial */}
         <BouncyCard 
           variant="accent" 
@@ -825,12 +819,7 @@ export const Settings: React.FC<SettingsProps> = ({
           }}
         >
           <div className="flex items-center gap-3">
-            <div 
-              className="w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{ background: `linear-gradient(135deg, ${colors.steelBlue500}30, ${colors.steelBlue500}10)` }}
-            >
-              <BookOpen className="w-5 h-5" strokeWidth={1.5} style={{ color: colors.brandGold }} />
-            </div>
+            <BookOpen className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
             <div className="flex-1 min-w-0">
               <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-0.5 text-sm">Replay Tutorial</h3>
               <p className="text-slate-500 text-xs truncate">Learn how to use the app</p>
@@ -851,12 +840,7 @@ export const Settings: React.FC<SettingsProps> = ({
           }}
         >
           <div className="flex items-center gap-3">
-            <div 
-              className="w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{ background: `linear-gradient(135deg, ${colors.steelBlue500}30, ${colors.steelBlue500}10)` }}
-            >
-              <Keyboard className="w-5 h-5" strokeWidth={1.5} style={{ color: colors.brandGold }} />
-            </div>
+            <Keyboard className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
             <div className="flex-1 min-w-0">
               <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-0.5 text-sm">Keyboard Shortcuts</h3>
               <p className="text-slate-500 text-xs truncate">Press ? to see all shortcuts</p>
@@ -883,9 +867,9 @@ export const Settings: React.FC<SettingsProps> = ({
 
       {/* Clear Data Confirmation Modal */}
       {showClearConfirm && (
-        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md flex items-start justify-center pt-[30vh] p-4 z-50">
+        <div className="form-modal-backdrop">
           <div 
-            className="rounded-2xl p-8 w-full max-w-sm animate-bounce-in"
+            className="rounded-2xl p-8 w-full max-w-sm animate-fade-in"
             style={{
               backgroundColor: "rgba(30, 41, 59, 0.98)",
               border: "1px solid rgba(239, 68, 68, 0.3)",
@@ -934,9 +918,9 @@ export const Settings: React.FC<SettingsProps> = ({
 
       {/* Encrypted Export Modal */}
       {showEncryptedExportModal && (
-        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md flex items-start justify-center pt-[15vh] p-4 z-50">
+        <div className="form-modal-backdrop">
           <div 
-            className="rounded-2xl p-6 w-full max-w-md animate-bounce-in"
+            className="rounded-2xl p-6 w-full max-w-md animate-fade-in"
             style={{
               backgroundColor: "rgba(30, 41, 59, 0.98)",
               border: `1px solid ${colors.steelBlue500}40`,
@@ -948,30 +932,32 @@ export const Settings: React.FC<SettingsProps> = ({
                 <Shield className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
               </div>
               <div>
-                <h3 style={{ color: colors.warmIvory }} className="text-lg font-bold">Encrypted Export</h3>
-                <p className="text-slate-400 text-xs">Create password-protected backup</p>
+                <h3 style={{ color: colors.warmIvory }} className="text-lg font-bold">Secure Backup</h3>
+                <p className="text-slate-400 text-xs">Confirm to create encrypted backup</p>
               </div>
             </div>
             
             <div className="space-y-4">
+              <div 
+                className="p-4 rounded-lg"
+                style={{ backgroundColor: 'rgba(91, 130, 184, 0.1)', border: '1px solid rgba(91, 130, 184, 0.2)' }}
+              >
+                <p className="text-slate-300 text-sm mb-3">
+                  Enter your <strong style={{ color: colors.brandGold }}>master password</strong> to create an encrypted backup.
+                </p>
+                <p className="text-slate-400 text-xs">
+                  You'll need this same password to restore the backup later.
+                </p>
+              </div>
+              
               <div>
-                <label className="text-xs text-slate-400 mb-1.5 block">Export Password (min 8 chars)</label>
+                <label className="text-xs text-slate-400 mb-1.5 block">Confirm Master Password</label>
                 <input
                   type="password"
                   value={encryptPassword}
                   onChange={(e) => setEncryptPassword(e.target.value)}
                   className="w-full px-3 py-2.5 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
-                  placeholder="Enter encryption password"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-slate-400 mb-1.5 block">Confirm Password</label>
-                <input
-                  type="password"
-                  value={encryptPasswordConfirm}
-                  onChange={(e) => setEncryptPasswordConfirm(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
-                  placeholder="Confirm password"
+                  placeholder="Enter your master password"
                 />
               </div>
               
@@ -984,7 +970,6 @@ export const Settings: React.FC<SettingsProps> = ({
                   onClick={() => {
                     setShowEncryptedExportModal(false);
                     setEncryptPassword("");
-                    setEncryptPasswordConfirm("");
                     setEncryptError("");
                   }}
                   className="flex-1 px-4 py-2.5 bg-slate-700/50 hover:bg-slate-600/50 text-white rounded-lg text-sm font-medium transition-all"
@@ -994,11 +979,11 @@ export const Settings: React.FC<SettingsProps> = ({
                 </button>
                 <button
                   onClick={handleEncryptedExport}
-                  disabled={isProcessing || encryptPassword.length < 8}
+                  disabled={isProcessing || !encryptPassword}
                   className="flex-1 px-4 py-2.5 text-white rounded-lg text-sm font-medium transition-all disabled:opacity-50"
                   style={{ backgroundColor: colors.steelBlue500 }}
                 >
-                  {isProcessing ? "Exporting..." : "Export Secure"}
+                  {isProcessing ? "Creating Backup..." : "Create Backup"}
                 </button>
               </div>
             </div>
@@ -1008,9 +993,9 @@ export const Settings: React.FC<SettingsProps> = ({
 
       {/* Encrypted Import Modal */}
       {showEncryptedImportModal && (
-        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md flex items-start justify-center pt-[15vh] p-4 z-50">
+        <div className="form-modal-backdrop">
           <div 
-            className="rounded-2xl p-6 w-full max-w-md animate-bounce-in"
+            className="rounded-2xl p-6 w-full max-w-md animate-fade-in"
             style={{
               backgroundColor: "rgba(30, 41, 59, 0.98)",
               border: `1px solid ${colors.steelBlue500}40`,
@@ -1022,29 +1007,43 @@ export const Settings: React.FC<SettingsProps> = ({
                 <Lock className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
               </div>
               <div>
-                <h3 style={{ color: colors.warmIvory }} className="text-lg font-bold">Restore Secure Backup</h3>
-                <p className="text-slate-400 text-xs">Upload your .csv backup file</p>
+                <h3 style={{ color: colors.warmIvory }} className="text-lg font-bold">Restore Backup</h3>
+                <p className="text-slate-400 text-xs">Restore from encrypted backup file</p>
               </div>
             </div>
             
             <div className="space-y-4">
               <div>
-                <label className="text-xs text-slate-400 mb-1.5 block">Backup File Contents</label>
-                <textarea
-                  value={importData}
-                  onChange={(e) => setImportData(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 h-24 resize-none"
-                  placeholder="Paste your backup file contents here..."
+                <label className="text-xs text-slate-400 mb-1.5 block">Select Backup File</label>
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (event) => {
+                        setImportData(event.target?.result as string || "");
+                      };
+                      reader.readAsText(file);
+                    }
+                  }}
+                  className="w-full px-3 py-2.5 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-600 file:text-white hover:file:bg-blue-500 file:cursor-pointer"
                 />
+                {importData && (
+                  <p className="text-emerald-400 text-xs mt-2 flex items-center gap-1">
+                    <Check className="w-3 h-3" /> File loaded successfully
+                  </p>
+                )}
               </div>
               <div>
-                <label className="text-xs text-slate-400 mb-1.5 block">Password</label>
+                <label className="text-xs text-slate-400 mb-1.5 block">Confirm Master Password</label>
                 <input
                   type="password"
                   value={importPassword}
                   onChange={(e) => setImportPassword(e.target.value)}
                   className="w-full px-3 py-2.5 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
-                  placeholder="Enter the password you used when creating the backup"
+                  placeholder="Enter your master password to confirm"
                 />
               </div>
               
@@ -1083,9 +1082,9 @@ export const Settings: React.FC<SettingsProps> = ({
 
       {/* Regenerate Recovery Phrase Modal */}
       {showRegenerateModal && (
-        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md flex items-start justify-center pt-[10vh] p-4 z-50 overflow-auto">
+        <div className="form-modal-backdrop">
           <div 
-            className="rounded-2xl p-6 w-full max-w-lg animate-bounce-in"
+            className="rounded-2xl p-6 w-full max-w-lg animate-fade-in"
             style={{
               backgroundColor: "rgba(30, 41, 59, 0.98)",
               border: `1px solid ${colors.steelBlue500}40`,
@@ -1210,9 +1209,9 @@ export const Settings: React.FC<SettingsProps> = ({
 
       {/* Password Hint Modal */}
       {showHintModal && (
-        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md flex items-start justify-center pt-[20vh] p-4 z-50">
+        <div className="form-modal-backdrop">
           <div 
-            className="rounded-2xl p-6 w-full max-w-md animate-bounce-in"
+            className="rounded-2xl p-6 w-full max-w-md animate-fade-in"
             style={{
               backgroundColor: "rgba(30, 41, 59, 0.98)",
               border: `1px solid ${colors.steelBlue500}40`,
@@ -1312,13 +1311,12 @@ export const Settings: React.FC<SettingsProps> = ({
       )}
 
       <style>{`
-        @keyframes bounce-in {
-          0% { transform: scale(0.9); opacity: 0; }
-          50% { transform: scale(1.02); }
-          100% { transform: scale(1); opacity: 1; }
+        @keyframes fade-in {
+          0% { opacity: 0; transform: translateY(-10px); }
+          100% { opacity: 1; transform: translateY(0); }
         }
-        .animate-bounce-in {
-          animation: bounce-in 0.3s ease-out;
+        .animate-fade-in {
+          animation: fade-in 0.2s ease-out;
         }
       `}</style>
     </div>
@@ -1334,7 +1332,11 @@ export const getVaultSettings = (): VaultSettings => {
       const parsed = JSON.parse(vaultSettings);
       soundEffectsEnabled = parsed.soundEffectsEnabled ?? false;
     }
-  } catch { /* ignore */ }
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.error("Failed to parse vault settings in getVaultSettings:", error);
+    }
+  }
   
   return {
     autoLockTimeout: parseInt(localStorage.getItem(SETTINGS_KEYS.AUTO_LOCK_TIMEOUT) || String(DEFAULT_SETTINGS.autoLockTimeout)),
@@ -1372,12 +1374,18 @@ export const clearClipboardAfterTimeout = (timeout: number, copiedText?: string)
           if (currentClipboard === lastCopiedText) {
             await navigator.clipboard.writeText("");
           }
-        } catch {
+        } catch (readError) {
           // If we can't read clipboard (permission denied), clear it anyway for safety
+          if (import.meta.env.DEV) {
+            console.warn("Clipboard read denied, clearing anyway:", readError);
+          }
           await navigator.clipboard.writeText("");
         }
-      } catch {
+      } catch (clearError) {
         // Clipboard clear failed - non-critical
+        if (import.meta.env.DEV) {
+          console.warn("Clipboard clear failed:", clearError);
+        }
       } finally {
         lastCopiedText = null;
         clearTimeoutId = null;

@@ -5,10 +5,9 @@
  */
 
 export { Skeleton, SkeletonCard, SkeletonList } from '../Skeleton';
-export { default as OfflineIndicator } from '../OfflineIndicator';
-export { default as UndoToast } from '../UndoToast';
+export { OfflineIndicator } from '../OfflineIndicator';
+export { UndoToast } from '../UndoToast';
 export { ErrorBoundary } from '../ErrorBoundary';
-export { default as CategoryIcon } from '../CategoryIcon';
-export { default as PasswordGenerator } from '../PasswordGenerator';
-export { default as LanguageSelector } from '../LanguageSelector';
-
+export { CategoryIcon } from '../CategoryIcon';
+export { PasswordGenerator } from '../PasswordGenerator';
+export { LanguageSelector } from '../LanguageSelector';

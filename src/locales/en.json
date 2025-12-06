@@ -1,7 +1,7 @@
 {
   "app": {
-    "name": "Local Legacy Vault",
-    "tagline": "Secure your digital estate and loved ones"
+    "name": "Local Password Vault",
+    "tagline": "Your passwords, 100% offline"
   },
   "common": {
     "save": "Save",
