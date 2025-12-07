@@ -301,21 +301,36 @@
     .trust-badges {
       display: flex;
       flex-wrap: wrap;
-      gap: 1.5rem;
+      gap: 1rem;
+      margin-top: 1rem;
     }
     
     .trust-badge {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      font-size: 0.875rem;
-      color: var(--muted);
+      gap: 0.75rem;
+      padding: 0.75rem 1.25rem;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--ivory);
+      transition: all 0.3s ease;
+    }
+    
+    .trust-badge:hover {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: rgba(16, 185, 129, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(16, 185, 129, 0.2);
     }
     
     .trust-badge svg {
-      width: 20px;
-      height: 20px;
+      width: 24px;
+      height: 24px;
       color: var(--emerald);
+      filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.5));
     }
     
     /* Stats Section */
