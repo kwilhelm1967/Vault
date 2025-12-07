@@ -63,21 +63,22 @@
     }
     
     .nav-logo {
-      width: 40px;
-      height: 40px;
-      background: linear-gradient(135deg, var(--electric), var(--electric-dark));
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(145deg, var(--electric), var(--electric-dark));
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
+      box-shadow: 
+        0 4px 12px rgba(59, 130, 246, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
     
     .nav-logo svg {
-      width: 20px;
-      height: 20px;
-      fill: none;
-      stroke: white;
-      stroke-width: 2;
+      width: 22px;
+      height: 22px;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
     }
     
     .nav-title {
@@ -847,7 +848,7 @@
     <div class="nav-container">
       <div class="nav-brand">
         <div class="nav-logo">
-          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="white" stroke="white" stroke-width="1"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
         <span class="nav-title">Local Password Vault</span>
       </div>
@@ -1141,7 +1142,7 @@
         <div>
           <div class="footer-brand">
             <div class="nav-logo">
-              <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="white" stroke="white" stroke-width="1"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </div>
             <span class="nav-title">Local Password Vault</span>
           </div>
