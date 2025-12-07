@@ -4,302 +4,238 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Terms of Service - Local Password Vault</title>
-  <meta name="description" content="Terms of Service for Local Password Vault - Your 100% offline password manager">
-  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --obsidian: #0a0e17;
       --midnight: #111827;
-      --steel-blue: #5B82B8;
-      --warm-ivory: #F3F4F6;
-      --brand-gold: #C9AE66;
+      --slate: #1e293b;
+      --electric: #3b82f6;
+      --electric-light: #60a5fa;
+      --ivory: #f8fafc;
+      --silver: #94a3b8;
+      --muted: #64748b;
     }
-    
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--obsidian);
-      color: var(--warm-ivory);
-      line-height: 1.7;
+      color: var(--ivory);
+      line-height: 1.8;
     }
-    
+
     .container {
       max-width: 800px;
       margin: 0 auto;
-      padding: 60px 24px;
+      padding: 4rem 2rem;
     }
-    
-    header {
-      text-align: center;
-      margin-bottom: 48px;
-      padding-bottom: 32px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-    
-    h1 {
-      font-size: 2.5rem;
-      font-weight: 700;
-      margin-bottom: 16px;
-      background: linear-gradient(135deg, var(--warm-ivory), var(--steel-blue));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    
-    .last-updated {
-      color: #9ca3af;
-      font-size: 0.9rem;
-    }
-    
-    h2 {
-      font-size: 1.5rem;
-      color: var(--brand-gold);
-      margin: 40px 0 16px 0;
-      padding-bottom: 8px;
-      border-bottom: 1px solid rgba(201, 174, 102, 0.3);
-    }
-    
-    h3 {
-      font-size: 1.1rem;
-      color: var(--steel-blue);
-      margin: 24px 0 12px 0;
-    }
-    
-    p {
-      margin-bottom: 16px;
-      color: #d1d5db;
-    }
-    
-    ul, ol {
-      margin: 16px 0;
-      padding-left: 24px;
-    }
-    
-    li {
-      margin-bottom: 8px;
-      color: #d1d5db;
-    }
-    
-    .highlight-box {
-      background: linear-gradient(135deg, rgba(91, 130, 184, 0.1), rgba(91, 130, 184, 0.05));
-      border: 1px solid rgba(91, 130, 184, 0.3);
-      border-radius: 12px;
-      padding: 24px;
-      margin: 24px 0;
-    }
-    
-    .warning-box {
-      background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      border-radius: 12px;
-      padding: 24px;
-      margin: 24px 0;
-    }
-    
-    .warning-box h3 {
-      color: #ef4444;
-      margin-top: 0;
-    }
-    
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 24px 0;
-    }
-    
-    th, td {
-      padding: 12px 16px;
-      text-align: left;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-    
-    th {
-      background: rgba(91, 130, 184, 0.1);
-      color: var(--steel-blue);
-      font-weight: 600;
-    }
-    
-    td {
-      color: #d1d5db;
-    }
-    
-    a {
-      color: var(--steel-blue);
-      text-decoration: none;
-    }
-    
-    a:hover {
-      text-decoration: underline;
-    }
-    
+
     .back-link {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      color: var(--brand-gold);
-      margin-bottom: 24px;
-      font-weight: 500;
+      color: var(--electric-light);
+      text-decoration: none;
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+      transition: opacity 0.2s;
     }
-    
-    footer {
-      text-align: center;
-      padding: 40px 24px;
-      border-top: 1px solid rgba(255,255,255,0.1);
-      margin-top: 60px;
-      color: #6b7280;
+
+    .back-link:hover { opacity: 0.8; }
+
+    h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
     }
-    
-    .section-number {
-      color: var(--brand-gold);
+
+    .last-updated {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 3rem;
+    }
+
+    .highlight-box {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 3rem;
+    }
+
+    .highlight-box p {
+      color: var(--silver);
+      margin: 0;
+    }
+
+    h2 {
+      font-size: 1.5rem;
       font-weight: 600;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--ivory);
+    }
+
+    h3 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    p {
+      color: var(--silver);
+      margin-bottom: 1rem;
+    }
+
+    ul, ol {
+      color: var(--silver);
+      margin-bottom: 1rem;
+      padding-left: 1.5rem;
+    }
+
+    li {
+      margin-bottom: 0.5rem;
+    }
+
+    strong {
+      color: var(--ivory);
+    }
+
+    .footer {
+      margin-top: 4rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(51, 65, 85, 0.3);
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.875rem;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <a href="/" class="back-link">← Back to Home</a>
-    
-    <header>
-      <h1>Terms of Service</h1>
-      <p class="last-updated">Last Updated: December 2024</p>
-    </header>
-    
-    <p>By downloading, installing, or using Local Password Vault, you agree to be bound by these Terms. If you do not agree, do not use the Application.</p>
-    
-    <h2><span class="section-number">1.</span> License Grant</h2>
-    
-    <h3>Personal License ($49)</h3>
-    <ul>
-      <li>Install and use on one (1) device</li>
-      <li>Store unlimited passwords and data</li>
-      <li>Receive updates for the license period</li>
-    </ul>
-    
-    <h3>Family License ($79)</h3>
-    <ul>
-      <li>Install and use on up to five (5) devices</li>
-      <li>Share with household members</li>
-      <li>Receive updates for the license period</li>
-    </ul>
-    
-    <h3>Trial License (Free)</h3>
-    <ul>
-      <li>Full access for 14 days</li>
-      <li>One trial per user/device</li>
-      <li>No payment required</li>
-    </ul>
-    
-    <h3>Restrictions</h3>
-    <p>You may NOT:</p>
-    <ul>
-      <li>Share license keys outside authorized devices</li>
-      <li>Reverse engineer or decompile the Application</li>
-      <li>Remove proprietary notices</li>
-      <li>Use for illegal purposes</li>
-      <li>Redistribute or resell</li>
-    </ul>
-    
-    <h2><span class="section-number">2.</span> Payments & Refunds</h2>
-    
+    <a href="landing-standalone.html" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      Back to Home
+    </a>
+
+    <h1>Terms of Service</h1>
+    <p class="last-updated">Last updated: December 7, 2025</p>
+
     <div class="highlight-box">
-      <h3>30-Day Money-Back Guarantee</h3>
-      <p>Not satisfied? Get a full refund within 30 days of purchase. No questions asked.</p>
-      <p>Contact: <a href="mailto:support@localpasswordvault.com">support@localpasswordvault.com</a></p>
+      <p>Please read these Terms of Service carefully before using Local Password Vault. By using the application, you agree to be bound by these terms.</p>
     </div>
-    
+
+    <h2>1. Acceptance of Terms</h2>
+    <p>By downloading, installing, or using Local Password Vault ("the App"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use the App.</p>
+
+    <h2>2. Description of Service</h2>
+    <p>Local Password Vault is a desktop application that provides:</p>
     <ul>
-      <li>Payments processed securely by Stripe</li>
-      <li>All prices in USD</li>
-      <li>One-time purchase (no subscriptions)</li>
+      <li>Secure, encrypted password storage on your local device</li>
+      <li>Password generation tools</li>
+      <li>Two-factor authentication (TOTP) code generation</li>
+      <li>Import functionality from other password managers</li>
+      <li>Secure mobile access via encrypted QR codes</li>
     </ul>
-    
-    <h2><span class="section-number">3.</span> Your Data</h2>
-    
-    <div class="warning-box">
-      <h3>Important: Your Responsibility</h3>
-      <ul>
-        <li>All data is stored locally on YOUR device</li>
-        <li>We cannot access, view, or recover your data</li>
-        <li>You are responsible for your master password</li>
-        <li>You are responsible for maintaining backups</li>
-      </ul>
+
+    <h2>3. License Grant</h2>
+    <h3>3.1 Free Trial</h3>
+    <p>We offer a 14-day free trial with full functionality. No credit card is required. After the trial period, you must purchase a license to continue using the App.</p>
+
+    <h3>3.2 Purchased License</h3>
+    <p>Upon purchase, you receive a perpetual, non-exclusive license to use the App on the number of devices specified by your license tier:</p>
+    <ul>
+      <li><strong>Personal Vault:</strong> 1 device activation</li>
+      <li><strong>Family Vault:</strong> 5 device activations</li>
+    </ul>
+    <p>This license is non-transferable except as provided in our license transfer policy.</p>
+
+    <h2>4. User Responsibilities</h2>
+    <p>You are responsible for:</p>
+    <ul>
+      <li><strong>Master Password Security:</strong> Choosing a strong master password and keeping it confidential. We cannot recover or reset your master password.</li>
+      <li><strong>Backup:</strong> Maintaining backups of your encrypted vault file. Data loss due to hardware failure or accidental deletion is your responsibility.</li>
+      <li><strong>Lawful Use:</strong> Using the App only for lawful purposes and in compliance with all applicable laws.</li>
+      <li><strong>Account Security:</strong> Maintaining the security of any devices where the App is installed.</li>
+    </ul>
+
+    <h2>5. Prohibited Uses</h2>
+    <p>You may not:</p>
+    <ul>
+      <li>Reverse engineer, decompile, or disassemble the App</li>
+      <li>Modify, adapt, or create derivative works of the App</li>
+      <li>Redistribute, sell, lease, or sublicense the App</li>
+      <li>Use the App to store illegal content or facilitate illegal activities</li>
+      <li>Attempt to bypass license restrictions or activation limits</li>
+      <li>Share your license key with unauthorized users</li>
+    </ul>
+
+    <h2>6. Intellectual Property</h2>
+    <p>The App, including all code, graphics, user interface, and documentation, is protected by copyright and other intellectual property laws. You acknowledge that all intellectual property rights in the App remain with us.</p>
+
+    <h2>7. Payment and Refunds</h2>
+    <h3>7.1 Payment</h3>
+    <p>All purchases are processed through Stripe. Prices are in USD unless otherwise specified. You agree to pay all applicable fees and taxes.</p>
+
+    <h3>7.2 Refund Policy</h3>
+    <p>We offer a 30-day money-back guarantee. If you are not satisfied with the App within 30 days of purchase, contact us for a full refund. Refund requests after 30 days will be considered on a case-by-case basis.</p>
+
+    <h2>8. Disclaimer of Warranties</h2>
+    <p>THE APP IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO:</p>
+    <ul>
+      <li>MERCHANTABILITY</li>
+      <li>FITNESS FOR A PARTICULAR PURPOSE</li>
+      <li>NON-INFRINGEMENT</li>
+      <li>SECURITY OR UNINTERRUPTED ACCESS</li>
+    </ul>
+    <p>We do not warrant that the App will be error-free or that defects will be corrected.</p>
+
+    <h2>9. Limitation of Liability</h2>
+    <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW, WE SHALL NOT BE LIABLE FOR:</p>
+    <ul>
+      <li>Any indirect, incidental, special, consequential, or punitive damages</li>
+      <li>Loss of data, profits, or business opportunities</li>
+      <li>Damages arising from your use or inability to use the App</li>
+      <li>Unauthorized access to your data due to your failure to maintain security</li>
+    </ul>
+    <p>Our total liability shall not exceed the amount you paid for the App.</p>
+
+    <h2>10. Data Loss Acknowledgment</h2>
+    <p>You acknowledge that:</p>
+    <ul>
+      <li>Your data is stored only on your device</li>
+      <li>We cannot recover your data if you lose your master password</li>
+      <li>We cannot recover your data if your device fails</li>
+      <li>You are solely responsible for maintaining backups</li>
+    </ul>
+
+    <h2>11. Updates</h2>
+    <p>We may release updates to the App from time to time. These updates may include bug fixes, new features, or security improvements. Your license includes free updates for the lifetime of the product.</p>
+
+    <h2>12. Termination</h2>
+    <p>We may terminate your license if you violate these Terms. Upon termination, you must cease all use of the App and destroy all copies. Your encrypted vault data remains yours and is not affected by license termination.</p>
+
+    <h2>13. Governing Law</h2>
+    <p>These Terms shall be governed by and construed in accordance with the laws of the United States, without regard to conflict of law principles.</p>
+
+    <h2>14. Changes to Terms</h2>
+    <p>We reserve the right to modify these Terms at any time. We will notify you of material changes by posting the updated Terms on our website. Your continued use of the App after changes constitutes acceptance of the new Terms.</p>
+
+    <h2>15. Contact Information</h2>
+    <p>For questions about these Terms, please contact us at:</p>
+    <p><strong>Email:</strong> support@localpasswordvault.com</p>
+
+    <div class="footer">
+      <p>© 2025 Local Password Vault. All rights reserved.</p>
     </div>
-    
-    <p>We are NOT responsible for data loss due to:</p>
-    <ul>
-      <li>Forgotten master password</li>
-      <li>Device failure or theft</li>
-      <li>Uninstallation without backup</li>
-      <li>User error</li>
-    </ul>
-    
-    <h2><span class="section-number">4.</span> Security</h2>
-    <ul>
-      <li>AES-256-GCM encryption standard</li>
-      <li>Zero-knowledge architecture</li>
-      <li>Your master password is never transmitted</li>
-    </ul>
-    
-    <p>Your responsibilities:</p>
-    <ul>
-      <li>Choose a strong master password</li>
-      <li>Keep your password confidential</li>
-      <li>Maintain secure backups</li>
-      <li>Report security vulnerabilities responsibly</li>
-    </ul>
-    
-    <h2><span class="section-number">5.</span> Disclaimer of Warranties</h2>
-    <p>THE APPLICATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. WE DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.</p>
-    
-    <h2><span class="section-number">6.</span> Limitation of Liability</h2>
-    <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW, WE SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES. OUR TOTAL LIABILITY SHALL NOT EXCEED THE AMOUNT YOU PAID FOR THE LICENSE.</p>
-    
-    <h2><span class="section-number">7.</span> Termination</h2>
-    <p>You may terminate by uninstalling the Application. We may terminate your license if you violate these Terms.</p>
-    
-    <h2><span class="section-number">8.</span> Changes</h2>
-    <p>We may modify these Terms at any time. Changes are effective upon posting. Continued use constitutes acceptance.</p>
-    
-    <h2>Summary</h2>
-    <table>
-      <tr>
-        <th>Topic</th>
-        <th>Summary</th>
-      </tr>
-      <tr>
-        <td>License</td>
-        <td>Personal (1 device) or Family (5 devices)</td>
-      </tr>
-      <tr>
-        <td>Trial</td>
-        <td>14 days, full features, no card required</td>
-      </tr>
-      <tr>
-        <td>Refunds</td>
-        <td>30-day money-back guarantee</td>
-      </tr>
-      <tr>
-        <td>Your Data</td>
-        <td>Local only, your responsibility</td>
-      </tr>
-      <tr>
-        <td>Updates</td>
-        <td>Included with license</td>
-      </tr>
-    </table>
-    
-    <h2>Contact</h2>
-    <p>Questions? <a href="mailto:legal@localpasswordvault.com">legal@localpasswordvault.com</a></p>
-    
-    <footer>
-      <p>© 2024 Local Password Vault. All rights reserved.</p>
-      <p><a href="/">Home</a> · <a href="/terms.html">Terms of Service</a> · <a href="/privacy.html">Privacy Policy</a></p>
-    </footer>
   </div>
 </body>
 </html>
-

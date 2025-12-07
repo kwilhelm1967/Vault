@@ -4,288 +4,229 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Privacy Policy - Local Password Vault</title>
-  <meta name="description" content="Privacy Policy for Local Password Vault - Your 100% offline password manager">
-  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --obsidian: #0a0e17;
       --midnight: #111827;
-      --steel-blue: #5B82B8;
-      --warm-ivory: #F3F4F6;
-      --brand-gold: #C9AE66;
+      --slate: #1e293b;
+      --electric: #3b82f6;
+      --electric-light: #60a5fa;
+      --ivory: #f8fafc;
+      --silver: #94a3b8;
+      --muted: #64748b;
     }
-    
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--obsidian);
-      color: var(--warm-ivory);
-      line-height: 1.7;
+      color: var(--ivory);
+      line-height: 1.8;
     }
-    
+
     .container {
       max-width: 800px;
       margin: 0 auto;
-      padding: 60px 24px;
+      padding: 4rem 2rem;
     }
-    
-    header {
-      text-align: center;
-      margin-bottom: 48px;
-      padding-bottom: 32px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-    
-    h1 {
-      font-size: 2.5rem;
-      font-weight: 700;
-      margin-bottom: 16px;
-      background: linear-gradient(135deg, var(--warm-ivory), var(--steel-blue));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    
-    .last-updated {
-      color: #9ca3af;
-      font-size: 0.9rem;
-    }
-    
-    h2 {
-      font-size: 1.5rem;
-      color: var(--brand-gold);
-      margin: 40px 0 16px 0;
-      padding-bottom: 8px;
-      border-bottom: 1px solid rgba(201, 174, 102, 0.3);
-    }
-    
-    h3 {
-      font-size: 1.1rem;
-      color: var(--steel-blue);
-      margin: 24px 0 12px 0;
-    }
-    
-    p {
-      margin-bottom: 16px;
-      color: #d1d5db;
-    }
-    
-    ul, ol {
-      margin: 16px 0;
-      padding-left: 24px;
-    }
-    
-    li {
-      margin-bottom: 8px;
-      color: #d1d5db;
-    }
-    
-    .highlight-box {
-      background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      border-radius: 12px;
-      padding: 24px;
-      margin: 24px 0;
-    }
-    
-    .highlight-box h3 {
-      color: #10b981;
-      margin-top: 0;
-    }
-    
-    .highlight-box ul {
-      list-style: none;
-      padding: 0;
-    }
-    
-    .highlight-box li {
-      padding-left: 24px;
-      position: relative;
-    }
-    
-    .highlight-box li::before {
-      content: "✅";
-      position: absolute;
-      left: 0;
-    }
-    
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 24px 0;
-    }
-    
-    th, td {
-      padding: 12px 16px;
-      text-align: left;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
-    
-    th {
-      background: rgba(91, 130, 184, 0.1);
-      color: var(--steel-blue);
-      font-weight: 600;
-    }
-    
-    td {
-      color: #d1d5db;
-    }
-    
-    a {
-      color: var(--steel-blue);
-      text-decoration: none;
-    }
-    
-    a:hover {
-      text-decoration: underline;
-    }
-    
+
     .back-link {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      color: var(--brand-gold);
-      margin-bottom: 24px;
-      font-weight: 500;
+      color: var(--electric-light);
+      text-decoration: none;
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+      transition: opacity 0.2s;
     }
-    
-    footer {
+
+    .back-link:hover { opacity: 0.8; }
+
+    h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .last-updated {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 3rem;
+    }
+
+    .highlight-box {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 3rem;
+    }
+
+    .highlight-box h2 {
+      color: var(--electric-light);
+      font-size: 1.25rem;
+      margin-bottom: 12px;
+    }
+
+    .highlight-box p {
+      color: var(--silver);
+      margin: 0;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--ivory);
+    }
+
+    h3 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    p {
+      color: var(--silver);
+      margin-bottom: 1rem;
+    }
+
+    ul {
+      color: var(--silver);
+      margin-bottom: 1rem;
+      padding-left: 1.5rem;
+    }
+
+    li {
+      margin-bottom: 0.5rem;
+    }
+
+    strong {
+      color: var(--ivory);
+    }
+
+    .footer {
+      margin-top: 4rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(51, 65, 85, 0.3);
       text-align: center;
-      padding: 40px 24px;
-      border-top: 1px solid rgba(255,255,255,0.1);
-      margin-top: 60px;
-      color: #6b7280;
+      color: var(--muted);
+      font-size: 0.875rem;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <a href="/" class="back-link">← Back to Home</a>
-    
-    <header>
-      <h1>Privacy Policy</h1>
-      <p class="last-updated">Last Updated: December 2024</p>
-    </header>
-    
+    <a href="landing-standalone.html" class="back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      Back to Home
+    </a>
+
+    <h1>Privacy Policy</h1>
+    <p class="last-updated">Last updated: December 7, 2025</p>
+
     <div class="highlight-box">
-      <h3>Our Privacy Commitment</h3>
-      <p>Local Password Vault is designed with privacy as a core principle:</p>
-      <ul>
-        <li>Store all data locally on your device only</li>
-        <li>Never transmit your passwords to any server</li>
-        <li>Never access or view your vault contents</li>
-        <li>Never track your usage or behavior</li>
-        <li>Never sell or share any data</li>
-      </ul>
+      <h2>The Short Version</h2>
+      <p>Local Password Vault is designed from the ground up to protect your privacy. Your passwords and data are stored <strong>only on your device</strong>, encrypted with keys <strong>only you control</strong>. We cannot access your data because we never receive it.</p>
     </div>
-    
-    <h2>Information We Do NOT Collect</h2>
-    <p>We do <strong>NOT</strong> collect, store, or have access to:</p>
+
+    <h2>1. Our Privacy Commitment</h2>
+    <p>Local Password Vault ("we," "our," or "the App") is built on a fundamental principle: <strong>your data belongs to you</strong>. Unlike cloud-based password managers, we have designed our application so that:</p>
+    <ul>
+      <li>Your passwords never leave your device</li>
+      <li>We have no servers that store your data</li>
+      <li>We cannot access, read, or decrypt your vault</li>
+      <li>We cannot reset your password or recover your data</li>
+    </ul>
+
+    <h2>2. Data We Do NOT Collect</h2>
+    <p>We do not collect, store, transmit, or have access to:</p>
     <ul>
       <li>Your master password</li>
-      <li>Your stored passwords or account credentials</li>
-      <li>Your notes, custom fields, or any vault contents</li>
-      <li>Your device information or identifiers</li>
-      <li>Your location or IP address</li>
-      <li>Your browsing history or app usage patterns</li>
-      <li>Any personal information whatsoever</li>
+      <li>Your stored passwords or credentials</li>
+      <li>Your vault contents or metadata</li>
+      <li>Your 2FA/TOTP secrets</li>
+      <li>Your personal notes or secure information</li>
+      <li>Any data you enter into the application</li>
     </ul>
-    
-    <h2>How Your Data is Stored</h2>
-    <h3>Local Storage Only</h3>
-    <p>All vault data is:</p>
+
+    <h2>3. Data We May Collect</h2>
+    <h3>3.1 License Verification</h3>
+    <p>When you purchase and activate a license, we process:</p>
     <ul>
-      <li>Stored exclusively on your local device</li>
-      <li>Encrypted with AES-256-GCM encryption</li>
-      <li>Protected by your master password</li>
-      <li>Never transmitted over the internet</li>
+      <li>License key (to verify validity)</li>
+      <li>Email address (for purchase receipt and support)</li>
+      <li>A device identifier (to manage license activations)</li>
     </ul>
-    
-    <h3>Encryption Details</h3>
+    <p>This information is processed through our payment provider (Stripe) and is used solely for license management.</p>
+
+    <h3>3.2 Anonymous Analytics (Optional)</h3>
+    <p>With your explicit consent, we may collect anonymous usage statistics such as:</p>
     <ul>
-      <li><strong>Algorithm:</strong> AES-256-GCM</li>
-      <li><strong>Key Derivation:</strong> PBKDF2 with SHA-256</li>
-      <li><strong>Iterations:</strong> 100,000</li>
-      <li>Your master password never leaves your device</li>
+      <li>App version</li>
+      <li>Operating system</li>
+      <li>Feature usage patterns (no personal data)</li>
+      <li>Crash reports (no vault data included)</li>
     </ul>
-    
-    <h2>Information We May Collect</h2>
-    
-    <h3>License Activation</h3>
-    <p>When you activate a license, we process:</p>
+    <p>You can disable analytics at any time in Settings. Analytics never include your passwords or vault contents.</p>
+
+    <h2>4. How Your Data Is Protected</h2>
     <ul>
-      <li>License key</li>
-      <li>A hardware fingerprint (anonymized device identifier)</li>
+      <li><strong>AES-256-GCM Encryption:</strong> Your vault is encrypted using military-grade encryption</li>
+      <li><strong>PBKDF2 Key Derivation:</strong> 100,000 iterations protect against brute-force attacks</li>
+      <li><strong>Zero-Knowledge Architecture:</strong> Your master password never leaves your device</li>
+      <li><strong>Local Storage Only:</strong> All data remains on your computer</li>
     </ul>
-    <p>This information is used solely to validate your license and prevent unauthorized use.</p>
-    
-    <h3>Website Interactions</h3>
-    <p>If you visit our website:</p>
+
+    <h2>5. Third-Party Services</h2>
+    <p>We use the following third-party services:</p>
     <ul>
-      <li>Standard web server logs</li>
-      <li>Cookies for essential functionality</li>
-      <li>Email if you sign up for trial or support</li>
+      <li><strong>Stripe:</strong> Payment processing (see Stripe's Privacy Policy)</li>
+      <li><strong>Email Provider:</strong> For purchase receipts and support communications</li>
     </ul>
-    
-    <h3>Support Communications</h3>
-    <p>If you contact us, we store communication history to assist you.</p>
-    
-    <h2>Third-Party Services</h2>
-    
-    <h3>Payment Processing</h3>
-    <p>We use <strong>Stripe</strong> for payment processing. Payment information goes directly to Stripe - we never see your card details.</p>
-    
-    <h3>Email Services</h3>
-    <p>We use <strong>Brevo</strong> for transactional emails only (receipts, trial info).</p>
-    
-    <h2>Your Rights</h2>
+    <p>These services do not have access to your vault data.</p>
+
+    <h2>6. Data Retention</h2>
+    <p>Your vault data is stored only on your device. We retain:</p>
     <ul>
-      <li><strong>Access:</strong> All vault data is on your device</li>
-      <li><strong>Portability:</strong> Export anytime in JSON or CSV</li>
-      <li><strong>Deletion:</strong> Clear All Data option in Settings</li>
-      <li><strong>Opt-Out:</strong> Uninstall removes all local data</li>
+      <li>Purchase records for tax and legal compliance</li>
+      <li>Support communications for quality assurance</li>
+      <li>License activation records for fraud prevention</li>
     </ul>
-    
-    <h2>Summary</h2>
-    <table>
-      <tr>
-        <th>Question</th>
-        <th>Answer</th>
-      </tr>
-      <tr>
-        <td>Do you see my passwords?</td>
-        <td><strong>No</strong> - Zero-knowledge architecture</td>
-      </tr>
-      <tr>
-        <td>Is my data in the cloud?</td>
-        <td><strong>No</strong> - Local storage only</td>
-      </tr>
-      <tr>
-        <td>Do you track me?</td>
-        <td><strong>No</strong> - No analytics in the app</td>
-      </tr>
-      <tr>
-        <td>Do you sell my data?</td>
-        <td><strong>No</strong> - We have no data to sell</td>
-      </tr>
-      <tr>
-        <td>Is my data encrypted?</td>
-        <td><strong>Yes</strong> - AES-256-GCM</td>
-      </tr>
-    </table>
-    
-    <h2>Contact Us</h2>
-    <p>For privacy questions: <a href="mailto:privacy@localpasswordvault.com">privacy@localpasswordvault.com</a></p>
-    
-    <footer>
-      <p>© 2024 Local Password Vault. All rights reserved.</p>
-      <p><a href="/">Home</a> · <a href="/terms.html">Terms of Service</a> · <a href="/privacy.html">Privacy Policy</a></p>
-    </footer>
+
+    <h2>7. Your Rights</h2>
+    <p>You have the right to:</p>
+    <ul>
+      <li>Access your purchase information</li>
+      <li>Request deletion of your license records</li>
+      <li>Opt out of analytics</li>
+      <li>Export your vault data (from within the app)</li>
+      <li>Delete your vault at any time</li>
+    </ul>
+
+    <h2>8. Children's Privacy</h2>
+    <p>Local Password Vault is not intended for children under 13. We do not knowingly collect information from children under 13.</p>
+
+    <h2>9. Changes to This Policy</h2>
+    <p>We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the new policy on our website and updating the "Last updated" date.</p>
+
+    <h2>10. Contact Us</h2>
+    <p>If you have questions about this Privacy Policy, please contact us at:</p>
+    <p><strong>Email:</strong> support@localpasswordvault.com</p>
+
+    <div class="footer">
+      <p>© 2025 Local Password Vault. All rights reserved.</p>
+    </div>
   </div>
 </body>
 </html>
-
