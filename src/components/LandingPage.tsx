@@ -22,28 +22,38 @@ import {
   Quote,
   Mail,
   Smartphone,
+  Import,
+  Undo2,
+  Keyboard,
+  Globe,
+  History,
+  FolderKey,
+  QrCode,
+  ShieldCheck,
 } from "lucide-react";
 import { devLog } from "../utils/devLog";
 
-// Distinctive color palette - deep, trustworthy, premium feel
+// Color palette matching LocalPasswordVault.com - premium gold accents
 const colors = {
-  // Primary palette
+  // Primary palette - deep navy blues
   obsidian: "#0a0e17",
-  midnight: "#111827",
+  midnight: "#0f172a",
   slate: "#1e293b",
   steel: "#334155",
   
-  // Accent colors
-  electric: "#3b82f6",
-  electricLight: "#60a5fa",
-  electricDark: "#1d4ed8",
+  // Brand gold accents (primary)
+  brandGold: "#C9AE66",
+  goldLight: "#D4BC7D",
+  goldDark: "#B89B4D",
   
-  // Warm accents
-  amber: "#f59e0b",
-  amberLight: "#fbbf24",
+  // Steel blue accents (secondary)
+  steelBlue: "#5B82B8",
+  steelBlueLight: "#7A9DC7",
+  steelBlueDark: "#4A6FA5",
   
   // Text
-  ivory: "#f8fafc",
+  ivory: "#F3F4F6",
+  warmIvory: "#E8EDF2",
   silver: "#94a3b8",
   muted: "#64748b",
   
@@ -61,7 +71,7 @@ const ParticleField: React.FC = () => {
           key={i}
           className="absolute w-1 h-1 rounded-full opacity-20"
           style={{
-            backgroundColor: colors.electric,
+            backgroundColor: colors.brandGold,
             left: `${Math.random() * 100}%`,
             top: `${Math.random() * 100}%`,
             animation: `float ${5 + Math.random() * 10}s ease-in-out infinite`,
@@ -85,19 +95,19 @@ const AnimatedShield: React.FC = () => {
     <div className="relative">
       <div 
         className="absolute inset-0 rounded-full blur-3xl opacity-30"
-        style={{ backgroundColor: colors.electric }}
+        style={{ backgroundColor: colors.brandGold }}
       />
       <div 
         className="relative w-32 h-32 rounded-2xl flex items-center justify-center"
         style={{ 
-          background: `linear-gradient(135deg, ${colors.electric}20 0%, ${colors.electricDark}20 100%)`,
-          border: `2px solid ${colors.electric}40`,
-          boxShadow: `0 0 60px ${colors.electric}30`,
+          background: `linear-gradient(135deg, ${colors.brandGold}20 0%, ${colors.goldDark}20 100%)`,
+          border: `2px solid ${colors.brandGold}40`,
+          boxShadow: `0 0 60px ${colors.brandGold}30`,
         }}
       >
         <Shield 
           className="w-16 h-16 animate-pulse" 
-          style={{ color: colors.electric }}
+          style={{ color: colors.brandGold }}
           strokeWidth={1.5}
         />
         <div 
@@ -125,22 +135,22 @@ const FeatureCard: React.FC<{
     <div
       className="group relative p-6 rounded-2xl transition-all duration-500 hover:scale-[1.02]"
       style={{
-        backgroundColor: highlight ? `${colors.electric}10` : `${colors.slate}50`,
-        border: `1px solid ${highlight ? colors.electric : colors.steel}40`,
+        backgroundColor: highlight ? `${colors.brandGold}10` : `${colors.slate}50`,
+        border: `1px solid ${highlight ? colors.brandGold : colors.steel}40`,
       }}
     >
       <div 
         className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
         style={{
-          background: `radial-gradient(circle at 50% 0%, ${colors.electric}10 0%, transparent 70%)`,
+          background: `radial-gradient(circle at 50% 0%, ${colors.brandGold}10 0%, transparent 70%)`,
         }}
       />
       <div className="relative">
         <div 
           className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110"
           style={{ 
-            backgroundColor: highlight ? `${colors.electric}20` : `${colors.steel}50`,
-            color: highlight ? colors.electric : colors.electricLight,
+            backgroundColor: highlight ? `${colors.brandGold}20` : `${colors.steelBlue}20`,
+            color: highlight ? colors.brandGold : colors.steelBlue,
           }}
         >
           {icon}
@@ -177,16 +187,16 @@ const PricingCard: React.FC<{
       className="relative p-8 rounded-3xl transition-all duration-500 hover:scale-[1.02]"
       style={{
         backgroundColor: popular ? colors.slate : `${colors.midnight}`,
-        border: `2px solid ${popular ? colors.electric : colors.steel}`,
-        boxShadow: popular ? `0 0 60px ${colors.electric}20` : 'none',
+        border: `2px solid ${popular ? colors.brandGold : colors.steel}`,
+        boxShadow: popular ? `0 0 60px ${colors.brandGold}20` : 'none',
       }}
     >
       {popular && (
         <div 
           className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
           style={{ 
-            backgroundColor: colors.electric,
-            color: colors.ivory,
+            backgroundColor: colors.brandGold,
+            color: colors.midnight,
           }}
         >
           Most Popular
@@ -203,7 +213,7 @@ const PricingCard: React.FC<{
       <div className="flex items-baseline mb-6">
         <span 
           className="text-5xl font-black"
-          style={{ color: popular ? colors.electric : colors.ivory }}
+          style={{ color: popular ? colors.brandGold : colors.ivory }}
         >
           {price}
         </span>
@@ -222,7 +232,7 @@ const PricingCard: React.FC<{
           <li key={i} className="flex items-start space-x-3">
             <Check 
               className="w-5 h-5 mt-0.5 flex-shrink-0" 
-              style={{ color: colors.emerald }}
+              style={{ color: colors.brandGold }}
             />
             <span 
               className="text-sm"
@@ -238,9 +248,9 @@ const PricingCard: React.FC<{
         onClick={onCta}
         className="w-full py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-[1.02] flex items-center justify-center space-x-2"
         style={{
-          backgroundColor: popular ? colors.electric : 'transparent',
-          color: popular ? colors.ivory : colors.electric,
-          border: popular ? 'none' : `2px solid ${colors.electric}`,
+          backgroundColor: popular ? colors.brandGold : 'transparent',
+          color: popular ? colors.midnight : colors.brandGold,
+          border: popular ? 'none' : `2px solid ${colors.brandGold}`,
         }}
       >
         <span>{ctaText}</span>
@@ -270,13 +280,13 @@ const TestimonialCard: React.FC<{
           <Star 
             key={i} 
             className="w-4 h-4 fill-current" 
-            style={{ color: colors.amber }}
+            style={{ color: colors.brandGold }}
           />
         ))}
       </div>
       <Quote 
         className="w-8 h-8 mb-3 opacity-30" 
-        style={{ color: colors.electric }}
+        style={{ color: colors.brandGold }}
       />
       <p 
         className="text-sm leading-relaxed mb-4"
@@ -333,7 +343,7 @@ const AnimatedCounter: React.FC<{ end: number; suffix?: string; label: string }>
     <div className="text-center">
       <div 
         className="text-4xl font-black mb-1"
-        style={{ color: colors.electric }}
+        style={{ color: colors.brandGold }}
       >
         {count.toLocaleString()}{suffix}
       </div>
@@ -369,9 +379,9 @@ const PasswordDemo: React.FC = () => {
         <div className="flex items-center space-x-2">
           <div 
             className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: `${colors.electric}20` }}
+            style={{ backgroundColor: `${colors.brandGold}20` }}
           >
-            <Key className="w-4 h-4" style={{ color: colors.electric }} />
+            <Key className="w-4 h-4" style={{ color: colors.brandGold }} />
           </div>
           <span className="text-sm font-medium" style={{ color: colors.ivory }}>
             bank.example.com
@@ -391,7 +401,7 @@ const PasswordDemo: React.FC = () => {
       >
         <code 
           className="font-mono text-sm tracking-wider"
-          style={{ color: colors.electricLight }}
+          style={{ color: colors.goldLight }}
         >
           {revealed ? "xK9#mP2$vL7@nQ4" : "••••••••••••••••"}
         </code>
@@ -464,8 +474,8 @@ export const LandingPage: React.FC = () => {
         }
         
         @keyframes glow {
-          0%, 100% { box-shadow: 0 0 20px ${colors.electric}40; }
-          50% { box-shadow: 0 0 40px ${colors.electric}60; }
+          0%, 100% { box-shadow: 0 0 20px ${colors.brandGold}40; }
+          50% { box-shadow: 0 0 40px ${colors.brandGold}60; }
         }
         
         .animate-gradient {
@@ -478,7 +488,7 @@ export const LandingPage: React.FC = () => {
         }
         
         .text-gradient {
-          background: linear-gradient(135deg, ${colors.electric} 0%, ${colors.electricLight} 50%, ${colors.amber} 100%);
+          background: linear-gradient(135deg, ${colors.brandGold} 0%, ${colors.goldLight} 50%, ${colors.steelBlue} 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
@@ -498,10 +508,10 @@ export const LandingPage: React.FC = () => {
             <div 
               className="w-10 h-10 rounded-xl flex items-center justify-center"
               style={{ 
-                background: `linear-gradient(135deg, ${colors.electric} 0%, ${colors.electricDark} 100%)`,
+                background: `linear-gradient(135deg, ${colors.brandGold} 0%, ${colors.goldDark} 100%)`,
               }}
             >
-              <Shield className="w-5 h-5 text-white" strokeWidth={2} />
+              <Shield className="w-5 h-5" style={{ color: colors.midnight }} strokeWidth={2} />
             </div>
             <span 
               className="text-lg font-bold tracking-tight"
@@ -529,8 +539,8 @@ export const LandingPage: React.FC = () => {
           <button
             className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 hover:scale-105"
             style={{
-              backgroundColor: colors.electric,
-              color: colors.ivory,
+              backgroundColor: colors.brandGold,
+              color: colors.midnight,
             }}
           >
             Get Started Free
@@ -545,11 +555,11 @@ export const LandingPage: React.FC = () => {
         {/* Gradient orbs */}
         <div 
           className="absolute top-20 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-20"
-          style={{ backgroundColor: colors.electric }}
+          style={{ backgroundColor: colors.brandGold }}
         />
         <div 
           className="absolute bottom-0 right-1/4 w-80 h-80 rounded-full blur-3xl opacity-10"
-          style={{ backgroundColor: colors.amber }}
+          style={{ backgroundColor: colors.steelBlue }}
         />
         
         <div className="max-w-7xl mx-auto relative">
@@ -559,12 +569,12 @@ export const LandingPage: React.FC = () => {
               <div 
                 className="inline-flex items-center space-x-2 px-4 py-2 rounded-full mb-6"
                 style={{ 
-                  backgroundColor: `${colors.electric}15`,
-                  border: `1px solid ${colors.electric}30`,
+                  backgroundColor: `${colors.brandGold}15`,
+                  border: `1px solid ${colors.brandGold}30`,
                 }}
               >
-                <Sparkles className="w-4 h-4" style={{ color: colors.amber }} />
-                <span className="text-sm font-medium" style={{ color: colors.electricLight }}>
+                <Sparkles className="w-4 h-4" style={{ color: colors.brandGold }} />
+                <span className="text-sm font-medium" style={{ color: colors.goldLight }}>
                   100% Offline • Zero Cloud Storage
                 </span>
               </div>
@@ -585,7 +595,8 @@ export const LandingPage: React.FC = () => {
                 style={{ color: colors.silver }}
               >
                 The password manager that never sends your data anywhere. 
-                Military-grade encryption. Complete privacy. No subscriptions.
+                AES-256 encryption. Built-in 2FA. Import from any manager.
+                One price, forever yours.
               </p>
               
               {/* CTA Form */}
@@ -612,8 +623,8 @@ export const LandingPage: React.FC = () => {
                   onClick={handleStartTrial}
                   className="px-8 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 flex items-center justify-center space-x-2 animate-glow"
                   style={{
-                    background: `linear-gradient(135deg, ${colors.electric} 0%, ${colors.electricDark} 100%)`,
-                    color: colors.ivory,
+                    background: `linear-gradient(135deg, ${colors.brandGold} 0%, ${colors.goldDark} 100%)`,
+                    color: colors.midnight,
                   }}
                 >
                   <span>Start Free Trial</span>
@@ -642,7 +653,7 @@ export const LandingPage: React.FC = () => {
             <div className="relative">
               <div 
                 className="absolute inset-0 rounded-3xl blur-2xl opacity-30"
-                style={{ backgroundColor: colors.electric }}
+                style={{ backgroundColor: colors.brandGold }}
               />
               <div
                 className="relative rounded-3xl p-8 backdrop-blur-sm"
@@ -672,7 +683,7 @@ export const LandingPage: React.FC = () => {
                     <div className="flex items-center space-x-3">
                       <div 
                         className="w-8 h-8 rounded-lg"
-                        style={{ backgroundColor: `${colors.amber}20` }}
+                        style={{ backgroundColor: `${colors.steelBlue}20` }}
                       />
                       <div className="flex-1">
                         <div 
@@ -723,9 +734,9 @@ export const LandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <AnimatedCounter end={256} suffix="-bit" label="AES Encryption" />
-            <AnimatedCounter end={0} label="Cloud Servers" />
-            <AnimatedCounter end={0} label="Data We Store" />
-            <AnimatedCounter end={100} suffix="%" label="Offline Privacy" />
+            <AnimatedCounter end={100000} suffix="" label="PBKDF2 Iterations" />
+            <AnimatedCounter end={0} label="Data Sent to Cloud" />
+            <AnimatedCounter end={6} suffix="+" label="Import Sources" />
           </div>
         </div>
       </section>
@@ -734,82 +745,178 @@ export const LandingPage: React.FC = () => {
       <section id="features" className="py-24 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
+            <div 
+              className="inline-flex items-center space-x-2 px-4 py-2 rounded-full mb-6"
+              style={{ 
+                backgroundColor: `${colors.emerald}15`,
+                border: `1px solid ${colors.emerald}30`,
+              }}
+            >
+              <ShieldCheck className="w-4 h-4" style={{ color: colors.emerald }} />
+              <span className="text-sm font-medium" style={{ color: colors.emerald }}>
+                Professional-Grade Security
+              </span>
+            </div>
             <h2 
               className="text-4xl lg:text-5xl font-bold mb-4"
               style={{ color: colors.ivory }}
             >
-              Security without compromise
+              Everything you need.
+              <br />
+              <span className="text-gradient">Nothing you don't.</span>
             </h2>
             <p 
               className="text-lg max-w-2xl mx-auto"
               style={{ color: colors.silver }}
             >
               Every feature designed with one goal: keeping your passwords 
-              secure and accessible only to you.
+              secure and accessible only to you. No bloat, no tracking, no compromises.
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <FeatureCard
-              icon={<WifiOff className="w-6 h-6" />}
-              title="100% Offline"
-              description="Your passwords never leave your device. No servers, no cloud, no risk of online breaches."
-              highlight
-            />
-            <FeatureCard
-              icon={<Lock className="w-6 h-6" />}
-              title="AES-256 Encryption"
-              description="Military-grade encryption protects your data. Even if someone gets your file, they can't read it."
-            />
-            <FeatureCard
-              icon={<Fingerprint className="w-6 h-6" />}
-              title="2FA Authenticator Built-in"
-              description="Generate TOTP codes for two-factor authentication. No separate app needed."
-            />
-            <FeatureCard
-              icon={<Clock className="w-6 h-6" />}
-              title="Auto-Lock & Undo"
-              description="Auto-locks after inactivity. Accidentally delete something? 5-second undo to restore it."
-            />
-            <FeatureCard
-              icon={<Database className="w-6 h-6" />}
-              title="Password History"
-              description="Track all previous passwords. Restore old passwords anytime with one click."
-            />
-            <FeatureCard
-              icon={<Zap className="w-6 h-6" />}
-              title="Password Generator"
-              description="Create strong, unique passwords instantly. Visual strength meter shows security level."
-            />
+          {/* Core Security Features */}
+          <div className="mb-12">
+            <h3 
+              className="text-sm font-semibold uppercase tracking-wider mb-6 flex items-center space-x-2"
+              style={{ color: colors.brandGold }}
+            >
+              <Lock className="w-4 h-4" />
+              <span>Core Security</span>
+            </h3>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <FeatureCard
+                icon={<WifiOff className="w-6 h-6" />}
+                title="100% Offline Architecture"
+                description="Your passwords never leave your device. No servers, no cloud sync, no risk of mass data breaches. Period."
+                highlight
+              />
+              <FeatureCard
+                icon={<Lock className="w-6 h-6" />}
+                title="AES-256-GCM Encryption"
+                description="Military-grade encryption with PBKDF2 key derivation (100,000 iterations). The same standard used by governments."
+              />
+              <FeatureCard
+                icon={<Fingerprint className="w-6 h-6" />}
+                title="Built-in 2FA Authenticator"
+                description="Generate TOTP codes for any account. Replace Google Authenticator—keep everything in one secure vault."
+              />
+            </div>
           </div>
           
-          {/* Second row of features */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-            <FeatureCard
-              icon={<RefreshCw className="w-6 h-6" />}
-              title="Secure Backup"
-              description="Create encrypted backups. Restore on any device with your master password."
-            />
-            <FeatureCard
-              icon={<CalendarClock className="w-6 h-6" />}
-              title="Password Age Alerts"
-              description="Dashboard warns when passwords are over 90 days old. Stay ahead of security risks."
-            />
-            <FeatureCard
-              icon={<Key className="w-6 h-6" />}
-              title="Custom Fields"
-              description="Add any field to entries—PINs, security questions, notes. You control the data."
-            />
+          {/* Password Management Features */}
+          <div className="mb-12">
+            <h3 
+              className="text-sm font-semibold uppercase tracking-wider mb-6 flex items-center space-x-2"
+              style={{ color: colors.goldLight }}
+            >
+              <Key className="w-4 h-4" />
+              <span>Smart Password Management</span>
+            </h3>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <FeatureCard
+                icon={<Zap className="w-6 h-6" />}
+                title="Intelligent Password Generator"
+                description="Create cryptographically secure passwords with customizable length, characters, and exclusions. Real-time strength analysis."
+              />
+              <FeatureCard
+                icon={<History className="w-6 h-6" />}
+                title="Complete Password History"
+                description="Track every password change. Accidentally overwrote a password? Restore any previous version with one click."
+              />
+              <FeatureCard
+                icon={<CalendarClock className="w-6 h-6" />}
+                title="Password Age Monitoring"
+                description="Dashboard alerts when passwords are over 90 days old. Visual indicators help you stay ahead of security risks."
+              />
+              <FeatureCard
+                icon={<FolderKey className="w-6 h-6" />}
+                title="Custom Fields"
+                description="Add unlimited custom fields—PINs, security questions, recovery codes, notes. Your data, your structure."
+              />
+              <FeatureCard
+                icon={<Undo2 className="w-6 h-6" />}
+                title="5-Second Undo Delete"
+                description="Accidentally deleted an entry? Quick undo toast gives you 5 seconds to restore it. No data loss stress."
+              />
+              <FeatureCard
+                icon={<Clock className="w-6 h-6" />}
+                title="Configurable Auto-Lock"
+                description="Set your preferred inactivity timeout (1-60 minutes). Vault locks automatically to protect your data."
+              />
+            </div>
           </div>
           
-          {/* Third row of features */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-            <FeatureCard
-              icon={<Smartphone className="w-6 h-6" />}
-              title="Mobile Access"
-              description="View your vault on your phone with secure QR codes. Temporary tokens auto-expire for safety."
-              highlight
-            />
+          {/* Convenience Features */}
+          <div className="mb-12">
+            <h3 
+              className="text-sm font-semibold uppercase tracking-wider mb-6 flex items-center space-x-2"
+              style={{ color: colors.brandGoldLight }}
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>Convenience and Accessibility</span>
+            </h3>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <FeatureCard
+                icon={<QrCode className="w-6 h-6" />}
+                title="Secure Mobile Access"
+                description="View your vault on any phone via encrypted QR codes. Temporary tokens auto-expire. No app installation needed."
+                highlight
+              />
+              <FeatureCard
+                icon={<Import className="w-6 h-6" />}
+                title="Import from Anywhere"
+                description="Seamlessly import from LastPass, 1Password, Bitwarden, Dashlane, Keeper, or Chrome. Switch in minutes."
+              />
+              <FeatureCard
+                icon={<RefreshCw className="w-6 h-6" />}
+                title="Encrypted Backups"
+                description="Create password-protected backup files. Restore on any device with your encryption password."
+              />
+              <FeatureCard
+                icon={<Keyboard className="w-6 h-6" />}
+                title="Keyboard Shortcuts"
+                description="Power-user friendly with full keyboard navigation. Ctrl+N for new entry, Ctrl+F to search, and more."
+              />
+              <FeatureCard
+                icon={<Globe className="w-6 h-6" />}
+                title="Multi-Language Support"
+                description="Available in English, German, Spanish, and French. More languages coming based on community requests."
+              />
+              <FeatureCard
+                icon={<Database className="w-6 h-6" />}
+                title="12-Word Recovery Phrase"
+                description="BIP39 recovery phrase lets you recover your vault even if you forget your master password. Write it down, store it safely."
+              />
+            </div>
+          </div>
+          
+          {/* Desktop Features */}
+          <div>
+            <h3 
+              className="text-sm font-semibold uppercase tracking-wider mb-6 flex items-center space-x-2"
+              style={{ color: colors.emerald }}
+            >
+              <Monitor className="w-4 h-4" />
+              <span>Desktop Application</span>
+            </h3>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <FeatureCard
+                icon={<Smartphone className="w-6 h-6" />}
+                title="Floating Mini-Vault"
+                description="Quick-access floating panel stays on top of other windows. Copy passwords without switching apps."
+                highlight
+              />
+              <FeatureCard
+                icon={<Shield className="w-6 h-6" />}
+                title="Secure Memory Handling"
+                description="Sensitive data is wiped from memory after use. Clipboard auto-clears after copying passwords."
+              />
+              <FeatureCard
+                icon={<RefreshCw className="w-6 h-6" />}
+                title="License Transfer"
+                description="Moving to a new computer? Transfer your license seamlessly. One device at a time, your choice which one."
+              />
+            </div>
           </div>
         </div>
       </section>
@@ -819,7 +926,7 @@ export const LandingPage: React.FC = () => {
         <div 
           className="absolute inset-0 opacity-5"
           style={{
-            backgroundImage: `radial-gradient(circle at 2px 2px, ${colors.electric} 1px, transparent 0)`,
+            backgroundImage: `radial-gradient(circle at 2px 2px, ${colors.brandGold} 1px, transparent 0)`,
             backgroundSize: '40px 40px',
           }}
         />
@@ -902,10 +1009,10 @@ export const LandingPage: React.FC = () => {
                 <div className="text-center mb-8">
                   <div 
                     className="inline-flex items-center space-x-2 px-4 py-2 rounded-full mb-4"
-                    style={{ backgroundColor: `${colors.electric}15` }}
+                    style={{ backgroundColor: `${colors.brandGold}15` }}
                   >
-                    <Shield className="w-4 h-4" style={{ color: colors.electric }} />
-                    <span className="text-sm font-medium" style={{ color: colors.electric }}>
+                    <Shield className="w-4 h-4" style={{ color: colors.brandGold }} />
+                    <span className="text-sm font-medium" style={{ color: colors.brandGold }}>
                       Your Security Stack
                     </span>
                   </div>
@@ -913,10 +1020,10 @@ export const LandingPage: React.FC = () => {
                 
                 <div className="space-y-4">
                   {[
-                    { label: 'AES-256 Encryption', icon: Lock, color: colors.electric },
-                    { label: 'PBKDF2 Key Derivation', icon: Key, color: colors.amber },
+                    { label: 'AES-256 Encryption', icon: Lock, color: colors.brandGold },
+                    { label: 'PBKDF2 Key Derivation', icon: Key, color: colors.goldLight },
                     { label: 'Secure Memory Handling', icon: Database, color: colors.emerald },
-                    { label: 'Auto-Lock Protection', icon: Clock, color: colors.electricLight },
+                    { label: 'Auto-Lock Protection', icon: Clock, color: colors.brandGoldLight },
                   ].map((item, i) => (
                     <div
                       key={i}
@@ -943,6 +1050,110 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
+      {/* Switch Section */}
+      <section className="py-24 px-6" style={{ backgroundColor: `${colors.obsidian}` }}>
+        <div className="max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div>
+              <div 
+                className="inline-flex items-center space-x-2 px-4 py-2 rounded-full mb-6"
+                style={{ 
+                  backgroundColor: `${colors.goldLight}15`,
+                  border: `1px solid ${colors.goldLight}30`,
+                }}
+              >
+                <Import className="w-4 h-4" style={{ color: colors.goldLight }} />
+                <span className="text-sm font-medium" style={{ color: colors.goldLight }}>
+                  Easy Migration
+                </span>
+              </div>
+              <h2 
+                className="text-4xl lg:text-5xl font-bold mb-6"
+                style={{ color: colors.ivory }}
+              >
+                Switching is
+                <br />
+                <span className="text-gradient">effortless</span>
+              </h2>
+              <p 
+                className="text-lg mb-8"
+                style={{ color: colors.silver }}
+              >
+                Import your existing passwords in minutes. We support all major 
+                password managers so you can make the switch without the hassle.
+              </p>
+              
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  'LastPass',
+                  '1Password', 
+                  'Bitwarden',
+                  'Dashlane',
+                  'Keeper',
+                  'Chrome'
+                ].map((manager) => (
+                  <div 
+                    key={manager}
+                    className="flex items-center space-x-3 p-3 rounded-lg"
+                    style={{ backgroundColor: `${colors.slate}50` }}
+                  >
+                    <Check className="w-5 h-5" style={{ color: colors.emerald }} />
+                    <span className="font-medium" style={{ color: colors.ivory }}>
+                      {manager}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div 
+              className="rounded-3xl p-8"
+              style={{
+                backgroundColor: colors.midnight,
+                border: `1px solid ${colors.steel}`,
+              }}
+            >
+              <h3 
+                className="text-xl font-bold mb-6"
+                style={{ color: colors.ivory }}
+              >
+                Why users are switching:
+              </h3>
+              
+              <div className="space-y-4">
+                {[
+                  { title: 'LastPass breach concerns', desc: 'No cloud means no mass data exposure' },
+                  { title: 'Rising subscription costs', desc: 'Pay once, own forever—no monthly fees' },
+                  { title: 'Privacy first', desc: 'Your data stays on your device, always' },
+                  { title: 'No vendor lock-in', desc: 'Export your data anytime in standard formats' },
+                ].map((reason, i) => (
+                  <div 
+                    key={i}
+                    className="flex items-start space-x-4 p-4 rounded-xl"
+                    style={{ backgroundColor: `${colors.slate}30` }}
+                  >
+                    <div 
+                      className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: `${colors.emerald}20` }}
+                    >
+                      <Check className="w-4 h-4" style={{ color: colors.emerald }} />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold mb-1" style={{ color: colors.ivory }}>
+                        {reason.title}
+                      </h4>
+                      <p className="text-sm" style={{ color: colors.silver }}>
+                        {reason.desc}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Testimonials Section */}
       <section className="py-24 px-6">
         <div className="max-w-7xl mx-auto">
@@ -957,21 +1168,42 @@ export const LandingPage: React.FC = () => {
           
           <div className="grid md:grid-cols-3 gap-6">
             <TestimonialCard
-              quote="Finally, a password manager that doesn't require me to trust a third party with my most sensitive data. Pure genius."
+              quote="Finally, a password manager that doesn't require me to trust a third party with my most sensitive data. The built-in 2FA is a game-changer."
               author="Marcus Chen"
               role="Security Engineer"
               rating={5}
             />
             <TestimonialCard
-              quote="After the LastPass breach, I knew I needed something different. This is exactly what I was looking for—total control."
+              quote="After the LastPass breach, I imported everything in 5 minutes. Now my passwords never leave my laptop. This is what security should be."
               author="Sarah Mitchell"
-              role="Privacy Advocate"
+              role="IT Consultant"
               rating={5}
             />
             <TestimonialCard
-              quote="The one-time purchase model is refreshing. No monthly fees, no upsells, just solid security that works."
+              quote="The one-time purchase sold me. No more $36/year subscriptions. Plus the password age alerts keep my team's credentials fresh."
               author="David Park"
               role="Small Business Owner"
+              rating={5}
+            />
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-6 mt-6">
+            <TestimonialCard
+              quote="The mobile QR access is brilliant. I can check a password on my phone without installing another app or syncing to the cloud."
+              author="Jennifer Lopez"
+              role="Remote Worker"
+              rating={5}
+            />
+            <TestimonialCard
+              quote="Imported 300+ passwords from 1Password seamlessly. The password history feature has already saved me twice when I accidentally overwrote credentials."
+              author="Robert Kim"
+              role="Software Developer"
+              rating={5}
+            />
+            <TestimonialCard
+              quote="My whole family uses the Family Vault. Everyone has their own secure storage, and I don't worry about data breaches anymore."
+              author="Amanda Foster"
+              role="Parent and Teacher"
               rating={5}
             />
           </div>
@@ -1004,8 +1236,9 @@ export const LandingPage: React.FC = () => {
               features={[
                 "Full feature access",
                 "Unlimited passwords",
+                "Built-in 2FA authenticator",
                 "Password generator",
-                "Secure notes",
+                "Import from any manager",
                 "No credit card required",
               ]}
               ctaText="Start Free Trial"
@@ -1016,10 +1249,13 @@ export const LandingPage: React.FC = () => {
               price="$49"
               period="one-time"
               features={[
-                "Lifetime license",
+                "Lifetime license—pay once",
                 "1 device activation",
                 "All security features",
+                "Built-in 2FA authenticator",
+                "Mobile access via QR",
                 "Free updates forever",
+                "License transfer included",
                 "Email support",
               ]}
               popular
@@ -1032,8 +1268,10 @@ export const LandingPage: React.FC = () => {
               period="one-time"
               features={[
                 "5 device activations",
-                "Perfect for families",
-                "All security features",
+                "Share with family members",
+                "All Personal Vault features",
+                "Built-in 2FA for everyone",
+                "License transfer per device",
                 "Free updates forever",
                 "Priority support",
               ]}
@@ -1050,13 +1288,13 @@ export const LandingPage: React.FC = () => {
           <div 
             className="rounded-3xl p-12 text-center relative overflow-hidden"
             style={{
-              background: `linear-gradient(135deg, ${colors.electric}15 0%, ${colors.midnight} 50%, ${colors.electricDark}15 100%)`,
-              border: `1px solid ${colors.electric}30`,
+              background: `linear-gradient(135deg, ${colors.brandGold}15 0%, ${colors.midnight} 50%, ${colors.goldDark}15 100%)`,
+              border: `1px solid ${colors.brandGold}30`,
             }}
           >
             <div 
               className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-32 blur-3xl opacity-30"
-              style={{ backgroundColor: colors.electric }}
+              style={{ backgroundColor: colors.brandGold }}
             />
             
             <div className="relative">
@@ -1079,7 +1317,7 @@ export const LandingPage: React.FC = () => {
                   onClick={() => handleDownload('windows')}
                   className="flex items-center space-x-3 px-6 py-4 rounded-xl transition-all duration-300 hover:scale-105"
                   style={{
-                    backgroundColor: colors.electric,
+                    backgroundColor: colors.brandGold,
                     color: colors.ivory,
                   }}
                 >
@@ -1136,10 +1374,10 @@ export const LandingPage: React.FC = () => {
                 <div 
                   className="w-10 h-10 rounded-xl flex items-center justify-center"
                   style={{ 
-                    background: `linear-gradient(135deg, ${colors.electric} 0%, ${colors.electricDark} 100%)`,
+                    background: `linear-gradient(135deg, ${colors.brandGold} 0%, ${colors.goldDark} 100%)`,
                   }}
                 >
-                  <Shield className="w-5 h-5 text-white" strokeWidth={2} />
+                  <Shield className="w-5 h-5" style={{ color: colors.midnight }} strokeWidth={2} />
                 </div>
                 <span 
                   className="text-lg font-bold"
