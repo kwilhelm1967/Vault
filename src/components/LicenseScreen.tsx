@@ -701,7 +701,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
                   </button>
 
                   <p className="text-xs text-slate-400 text-center">
-                    All features unlocked for 7 days
+                    All features unlocked • Key expires in 7 days
                   </p>
                 </div>
               </div>
