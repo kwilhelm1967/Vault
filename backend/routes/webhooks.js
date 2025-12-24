@@ -6,9 +6,14 @@
 
 const express = require('express');
 const db = require('../database/db');
-const { verifyWebhookSignature, getCheckoutSession, PRODUCTS } = require('../services/stripe');
-const { generatePersonalKey, generateFamilyKey } = require('../services/licenseGenerator');
-const { sendPurchaseEmail } = require('../services/email');
+const { stripe, verifyWebhookSignature, getCheckoutSession, PRODUCTS, getProductByPriceId } = require('../services/stripe');
+const { 
+  generatePersonalKey, 
+  generateFamilyKey, 
+  generateLLVPersonalKey, 
+  generateLLVFamilyKey 
+} = require('../services/licenseGenerator');
+const { sendPurchaseEmail, sendBundleEmail } = require('../services/email');
 
 const router = express.Router();
 
@@ -89,6 +94,7 @@ router.post('/stripe', express.raw({ type: 'application/json' }), async (req, re
 
 /**
  * Handle successful checkout session
+ * Supports both single product and bundle purchases (multiple line items)
  * 
  * @param {Object} session - Stripe Checkout Session object
  */
@@ -102,26 +108,21 @@ async function handleCheckoutCompleted(session) {
     return;
   }
   
-  // Get session details with expanded customer
+  // Get session details with expanded customer and line items
   const fullSession = await getCheckoutSession(session.id);
   
-  // Extract metadata
-  const planType = fullSession.metadata?.plan_type || 'personal';
-  const maxDevices = parseInt(fullSession.metadata?.max_devices || '1');
-  const customerEmail = fullSession.customer_email || fullSession.customer_details?.email;
+  // Retrieve line items to determine what was purchased
+  const lineItems = await stripe.checkout.sessions.listLineItems(session.id, {
+    expand: ['data.price.product'],
+  });
   
+  const customerEmail = fullSession.customer_email || fullSession.customer_details?.email;
   if (!customerEmail) {
     throw new Error('No customer email found in checkout session');
   }
   
-  // Generate license key based on plan type
-  const licenseKey = planType === 'family' 
-    ? generateFamilyKey() 
-    : generatePersonalKey();
-  
   // Get or create customer record
   let customer = db.customers.findByEmail.get(customerEmail);
-  
   if (!customer) {
     db.customers.create.run({
       email: customerEmail,
@@ -136,46 +137,103 @@ async function handleCheckoutCompleted(session) {
     });
   }
   
-  // Get amount paid
-  const amountPaid = fullSession.amount_total || PRODUCTS[planType]?.price || 4900;
+  const licenses = [];
+  const isBundle = lineItems.data.length > 1 || fullSession.metadata?.is_bundle === 'true';
   
-  // Create license record
-  db.licenses.create.run({
-    license_key: licenseKey,
-    plan_type: planType,
-    customer_id: customer?.id || null,
-    email: customerEmail,
-    stripe_payment_id: fullSession.payment_intent?.id || null,
-    stripe_checkout_session_id: session.id,
-    amount_paid: amountPaid,
-    max_devices: maxDevices,
-  });
+  // Process each line item (supports bundles)
+  for (const lineItem of lineItems.data) {
+    const priceId = lineItem.price.id;
+    const product = getProductByPriceId(priceId);
+    
+    if (!product) {
+      console.warn(`Unknown price ID in checkout: ${priceId}`);
+      continue;
+    }
+    
+    // Determine plan type and generate appropriate license key
+    let licenseKey;
+    let planType;
+    
+    if (product.key === 'personal') {
+      licenseKey = generatePersonalKey();
+      planType = 'personal';
+    } else if (product.key === 'family') {
+      licenseKey = generateFamilyKey();
+      planType = 'family';
+    } else if (product.key === 'llv_personal') {
+      licenseKey = generateLLVPersonalKey();
+      planType = 'llv_personal';
+    } else if (product.key === 'llv_family') {
+      licenseKey = generateLLVFamilyKey();
+      planType = 'llv_family';
+    } else {
+      console.warn(`Unknown product key: ${product.key}`);
+      continue;
+    }
+    
+    // Calculate amount for this line item
+    const lineItemAmount = lineItem.amount_total || (product.price * lineItem.quantity);
+    
+    // Create license record
+    db.licenses.create.run({
+      license_key: licenseKey,
+      plan_type: planType,
+      product_type: product.productType || 'lpv',
+      customer_id: customer?.id || null,
+      email: customerEmail,
+      stripe_payment_id: fullSession.payment_intent?.id || null,
+      stripe_checkout_session_id: session.id,
+      amount_paid: lineItemAmount,
+      max_devices: product.maxDevices,
+    });
+    
+    licenses.push({
+      key: licenseKey,
+      planType: planType,
+      productName: product.name,
+      amount: lineItemAmount,
+      maxDevices: product.maxDevices,
+    });
+    
+    console.log(`License created: ${licenseKey} (${product.name}) for ${customerEmail}`);
+  }
   
-  console.log(`License created: ${licenseKey} for ${customerEmail}`);
+  if (licenses.length === 0) {
+    throw new Error('No valid products found in checkout session');
+  }
   
   // Mark any existing trial as converted
   const existingTrial = db.trials.findByEmail.get(customerEmail);
-  if (existingTrial) {
-    const newLicense = db.licenses.findByKey.get(licenseKey);
+  if (existingTrial && licenses.length > 0) {
+    const firstLicense = db.licenses.findByKey.get(licenses[0].key);
     db.trials.markConverted.run({
       email: customerEmail,
-      license_id: newLicense?.id || null,
+      license_id: firstLicense?.id || null,
     });
     console.log(`Trial converted for ${customerEmail}`);
   }
   
-  // Send purchase confirmation email
+  // Send email (bundle email if multiple licenses, single email if one)
   try {
-    await sendPurchaseEmail({
-      to: customerEmail,
-      licenseKey,
-      planType,
-      amount: amountPaid,
-    });
-    console.log(`Purchase email sent to ${customerEmail}`);
+    if (isBundle || licenses.length > 1) {
+      await sendBundleEmail({
+        to: customerEmail,
+        licenses: licenses,
+        totalAmount: fullSession.amount_total,
+      });
+      console.log(`Bundle purchase email sent to ${customerEmail}`);
+    } else {
+      await sendPurchaseEmail({
+        to: customerEmail,
+        licenseKey: licenses[0].key,
+        planType: licenses[0].planType,
+        amount: licenses[0].amount,
+      });
+      console.log(`Purchase email sent to ${customerEmail}`);
+    }
   } catch (emailError) {
     console.error('Failed to send purchase email:', emailError);
-    // Don't throw - license was created successfully
+    // Don't throw - licenses were created successfully
   }
 }
 

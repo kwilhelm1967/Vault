@@ -15,20 +15,9 @@
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 
 const db = require('../database/db');
-const nodemailer = require('nodemailer');
+const { sendEmail } = require('../services/email');
 const fs = require('fs');
 const path = require('path');
-
-// Initialize email transporter
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: process.env.SMTP_SECURE === 'true',
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD,
-  },
-});
 
 /**
  * Load and process HTML email template
@@ -65,12 +54,13 @@ async function sendTrialExpiringEmail(email, expiresAt) {
     EXPIRES_AT: formatDate(expiresAt),
   });
 
-  await transporter.sendMail({
-    from: `"Local Password Vault" <${process.env.FROM_EMAIL || 'noreply@localpasswordvault.com'}>`,
+  const text = `Your Local Password Vault trial expires tomorrow (${formatDate(expiresAt)}). Upgrade now to keep your passwords secure: https://localpasswordvault.com/pricing`;
+
+  await sendEmail({
     to: email,
     subject: '⏰ Your trial expires tomorrow - Local Password Vault',
     html,
-    text: `Your Local Password Vault trial expires tomorrow (${formatDate(expiresAt)}). Upgrade now to keep your passwords secure: https://localpasswordvault.com/pricing`,
+    text,
   });
 
   console.log(`✓ Expiring email sent to ${email}`);
@@ -85,12 +75,13 @@ async function sendTrialExpiredEmail(email, expiredDate) {
     EMAIL: email,
   });
 
-  await transporter.sendMail({
-    from: `"Local Password Vault" <${process.env.FROM_EMAIL || 'noreply@localpasswordvault.com'}>`,
+  const text = `Your Local Password Vault trial has ended. Your passwords are still safe! Use code COMEBACK10 for 10% off: https://localpasswordvault.com/pricing?code=COMEBACK10`;
+
+  await sendEmail({
     to: email,
     subject: 'Your trial ended - Here\'s 10% off to come back',
     html,
-    text: `Your Local Password Vault trial has ended. Your passwords are still safe! Use code COMEBACK10 for 10% off: https://localpasswordvault.com/pricing?code=COMEBACK10`,
+    text,
   });
 
   console.log(`✓ Expired email sent to ${email}`);

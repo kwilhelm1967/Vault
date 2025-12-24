@@ -66,6 +66,22 @@ function generateFamilyKey() {
 }
 
 /**
+ * Generate a Local Legacy Vault Personal key
+ * Format: LLVP-XXXX-XXXX-XXXX
+ */
+function generateLLVPersonalKey() {
+  return generateLicenseKey('LLVP');
+}
+
+/**
+ * Generate a Local Legacy Vault Family key
+ * Format: LLVF-XXXX-XXXX-XXXX
+ */
+function generateLLVFamilyKey() {
+  return generateLicenseKey('LLVF');
+}
+
+/**
  * Validate license key format
  * @param {string} key - License key to validate
  * @returns {boolean} True if valid format
@@ -106,6 +122,10 @@ function getPlanTypeFromKey(key) {
       return 'personal';
     case 'FMLY':
       return 'family';
+    case 'LLVP':
+      return 'llv_personal';
+    case 'LLVF':
+      return 'llv_family';
     case 'TRIA':
       return 'trial';
     default:
@@ -118,6 +138,8 @@ module.exports = {
   generateTrialKey,
   generatePersonalKey,
   generateFamilyKey,
+  generateLLVPersonalKey,
+  generateLLVFamilyKey,
   isValidFormat,
   normalizeKey,
   getPlanTypeFromKey,

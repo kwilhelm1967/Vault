@@ -130,12 +130,12 @@ app.listen(PORT, () => {
 ║   Environment: ${process.env.NODE_ENV || 'development'}                              ║
 ║                                                               ║
 ║   Endpoints:                                                  ║
-   ║   • POST /api/licenses/validate  - Activate license key       ║
-   ║   • POST /api/lpv/license/activate - LPV license activation   ║
-   ║   • POST /api/lpv/license/transfer - LPV license transfer     ║
-   ║   • POST /api/trial/signup       - Start free trial           ║
-   ║   • POST /api/checkout/session   - Create Stripe checkout     ║
-   ║   • POST /api/webhooks/stripe    - Stripe webhook handler     ║
+║   • POST /api/licenses/validate  - Activate license key       ║
+║   • POST /api/lpv/license/activate - LPV license activation   ║
+║   • POST /api/lpv/license/transfer - LPV license transfer     ║
+║   • POST /api/trial/signup       - Start free trial           ║
+║   • POST /api/checkout/session   - Create Stripe checkout     ║
+║   • POST /api/webhooks/stripe    - Stripe webhook handler     ║
 ║                                                               ║
 ╚═══════════════════════════════════════════════════════════════╝
   `);

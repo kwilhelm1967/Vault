@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <title>Thank You - Local Password Vault</title>
+  <meta name="description" content="Your purchase is complete. Welcome to Local Password Vault.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-dark: #0a0f1a;
+      --bg-darker: #060912;
+      --bg-card: #111827;
+      --cyan: #06b6d4;
+      --cyan-light: #22d3ee;
+      --cyan-dark: #0891b2;
+      --cyan-glow: rgba(6, 182, 212, 0.3);
+      --green: #10b981;
+      --gold: #c9a24e;
+      --gold-dark: #a6873e;
+      --gold-glow: rgba(201, 162, 78, 0.3);
+      --text-primary: #f9fafb;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --gradient-cyan: linear-gradient(135deg, #22d3ee 0%, #0891b2 100%);
+      --gradient-gold: linear-gradient(135deg, #c9a24e 0%, #a6873e 100%);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; font-size: 16px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-darker);
+      color: var(--text-primary);
+      line-height: 1.6;
+      font-size: 1rem;
+      min-height: 100vh;
+    }
+
+    /* Success Section */
+    .success-section {
+      padding: 40px 2rem;
+      text-align: center;
+      background: linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-darker) 100%);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .success-container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      background: var(--gradient-cyan);
+      border: 3px solid var(--cyan-dark);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      box-shadow: 0 8px 32px var(--cyan-glow), 0 0 0 1px rgba(6, 182, 212, 0.2);
+      animation: scaleIn 0.5s ease;
+    }
+
+    @keyframes scaleIn {
+      from { transform: scale(0); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .success-icon svg {
+      width: 40px;
+      height: 40px;
+      color: var(--cyan-dark);
+      stroke: var(--cyan-dark);
+      stroke-width: 3;
+    }
+
+    .success-section h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .success-section .subtitle {
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+    .next-steps {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: left;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .next-steps h3 {
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+      color: var(--cyan);
+    }
+
+    .step-list {
+      list-style: none;
+    }
+
+    .step-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .step-list li:last-child {
+      border-bottom: none;
+    }
+
+    .step-number {
+      width: 28px;
+      height: 28px;
+      background: var(--gradient-cyan);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--bg-darker);
+      flex-shrink: 0;
+    }
+
+    .step-list li span {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      padding-top: 4px;
+    }
+
+    /* UPSELL SECTION - THE MONEY MAKER */
+    .upsell-section {
+      padding: 40px 2rem;
+      background: linear-gradient(180deg, var(--bg-darker) 0%, #0d1117 50%, var(--bg-darker) 100%);
+    }
+
+    .upsell-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .upsell-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .upsell-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      background: rgba(201, 162, 78, 0.15);
+      border: 1px solid rgba(201, 162, 78, 0.4);
+      border-radius: 100px;
+      font-size: 0.85rem;
+      color: var(--gold);
+      margin-bottom: 24px;
+      font-weight: 600;
+    }
+
+    .upsell-header h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(1.75rem, 4vw, 2.25rem);
+      font-weight: 700;
+      margin-bottom: 12px;
+      line-height: 1.2;
+    }
+
+    .upsell-header h2 span {
+      color: var(--gold);
+    }
+
+    .upsell-header .emotional-anchor {
+      font-size: 1.25rem;
+      font-weight: 500;
+      color: var(--gold);
+      font-style: italic;
+      margin-bottom: 16px;
+    }
+
+    .upsell-header p {
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Timer */
+    .timer-container {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin: 40px 0;
+    }
+
+    .timer-block {
+      background: var(--bg-card);
+      border: 2px solid var(--gold-dark);
+      border-radius: 12px;
+      padding: 16px 24px;
+      min-width: 80px;
+      text-align: center;
+    }
+
+    .timer-value {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--gold);
+      line-height: 1;
+    }
+
+    .timer-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 4px;
+    }
+
+    /* Offer Card */
+    .offer-card {
+      background: var(--bg-card);
+      border-radius: 20px;
+      padding: 48px 40px;
+      border: 2px solid var(--gold-dark);
+      box-shadow: 0 0 60px var(--gold-glow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .offer-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--gradient-gold);
+    }
+
+    .offer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: center;
+    }
+
+    .offer-details h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .offer-details h3 svg {
+      width: 32px;
+      height: 32px;
+      stroke: var(--gold);
+    }
+
+    .offer-details p {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+
+    .offer-features {
+      list-style: none;
+    }
+
+    .offer-features li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    .offer-features li svg {
+      width: 18px;
+      height: 18px;
+      color: var(--cyan);
+      stroke: var(--cyan);
+      flex-shrink: 0;
+    }
+
+    .offer-pricing {
+      text-align: center;
+      padding: 32px;
+      background: var(--bg-darker);
+      border-radius: 16px;
+    }
+
+    .original-price {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      text-decoration: line-through;
+      margin-bottom: 8px;
+    }
+
+    .sale-price {
+      margin-bottom: 8px;
+    }
+
+    .sale-price .currency {
+      font-size: 1.5rem;
+      color: var(--gold);
+      vertical-align: top;
+    }
+
+    .sale-price .amount {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 4rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .savings-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid var(--green);
+      border-radius: 100px;
+      color: var(--green);
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+
+    .offer-cta {
+      display: block;
+      width: 100%;
+      padding: 18px 32px;
+      background: var(--gradient-gold);
+      color: var(--bg-darker);
+      text-decoration: none;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .offer-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px var(--gold-glow);
+    }
+
+    .offer-subtext {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 16px;
+    }
+
+    /* Discount Code Box */
+    .discount-code-box {
+      background: var(--bg-card);
+      border: 2px dashed var(--gold);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .discount-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .discount-code {
+      font-family: 'Space Grotesk', monospace;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 3px;
+      margin-bottom: 12px;
+    }
+
+    .copy-code-btn {
+      padding: 8px 20px;
+      background: transparent;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .copy-code-btn:hover {
+      background: var(--gold);
+      color: var(--bg-darker);
+    }
+
+    .copy-code-btn.copied {
+      background: var(--green);
+      border-color: var(--green);
+      color: white;
+    }
+
+    /* No thanks link */
+    .skip-offer {
+      text-align: center;
+      margin-top: 32px;
+    }
+
+    .skip-offer a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.2s;
+    }
+
+    .skip-offer a:hover {
+      color: var(--text-secondary);
+    }
+
+    /* Footer */
+    .footer {
+      padding: 40px 2rem;
+      background: var(--bg-darker);
+      border-top: 1px solid var(--border-subtle);
+      text-align: center;
+    }
+
+    .footer-copyright {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .offer-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .timer-container {
+        gap: 10px;
+      }
+
+      .timer-block {
+        padding: 12px 16px;
+        min-width: 60px;
+      }
+
+      .timer-value {
+        font-size: 1.75rem;
+      }
+
+      .offer-card {
+        padding: 32px 24px;
+      }
+
+      .offer-pricing {
+        padding: 32px 24px;
+      }
+
+      .sale-price .amount {
+        font-size: 3rem;
+      }
+    }
+
+    /* Expired state */
+    .offer-expired .timer-value {
+      color: var(--text-muted);
+    }
+
+    .offer-expired .offer-card {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .expired-message {
+      display: none;
+      text-align: center;
+      padding: 24px;
+      background: var(--bg-card);
+      border-radius: 12px;
+      margin-top: 24px;
+    }
+
+    .offer-expired .expired-message {
+      display: block;
+    }
+
+    .expired-message p {
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .expired-message a {
+      color: var(--gold);
+      text-decoration: none;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <!-- Success Section -->
+  <section class="success-section">
+    <div class="success-container">
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+      <h1>You're All Set!</h1>
+      <p class="subtitle">Your purchase is complete. Check your email for your license key and download link.</p>
+      
+      <div class="next-steps">
+        <h3>What's Next:</h3>
+        <ol class="step-list">
+          <li>
+            <span class="step-number">1</span>
+            <span>Check your email for your license key and download link</span>
+          </li>
+          <li>
+            <span class="step-number">2</span>
+            <span>Download and install Local Password Vault</span>
+          </li>
+          <li>
+            <span class="step-number">3</span>
+            <span>Create your master password and start adding accounts</span>
+          </li>
+          <li>
+            <span class="step-number">4</span>
+            <span>Create a backup to a USB drive for safekeeping</span>
+          </li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- UPSELL SECTION -->
+  <section class="upsell-section" id="upsell">
+    <div class="upsell-container">
+      <div class="upsell-header">
+        <div class="upsell-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          One-Time Offer
+        </div>
+        <h2>Protecting Your Access Is Step One.<br><span>Protecting Your Family Is Step Two.</span></h2>
+        <p class="emotional-anchor">You just solved today's problem. Legacy Vault solves tomorrow's burden.</p>
+        <p>What happens to your accounts when you're gone? Don't let your family struggle to access what matters most.</p>
+      </div>
+
+      <!-- Timer -->
+      <div class="timer-container">
+        <div class="timer-block">
+          <div class="timer-value" id="minutes">20</div>
+          <div class="timer-label">Minutes</div>
+        </div>
+        <div class="timer-block">
+          <div class="timer-value" id="seconds">00</div>
+          <div class="timer-label">Seconds</div>
+        </div>
+      </div>
+
+      <!-- Offer Card -->
+      <div class="offer-card">
+        <div class="offer-grid">
+          <div class="offer-details">
+            <h3>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                <circle cx="12" cy="16" r="1"/>
+              </svg>
+              Local Legacy Vault
+            </h3>
+            <p>Organize everything your family needs—documents, instructions, account lists, final wishes—so they're never left scrambling.</p>
+            <ul class="offer-features">
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Store documents and instructions</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Organize account information</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Record final wishes and messages</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> 100% offline, fully encrypted</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Lifetime license included</li>
+            </ul>
+          </div>
+          <div class="offer-pricing">
+            <div class="original-price">Regular price: <span id="regular-price">$79</span></div>
+            <div class="sale-price">
+              <span class="currency">$</span><span class="amount" id="sale-amount">59</span>
+            </div>
+            <div class="savings-badge">Save <span id="savings-amount">$20</span> Today Only</div>
+            
+            <div class="discount-code-box">
+              <p class="discount-label">Your Exclusive Code:</p>
+              <div class="discount-code" id="discount-code">LEGACY20</div>
+              <button class="copy-code-btn" onclick="copyDiscountCode()">Copy Code</button>
+            </div>
+            
+            <a href="https://locallegacyvault.com/pricing.html" class="offer-cta" target="_blank">Claim Offer at Legacy Vault</a>
+            <p class="offer-subtext">Use code at checkout. Expires when timer ends.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="skip-offer">
+        <a href="index.html">No thanks, I'll pass on this offer</a>
+      </div>
+
+      <div class="expired-message">
+        <p>This special offer has expired.</p>
+        <a href="https://locallegacyvault.com">View Legacy Vault at regular price →</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p class="footer-copyright">© 2025 Local Password Vault. All rights reserved.</p>
+  </footer>
+
+  <script>
+    // Timer countdown (20 minutes)
+    let timeLeft = 20 * 60; // 20 minutes in seconds
+
+    // Check if there's a saved timestamp
+    const savedTime = localStorage.getItem('lpv_upsell_timer');
+    const savedTimestamp = localStorage.getItem('lpv_upsell_timestamp');
+
+    if (savedTime && savedTimestamp) {
+      const elapsed = Math.floor((Date.now() - parseInt(savedTimestamp)) / 1000);
+      timeLeft = Math.max(0, parseInt(savedTime) - elapsed);
+    } else {
+      localStorage.setItem('lpv_upsell_timer', timeLeft);
+      localStorage.setItem('lpv_upsell_timestamp', Date.now());
+    }
+
+    function updateTimer() {
+      const minutes = Math.floor(timeLeft / 60);
+      const seconds = timeLeft % 60;
+      
+      document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
+      document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
+
+      if (timeLeft <= 0) {
+        document.getElementById('upsell').classList.add('offer-expired');
+        clearInterval(timerInterval);
+      } else {
+        timeLeft--;
+      }
+    }
+
+    updateTimer();
+    const timerInterval = setInterval(updateTimer, 1000);
+
+    // Detect which plan was purchased and adjust pricing
+    // In production, this would come from the checkout/order data
+    const urlParams = new URLSearchParams(window.location.search);
+    const plan = urlParams.get('plan') || 'personal';
+
+    if (plan === 'family') {
+      // Family plan buyer: offer Legacy Family at $99 instead of $129
+      document.getElementById('regular-price').textContent = '$129';
+      document.getElementById('sale-amount').textContent = '99';
+      document.getElementById('savings-amount').textContent = '$30';
+      document.getElementById('discount-code').textContent = 'LEGACY30';
+    }
+    // Personal plan defaults: $79 → $59, save $20, code LEGACY20
+
+    function copyDiscountCode() {
+      const code = document.getElementById('discount-code').textContent;
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = document.querySelector('.copy-code-btn');
+        btn.textContent = '✓ Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy Code';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>
+
+

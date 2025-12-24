@@ -23,8 +23,11 @@ CREATE TABLE IF NOT EXISTS licenses (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     license_key TEXT NOT NULL UNIQUE,
     
-    -- License type: 'personal' ($49) or 'family' ($79)
-    plan_type TEXT NOT NULL CHECK (plan_type IN ('personal', 'family')),
+    -- License type: 'personal', 'family', 'llv_personal', 'llv_family'
+    plan_type TEXT NOT NULL CHECK (plan_type IN ('personal', 'family', 'llv_personal', 'llv_family')),
+    
+    -- Product type: 'lpv' (Local Password Vault) or 'llv' (Local Legacy Vault)
+    product_type TEXT DEFAULT 'lpv' CHECK (product_type IN ('lpv', 'llv')),
     
     -- Customer association
     customer_id INTEGER REFERENCES customers(id),

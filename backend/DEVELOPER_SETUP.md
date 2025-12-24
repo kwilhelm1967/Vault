@@ -48,12 +48,10 @@ JWT_SECRET=[PASTE_RANDOM_STRING]
 STRIPE_SECRET_KEY=[YOUR_STRIPE_SECRET_KEY]
 STRIPE_WEBHOOK_SECRET=[YOUR_WEBHOOK_SECRET]
 
-# Brevo (from Brevo → Settings → SMTP & API)
-EMAIL_PROVIDER=smtp
-SMTP_HOST=smtp-relay.brevo.com
-SMTP_PORT=587
-SMTP_USER=[YOUR_BREVO_LOGIN_EMAIL]
-SMTP_PASSWORD=[YOUR_BREVO_SMTP_KEY]
+# Brevo (from Brevo → Settings → SMTP & API → API Keys)
+# Create a new API key with "Send emails" permission
+# RECOMMENDED: Use Transactional API (more reliable than SMTP)
+BREVO_API_KEY=xkeysib-[YOUR_API_KEY_HERE]
 
 # Sender info
 FROM_EMAIL=noreply@localpasswordvault.com
@@ -79,12 +77,33 @@ WEBSITE_URL=https://localpasswordvault.com
 ## Step 4: Create Stripe Products
 
 1. Go to [Stripe Dashboard → Products](https://dashboard.stripe.com/products)
-2. Create two products:
+2. Create products and prices:
 
-| Product | Price | Type |
-|---------|-------|------|
-| Personal Vault | $49.00 | One-time |
-| Family Vault | $79.00 | One-time |
+### Local Password Vault (LPV)
+| Product | Price | Type | Price ID Variable |
+|---------|-------|------|-------------------|
+| Personal Vault | $49.00 | One-time | `STRIPE_PRICE_PERSONAL` |
+| Family Vault | $79.00 | One-time | `STRIPE_PRICE_FAMILY` |
+
+### Local Legacy Vault (LLV)
+| Product | Price | Type | Price ID Variable |
+|---------|-------|------|-------------------|
+| Personal | $49.00 | One-time | `STRIPE_PRICE_LLV_PERSONAL` |
+| Family | $129.00 | One-time | `STRIPE_PRICE_LLV_FAMILY` |
+
+3. Copy each Price ID and add to `.env`:
+```env
+STRIPE_PRICE_PERSONAL=price_xxxxx
+STRIPE_PRICE_FAMILY=price_xxxxx
+STRIPE_PRICE_LLV_PERSONAL=price_xxxxx
+STRIPE_PRICE_LLV_FAMILY=price_xxxxx
+```
+
+**Bundle Support:**
+- The backend automatically applies discounts for bundles:
+  - **Family Protection Bundle**: LPV Family ($79) + LLV Family ($129) = $179 (save $29)
+  - **Personal Bundle**: LPV Personal ($49) + LLV Personal ($49) = $79 (save $19)
+- Use `POST /api/checkout/bundle` endpoint with multiple products
 
 ---
 

@@ -35,13 +35,14 @@ JWT_SECRET=[64-char-random-string]
 # Stripe
 STRIPE_SECRET_KEY=[your-stripe-secret-key]
 STRIPE_WEBHOOK_SECRET=[your-webhook-secret]
+STRIPE_PRICE_PERSONAL=[price_id_for_personal]
+STRIPE_PRICE_FAMILY=[price_id_for_family]
+STRIPE_PRICE_LLV_PERSONAL=[price_id_for_llv_personal]
+STRIPE_PRICE_LLV_FAMILY=[price_id_for_llv_family]
 
-# Brevo
-EMAIL_PROVIDER=smtp
-SMTP_HOST=smtp-relay.brevo.com
-SMTP_PORT=587
-SMTP_USER=[your-brevo-email]
-SMTP_PASSWORD=[your-brevo-smtp-key]
+# Brevo (Transactional API - Recommended)
+# Get API key from: Brevo → Settings → SMTP & API → API Keys
+BREVO_API_KEY=xkeysib-your-api-key-here
 
 # Email addresses
 FROM_EMAIL=noreply@localpasswordvault.com
@@ -57,7 +58,9 @@ WEBSITE_URL=https://localpasswordvault.com
 |----------|--------|---------|
 | `/api/licenses/validate` | POST | Activate license key |
 | `/api/trial/signup` | POST | Start 7-day trial |
-| `/api/checkout/session` | POST | Create Stripe checkout |
+| `/api/checkout/session` | POST | Create Stripe checkout (single product) |
+| `/api/checkout/bundle` | POST | Create Stripe checkout (bundle with discount) |
+| `/api/checkout/products` | GET | List available products |
 | `/api/webhooks/stripe` | POST | Handle Stripe payments |
 | `/health` | GET | Server status |
 
@@ -93,6 +96,8 @@ backend/
 | Free Trial | $0 | 1 (7 days) |
 | Personal Vault | $49 | 1 (lifetime) |
 | Family Vault | $79 | 5 (lifetime) |
+| **Family Protection Bundle** | **$179** | **5 devices (both products)** |
+| *Save $29 when buying LPV Family + LLV Family together* | | |
 
 ## Support
 

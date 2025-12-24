@@ -74,11 +74,11 @@ const customers = {
 const licenses = {
   create: db.prepare(`
     INSERT INTO licenses (
-      license_key, plan_type, customer_id, email, 
+      license_key, plan_type, product_type, customer_id, email, 
       stripe_payment_id, stripe_checkout_session_id, amount_paid, max_devices
     )
     VALUES (
-      @license_key, @plan_type, @customer_id, @email,
+      @license_key, @plan_type, @product_type, @customer_id, @email,
       @stripe_payment_id, @stripe_checkout_session_id, @amount_paid, @max_devices
     )
   `),

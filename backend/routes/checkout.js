@@ -5,7 +5,7 @@
  */
 
 const express = require('express');
-const { createCheckoutSession, PRODUCTS } = require('../services/stripe');
+const { createCheckoutSession, createBundleCheckoutSession, PRODUCTS } = require('../services/stripe');
 
 const router = express.Router();
 
@@ -123,6 +123,77 @@ router.get('/session/:sessionId', async (req, res) => {
 });
 
 /**
+ * POST /api/checkout/bundle
+ * 
+ * Creates a Stripe Checkout session for a bundle purchase (multiple products).
+ * 
+ * Request body:
+ * {
+ *   "items": [
+ *     { "productKey": "personal", "quantity": 1 },
+ *     { "productKey": "llv_personal", "quantity": 1 }
+ *   ],
+ *   "email": "user@example.com" (optional)
+ * }
+ * 
+ * Response:
+ * {
+ *   "success": true,
+ *   "sessionId": "cs_xxx",
+ *   "url": "https://checkout.stripe.com/..."
+ * }
+ */
+router.post('/bundle', async (req, res) => {
+  try {
+    const { items, email } = req.body;
+    
+    // Validate items array
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid items. Must be a non-empty array of { productKey, quantity } objects.' 
+      });
+    }
+    
+    // Validate each item
+    for (const item of items) {
+      if (!item.productKey || !PRODUCTS[item.productKey]) {
+        return res.status(400).json({ 
+          success: false, 
+          error: `Invalid product key: ${item.productKey}. Valid keys: ${Object.keys(PRODUCTS).join(', ')}` 
+        });
+      }
+    }
+    
+    // Build success/cancel URLs
+    const baseUrl = process.env.WEBSITE_URL || 'https://localpasswordvault.com';
+    const successUrl = `${baseUrl}/purchase/success?session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = `${baseUrl}/pricing?cancelled=true`;
+    
+    // Create bundle checkout session
+    const session = await createBundleCheckoutSession(
+      items,
+      email || null,
+      successUrl,
+      cancelUrl
+    );
+    
+    res.json({
+      success: true,
+      sessionId: session.id,
+      url: session.url,
+    });
+    
+  } catch (error) {
+    console.error('Bundle checkout session error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to create bundle checkout session' 
+    });
+  }
+});
+
+/**
  * GET /api/checkout/products
  * 
  * Returns available products and pricing
@@ -137,6 +208,7 @@ router.get('/products', (req, res) => {
       price: product.price,
       priceFormatted: `$${(product.price / 100).toFixed(2)}`,
       maxDevices: product.maxDevices,
+      productType: product.productType,
     })),
   });
 });
