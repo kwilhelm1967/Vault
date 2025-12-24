@@ -85,8 +85,11 @@ backend/
 │   ├── db.js              # SQLite connection
 │   └── schema.sql         # Tables
 └── templates/
-    ├── purchase-email.html
-    └── trial-email.html
+    ├── bundle-email.html
+    ├── purchase-confirmation-email.html
+    ├── trial-expired-email.html
+    ├── trial-expires-tomorrow-email.html
+    └── trial-welcome-email.html
 ```
 
 ## Pricing
