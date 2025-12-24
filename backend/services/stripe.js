@@ -203,9 +203,13 @@ async function createOrRetrieveCustomer(email, name = null) {
 /**
  * Create a bundle checkout session (multiple products) with automatic discount
  * 
- * Bundle Discount Rules:
- * - Family Protection Bundle (LPV Family + LLV Family): $29 discount
- * - Personal Bundle (LPV Personal + LLV Personal): $19 discount (adjust as needed)
+ * Bundle Discount: All bundles receive 13.94% discount for consistency
+ * 
+ * Available bundles:
+ * 1. Personal Bundle: LPV Personal ($49) + LLV Personal ($49) = $98 → $84 (save $14)
+ * 2. Family Protection Bundle: LPV Family ($79) + LLV Family ($129) = $208 → $179 (save $29)
+ * 3. Mixed Bundle: LPV Personal ($49) + LLV Family ($129) = $178 → $153 (save $25)
+ * 4. Mixed Bundle: LPV Family ($79) + LLV Personal ($49) = $128 → $110 (save $18)
  * 
  * @param {Array} items - Array of { productKey, quantity } objects
  * @param {string} customerEmail - Customer's email address
@@ -242,18 +246,25 @@ async function createBundleCheckoutSession(items, customerEmail, successUrl, can
     };
   });
   
-  // Calculate bundle discount
-  // Family Protection Bundle: $29 off (LPV Family $79 + LLV Family $129 = $208, bundle = $179)
-  // Personal Bundle: $19 off (LPV Personal $49 + LLV Personal $49 = $98, bundle = $79)
+  // Calculate bundle discount - All bundles receive 13.94% discount for consistency
+  // Bundle options:
+  // 1. Personal Bundle: LPV Personal ($49) + LLV Personal ($49) = $98 → $84 (save $14)
+  // 2. Family Protection Bundle: LPV Family ($79) + LLV Family ($129) = $208 → $179 (save $29)
+  // 3. Mixed Bundle: LPV Personal ($49) + LLV Family ($129) = $178 → $153 (save $25)
+  // 4. Mixed Bundle: LPV Family ($79) + LLV Personal ($49) = $128 → $110 (save $18)
   let discountAmount = 0;
   const productKeys = items.map(i => i.productKey).sort().join(',');
   
-  if (productKeys === 'family,llv_family' || productKeys === 'llv_family,family') {
-    // Family Protection Bundle: Save $29
-    discountAmount = 2900; // $29.00 in cents
-  } else if (productKeys === 'llv_personal,personal' || productKeys === 'personal,llv_personal') {
-    // Personal Bundle: Save $19 (adjust as needed)
-    discountAmount = 1900; // $19.00 in cents
+  // Only apply discount if this is actually a bundle (multiple products)
+  if (items.length > 1) {
+    // Calculate total price first
+    const totalPrice = items.reduce((sum, item) => {
+      const product = PRODUCTS[item.productKey];
+      return sum + (product.price * (item.quantity || 1));
+    }, 0);
+    
+    // Apply 13.94% discount to all bundles (rounding to nearest cent)
+    discountAmount = Math.round(totalPrice * 0.1394);
   }
   
   // Build session config
