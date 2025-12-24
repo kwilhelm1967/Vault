@@ -46,7 +46,8 @@ function loadTemplate(templateName, variables = {}) {
   
   // Replace all {{variable}} placeholders
   for (const [key, value] of Object.entries(variables)) {
-    const regex = new RegExp(`{{${key}}}`, 'g');
+    // Escape braces in regex
+    const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
     html = html.replace(regex, value);
   }
   
@@ -240,7 +241,7 @@ Enjoy your trial!
  * @param {Array} options.licenses - Array of { key, planType, productName, amount, maxDevices }
  * @param {number} options.totalAmount - Total amount paid in cents
  */
-async function sendBundleEmail({ to, licenses, totalAmount }) {
+async function sendBundleEmail({ to, licenses, totalAmount, orderId = null }) {
   const totalFormatted = `$${(totalAmount / 100).toFixed(2)}`;
   const date = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
@@ -248,65 +249,73 @@ async function sendBundleEmail({ to, licenses, totalAmount }) {
     day: 'numeric',
   });
   
-  // Build license keys HTML
-  const licensesHtml = licenses.map((license, index) => `
-    <div style="background-color: #0f172a; border-radius: 12px; border: 2px solid #334155; padding: 24px; margin-bottom: 16px;">
-      <p style="margin: 0 0 8px; color: #94a3b8; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">
-        ${license.productName}
-      </p>
-      <p style="margin: 0 0 8px; color: #5B82B8; font-size: 24px; font-weight: 700; font-family: 'Courier New', Courier, monospace; letter-spacing: 2px; word-break: break-all;">
-        ${license.key}
-      </p>
-      <p style="margin: 0; color: #64748b; font-size: 13px;">
-        Valid for ${license.maxDevices} device(s) • Lifetime access
-      </p>
-    </div>
-  `).join('');
+  // Build license keys HTML with strong contrast (WCAG AA compliant)
+  // Light blue background container, dark blue text for maximum readability
+  // Each product gets its own container with all its keys displayed
+  const licensesHtml = licenses.map((license, index) => {
+    // Handle both old format (single key) and new format (array of keys)
+    const keys = license.keys || [license.key];
+    const keyCount = keys.length;
+    
+    return `
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #e0f2fe; border-radius: 12px; border: 2px solid #1e293b; margin-bottom: 16px;">
+      <tr>
+        <td style="padding: 28px;">
+          <p style="margin: 0 0 8px; color: #1e293b; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; font-weight: 600;">
+            ${license.productName}
+          </p>
+          ${keys.map((key, keyIndex) => {
+            const keyId = `key-${index}-${keyIndex}`;
+            return `
+          <div style="margin: 0 0 8px; text-align: center; background-color: #e0f2fe; border-radius: 6px; padding: 12px; border: 2px solid #1e293b; position: relative;">
+            <span id="${keyId}" style="color: #1e40af !important; font-size: 16px !important; font-weight: 600 !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important; letter-spacing: 1px !important; word-break: break-all !important; text-decoration: none !important; display: inline-block !important; line-height: 1.5 !important; user-select: all !important; -webkit-user-select: all !important; -moz-user-select: all !important; cursor: text !important;">${key}</span>
+          </div>
+          `;
+          }).join('')}
+          <p style="margin: 12px 0 0; color: #1e293b; font-size: 13px; text-align: center; line-height: 1.5;">
+            ${keyCount} license key${keyCount > 1 ? 's' : ''} • Lifetime access
+          </p>
+        </td>
+      </tr>
+    </table>
+    `;
+  }).join('');
   
-  // Build simple HTML email (you can create a proper template later)
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0f172a; color: #ffffff; }
-        .container { max-width: 600px; margin: 0 auto; background-color: #1e293b; border-radius: 16px; padding: 40px; }
-        h1 { color: #ffffff; font-size: 28px; margin: 0 0 16px; }
-        p { color: #94a3b8; line-height: 1.6; }
-        .total { background: linear-gradient(135deg, #5B82B8 0%, #4A6FA5 100%); padding: 20px; border-radius: 8px; text-align: center; margin: 24px 0; }
-        .total-amount { font-size: 32px; font-weight: 700; color: #ffffff; }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <h1>Thank You for Your Bundle Purchase!</h1>
-        <p>Your Family Protection Bundle licenses are ready. You've received ${licenses.length} license key(s):</p>
-        ${licensesHtml}
-        <div class="total">
-          <p style="margin: 0 0 8px; color: rgba(255,255,255,0.9); font-size: 14px;">Total Paid</p>
-          <p class="total-amount" style="margin: 0;">${totalFormatted}</p>
-        </div>
-        <p style="margin-top: 24px;">Order Date: ${date}</p>
-        <p>Questions? Contact us at ${process.env.SUPPORT_EMAIL || 'support@localpasswordvault.com'}</p>
-      </div>
-    </body>
-    </html>
-  `;
+  // Calculate total number of keys across all products
+  const totalKeyCount = licenses.reduce((sum, license) => {
+    const keys = license.keys || [license.key];
+    return sum + keys.length;
+  }, 0);
+  
+  // Load template and replace placeholders
+  const html = loadTemplate('bundle-email', {
+    LICENSE_COUNT: totalKeyCount.toString(),
+    TOTAL_AMOUNT: totalFormatted,
+    LICENSE_KEYS_HTML: licensesHtml,
+    ORDER_DATE: date,
+    ORDER_ID: orderId || 'N/A',
+  });
+  
+  const totalKeyCount = licenses.reduce((sum, license) => {
+    const keys = license.keys || [license.key];
+    return sum + keys.length;
+  }, 0);
   
   const text = `
 Thank you for purchasing the Family Protection Bundle!
 
-You've received ${licenses.length} license key(s):
+You've received ${totalKeyCount} license key(s):
 
-${licenses.map((l, i) => `${i + 1}. ${l.productName}: ${l.key}`).join('\n')}
+${licenses.map((l, i) => {
+    const keys = l.keys || [l.key];
+    return keys.map((key, j) => `${i + 1}.${j + 1} ${l.productName}: ${key}`).join('\n');
+  }).join('\n')}
 
 Total Paid: ${totalFormatted}
 Order Date: ${date}
 
 To get started:
-1. Download the apps from https://localpasswordvault.com
+1. Download the apps using the download button in this email or after trial signup
 2. Install and launch each application
 3. Enter the corresponding license key when prompted
 

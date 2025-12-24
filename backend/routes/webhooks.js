@@ -150,22 +150,27 @@ async function handleCheckoutCompleted(session) {
       continue;
     }
     
-    // Determine plan type and generate appropriate license key
-    let licenseKey;
+    // Determine plan type and number of keys needed
     let planType;
+    let numKeys;
+    let keyGenerator;
     
     if (product.key === 'personal') {
-      licenseKey = generatePersonalKey();
       planType = 'personal';
+      numKeys = 1;
+      keyGenerator = generatePersonalKey;
     } else if (product.key === 'family') {
-      licenseKey = generateFamilyKey();
       planType = 'family';
+      numKeys = 5; // Family plans get 5 separate keys
+      keyGenerator = generateFamilyKey;
     } else if (product.key === 'llv_personal') {
-      licenseKey = generateLLVPersonalKey();
       planType = 'llv_personal';
+      numKeys = 1;
+      keyGenerator = generateLLVPersonalKey;
     } else if (product.key === 'llv_family') {
-      licenseKey = generateLLVFamilyKey();
       planType = 'llv_family';
+      numKeys = 5; // Family plans get 5 separate keys
+      keyGenerator = generateLLVFamilyKey;
     } else {
       console.warn(`Unknown product key: ${product.key}`);
       continue;
@@ -174,28 +179,36 @@ async function handleCheckoutCompleted(session) {
     // Calculate amount for this line item
     const lineItemAmount = lineItem.amount_total || (product.price * lineItem.quantity);
     
-    // Create license record
-    db.licenses.create.run({
-      license_key: licenseKey,
-      plan_type: planType,
-      product_type: product.productType || 'lpv',
-      customer_id: customer?.id || null,
-      email: customerEmail,
-      stripe_payment_id: fullSession.payment_intent?.id || null,
-      stripe_checkout_session_id: session.id,
-      amount_paid: lineItemAmount,
-      max_devices: product.maxDevices,
-    });
+    // Generate all keys for this product (1 for personal, 5 for family)
+    const productKeys = [];
+    for (let i = 0; i < numKeys; i++) {
+      const licenseKey = keyGenerator();
+      
+      // Create license record for each key
+      db.licenses.create.run({
+        license_key: licenseKey,
+        plan_type: planType,
+        product_type: product.productType || 'lpv',
+        customer_id: customer?.id || null,
+        email: customerEmail,
+        stripe_payment_id: fullSession.payment_intent?.id || null,
+        stripe_checkout_session_id: session.id,
+        amount_paid: lineItemAmount / numKeys, // Split amount across keys
+        max_devices: 1, // Each key is for 1 device
+      });
+      
+      productKeys.push(licenseKey);
+      console.log(`License created: ${licenseKey} (${product.name}) for ${customerEmail}`);
+    }
     
+    // Add all keys for this product to licenses array
     licenses.push({
-      key: licenseKey,
+      keys: productKeys, // Array of keys for this product
       planType: planType,
       productName: product.name,
       amount: lineItemAmount,
       maxDevices: product.maxDevices,
     });
-    
-    console.log(`License created: ${licenseKey} (${product.name}) for ${customerEmail}`);
   }
   
   if (licenses.length === 0) {
@@ -213,16 +226,17 @@ async function handleCheckoutCompleted(session) {
     console.log(`Trial converted for ${customerEmail}`);
   }
   
-  // Send email (bundle email if multiple licenses, single email if one)
-  try {
-    if (isBundle || licenses.length > 1) {
-      await sendBundleEmail({
-        to: customerEmail,
-        licenses: licenses,
-        totalAmount: fullSession.amount_total,
-      });
-      console.log(`Bundle purchase email sent to ${customerEmail}`);
-    } else {
+    // Send email (bundle email if multiple licenses, single email if one)
+    try {
+      if (isBundle || licenses.length > 1) {
+        await sendBundleEmail({
+          to: customerEmail,
+          licenses: licenses,
+          totalAmount: fullSession.amount_total,
+          orderId: session.id,
+        });
+        console.log(`Bundle purchase email sent to ${customerEmail}`);
+      } else {
       await sendPurchaseEmail({
         to: customerEmail,
         licenseKey: licenses[0].key,

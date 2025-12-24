@@ -569,7 +569,47 @@ function generateLicenseKeyHtml(licenseKeys) {
 
 ---
 
-## Template 5: Password Reset / Support
+## Template 5: Bundle Purchase Confirmation
+
+**Trigger:** After successful Stripe bundle payment (multiple products)  
+**Subject:** Your Bundle Purchase - X License Key(s)  
+**Template Name:** `bundle_purchase`  
+**File:** `backend/templates/bundle-email.html`
+
+### Variables to Pass:
+- `{{LICENSE_COUNT}}` - Number of license keys (e.g., "2")
+- `{{TOTAL_AMOUNT}}` - Total amount paid (e.g., "$179.00")
+- `{{LICENSE_KEYS_HTML}}` - HTML string of all license key boxes (generated dynamically)
+- `{{ORDER_DATE}}` - Order date (e.g., "January 15, 2025")
+- `{{ORDER_ID}}` - Stripe session ID
+
+### Notes:
+- **No `/download` links** - Users download via buttons in email or after trial signup
+- **White text on dark backgrounds** - All text colors are white (#ffffff) when on dark backgrounds
+- **CSS-based icons** - Uses CSS-drawn lock icon, no emojis
+- **Standard blue colors** - Uses #5B82B8, #4A6FA5 for accents
+- **Multiple license keys** - Displays all licenses from bundle purchase (LPV + LLV)
+
+### Template Location:
+- **File:** `backend/templates/bundle-email.html`
+- **Service Function:** `backend/services/email.js` → `sendBundleEmail()`
+
+### Usage in Backend:
+```javascript
+await sendBundleEmail({
+  to: customerEmail,
+  licenses: [
+    { key: 'FMLY-XXXX-XXXX-XXXX', planType: 'family', productName: 'Family Vault', amount: 7900, maxDevices: 5 },
+    { key: 'LLVF-XXXX-XXXX-XXXX', planType: 'llv_family', productName: 'Local Legacy Vault - Family', amount: 12900, maxDevices: 5 }
+  ],
+  totalAmount: 17900, // $179.00 in cents
+  orderId: 'cs_xxxxx'
+});
+```
+
+---
+
+## Template 6: Password Reset / Support
 
 **Trigger:** Manual support request  
 **Subject:** 🔑 Local Password Vault Support  
@@ -727,6 +767,7 @@ async function sendTrialExpiredEmail(email) {
 | Email | When to Send |
 |-------|--------------|
 | Purchase Confirmation | Immediately after Stripe webhook |
+| Bundle Purchase | Immediately after Stripe bundle webhook |
 | Trial Started | Immediately after trial activation |
 | Trial Expiring (3 days) | 3 days before expiry (cron job) |
 | Trial Expiring (1 day) | 1 day before expiry (cron job) |
@@ -743,5 +784,19 @@ async function sendTrialExpiredEmail(email) {
 
 ---
 
-*Last Updated: December 3, 2024*
+---
+
+## All Email Templates Location
+
+All email templates are stored in: `backend/templates/`
+
+- `bundle-email.html` - Bundle purchase confirmation
+- `purchase-confirmation-email.html` - Single product purchase
+- `trial-welcome-email.html` - Trial welcome email
+- `trial-expires-tomorrow-email.html` - Trial expiring reminder
+- `trial-expired-email.html` - Trial expired notification
+
+---
+
+*Last Updated: January 2025*
 
