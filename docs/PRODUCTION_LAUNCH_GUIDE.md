@@ -96,9 +96,9 @@ Before starting, ensure you have:
 
 ---
 
-## Step 1: Database Setup (Supabase - PostgreSQL Only)
+## Step 1: Database Setup (Supabase - PostgreSQL)
 
-**Important:** This system uses **Supabase (PostgreSQL)** exclusively for both Local Password Vault (LPV) and Local Legacy Vault (LLV). There is no SQLite support. All database operations use Supabase's PostgreSQL database.
+**Database:** This system uses **Supabase (PostgreSQL)** for both Local Password Vault (LPV) and Local Legacy Vault (LLV). All database operations use Supabase's PostgreSQL database.
 
 1. **Log into Supabase Dashboard:** https://app.supabase.com
 

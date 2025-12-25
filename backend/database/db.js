@@ -1,6 +1,6 @@
 /**
  * Database Connection and Initialization
- * Uses Supabase (PostgreSQL) - NO SQLite support
+ * Uses Supabase (PostgreSQL)
  * 
  * This database supports both products:
  * - Local Password Vault (LPV): product_type='lpv'

@@ -9,7 +9,7 @@
 -- • Hardware-bound activation tracking
 -- • Bundle purchases with automatic discounts (LPV + LLV combinations)
 -- 
--- Database: Supabase (PostgreSQL) - NO SQLite support
+-- Database: Supabase (PostgreSQL)
 -- =============================================================================
 
 -- Customers table (synced from Stripe)
