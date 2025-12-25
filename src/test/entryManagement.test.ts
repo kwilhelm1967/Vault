@@ -372,7 +372,9 @@ describe('Entry Management', () => {
         b.updatedAt.getTime() - a.updatedAt.getTime()
       );
       
+      // March is month 2 (0-indexed: Jan=0, Feb=1, Mar=2)
       expect(sorted[0].updatedAt.getMonth()).toBe(2); // March (0-indexed)
+      expect(sorted[0].updatedAt.getFullYear()).toBe(2024);
     });
   });
 });

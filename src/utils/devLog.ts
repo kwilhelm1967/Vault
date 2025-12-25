@@ -5,7 +5,17 @@
  * Use instead of console.log/warn/error for debug output.
  */
 
-const isDev = import.meta.env.DEV;
+// Support both Vite's import.meta.env and test environment
+let isDev = true; // Default to true for tests
+try {
+  // @ts-ignore - import.meta may not be available in all environments
+  if (typeof import !== 'undefined' && import.meta?.env) {
+    isDev = import.meta.env.DEV !== false;
+  }
+} catch {
+  // In test environment, default to dev mode
+  isDev = true;
+}
 
 /**
  * Log debug info - only in development

@@ -5,7 +5,6 @@
  * to ensure proper accessibility support for users with disabilities.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LiveRegionProvider, useLiveRegion } from '../components/accessibility/LiveRegion';
@@ -15,11 +14,11 @@ import { FocusTrap } from '../components/accessibility/FocusTrap';
 // Mock window.speechSynthesis for screen reader tests
 Object.defineProperty(window, 'speechSynthesis', {
   value: {
-    speak: vi.fn(),
-    cancel: vi.fn(),
-    pause: vi.fn(),
-    resume: vi.fn(),
-    getVoices: vi.fn(() => []),
+    speak: jest.fn(),
+    cancel: jest.fn(),
+    pause: jest.fn(),
+    resume: jest.fn(),
+    getVoices: jest.fn(() => []),
   },
   writable: true,
 });

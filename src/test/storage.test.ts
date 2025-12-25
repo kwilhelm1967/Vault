@@ -5,6 +5,7 @@
  */
 
 import { storageService } from '../utils/storage';
+import { validateMasterPassword } from '../utils/validation';
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -60,19 +61,19 @@ describe('StorageService', () => {
 
   describe('Master Password Validation', () => {
     it('should reject password shorter than 12 characters', () => {
-      const result = storageService.validateMasterPassword('short123');
+      const result = validateMasterPassword('short123');
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain('Password must be at least 12 characters');
     });
 
     it('should accept valid password with 12+ characters', () => {
-      const result = storageService.validateMasterPassword('ValidPassword123!');
+      const result = validateMasterPassword('ValidPassword123!');
       expect(result.isValid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
 
     it('should require mixed case for strong passwords', () => {
-      const result = storageService.validateMasterPassword('alllowercase123!');
+      const result = validateMasterPassword('alllowercase123!');
       // Should still be valid but may have strength warnings
       expect(result.isValid).toBe(true);
     });

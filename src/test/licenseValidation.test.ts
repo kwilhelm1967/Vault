@@ -4,21 +4,21 @@
  * Tests for license key validation and trial management.
  */
 
-import { isValidLicenseKey, getLicenseType, SINGLE_USER_LICENSES, FAMILY_LICENSES } from '../utils/licenseKeys';
+import { validateLicenseKey, getLicenseType, singleUserLicenses, familyLicenses } from '../utils/licenseKeys';
 
 describe('License Key Validation', () => {
   describe('Format Validation', () => {
     it('should accept valid single user license format', () => {
       // Single user format: LPV-XXXX-XXXX-XXXX
       const validKey = 'LPV-ABCD-1234-EFGH';
-      const result = isValidLicenseKey(validKey);
+      const result = validateLicenseKey(validKey);
       expect(result).toBe(true);
     });
 
     it('should accept valid family license format', () => {
       // Family format: LPVF-XXXX-XXXX-XXXX
       const validKey = 'LPVF-ABCD-1234-EFGH';
-      const result = isValidLicenseKey(validKey);
+      const result = validateLicenseKey(validKey);
       expect(result).toBe(true);
     });
 
@@ -34,7 +34,7 @@ describe('License Key Validation', () => {
 
       invalidKeys.forEach(key => {
         if (key !== null && key !== undefined) {
-          const result = isValidLicenseKey(key);
+          const result = validateLicenseKey(key);
           expect(result).toBe(false);
         }
       });
@@ -46,9 +46,9 @@ describe('License Key Validation', () => {
       const mixedCase = 'Lpv-AbCd-1234-EfGh';
 
       // All should have consistent validation
-      expect(typeof isValidLicenseKey(upperCase)).toBe('boolean');
-      expect(typeof isValidLicenseKey(lowerCase)).toBe('boolean');
-      expect(typeof isValidLicenseKey(mixedCase)).toBe('boolean');
+      expect(typeof validateLicenseKey(upperCase)).toBe('boolean');
+      expect(typeof validateLicenseKey(lowerCase)).toBe('boolean');
+      expect(typeof validateLicenseKey(mixedCase)).toBe('boolean');
     });
   });
 
@@ -74,19 +74,19 @@ describe('License Key Validation', () => {
 
   describe('License Key Storage', () => {
     it('should have defined single user licenses', () => {
-      expect(Array.isArray(SINGLE_USER_LICENSES)).toBe(true);
-      expect(SINGLE_USER_LICENSES.length).toBeGreaterThan(0);
+      expect(Array.isArray(singleUserLicenses)).toBe(true);
+      expect(singleUserLicenses.length).toBeGreaterThan(0);
     });
 
     it('should have defined family licenses', () => {
-      expect(Array.isArray(FAMILY_LICENSES)).toBe(true);
-      expect(FAMILY_LICENSES.length).toBeGreaterThan(0);
+      expect(Array.isArray(familyLicenses)).toBe(true);
+      expect(familyLicenses.length).toBeGreaterThan(0);
     });
 
     it('should not have overlapping keys between single and family', () => {
-      const overlap = SINGLE_USER_LICENSES.filter(key => 
-        FAMILY_LICENSES.includes(key)
-      );
+      const singleKeys = singleUserLicenses.map(l => l.key);
+      const familyKeys = familyLicenses.map(l => l.key);
+      const overlap = singleKeys.filter(key => familyKeys.includes(key));
       expect(overlap).toHaveLength(0);
     });
   });

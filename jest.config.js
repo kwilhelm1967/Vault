@@ -9,8 +9,19 @@ module.exports = {
   ],
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', {
-      tsconfig: 'tsconfig.json',
+      tsconfig: {
+        esModuleInterop: true,
+        jsx: 'react-jsx',
+        module: 'ESNext',
+        moduleResolution: 'node',
+        allowSyntheticDefaultImports: true,
+      },
     }],
+  },
+  globals: {
+    'ts-jest': {
+      useESM: false,
+    },
   },
   moduleNameMapper: {
     // Handle CSS imports

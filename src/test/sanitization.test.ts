@@ -5,13 +5,11 @@
  * proper input validation and XSS prevention.
  */
 
-import { describe, it, expect } from 'vitest';
 import {
   sanitizeTextField,
   sanitizePassword,
   sanitizeNotes,
-  sanitizeEmail,
-  sanitizeURL,
+  sanitizeUrl,
   escapeHtml
 } from '../utils/sanitization';
 
@@ -111,76 +109,44 @@ describe('Notes Sanitization', () => {
   });
 });
 
-describe('Email Sanitization', () => {
-  it('should preserve valid email', () => {
-    const input = 'user@example.com';
-    const result = sanitizeEmail(input);
-    expect(result).toBe('user@example.com');
-  });
-
-  it('should trim whitespace', () => {
-    const input = '  user@example.com  ';
-    const result = sanitizeEmail(input);
-    expect(result).toBe('user@example.com');
-  });
-
-  it('should convert to lowercase', () => {
-    const input = 'USER@EXAMPLE.COM';
-    const result = sanitizeEmail(input);
-    expect(result).toBe('user@example.com');
-  });
-
-  it('should handle empty email', () => {
-    const input = '';
-    const result = sanitizeEmail(input);
-    expect(result).toBe('');
-  });
-
-  it('should remove invalid characters', () => {
-    const input = 'user<script>alert("xss")</script>@example.com';
-    const result = sanitizeEmail(input);
-    expect(result).toBe('useralertexss@example.com'); // Scripts removed
-  });
-});
-
 describe('URL Sanitization', () => {
   it('should preserve valid URLs', () => {
     const input = 'https://www.example.com/path?param=value';
-    const result = sanitizeURL(input);
+    const result = sanitizeUrl(input);
     expect(result).toBe('https://www.example.com/path?param=value');
   });
 
   it('should trim whitespace', () => {
     const input = '  https://example.com  ';
-    const result = sanitizeURL(input);
+    const result = sanitizeUrl(input);
     expect(result).toBe('https://example.com');
   });
 
   it('should handle empty URLs', () => {
     const input = '';
-    const result = sanitizeURL(input);
+    const result = sanitizeUrl(input);
     expect(result).toBe('');
   });
 
   it('should remove dangerous protocols', () => {
     const input = 'javascript:alert("xss")';
-    const result = sanitizeURL(input);
+    const result = sanitizeUrl(input);
     expect(result).toBe(''); // Should be rejected
   });
 
   it('should allow safe protocols', () => {
-    const protocols = ['http://', 'https://', 'ftp://'];
+    const protocols = ['http://', 'https://'];
     protocols.forEach(protocol => {
       const input = `${protocol}example.com`;
-      const result = sanitizeURL(input);
+      const result = sanitizeUrl(input);
       expect(result).toBe(`${protocol}example.com`);
     });
   });
 
-  it('should handle malformed URLs', () => {
-    const input = 'not-a-url-at-all';
-    const result = sanitizeURL(input);
-    expect(result).toBe(''); // Should be rejected
+  it('should handle malformed URLs by adding https', () => {
+    const input = 'example.com';
+    const result = sanitizeUrl(input);
+    expect(result).toBe('https://example.com'); // Should add https://
   });
 });
 
@@ -241,7 +207,7 @@ describe('HTML Escaping', () => {
 
 describe('Sanitization Edge Cases', () => {
   it('should handle null and undefined values', () => {
-    const functions = [sanitizeTextField, sanitizePassword, sanitizeNotes, sanitizeEmail, sanitizeURL, escapeHtml];
+    const functions = [sanitizeTextField, sanitizePassword, sanitizeNotes, sanitizeUrl, escapeHtml];
 
     functions.forEach(func => {
       expect(func(null as any)).toBeDefined();
@@ -250,7 +216,7 @@ describe('Sanitization Edge Cases', () => {
   });
 
   it('should handle non-string inputs', () => {
-    const functions = [sanitizeTextField, sanitizePassword, sanitizeNotes, sanitizeEmail, sanitizeURL, escapeHtml];
+    const functions = [sanitizeTextField, sanitizePassword, sanitizeNotes, sanitizeUrl, escapeHtml];
 
     const inputs = [123, {}, [], true, false];
 

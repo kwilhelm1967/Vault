@@ -94,6 +94,9 @@ global.fetch = jest.fn().mockResolvedValue({
 // console.error = jest.fn();
 // console.warn = jest.fn();
 
+// Import jest-dom matchers
+import '@testing-library/jest-dom';
+
 // Reset all mocks before each test
 beforeEach(() => {
   jest.clearAllMocks();

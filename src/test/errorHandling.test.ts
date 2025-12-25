@@ -4,7 +4,6 @@
  * Tests for error handling utilities and patterns
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   ErrorHandler,
   ValidationError,
@@ -69,12 +68,12 @@ describe('ErrorHandler', () => {
 
   beforeEach(() => {
     errorHandler = ErrorHandler.getInstance();
-    vi.clearAllMocks();
+    jest.clearAllMocks();
   });
 
   describe('handle method', () => {
     it('should handle ValidationError correctly', () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       const validationError = new ValidationError('Invalid email format');
 
       const result = errorHandler.handle(validationError, 'Email validation');
@@ -83,7 +82,8 @@ describe('ErrorHandler', () => {
       expect(result.shouldRetry).toBe(true);
       expect(result.logError).toBe(true);
 
-      if (import.meta.env.DEV) {
+      // In test environment, always log
+      if (true) {
         expect(consoleSpy).toHaveBeenCalledWith(
           '[VALIDATION_ERROR] Email validation: Invalid email format',
           validationError.details
@@ -94,7 +94,7 @@ describe('ErrorHandler', () => {
     });
 
     it('should handle regular Error correctly', () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       const regularError = new Error('Something went wrong');
 
       const result = errorHandler.handle(regularError, 'Data loading');

@@ -5,9 +5,8 @@
  * to ensure data integrity and security during transfers.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { importService } from '../utils/importService';
 import { storageService } from '../utils/storage';
+import { importService } from '../utils/importService';
 
 // Mock localStorage for testing
 const localStorageMock = (() => {
@@ -144,7 +143,7 @@ describe('Import/Export Service', () => {
       expect(loadedEntries).toHaveLength(0);
 
       // Import the data back
-      await importService.importData(exportData);
+      await storageService.importData(exportData);
 
       loadedEntries = await storageService.loadEntries();
       expect(loadedEntries).toHaveLength(1);
@@ -161,7 +160,7 @@ describe('Import/Export Service', () => {
         entries: [],
       });
 
-      await importService.importData(emptyExport);
+      await storageService.importData(emptyExport);
 
       const loadedEntries = await storageService.loadEntries();
       expect(loadedEntries).toEqual([]);
@@ -189,7 +188,7 @@ describe('Import/Export Service', () => {
 
       // Clear and re-import
       await storageService.saveEntries([]);
-      await importService.importData(exportData);
+      await storageService.importData(exportData);
 
       const loadedEntries = await storageService.loadEntries();
       expect(loadedEntries).toHaveLength(1);
@@ -202,7 +201,7 @@ describe('Import/Export Service', () => {
     it('should reject malformed JSON', async () => {
       const malformedData = '{ invalid json }';
 
-      await expect(importService.importData(malformedData)).rejects.toThrow();
+      await expect(storageService.importData(malformedData)).rejects.toThrow();
     });
 
     it('should reject data without required fields', async () => {
@@ -211,7 +210,7 @@ describe('Import/Export Service', () => {
         someOtherField: 'value',
       });
 
-      await expect(importService.importData(invalidData)).rejects.toThrow();
+      await expect(storageService.importData(invalidData)).rejects.toThrow();
     });
 
     it('should handle import of data with missing optional fields', async () => {
@@ -261,7 +260,7 @@ describe('Import/Export Service', () => {
 
       // Clear and re-import
       await storageService.saveEntries([]);
-      await importService.importData(exportData);
+      await storageService.importData(exportData);
 
       const loadedEntries = await storageService.loadEntries();
       expect(loadedEntries).toHaveLength(100);
@@ -297,7 +296,7 @@ describe('Import/Export Service', () => {
 
       // Clear and re-import
       await storageService.saveEntries([]);
-      await importService.importData(exportData);
+      await storageService.importData(exportData);
 
       const loadedEntries = await storageService.loadEntries();
 
@@ -339,7 +338,7 @@ describe('Import/Export Service', () => {
       const exportData = await storageService.exportData();
 
       await storageService.saveEntries([]);
-      await importService.importData(exportData);
+      await storageService.importData(exportData);
 
       const loadedEntries = await storageService.loadEntries();
       expect(loadedEntries).toHaveLength(1);
