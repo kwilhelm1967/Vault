@@ -1,4 +1,4 @@
-# Developer Handoff: Tasks to Complete
+# Tasks to Complete
 
 ## Phase 1: Backend Deployment
 
