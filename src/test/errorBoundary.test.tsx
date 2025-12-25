@@ -116,6 +116,7 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     );
 
+    const user = userEvent.setup();
     const reloadButton = screen.getByRole('button', { name: /reload/i });
     await user.click(reloadButton);
 
@@ -155,6 +156,7 @@ describe('ErrorBoundary', () => {
     expect(screen.getByText('Something went wrong')).toBeInTheDocument();
 
     // Click Try Again
+    const user = userEvent.setup();
     const tryAgainButton = screen.getByRole('button', { name: /try again/i });
     await user.click(tryAgainButton);
 

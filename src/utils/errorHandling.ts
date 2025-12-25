@@ -18,6 +18,7 @@ export interface AppError {
 export class ValidationError extends Error implements AppError {
   code = 'VALIDATION_ERROR';
   recoverable = true;
+  userMessage: string;
 
   constructor(message: string, public details?: unknown) {
     super(message);
@@ -29,6 +30,7 @@ export class ValidationError extends Error implements AppError {
 export class NetworkError extends Error implements AppError {
   code = 'NETWORK_ERROR';
   recoverable = true;
+  userMessage: string;
 
   constructor(message: string, public details?: unknown) {
     super(message);
@@ -40,6 +42,7 @@ export class NetworkError extends Error implements AppError {
 export class StorageError extends Error implements AppError {
   code = 'STORAGE_ERROR';
   recoverable = false;
+  userMessage: string;
 
   constructor(message: string, public details?: unknown) {
     super(message);
@@ -51,6 +54,7 @@ export class StorageError extends Error implements AppError {
 export class AuthenticationError extends Error implements AppError {
   code = 'AUTH_ERROR';
   recoverable = true;
+  userMessage: string;
 
   constructor(message: string, public details?: unknown) {
     super(message);

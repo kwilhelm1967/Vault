@@ -52,9 +52,8 @@ describe('StorageService', () => {
     });
 
     it('should detect when vault exists after creation', async () => {
-      // Simulate vault creation by setting the encrypted data key
-      localStorageMock.setItem('lpv_encrypted_entries', 'encrypted_data');
-      localStorageMock.setItem('lpv_salt', 'salt_value');
+      // Simulate vault creation by setting the salt key (vaultExists checks for vault_salt_v2)
+      localStorageMock.setItem('vault_salt_v2', 'salt_value');
       expect(storageService.vaultExists()).toBe(true);
     });
   });
@@ -80,6 +79,11 @@ describe('StorageService', () => {
   });
 
   describe('Password Hint', () => {
+    beforeEach(async () => {
+      // Unlock vault before setting password hint
+      await storageService.initializeVault('TestPassword123!');
+    });
+
     it('should store and retrieve password hint', async () => {
       await storageService.setPasswordHint('My hint');
       const hint = storageService.getPasswordHint();

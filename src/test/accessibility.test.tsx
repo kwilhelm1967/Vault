@@ -81,7 +81,7 @@ describe('LiveRegionProvider', () => {
   });
 
   it('should clear announcements after timeout', async () => {
-    vi.useFakeTimers();
+    jest.useFakeTimers();
 
     const TestComponent = () => {
       const { announce } = useLiveRegion();
@@ -108,7 +108,7 @@ describe('LiveRegionProvider', () => {
     expect(liveRegion).toHaveTextContent('Test announcement');
 
     // Fast-forward time
-    vi.advanceTimersByTime(1100);
+    jest.advanceTimersByTime(1100);
 
     expect(liveRegion).toHaveTextContent('');
   });
@@ -147,7 +147,7 @@ describe('LiveRegionProvider', () => {
     };
 
     // Expect console error for the thrown error
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
     expect(() => render(<TestComponent />)).toThrow();
 
@@ -224,7 +224,7 @@ describe('FocusTrap', () => {
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    jest.restoreAllMocks();
   });
 
   it('should render children', () => {
@@ -302,7 +302,7 @@ describe('FocusTrap', () => {
   });
 
   it('should call onEscape when Escape is pressed', async () => {
-    const onEscape = vi.fn();
+    const onEscape = jest.fn();
 
     render(
       <FocusTrap isActive={true} onEscape={onEscape}>

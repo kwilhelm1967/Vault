@@ -486,7 +486,8 @@ export class StorageService {
       const encryptedData = await this.encryption.encryptData(entriesJson);
 
       // SECURE: Try to save to secure file storage first (Electron)
-      if (window.electronAPI && window.electronAPI.saveVaultEncrypted) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((window as any).electronAPI && (window as any).electronAPI.saveVaultEncrypted) {
         // For Electron app, we need the master password for secure file storage
         // This is a security limitation - master password should never be exposed
         // to renderer process in production. For now, fallback to localStorage.
@@ -647,6 +648,29 @@ export class StorageService {
       .join("\n");
 
     return csvContent;
+  }
+
+  /**
+   * Export data in JSON format (for programmatic import/export)
+   */
+  async exportJSON(): Promise<string> {
+    if (!this.encryption.isUnlocked()) {
+      throw new Error("Vault is locked. Please unlock vault first.");
+    }
+
+    const entries = await this.loadEntries();
+
+    const exportData = {
+      version: '2.0.0',
+      exportedAt: new Date().toISOString(),
+      entries: entries.map(entry => ({
+        ...entry,
+        createdAt: entry.createdAt.toISOString(),
+        updatedAt: entry.updatedAt.toISOString(),
+      })),
+    };
+
+    return JSON.stringify(exportData, null, 2);
   }
 
   /**
@@ -816,11 +840,22 @@ export class StorageService {
     try {
       const parsed = JSON.parse(data);
       if (parsed.entries && Array.isArray(parsed.entries)) {
-        await this.saveEntries(parsed.entries);
+        // Convert date strings back to Date objects
+        const entries = parsed.entries.map((entry: { createdAt: string | Date; updatedAt: string | Date }) => ({
+          ...entry,
+          createdAt: entry.createdAt instanceof Date ? entry.createdAt : new Date(entry.createdAt),
+          updatedAt: entry.updatedAt instanceof Date ? entry.updatedAt : new Date(entry.updatedAt),
+        }));
+        await this.saveEntries(entries);
+      } else {
+        throw new Error("Invalid import data format: missing entries array");
       }
       // NEVER import categories - always use fixed ones for security
       await this.saveCategories(FIXED_CATEGORIES);
     } catch (error) {
+      if (error instanceof Error && error.message.includes("Invalid")) {
+        throw error;
+      }
       throw new Error("Invalid import data format");
     }
   }

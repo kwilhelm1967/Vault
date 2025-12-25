@@ -3,8 +3,8 @@
   "compilerOptions": {
     "module": "ESNext",
     "esModuleInterop": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "types": ["jest", "@testing-library/jest-dom"]
   },
   "include": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/**/__tests__/**/*"]
 }
-

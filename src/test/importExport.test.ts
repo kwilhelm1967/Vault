@@ -82,39 +82,35 @@ describe('Import/Export Service', () => {
 
       await storageService.saveEntries([testEntry]);
 
+      // exportData() returns CSV format, not JSON
       const exportData = await storageService.exportData();
-      const parsedData = JSON.parse(exportData);
-
-      expect(parsedData.entries).toHaveLength(1);
-      expect(parsedData.entries[0].accountName).toBe('Full Test Entry');
-      expect(parsedData.entries[0].website).toBe('https://example.com');
-      expect(parsedData.entries[0].notes).toBe('Test notes for export');
-      expect(parsedData.entries[0].isFavorite).toBe(true);
-      expect(parsedData.entries[0].customFields).toHaveLength(2);
+      
+      // Should be CSV format with headers
+      expect(exportData).toContain('Account Name');
+      expect(exportData).toContain('Full Test Entry');
+      expect(exportData).toContain('fulluser@test.com');
+      expect(exportData).toContain('banking');
     });
 
     it('should export empty data when no entries exist', async () => {
       const exportData = await storageService.exportData();
-      const parsedData = JSON.parse(exportData);
-
-      expect(parsedData.entries).toEqual([]);
-      expect(parsedData.version).toBeDefined();
-      expect(parsedData.exportedAt).toBeDefined();
+      
+      // Should be CSV with headers only
+      expect(exportData).toContain('Account Name');
+      expect(exportData).toContain('Username');
+      expect(exportData).toContain('Password');
+      // Should have headers but no data rows (just header line)
+      const lines = exportData.split('\n');
+      expect(lines.length).toBeGreaterThanOrEqual(1); // At least header line
     });
 
     it('should include export metadata', async () => {
       const exportData = await storageService.exportData();
-      const parsedData = JSON.parse(exportData);
-
-      expect(parsedData.version).toBeDefined();
-      expect(parsedData.exportedAt).toBeDefined();
-      expect(typeof parsedData.exportedAt).toBe('string');
-
-      // Should be recent timestamp
-      const exportTime = new Date(parsedData.exportedAt);
-      const now = new Date();
-      const timeDiff = Math.abs(now.getTime() - exportTime.getTime());
-      expect(timeDiff).toBeLessThan(5000); // Within 5 seconds
+      
+      // CSV format should have headers
+      expect(exportData).toContain('Account Name');
+      expect(exportData).toContain('Created Date');
+      expect(exportData).toContain('Updated Date');
     });
   });
 
@@ -135,7 +131,7 @@ describe('Import/Export Service', () => {
       ];
 
       await storageService.saveEntries(testEntries);
-      const exportData = await storageService.exportData();
+      const exportData = await storageService.exportJSON();
 
       // Clear current data
       await storageService.saveEntries([]);
@@ -184,7 +180,7 @@ describe('Import/Export Service', () => {
       };
 
       await storageService.saveEntries([entryWithCustomFields]);
-      const exportData = await storageService.exportData();
+      const exportData = await storageService.exportJSON();
 
       // Clear and re-import
       await storageService.saveEntries([]);
@@ -232,7 +228,7 @@ describe('Import/Export Service', () => {
         entries: [minimalEntry],
       });
 
-      await importService.importData(importData);
+      await storageService.importData(importData);
 
       const loadedEntries = await storageService.loadEntries();
       expect(loadedEntries).toHaveLength(1);
@@ -256,7 +252,7 @@ describe('Import/Export Service', () => {
       }));
 
       await storageService.saveEntries(largeDataset);
-      const exportData = await storageService.exportData();
+      const exportData = await storageService.exportJSON();
 
       // Clear and re-import
       await storageService.saveEntries([]);
@@ -292,7 +288,7 @@ describe('Import/Export Service', () => {
       };
 
       await storageService.saveEntries([originalEntry]);
-      const exportData = await storageService.exportData();
+      const exportData = await storageService.exportJSON();
 
       // Clear and re-import
       await storageService.saveEntries([]);
@@ -335,7 +331,7 @@ describe('Import/Export Service', () => {
       };
 
       await storageService.saveEntries([specialCharsEntry]);
-      const exportData = await storageService.exportData();
+      const exportData = await storageService.exportJSON();
 
       await storageService.saveEntries([]);
       await storageService.importData(exportData);

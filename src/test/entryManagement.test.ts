@@ -363,9 +363,9 @@ describe('Entry Management', () => {
 
     it('should sort by date descending (newest first)', () => {
       const entries = [
-        createMockEntry({ updatedAt: new Date('2024-01-01') }),
-        createMockEntry({ updatedAt: new Date('2024-03-01') }),
-        createMockEntry({ updatedAt: new Date('2024-02-01') }),
+        createMockEntry({ updatedAt: new Date('2024-01-01T00:00:00Z') }),
+        createMockEntry({ updatedAt: new Date('2024-03-01T00:00:00Z') }),
+        createMockEntry({ updatedAt: new Date('2024-02-01T00:00:00Z') }),
       ];
       
       const sorted = [...entries].sort((a, b) => 
@@ -373,8 +373,9 @@ describe('Entry Management', () => {
       );
       
       // March is month 2 (0-indexed: Jan=0, Feb=1, Mar=2)
-      expect(sorted[0].updatedAt.getMonth()).toBe(2); // March (0-indexed)
-      expect(sorted[0].updatedAt.getFullYear()).toBe(2024);
+      // Use UTC methods to avoid timezone issues
+      expect(sorted[0].updatedAt.getUTCMonth()).toBe(2); // March (0-indexed)
+      expect(sorted[0].updatedAt.getUTCFullYear()).toBe(2024);
     });
   });
 });

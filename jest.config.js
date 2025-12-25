@@ -9,6 +9,7 @@ module.exports = {
   ],
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', {
+      useESM: false,
       tsconfig: {
         esModuleInterop: true,
         jsx: 'react-jsx',
@@ -17,11 +18,6 @@ module.exports = {
         allowSyntheticDefaultImports: true,
       },
     }],
-  },
-  globals: {
-    'ts-jest': {
-      useESM: false,
-    },
   },
   moduleNameMapper: {
     // Handle CSS imports

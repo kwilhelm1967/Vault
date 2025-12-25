@@ -6,7 +6,7 @@
  * improves accessibility compliance.
  */
 
-import React, { useEffect, useRef, ReactNode } from 'react';
+import React, { useEffect, useRef, useCallback, ReactNode } from 'react';
 
 interface FocusTrapProps {
   children: ReactNode;

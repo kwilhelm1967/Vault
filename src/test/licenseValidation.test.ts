@@ -9,15 +9,15 @@ import { validateLicenseKey, getLicenseType, singleUserLicenses, familyLicenses 
 describe('License Key Validation', () => {
   describe('Format Validation', () => {
     it('should accept valid single user license format', () => {
-      // Single user format: LPV-XXXX-XXXX-XXXX
-      const validKey = 'LPV-ABCD-1234-EFGH';
+      // Use an actual license key from the list
+      const validKey = 'PERS-PGS3-XJ9V-NEGT';
       const result = validateLicenseKey(validKey);
       expect(result).toBe(true);
     });
 
     it('should accept valid family license format', () => {
-      // Family format: LPVF-XXXX-XXXX-XXXX
-      const validKey = 'LPVF-ABCD-1234-EFGH';
+      // Use an actual license key from the list
+      const validKey = 'FMLY-DC7S-E5WQ-MGNY';
       const result = validateLicenseKey(validKey);
       expect(result).toBe(true);
     });
@@ -54,13 +54,13 @@ describe('License Key Validation', () => {
 
   describe('License Type Detection', () => {
     it('should identify single user license', () => {
-      const singleUserKey = 'LPV-TEST-USER-KEY1';
+      const singleUserKey = 'PERS-PGS3-XJ9V-NEGT';
       const type = getLicenseType(singleUserKey);
       expect(type).toBe('single');
     });
 
     it('should identify family license', () => {
-      const familyKey = 'LPVF-TEST-FAMI-KEY1';
+      const familyKey = 'FMLY-DC7S-E5WQ-MGNY';
       const type = getLicenseType(familyKey);
       expect(type).toBe('family');
     });

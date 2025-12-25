@@ -8,9 +8,25 @@
 // Support both Vite's import.meta.env and test environment
 let isDev = true; // Default to true for tests
 try {
-  // @ts-ignore - import.meta may not be available in all environments
-  if (typeof import !== 'undefined' && import.meta?.env) {
-    isDev = import.meta.env.DEV !== false;
+  // Check if we're in a test environment first
+  if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
+    isDev = true;
+  } else if (typeof window !== 'undefined' && (window as any).__DEV__ !== undefined) {
+    isDev = (window as any).__DEV__;
+  } else {
+    // @ts-ignore - import.meta may not be available in all environments
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    try {
+      const meta = (globalThis as any).import?.meta;
+      if (meta?.env) {
+        isDev = meta.env.DEV !== false;
+      }
+    } catch {
+      // Fallback: check if we're in a browser environment
+      if (typeof window !== 'undefined') {
+        isDev = true;
+      }
+    }
   }
 } catch {
   // In test environment, default to dev mode

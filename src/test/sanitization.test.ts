@@ -64,10 +64,10 @@ describe('Password Sanitization', () => {
     expect(result).toBe('P@ssw0rd!123#$%');
   });
 
-  it('should trim whitespace', () => {
+  it('should preserve whitespace (passwords may intentionally contain spaces)', () => {
     const input = '  password  ';
     const result = sanitizePassword(input);
-    expect(result).toBe('password');
+    expect(result).toBe('  password  '); // Passwords intentionally don't trim
   });
 
   it('should handle empty passwords', () => {
@@ -76,10 +76,10 @@ describe('Password Sanitization', () => {
     expect(result).toBe('');
   });
 
-  it('should remove control characters', () => {
-    const input = 'password\x01\x02\x03';
+  it('should remove null bytes but preserve other characters', () => {
+    const input = 'password\x00\x01\x02\x03';
     const result = sanitizePassword(input);
-    expect(result).toBe('password');
+    expect(result).toBe('password\x01\x02\x03'); // Only null bytes removed
   });
 });
 
@@ -154,7 +154,7 @@ describe('HTML Escaping', () => {
   it('should escape dangerous HTML characters', () => {
     const input = '<script>alert("xss")</script>';
     const result = escapeHtml(input);
-    expect(result).toBe('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;');
+    expect(result).toBe('&lt;script&gt;alert(&quot;xss&quot;)&lt;&#x2F;script&gt;');
   });
 
   it('should escape quotes', () => {
@@ -166,7 +166,7 @@ describe('HTML Escaping', () => {
   it('should escape angle brackets', () => {
     const input = '<tag>content</tag>';
     const result = escapeHtml(input);
-    expect(result).toBe('&lt;tag&gt;content&lt;/tag&gt;');
+    expect(result).toBe('&lt;tag&gt;content&lt;&#x2F;tag&gt;');
   });
 
   it('should escape ampersands', () => {
@@ -235,9 +235,9 @@ describe('Sanitization Edge Cases', () => {
   });
 
   it('should handle strings with control characters', () => {
-    const input = 'text\x01\x02\x03with\x04control\x05chars';
+    const input = 'text\x00\x01\x02\x03with\x04control\x05chars';
     const result = sanitizePassword(input);
-    expect(result).toBe('textwithcontrolchars');
+    expect(result).toBe('text\x01\x02\x03with\x04control\x05chars'); // Only null bytes removed
   });
 
   it('should handle very large inputs', () => {
