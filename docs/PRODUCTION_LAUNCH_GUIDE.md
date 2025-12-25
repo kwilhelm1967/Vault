@@ -114,11 +114,7 @@ Before starting, ensure you have:
 
 5. **Run the database schema:**
    - Open `backend/database/schema.sql` from the repository
-   - Convert SQLite syntax to PostgreSQL:
-     - `INTEGER PRIMARY KEY` → `SERIAL PRIMARY KEY`
-     - `DATETIME` → `TIMESTAMP`
-     - `TEXT` → `TEXT` (same)
-     - `BOOLEAN` → `BOOLEAN` (same)
+   - The schema is already in PostgreSQL format for Supabase
    - Paste and execute in SQL Editor
 
 6. **Get connection details:**

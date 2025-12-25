@@ -36,43 +36,17 @@ This guide walks through setting up the backend API for Local Password Vault to 
 
 The backend uses **Supabase** (PostgreSQL database).
 
-### 1.1 Database Initialization
+### 1.1 Database Schema
 
-The database is automatically initialized when the server starts. The schema is defined in `backend/database/schema.sql` and creates the following tables:
+The database schema is defined in `backend/database/schema.sql` and must be run manually in the Supabase SQL Editor. The schema creates the following tables:
 
-```sql
--- Licenses table
-CREATE TABLE IF NOT EXISTS licenses (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  license_key VARCHAR(25) UNIQUE NOT NULL,
-  email VARCHAR(255) NOT NULL,
-  plan_type VARCHAR(20) NOT NULL DEFAULT 'personal',
-  status VARCHAR(20) NOT NULL DEFAULT 'pending',
-  hardware_hash VARCHAR(255),
-  activated_at TIMESTAMP WITH TIME ZONE,
-  stripe_payment_id VARCHAR(255),
-  stripe_customer_id VARCHAR(255),
-  family_group_id UUID,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+- **customers** - Customer records synced from Stripe
+- **licenses** - License keys with activation tracking and device binding
+- **trials** - Trial signups with expiration tracking
+- **device_activations** - Device tracking for family plans
+- **webhook_events** - Stripe webhook event logging
 
--- Purchases table
-CREATE TABLE IF NOT EXISTS purchases (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  email VARCHAR(255) NOT NULL,
-  plan_type VARCHAR(20) NOT NULL,
-  amount_cents INTEGER NOT NULL,
-  stripe_session_id VARCHAR(255),
-  stripe_payment_intent VARCHAR(255),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Create indexes
-CREATE INDEX IF NOT EXISTS idx_licenses_email ON licenses(email);
-CREATE INDEX IF NOT EXISTS idx_licenses_status ON licenses(status);
-CREATE INDEX IF NOT EXISTS idx_purchases_email ON purchases(email);
-```
+See `backend/database/schema.sql` for the complete schema definition.
 
 ### 1.2 Get Supabase Credentials
 

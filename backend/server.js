@@ -117,8 +117,11 @@ app.use((err, req, res, next) => {
 // START SERVER
 // =============================================================================
 
-// Initialize database tables
-db.initialize();
+// Initialize database connection (Supabase)
+// Note: Schema must be run manually in Supabase SQL Editor
+db.initialize().catch(err => {
+  console.error('Database initialization warning:', err.message);
+});
 
 app.listen(PORT, () => {
   console.log(`

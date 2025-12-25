@@ -26,7 +26,7 @@
     "dev:vite": "vite",
     "dev:electron": "wait-on tcp:5173 && nodemon",
     "start:test": "vite --mode test",
-    "start": "node server-api-examples/license-server.js",
+    "start": "echo 'Use npm run dev to start development server'",
     "build": "vite build",
     "build-only": "vite build",
     "build:prod": "vite build --mode production",
