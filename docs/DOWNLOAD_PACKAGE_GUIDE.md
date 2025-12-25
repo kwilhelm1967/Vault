@@ -2,6 +2,8 @@
 
 This document describes how to set up the download packages that users receive after purchase or trial signup.
 
+**⚠️ IMPORTANT:** Customer packages contain **ONLY** production builds and user documentation. **NO source code is included.** See `docs/PACKAGE_SECURITY_VERIFICATION.md` for verification details.
+
 ---
 
 ## Package Contents
@@ -35,12 +37,30 @@ LocalPasswordVault-Windows/
 
 ### Step 1: Build the Installers
 
+**Important:** The installers contain ONLY production builds. Source code is automatically excluded.
+
 ```bash
 # From the project root
 npm run dist:win    # Creates release/Local Password Vault-Setup-1.2.0.exe
 npm run dist:mac    # Creates release/Local Password Vault-1.2.0.dmg
 npm run dist:linux  # Creates release/Local Password Vault-1.2.0.AppImage
 ```
+
+**What's Included in Installer:**
+- ✅ Production build (`dist/` folder - minified, bundled JavaScript)
+- ✅ Electron main process (`electron/` folder)
+- ✅ Dependencies (`node_modules/`)
+- ✅ Package metadata (`package.json`)
+
+**What's EXCLUDED from Installer:**
+- ❌ Source code (`src/` directory)
+- ❌ Backend code (`backend/` directory)
+- ❌ Documentation (`docs/` directory - added separately to ZIP)
+- ❌ TypeScript files (`*.ts`, `*.tsx`)
+- ❌ Configuration files (`*.config.*`)
+- ❌ Test files (`__tests__/`)
+
+**Verification:** See `docs/PACKAGE_SECURITY_VERIFICATION.md`
 
 ### Step 2: Generate PDF Documentation
 
@@ -409,13 +429,21 @@ npm run dist:all
 ## Summary
 
 **What the user downloads:** A ZIP file containing:
-1. ✅ Installer (.exe / .dmg / .AppImage)
+1. ✅ Installer (.exe / .dmg / .AppImage) - **Production build only, NO source code**
 2. ✅ README.txt (quick start)
 3. ✅ User Manual.pdf
 4. ✅ Quick Start Guide.pdf
 5. ✅ Privacy Policy.pdf
 6. ✅ Terms of Service.pdf
 7. ✅ License.txt
+
+**What the user does NOT get:**
+- ❌ Source code (`src/` directory)
+- ❌ Backend code (`backend/` directory)
+- ❌ TypeScript files (`*.ts`, `*.tsx`)
+- ❌ Configuration files
+- ❌ Test files
+- ❌ Development files
 
 **User experience:**
 1. User purchases or starts trial
@@ -424,6 +452,8 @@ npm run dist:all
 4. Unzips to find installer + all documentation
 5. Runs installer, enters license key
 6. Ready to use!
+
+**Security Verification:** See `docs/PACKAGE_SECURITY_VERIFICATION.md` for complete verification that no source code is included.
 
 ---
 

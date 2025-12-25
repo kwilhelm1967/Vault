@@ -12,7 +12,17 @@
     "dist/**/*",
     "electron/**/*",
     "node_modules/**/*",
-    "package.json"
+    "package.json",
+    "!src/**/*",
+    "!backend/**/*",
+    "!docs/**/*",
+    "!*.ts",
+    "!*.tsx",
+    "!*.config.*",
+    "!__tests__/**/*",
+    "!.env*",
+    "!.git/**/*",
+    "!.github/**/*"
   ],
   "extraMetadata": {
     "main": "electron/main.js"
@@ -43,7 +53,10 @@
     "entitlements": "build/entitlements.mac.plist",
     "entitlementsInherit": "build/entitlements.mac.plist",
     "artifactName": "${productName}-${version}-mac.${ext}",
-    "darkModeSupport": true
+    "darkModeSupport": true,
+    "notarize": {
+      "teamId": "${APPLE_TEAM_ID}"
+    }
   },
   
   "dmg": {

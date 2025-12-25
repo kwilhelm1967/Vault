@@ -12,11 +12,12 @@
 2. [Phase 1: Infrastructure Setup](#phase-1-infrastructure-setup)
 3. [Phase 2: Backend Deployment](#phase-2-backend-deployment)
 4. [Phase 3: Frontend Configuration](#phase-3-frontend-configuration)
-5. [Phase 4: Monitoring Setup](#phase-4-monitoring-setup)
-6. [Phase 5: Testing & Verification](#phase-5-testing--verification)
-7. [Phase 6: Launch Readiness](#phase-6-launch-readiness)
-8. [Troubleshooting](#troubleshooting)
-9. [Quick Reference](#quick-reference)
+5. [Phase 4: Code Signing Setup](#phase-4-code-signing-setup)
+6. [Phase 5: Monitoring Setup](#phase-5-monitoring-setup)
+7. [Phase 6: Testing & Verification](#phase-6-testing--verification)
+8. [Phase 7: Launch Readiness](#phase-7-launch-readiness)
+9. [Troubleshooting](#troubleshooting)
+10. [Quick Reference](#quick-reference)
 
 ---
 
@@ -447,10 +448,15 @@ See: `docs/DOWNLOAD_PACKAGE_GUIDE.md`
 
 #### Step 2: Create ZIP Package
 Package should include:
-- `index.html`
-- `assets/` folder
-- `LICENSE.txt`
-- `README.txt`
+- Installer (.exe / .dmg / .AppImage) - **Production build only, NO source code**
+- `README.txt` (quick start)
+- `User Manual.pdf`
+- `Quick Start Guide.pdf`
+- `Privacy Policy.pdf`
+- `Terms of Service.pdf`
+- `License.txt`
+
+**Important:** Installers are prebuilt production builds with NO source code. See `docs/PACKAGE_SECURITY_VERIFICATION.md` for verification.
 
 #### Step 3: Host Package
 - Upload to website or CDN
@@ -460,7 +466,118 @@ Package should include:
 
 ---
 
-## Phase 4: Monitoring Setup (Day 4)
+## Phase 4: Code Signing Setup
+
+**Note:** Code signing certificates are available. This phase configures signing for Windows (SSL.com) and macOS (Apple Developer).
+
+### 4.1 Windows Code Signing (SSL.com)
+
+**Easiest Method: Use Automated Setup Script**
+
+#### Step 1: Download Certificate from SSL.com
+1. Go to: https://www.ssl.com/account/
+2. Navigate to: My Certificates → Code Signing Certificates
+3. Download certificate as **PKCS#12 (.pfx)** format
+4. Save the password provided by SSL.com
+
+#### Step 2: Run Setup Script
+```powershell
+.\scripts\setup-code-signing.ps1
+```
+
+**The script will:**
+- Guide you through the process
+- Ask for certificate file path (or drag and drop)
+- Ask for certificate password
+- Copy certificate to `certs/` folder
+- Create/update `.env` file automatically
+
+#### Step 3: Verify Setup
+```powershell
+.\scripts\verify-code-signing.ps1
+```
+
+Should show: ✅ All checks passed!
+
+#### Step 4: Test Code Signing
+```bash
+npm run dist:win
+```
+
+The installer will be automatically signed.
+
+**Verify signature:**
+- Right-click installer → Properties → Digital Signatures tab
+- Should show your SSL.com certificate name
+
+**Alternative (Manual Setup):** See `docs/CODE_SIGNING_AUTOMATED_SETUP.md` for manual instructions.
+
+**Reference:** `docs/CODE_SIGNING_AUTOMATED_SETUP.md` and `docs/SSL_COM_CERTIFICATE_SETUP.md`
+
+---
+
+### 4.2 macOS Code Signing (Apple Developer)
+
+#### Step 1: Get Certificate Identity
+1. Install certificate to Keychain:
+   - Download from: https://developer.apple.com/account/resources/certificates/list
+   - Double-click `.cer` file to install to Keychain
+
+2. Find your identity:
+   ```bash
+   security find-identity -v -p codesigning
+   ```
+
+3. Look for output like:
+   ```
+   1) ABC123... "Developer ID Application: Your Name (TEAM_ID)"
+   ```
+
+4. Copy the identity (the part in quotes)
+
+#### Step 2: Get App-Specific Password
+1. Go to: https://appleid.apple.com
+2. Sign in → App-Specific Passwords
+3. Generate new password for "electron-builder"
+4. Copy the password (you'll only see it once)
+
+#### Step 3: Update Configuration
+1. Add to `.env` file:
+   ```env
+   APPLE_ID=your@email.com
+   APPLE_ID_PASSWORD=app-specific-password-from-step-2
+   APPLE_TEAM_ID=YOUR_TEAM_ID
+   ```
+
+2. Update `electron-builder.json`:
+   - Find the `mac` section
+   - Add (if not already there):
+   ```json
+   "identity": "Developer ID Application: Your Name (TEAM_ID)",
+   ```
+   - Replace with your actual identity from Step 1
+
+#### Step 4: Test Code Signing
+```bash
+npm run dist:mac
+```
+
+This will:
+- Sign the app
+- Notarize with Apple (requires internet)
+- Staple notarization ticket
+
+**Verify:**
+```bash
+codesign -dv --verbose=4 "release/Local Password Vault.app"
+spctl -a -vvv -t install "release/Local Password Vault.app"
+```
+
+**Reference:** `docs/CODE_SIGNING_QUICK_START.md`
+
+---
+
+## Phase 5: Monitoring Setup
 
 ### 4.1 Sentry Error Tracking (Optional but Recommended)
 
@@ -513,7 +630,7 @@ Package should include:
 
 ---
 
-## Phase 5: Testing & Verification (Day 3-4)
+## Phase 6: Testing & Verification
 
 ### 5.1 End-to-End Testing
 
@@ -593,7 +710,7 @@ Look for:
 
 ---
 
-## Phase 6: Launch Readiness (Day 5)
+## Phase 7: Launch Readiness
 
 ### 6.1 Final Checks
 
@@ -766,11 +883,14 @@ npm run build:prod
 3. **Build Frontend**
    - See Phase 3: Frontend Configuration
 
-4. **Set Up Monitoring**
-   - See Phase 4: Monitoring Setup
+4. **Set Up Code Signing**
+   - See Phase 4: Code Signing Setup
 
-5. **Test Everything**
-   - See Phase 5: Testing & Verification
+5. **Set Up Monitoring**
+   - See Phase 5: Monitoring Setup
+
+6. **Test Everything**
+   - See Phase 6: Testing & Verification
 
 ---
 
