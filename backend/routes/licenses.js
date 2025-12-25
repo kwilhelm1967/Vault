@@ -1,7 +1,11 @@
 /**
- * License Validation and Activation Routes
+ * Legacy License Validation and Activation Routes
  * 
- * POST /api/licenses/validate - Validate and activate a license key
+ * This route provides JWT-based license validation for legacy clients.
+ * For new implementations, use /api/lpv/license/activate instead.
+ * 
+ * POST /api/licenses/validate - Validate and activate a license key (returns JWT token)
+ * GET /api/licenses/check/:key - Quick check if license key exists
  */
 
 const express = require('express');

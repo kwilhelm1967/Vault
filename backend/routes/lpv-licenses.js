@@ -1,14 +1,20 @@
 /**
  * LPV License Activation and Transfer Routes
  * 
- * Implements the LPV licensing model:
+ * Modern license activation API with device transfer support.
+ * This is the recommended API for new client implementations.
+ * 
+ * Endpoints:
  * - POST /api/lpv/license/activate - Activate license on device
  * - POST /api/lpv/license/transfer - Transfer license to new device
+ * - GET /api/lpv/license/status/:key - Check license status (diagnostics)
  * 
  * Security Requirements:
  * - No user data transmitted (only license_key + device_id)
  * - No vault content ever sent to server
  * - After activation, app works fully offline
+ * 
+ * Note: For legacy JWT-based validation, see /api/licenses/validate
  */
 
 const express = require('express');
