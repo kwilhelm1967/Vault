@@ -1,29 +1,33 @@
-# Developer Handoff: License Activation & Offline Validation
+# Developer Handoff: Deployment & Activation
 
 ## Overview
 
-This document outlines what needs to be done to ensure all license activation scenarios work correctly with 100% offline operation after initial activation.
+This document outlines exactly what needs to be done to deploy the current system and get it ready for users. All core features are complete - this focuses on deployment, configuration, and verification.
 
-**Key Architecture:** The system uses **signed license files** (HMAC-SHA256) for offline validation. When a license is activated or transferred, the backend returns a signed license file that is stored locally and validated offline without any network calls. This ensures complete privacy and 100% offline operation after initial activation.
+**Key Architecture:** The system uses **signed license files** (HMAC-SHA256) for offline validation. When a license is activated or transferred, the backend returns a signed license file that is stored locally and validated offline without any network calls.
 
 ---
 
-## ✅ What's Already Implemented
+## ✅ What's Already Complete
 
-### Backend (Complete)
+### Backend (100% Complete)
 - License key generation (all product types)
 - Stripe integration (single and bundle purchases)
-- Database setup (Supabase)
-- API endpoints (activation, transfer, status)
+- Database schema (Supabase PostgreSQL)
+- API endpoints (activation, transfer, status, trial)
 - Signed license file generation (HMAC-SHA256)
+- Email service integration (Brevo)
+- Webhook handling for purchases
 
-### Frontend (Complete)
+### Frontend (100% Complete)
 - Device fingerprint generation
 - License service (activation, transfer, validation)
 - UI components (activation screen, transfer dialog, error handling)
-- Device management screen
-- Bundle purchase handling
+- Device management screen (100% offline)
+- Bundle purchase handling (fetches all keys from session)
 - License status dashboard
+- Trial activation and expiration handling
+- 100% offline operation after activation
 
 **Key Files:**
 - `backend/routes/lpv-licenses.js` - Activation endpoints
@@ -31,451 +35,331 @@ This document outlines what needs to be done to ensure all license activation sc
 - `src/utils/licenseService.ts` - License logic
 - `src/utils/licenseValidator.ts` - Offline validation
 - `src/components/LicenseScreen.tsx` - Activation UI
+- `src/components/PurchaseSuccessPage.tsx` - Bundle purchase handling
 
 ---
 
-## 🎯 Tasks to Complete
+## 🎯 What's Left to Do
 
-**Summary:** This handoff includes both **implementation tasks** (code changes) and **testing tasks** (verification). Complete the implementation tasks first, then verify everything works with testing.
+**⚠️ IMPORTANT: See `docs/ACTIVATION_AND_FIRST_USER.md` for complete step-by-step deployment guide.**
 
-**⚠️ IMPORTANT: For getting the first user, see `docs/ACTIVATION_AND_FIRST_USER.md`** - This document focuses on deployment, configuration, and testing needed to activate the system and accept the first paying customer.
-
-**Implementation Tasks (Code Changes Required - Optional):**
-- Task 4.1: Add concurrent activation prevention guard
-- Task 4.2: Add retry button for network errors in UI
-- Task 4.3: Add device mismatch check on app startup
-- Task 4.4: Improve loading state management
-- Task 4.5: Add license file storage error handling
-
-**Note:** These implementation tasks are **optional enhancements**. The system works without them, but they improve user experience. Focus on deployment and testing first (see `ACTIVATION_AND_FIRST_USER.md`).
-
-**Testing Tasks (Verification Required):**
-- Task 1: Comprehensive testing of all activation scenarios
-- Task 2: Edge case handling verification
-- Task 3: Error message review (✅ Already complete)
+This section lists the specific tasks that must be completed to deploy the system.
 
 ---
 
-### Task 1: Comprehensive Testing
+## Phase 1: Backend Deployment
 
-**Objective:** Verify all activation and offline scenarios work correctly.
+### 1.1 Deploy Backend to Server
 
-**Test Scenarios:**
+**Required Steps:**
+1. SSH into production server (Linode/VPS)
+2. Clone or upload backend code to `/var/www/lpv-api`
+3. Install dependencies: `npm install`
+4. Create `.env` file with all required variables (see `backend/env.example`)
+5. Start with PM2: `pm2 start server.js --name lpv-api`
+6. Enable auto-start: `pm2 startup` and `pm2 save`
 
-#### Activation Testing
-1. **First Activation (Personal License)**
-   - Enter valid personal license key (`PERS-` prefix)
-   - Verify device binding occurs
-   - Verify local license file is created
-   - Disconnect internet
-   - Verify app works offline
-   - Verify no network requests are made
+**Required Environment Variables:**
+```env
+NODE_ENV=production
+PORT=3001
+LICENSE_SIGNING_SECRET=<64-character-hex-string>
+SUPABASE_URL=<supabase-project-url>
+SUPABASE_SERVICE_KEY=<service-role-key>
+STRIPE_SECRET_KEY=<live-key>
+STRIPE_PUBLISHABLE_KEY=<live-key>
+STRIPE_WEBHOOK_SECRET=<webhook-secret>
+BREVO_API_KEY=<brevo-api-key>
+FROM_EMAIL=<sender-email>
+SUPPORT_EMAIL=<support-email>
+WEBSITE_URL=<website-url>
+API_URL=<api-url>
+```
 
-2. **First Activation (Family License)**
-   - Enter valid family license key (`FMLY-` prefix)
-   - Verify device binding occurs
-   - Verify local license file is created
-   - Test that family plan generates 5 separate keys (each for 1 device)
-   - Verify device limit enforcement
+**Generate LICENSE_SIGNING_SECRET:**
+```bash
+openssl rand -hex 32
+```
 
-3. **Same Device Reactivation**
-   - Activate license on Device A
-   - Close and reopen app
-   - Enter same license key again
-   - Should work without requiring transfer
-   - Should not show transfer dialog
+**Files Needed:**
+- `backend/server.js`
+- `backend/.env` (create from `backend/env.example`)
+- PM2 configuration
 
-4. **Different Device (Transfer Required)**
-   - Activate license on Device A
-   - Enter same key on Device B
-   - Should detect different device ID
-   - Should show transfer dialog
-   - Complete transfer process
-   - Verify Device B works after transfer
-   - Verify Device A no longer works (device binding changed)
+**Reference:** `docs/PRODUCTION_LAUNCH_GUIDE.md` - Step 2
 
-5. **Transfer Limit Enforcement**
-   - Activate license
-   - Perform 3 transfers (simulate or use test keys)
-   - Attempt 4th transfer
-   - Should show clear message: "Transfer limit reached (3 transfers per year)"
-   - Should provide support contact information
+---
 
-6. **Invalid Key Scenarios**
-   - Enter invalid format (no prefix, wrong format)
-   - Enter non-existent key
-   - Enter revoked key (set status to 'revoked' in database)
-   - Each should show appropriate error message with troubleshooting tips
+### 1.2 Configure Nginx & SSL
 
-7. **Network Failure Handling**
-   - Disable network connection
-   - Attempt license activation
-   - Should show clear network error message
-   - Should allow retry when network is restored
-   - Re-enable network and verify retry works
+**Required Steps:**
+1. Install Nginx (if not installed)
+2. Configure SSL certificate (Let's Encrypt)
+3. Set up reverse proxy for API domain (api.localpasswordvault.com)
+4. Test health endpoint: `curl https://api.localpasswordvault.com/health`
 
-#### Offline Operation Testing
-1. **After Initial Activation**
-   - Activate license successfully
-   - Disconnect internet completely
-   - Use app for extended period (30+ minutes)
-   - Verify zero network requests are made
-   - Verify all app features work (vault access, password management, etc.)
-   - Verify license validation works offline
+**Files Needed:**
+- Nginx configuration file
+- SSL certificate files
 
-2. **App Restart While Offline**
-   - Activate license
-   - Disconnect internet
-   - Close application completely
-   - Reopen application
-   - Should load and work without any network calls
-   - Should validate license from local signed file
+**Reference:** `docs/PRODUCTION_LAUNCH_GUIDE.md` - Step 2
 
-3. **Trial Expiration Detection (Offline)**
-   - Start trial (7-day trial)
-   - Simulate expiration (modify system date or wait)
-   - Disconnect internet
-   - Open application
-   - Should detect expiration locally from signed trial file
-   - Should show upgrade prompt
-   - Should not make network calls
+---
 
-#### Bundle Purchase Testing
-1. **Bundle Purchase Flow**
-   - Purchase bundle via Stripe checkout
-   - Verify email contains multiple license keys (2 keys for bundle)
-   - Activate first key
-   - Verify activation works
-   - Activate second key (different device or same device)
-   - Verify both keys work independently
+### 1.3 Database Setup
 
-2. **Bundle Email Verification**
-   - Verify email contains all keys clearly labeled
-   - Verify download links work
-   - Verify keys are properly formatted with correct prefixes
+**Required Steps:**
+1. Verify Supabase project exists
+2. Run database schema: Execute `backend/database/schema.sql` in Supabase SQL Editor
+3. Get connection details:
+   - Project URL (from Supabase Settings → API)
+   - Service Role Key (NOT anon key)
+4. Add to backend `.env` file
+5. Test connection from backend server
+
+**Files Needed:**
+- `backend/database/schema.sql` - Database schema
+- Supabase project URL and Service Role Key
+
+**Reference:** `docs/PRODUCTION_LAUNCH_GUIDE.md` - Step 1
+
+---
+
+## Phase 2: Payment & Email Configuration
+
+### 2.1 Stripe Configuration
+
+**Required Steps:**
+1. Create Stripe products (if not done):
+   - Personal Vault ($49) - Get Price ID
+   - Family Vault ($79) - Get Price ID
+   - LLV Personal ($49) - Get Price ID
+   - LLV Family ($129) - Get Price ID
+
+2. Configure Stripe Webhook:
+   - Add endpoint: `https://api.localpasswordvault.com/api/webhooks/stripe`
+   - Select event: `checkout.session.completed`
+   - Copy webhook signing secret
+   - Add to backend `.env` as `STRIPE_WEBHOOK_SECRET`
+
+3. Switch to Live Mode:
+   - Replace test keys with live keys in backend `.env`
+   - Update frontend environment with live publishable key
+
+4. Test Webhook:
+   - Send test event from Stripe dashboard
+   - Verify webhook received and processed
+   - Check backend logs for webhook processing
+
+**Files to Update:**
+- `backend/.env` - Add Stripe live keys and webhook secret
+- Frontend environment config - Add Stripe live publishable key
+
+**Reference:** `docs/PRODUCTION_LAUNCH_GUIDE.md` - Step 3
+
+---
+
+### 2.2 Email Service (Brevo)
+
+**Required Steps:**
+1. Create/verify Brevo account
+2. Generate API key with "Send emails" permission
+3. Verify sender email address in Brevo
+4. Add API key to backend `.env` as `BREVO_API_KEY`
+5. Test email sending
+
+**Files to Update:**
+- `backend/.env` - Add `BREVO_API_KEY`, `FROM_EMAIL`, `SUPPORT_EMAIL`
+
+**Reference:** `docs/PRODUCTION_LAUNCH_GUIDE.md` - Step 4
+
+---
+
+## Phase 3: Application Builds
+
+### 3.1 Build Applications
+
+**Required Steps:**
+
+**Windows:**
+1. Run: `npm run dist:win`
+2. Test installer on clean Windows machine
+3. (Optional) Code sign installer if certificate available
+
+**macOS:**
+1. Run: `npm run dist:mac`
+2. Test DMG on clean macOS machine
+3. (Optional) Code sign and notarize if Apple Developer account available
+
+**Linux:**
+1. Run: `npm run dist:linux`
+2. Test AppImage on clean Linux machine
+
+**Files Generated:**
+- Windows: `dist/Local Password Vault Setup X.X.X.exe`
+- macOS: `dist/Local Password Vault-X.X.X.dmg`
+- Linux: `dist/Local Password Vault-X.X.X.AppImage`
+
+**Reference:** `docs/PRODUCTION_LAUNCH_GUIDE.md` - Step 5
+
+---
+
+### 3.2 Create Download Packages
+
+**Required Steps:**
+1. Create ZIP package for each platform containing:
+   - Installer file (`.exe`, `.dmg`, or `.AppImage`)
+   - `README.txt` (if available)
+   - Documentation files (if available)
+
+2. Host packages:
+   - Upload to GitHub Releases (or alternative hosting)
+   - Get download URLs
+   - Update email templates with download URLs
+
+**Files to Update:**
+- Email templates in `backend/templates/` - Update download links
+
+**Reference:** `docs/PRODUCTION_LAUNCH_GUIDE.md` - Step 6
+
+---
+
+## Phase 4: Testing & Verification
+
+### 4.1 End-to-End Purchase Test
+
+**Required Test Steps:**
+
+1. **Single Purchase Test:**
+   - [ ] Go to pricing page
+   - [ ] Click "Buy Now" for Personal Vault
+   - [ ] Complete Stripe checkout
+   - [ ] Verify webhook received and processed
+   - [ ] Verify license key generated in database
+   - [ ] Verify email received with license key
+   - [ ] Verify email contains correct download links
+   - [ ] Download and install application
+   - [ ] Enter license key in app
+   - [ ] Verify activation successful
+   - [ ] Disconnect internet
+   - [ ] Verify app works offline
+
+2. **Bundle Purchase Test:**
+   - [ ] Purchase bundle (2 products)
+   - [ ] Verify multiple license keys in email
+   - [ ] Verify success page shows all keys
+   - [ ] Activate first key
+   - [ ] Activate second key
+   - [ ] Verify both keys work independently
+
+3. **Trial Flow Test:**
+   - [ ] Sign up for trial on website
+   - [ ] Verify trial key received in email
+   - [ ] Activate trial key in app
+   - [ ] Verify trial works
+   - [ ] Verify trial expiration detected offline
 
 **Files to Test:**
-- `src/utils/licenseService.ts` - Main license activation logic
+- `src/utils/licenseService.ts` - License activation
 - `src/utils/licenseValidator.ts` - Offline validation
-- `src/components/LicenseScreen.tsx` - Activation UI and error handling
-- `src/components/LicenseTransferDialog.tsx` - Transfer flow
-- `backend/routes/lpv-licenses.js` - Backend activation endpoint
-
----
-
-### Task 2: Edge Case Handling
-
-**Objective:** Ensure graceful handling of edge cases and error scenarios.
-
-**Scenarios to Verify:**
-
-1. **Device ID Changes**
-   - **Scenario:** OS update or hardware change modifies device fingerprint
-   - **Expected Behavior:** 
-     - Should detect device ID mismatch
-     - Should prompt for transfer if within limit
-     - Should show clear message if transfer limit reached
-   - **Files to Review:**
-     - `src/utils/deviceFingerprint.ts` - Device ID generation
-     - `src/utils/licenseService.ts` - Device binding validation
-
-2. **License Revocation**
-   - **Scenario:** Backend revokes license (status = 'revoked')
-   - **Expected Behavior:**
-     - On next activation attempt, should detect revocation
-     - Should show clear revocation message
-     - Should provide support contact
-   - **Files to Review:**
-     - `src/utils/licenseService.ts` - Activation error handling
-     - `src/components/LicenseScreen.tsx` - Error message display
-
-3. **Corrupted License File**
-   - **Scenario:** Local license file becomes corrupted or invalid
-   - **Expected Behavior:**
-     - Should detect invalid signature
-     - Should show error message
-     - Should allow re-activation
-   - **Files to Review:**
-     - `src/utils/licenseValidator.ts` - Signature verification
-
-4. **Concurrent Activation Attempts**
-   - **Scenario:** Multiple activation attempts simultaneously
-   - **Expected Behavior:**
-     - Should handle gracefully
-     - Should prevent duplicate activations
-   - **Files to Review:**
-     - `src/utils/licenseService.ts` - Activation flow
-
-5. **Trial Expiration Edge Cases**
-   - **Scenario:** Trial expires while app is running
-   - **Expected Behavior:**
-     - Should detect expiration on next validation check
-     - Should show upgrade prompt
-     - Should gracefully lock features if needed
-   - **Files to Review:**
-     - `src/utils/trialService.ts` - Trial validation
-
-**Implementation Notes:**
-- All error messages should be user-friendly
-- All errors should provide actionable next steps
-- Network errors should allow retry
-- Validation errors should explain what went wrong
-
----
-
-### Task 3: Error Message Review ✅ COMPLETE
-
-**Status:** All error messages have been improved to be clear, actionable, and user-friendly.
-
-**Completed:**
-- All network errors include retry guidance
-- All validation errors explain format requirements
-- All system errors provide support contact
-- Error messages are user-friendly (no technical jargon)
-
----
-
-### Task 4: Implementation Tasks
-
-**Objective:** Implement missing functionality to ensure robust license activation and error handling.
-
-#### 4.1: Concurrent Activation Prevention
-
-**Problem:** Multiple simultaneous activation attempts can cause race conditions or duplicate activations.
-
-**Solution:** Add a guard in `licenseService.activateLicense()` to prevent concurrent calls.
-
-**Implementation Steps:**
-
-1. **Add activation lock to LicenseService class:**
-   - Add private property: `private isActivating: boolean = false;`
-   - Check lock at start of `activateLicense()` method
-   - Set lock to `true` at start, `false` in finally block
-   - Return early error if already activating
-
-2. **File to Modify:**
-   - `src/utils/licenseService.ts` - Add concurrent activation guard
-
-3. **Code Pattern:**
-   ```typescript
-   async activateLicense(licenseKey: string): Promise<...> {
-     // Prevent concurrent activations
-     if (this.isActivating) {
-       return {
-         success: false,
-         error: "Activation already in progress. Please wait for the current activation to complete."
-       };
-     }
-     
-     this.isActivating = true;
-     try {
-       // ... existing activation logic ...
-     } finally {
-       this.isActivating = false;
-     }
-   }
-   ```
-
-4. **Also Apply to Transfer:**
-   - Add similar guard to `transferLicense()` method
-   - Prevent concurrent transfers
-
-**Files to Modify:**
-- `src/utils/licenseService.ts` - Add `isActivating` and `isTransferring` flags
-
----
-
-#### 4.2: Retry Button for Network Errors
-
-**Problem:** When network errors occur, users must manually retry by clicking the activate button again.
-
-**Solution:** Add a dedicated "Retry" button that appears for network errors.
-
-**Implementation Steps:**
-
-1. **Update LicenseScreen Component:**
-   - Detect network error type (check if error includes "connect" or "network")
-   - Show "Retry" button next to error message for network errors
-   - Button should call `handleActivateLicense()` again
-   - Hide retry button on successful activation
-
-2. **File to Modify:**
-   - `src/components/LicenseScreen.tsx` - Add retry button UI
-
-3. **UI Location:**
-   - Add retry button in the error display section (around line 691-728)
-   - Show only when `errorType === 'network'`
-   - Style consistently with existing buttons
-
-4. **Also Add to Transfer Dialog:**
-   - Add retry button to `LicenseTransferDialog.tsx` for network errors
-   - Allow retry without closing dialog
-
-**Files to Modify:**
-- `src/components/LicenseScreen.tsx` - Add retry button for network errors
-- `src/components/LicenseTransferDialog.tsx` - Add retry button for transfer network errors
-
----
-
-#### 4.3: Device Mismatch Check on App Startup
-
-**Problem:** If device ID changes (OS update, hardware change), user should be notified on app startup, not just when trying to activate.
-
-**Solution:** Check for device mismatch when app starts and show appropriate message.
-
-**Implementation Steps:**
-
-1. **Add Startup Check in App.tsx:**
-   - In `useAppStatus` hook, after getting app status
-   - Call `licenseService.checkDeviceMismatch()` if license exists
-   - If mismatch detected, show transfer dialog or warning
-   - Store mismatch state to prevent repeated checks
-
-2. **File to Modify:**
-   - `src/App.tsx` - Add device mismatch check in `useAppStatus` hook
-
-3. **Implementation Pattern:**
-   ```typescript
-   useEffect(() => {
-     const checkMismatch = async () => {
-       if (appStatus?.isLicensed) {
-         const mismatch = await licenseService.checkDeviceMismatch();
-         if (mismatch.hasMismatch && mismatch.licenseKey) {
-           // Show transfer dialog or warning
-           setShowTransferDialog(true);
-           setPendingTransferKey(mismatch.licenseKey);
-         }
-       }
-     };
-     checkMismatch();
-   }, [appStatus?.isLicensed]);
-   ```
-
-4. **Handle Gracefully:**
-   - Don't block app startup if mismatch detected
-   - Show non-blocking notification or dialog
-   - Allow user to continue using app (if within transfer limit)
-   - Prompt for transfer when user tries to use licensed features
-
-**Files to Modify:**
-- `src/App.tsx` - Add device mismatch check in `useAppStatus` hook
-- `src/components/LicenseScreen.tsx` - Handle startup mismatch state
-
----
-
-#### 4.4: Improve Loading State Management
-
-**Problem:** Loading states may not properly prevent user actions during activation/transfer.
-
-**Solution:** Ensure loading states properly disable all relevant UI elements.
-
-**Implementation Steps:**
-
-1. **Verify Loading States:**
-   - Ensure `isActivating` disables activate button
-   - Ensure `isTransferring` disables transfer button
-   - Ensure input fields are disabled during activation
-   - Ensure cancel buttons work during loading
-
-2. **Add Visual Feedback:**
-   - Show loading spinner in button during activation
-   - Show progress indicator if activation takes > 2 seconds
-   - Disable form inputs during activation
-
-3. **Files to Review:**
-   - `src/components/LicenseScreen.tsx` - Verify all buttons/inputs disabled when `isActivating`
-   - `src/components/LicenseTransferDialog.tsx` - Verify all buttons disabled when `isTransferring`
-
-4. **Add Timeout Handling:**
-   - If activation takes > 30 seconds, show timeout message
-   - Allow user to cancel and retry
-   - Log timeout for debugging
-
-**Files to Modify:**
-- `src/components/LicenseScreen.tsx` - Improve loading state handling
-- `src/components/LicenseTransferDialog.tsx` - Improve loading state handling
-- `src/utils/licenseService.ts` - Add timeout handling (optional)
-
----
-
-#### 4.5: License File Storage Error Handling
-
-**Problem:** If localStorage fails (quota exceeded, disabled, etc.), activation will fail silently or with unclear error.
-
-**Solution:** Add proper error handling for storage operations.
-
-**Implementation Steps:**
-
-1. **Add Storage Error Detection:**
-   - Wrap `localStorage.setItem()` calls in try-catch
-   - Detect quota exceeded errors
-   - Detect disabled storage errors
-   - Provide clear error messages
-
-2. **File to Modify:**
-   - `src/utils/licenseService.ts` - Add error handling in `saveLocalLicenseFile()`
-
-3. **Error Messages:**
-   - Quota exceeded: "Storage quota exceeded. Please free up space and try again."
-   - Storage disabled: "Local storage is disabled. Please enable it in your browser settings."
-   - Generic: "Failed to save license file. Please try again or contact support."
-
-4. **Fallback Options:**
-   - For Electron: Use file system storage as fallback
-   - For Web: Show clear error with instructions
-
-**Files to Modify:**
-- `src/utils/licenseService.ts` - Add storage error handling in `saveLocalLicenseFile()`
-- `src/utils/trialService.ts` - Add storage error handling in `saveTrialFile()`
-
----
-
-## 🔧 Quick Start
-
-### 1. Review Current Implementation
-
-**Backend Files:**
-- `backend/routes/lpv-licenses.js` - License activation endpoints
-- `backend/routes/webhooks.js` - Stripe payment handling
-- `backend/services/licenseSigner.js` - HMAC-SHA256 license file signing
-- `backend/services/licenseGenerator.js` - License key generation
-
-**Frontend Files:**
-- `src/utils/licenseService.ts` - Main license activation logic
-- `src/utils/licenseValidator.ts` - Offline license file validation
-- `src/utils/deviceFingerprint.ts` - Device ID generation
-- `src/utils/trialService.ts` - Trial activation and validation
 - `src/components/LicenseScreen.tsx` - Activation UI
-- `src/components/LicenseTransferDialog.tsx` - Transfer UI
-- `src/components/DeviceManagementScreen.tsx` - Device management UI
-
-### 2. Set Up Testing Environment
-
-1. Start backend: `cd backend && npm start`
-2. Start frontend: `npm run dev`
-3. Ensure environment variables are configured (see `backend/env.example`)
-4. Ensure database is set up (see `backend/database/schema.sql`)
-
-### 3. Implement Missing Functionality
-
-Complete the implementation tasks in **Task 4** above:
-1. Add concurrent activation prevention
-2. Add retry button for network errors
-3. Add device mismatch check on app startup
-4. Improve loading state management
-5. Add license file storage error handling
-
-### 4. Execute Testing Tasks
-
-Follow the testing scenarios in **Task 1** above. Document any issues found and fix them.
-
-### 5. Verify Edge Cases
-
-Follow the edge case scenarios in **Task 2** above. Ensure all are handled gracefully.
+- `src/components/PurchaseSuccessPage.tsx` - Bundle handling
+- `backend/routes/lpv-licenses.js` - Backend activation endpoint
+- `backend/routes/webhooks.js` - Stripe webhook handling
 
 ---
 
-## 📝 Architecture Notes
+### 4.2 Error Scenario Testing
+
+**Required Test Scenarios:**
+
+1. **Invalid License Key:**
+   - [ ] Enter invalid format key
+   - [ ] Enter non-existent key
+   - [ ] Verify appropriate error message shown
+
+2. **Network Failure:**
+   - [ ] Disable network connection
+   - [ ] Attempt license activation
+   - [ ] Verify network error message shown
+   - [ ] Re-enable network and verify retry works
+
+3. **Device Transfer:**
+   - [ ] Activate license on Device A
+   - [ ] Enter same key on Device B
+   - [ ] Verify transfer dialog appears
+   - [ ] Complete transfer
+   - [ ] Verify Device B works after transfer
+   - [ ] Verify Device A no longer works
+
+4. **Transfer Limit:**
+   - [ ] Perform 3 transfers
+   - [ ] Attempt 4th transfer
+   - [ ] Verify transfer limit message shown
+
+---
+
+### 4.3 Offline Operation Verification
+
+**Required Verification:**
+
+1. **After Activation:**
+   - [ ] Activate license successfully
+   - [ ] Disconnect internet completely
+   - [ ] Use app for 30+ minutes
+   - [ ] Verify zero network requests (check DevTools Network tab)
+   - [ ] Verify all app features work offline
+   - [ ] Verify license validation works offline
+
+2. **App Restart Offline:**
+   - [ ] Activate license
+   - [ ] Disconnect internet
+   - [ ] Close application completely
+   - [ ] Reopen application
+   - [ ] Verify app loads without network calls
+   - [ ] Verify license validated from local file
+
+**Verification Method:**
+- Open browser DevTools → Network tab
+- Filter by "Fetch/XHR" or "WS"
+- Disconnect internet
+- Use app for extended period
+- Verify Network tab shows ZERO requests
+
+---
+
+## Phase 5: Pre-Launch Checklist
+
+**Complete before accepting first real customer:**
+
+### Infrastructure
+- [ ] Backend API deployed and accessible
+- [ ] Health endpoint responds: `curl https://api.localpasswordvault.com/health`
+- [ ] SSL certificate valid
+- [ ] Database connected and schema executed
+- [ ] All environment variables set correctly
+
+### Payment & Email
+- [ ] Stripe products created and configured
+- [ ] Stripe webhook endpoint active and tested
+- [ ] Brevo email service configured and tested
+- [ ] Test purchase email received successfully
+
+### Application
+- [ ] At least one platform built (Windows recommended)
+- [ ] Installer tested on clean machine
+- [ ] Download package created and hosted
+- [ ] Download URLs working
+
+### Testing
+- [ ] End-to-end purchase tested successfully
+- [ ] License activation tested successfully
+- [ ] Offline operation verified
+- [ ] Error scenarios tested
+
+---
+
+## 📝 Architecture Reference
 
 ### Current Implementation
 
@@ -484,7 +368,7 @@ Follow the edge case scenarios in **Task 2** above. Ensure all are handled grace
 - Stripe for payments
 - Brevo for emails
 - HMAC-SHA256 signed license files for offline validation
-- License activation endpoints return signed license files (not JWT tokens)
+- License activation endpoints return signed license files
 
 **Frontend:**
 - Electron app
@@ -495,11 +379,11 @@ Follow the edge case scenarios in **Task 2** above. Ensure all are handled grace
 
 ### Key Design Principles
 
-1. **Offline-First:** App must work 100% offline after activation
+1. **Offline-First:** App works 100% offline after activation
 2. **Device Binding:** License tied to device fingerprint (SHA-256 hash)
 3. **Transfer Support:** 3 transfers per year allowed
 4. **Privacy-First:** No user data transmitted, only license key + device hash at activation
-5. **Signed Files:** All validation uses HMAC-SHA256 signed license files (not JWT)
+5. **Signed Files:** All validation uses HMAC-SHA256 signed license files
 
 ### Security Model
 
@@ -508,7 +392,6 @@ Follow the edge case scenarios in **Task 2** above. Ensure all are handled grace
 - License files verified locally using Web Crypto API (no server calls)
 - License keys validated against database only at initial activation
 - Zero network traffic after activation (100% offline operation)
-- No JWT tokens - all validation uses signed license files
 
 ### Family Plan Model
 
@@ -516,80 +399,19 @@ Follow the edge case scenarios in **Task 2** above. Ensure all are handled grace
 - Each key can be activated on 1 device only
 - Keys cannot be shared or reused on multiple devices
 - Each key behaves like a personal license (single device binding)
-- This is the intended design (not 1 key for 5 devices)
-
----
-
-## 🎯 Success Criteria
-
-After completing these tasks, verify:
-
-1. ✅ All purchase scenarios work (single, bundle, all product types)
-2. ✅ All activation scenarios work (first, same device, transfer)
-3. ✅ 100% offline operation after activation (zero network calls)
-4. ✅ Device binding enforced correctly
-5. ✅ Transfer limits enforced (3 per year)
-6. ✅ Error messages are clear, helpful, and actionable
-7. ✅ Edge cases handled gracefully
-8. ✅ Family plan device management works
-9. ✅ Bundle purchases handled correctly
-10. ✅ Trial expiration detected offline
 
 ---
 
 ## 📞 Reference Documents
 
-- **`docs/ACTIVATION_AND_FIRST_USER.md`** - ⭐ **START HERE** - Complete guide to activate system and get first user
-- `docs/PRODUCTION_LAUNCH_GUIDE.md` - Production setup details
-- `docs/PRODUCTION_CHECKLIST.md` - Detailed production checklist
+- **`docs/ACTIVATION_AND_FIRST_USER.md`** - ⭐ **START HERE** - Complete step-by-step deployment guide
+- `docs/PRODUCTION_LAUNCH_GUIDE.md` - Detailed production setup guide
+- `docs/PRODUCTION_CHECKLIST.md` - Comprehensive production checklist
 - `backend/README.md` - API documentation
 - `backend/database/schema.sql` - Database structure
-- `docs/FAMILY_PLAN_MODEL.md` - Family plan model documentation
-- `docs/TESTING_FAMILY_PLAN.md` - Family plan testing guide
+- `backend/env.example` - Environment variables reference
 
 ---
 
-## 📋 Implementation & Testing Checklist
-
-Use this checklist to track progress:
-
-### Implementation Tasks
-- [ ] Task 4.1: Concurrent Activation Prevention
-- [ ] Task 4.2: Retry Button for Network Errors
-- [ ] Task 4.3: Device Mismatch Check on App Startup
-- [ ] Task 4.4: Improve Loading State Management
-- [ ] Task 4.5: License File Storage Error Handling
-
-### Testing Tasks
-- [ ] Task 1: Comprehensive Testing (all scenarios)
-- [ ] Task 2: Edge Case Handling (all scenarios)
-
-### Activation Scenarios
-- [ ] First Activation (Personal)
-- [ ] First Activation (Family)
-- [ ] Same Device Reactivation
-- [ ] Different Device (Transfer)
-- [ ] Transfer Limit Reached
-- [ ] Invalid Key (various formats)
-- [ ] Network Failure
-
-### Offline Operation
-- [ ] After Activation (extended use)
-- [ ] App Restart Offline
-- [ ] Trial Expiration Offline
-
-### Bundle Purchases
-- [ ] Bundle Purchase Flow
-- [ ] Bundle Email Verification
-
-### Edge Cases
-- [ ] Device ID Changes
-- [ ] License Revocation
-- [ ] Corrupted License File
-- [ ] Concurrent Activation Attempts
-- [ ] Trial Expiration Edge Cases
-
-### Error Messages
-- [ ] Network Errors (with retry button)
-- [ ] Validation Errors
-- [ ] System Errors
+**Last Updated:** January 2025  
+**Status:** Core features complete - Deployment tasks remaining
