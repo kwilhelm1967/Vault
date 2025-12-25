@@ -150,8 +150,8 @@ router.post('/validate', async (req, res) => {
         hardware_hash: hardwareHash,
       });
       
-      // For family plans, also record the first device
-      if (license.plan_type === 'family') {
+      // For family plans, also record the first device (both LPV and LLV family)
+      if (license.plan_type === 'family' || license.plan_type === 'llv_family') {
         await db.deviceActivations.create({
           license_id: license.id,
           hardware_hash: hardwareHash,
