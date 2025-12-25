@@ -24,6 +24,7 @@ import { KeyActivationScreen } from "./KeyActivationScreen";
 import { RecoveryOptionsScreen } from "./RecoveryOptionsScreen";
 import { LicenseTransferDialog } from "./LicenseTransferDialog";
 import { DeviceManagementScreen } from "./DeviceManagementScreen";
+import { LicenseStatusDashboard } from "./LicenseStatusDashboard";
 
 interface LicenseScreenProps {
   onLicenseValid: () => void;
@@ -56,6 +57,9 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
   
   // Device management state (for family plans)
   const [showDeviceManagement, setShowDeviceManagement] = useState(false);
+  
+  // License status dashboard state
+  const [showStatusDashboard, setShowStatusDashboard] = useState(false);
   
 
   const updateAppStatus = useCallback(async () => {
@@ -424,6 +428,40 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
     );
   }
 
+  // License Status Dashboard
+  if (showStatusDashboard) {
+    return (
+      <LicenseStatusDashboard
+        onBack={() => setShowStatusDashboard(false)}
+        onManageDevices={licenseService.isFamilyPlan() ? () => {
+          setShowStatusDashboard(false);
+          setShowDeviceManagement(true);
+        } : undefined}
+        onUpgrade={() => {
+          setShowStatusDashboard(false);
+          // Could navigate to pricing or show pricing plans
+        }}
+      />
+    );
+  }
+
+  // License Status Dashboard
+  if (showStatusDashboard) {
+    return (
+      <LicenseStatusDashboard
+        onBack={() => setShowStatusDashboard(false)}
+        onManageDevices={licenseService.isFamilyPlan() ? () => {
+          setShowStatusDashboard(false);
+          setShowDeviceManagement(true);
+        } : undefined}
+        onUpgrade={() => {
+          setShowStatusDashboard(false);
+          // Could navigate to pricing or show pricing plans
+        }}
+      />
+    );
+  }
+
   // Device Management Screen (for family plans)
   if (showDeviceManagement) {
     const localLicense = licenseService.getLocalLicenseFile();
@@ -579,6 +617,38 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
                 LocalPasswordVault.com
               </button>
             </p>
+            
+            {/* License Status & Device Management Buttons */}
+            {appStatus?.isLicensed && (
+              <div className="mt-4 flex flex-wrap gap-3 justify-center">
+                <button
+                  onClick={() => setShowStatusDashboard(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                  style={{
+                    backgroundColor: 'rgba(91, 130, 184, 0.1)',
+                    border: '1px solid rgba(91, 130, 184, 0.3)',
+                    color: '#5B82B8',
+                  }}
+                >
+                  <Shield className="w-4 h-4" />
+                  <span>View License Status</span>
+                </button>
+                {licenseService.isFamilyPlan() && (
+                  <button
+                    onClick={() => setShowDeviceManagement(true)}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                    style={{
+                      backgroundColor: 'rgba(91, 130, 184, 0.1)',
+                      border: '1px solid rgba(91, 130, 184, 0.3)',
+                      color: '#5B82B8',
+                    }}
+                  >
+                    <Users className="w-4 h-4" />
+                    <span>Manage Devices ({licenseService.getMaxDevices()} max)</span>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Trial Expiration Banner - Show based on localStorage trial data */}
