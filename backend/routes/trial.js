@@ -163,11 +163,11 @@ router.post('/signup', async (req, res) => {
  * 
  * Check trial status for an email
  */
-router.get('/status/:email', (req, res) => {
+router.get('/status/:email', async (req, res) => {
   try {
     const email = req.params.email.toLowerCase().trim();
     
-    const trial = db.trials.findByEmail.get(email);
+    const trial = await db.trials.findByEmail(email);
     
     if (!trial) {
       return res.json({

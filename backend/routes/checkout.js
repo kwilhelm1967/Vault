@@ -90,7 +90,7 @@ router.get('/session/:sessionId', async (req, res) => {
     const db = require('../database/db');
     
     // Look up license by session ID
-    const license = db.licenses.findBySessionId.get(sessionId);
+    const license = await db.licenses.findBySessionId(sessionId);
     
     if (!license) {
       // License not yet created - webhook may still be processing

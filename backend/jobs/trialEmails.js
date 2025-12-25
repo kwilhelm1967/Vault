@@ -112,22 +112,29 @@ async function checkTrialEmails() {
     // EXPIRING TRIALS (24-hour warning)
     // =========================================================================
     
-    const expiringTrials = db.db.prepare(`
-      SELECT * FROM trials 
-      WHERE expires_at BETWEEN ? AND ?
-      AND is_converted = 0
-      AND (expiring_email_sent IS NULL OR expiring_email_sent = 0)
-    `).all(in23Hours.toISOString(), in25Hours.toISOString());
+    const { data: expiringTrials, error: expiringError } = await db.supabase
+      .from('trials')
+      .select('*')
+      .gte('expires_at', in23Hours.toISOString())
+      .lte('expires_at', in25Hours.toISOString())
+      .eq('is_converted', false)
+      .or('expiring_email_sent.is.null,expiring_email_sent.eq.false');
 
-    console.log(`Found ${expiringTrials.length} trials expiring in ~24 hours`);
+    if (expiringError) {
+      console.error('Error fetching expiring trials:', expiringError);
+      throw expiringError;
+    }
 
-    for (const trial of expiringTrials) {
+    console.log(`Found ${expiringTrials?.length || 0} trials expiring in ~24 hours`);
+
+    for (const trial of expiringTrials || []) {
       try {
         await sendTrialExpiringEmail(trial.email, trial.expires_at);
         
-        db.db.prepare(`
-          UPDATE trials SET expiring_email_sent = 1 WHERE id = ?
-        `).run(trial.id);
+        await db.supabase
+          .from('trials')
+          .update({ expiring_email_sent: true })
+          .eq('id', trial.id);
         
         expiringCount++;
       } catch (error) {
@@ -140,22 +147,29 @@ async function checkTrialEmails() {
     // EXPIRED TRIALS (with discount offer)
     // =========================================================================
     
-    const expiredTrials = db.db.prepare(`
-      SELECT * FROM trials 
-      WHERE expires_at BETWEEN ? AND ?
-      AND is_converted = 0
-      AND (expired_email_sent IS NULL OR expired_email_sent = 0)
-    `).all(twoDaysAgo.toISOString(), oneDayAgo.toISOString());
+    const { data: expiredTrials, error: expiredError } = await db.supabase
+      .from('trials')
+      .select('*')
+      .gte('expires_at', twoDaysAgo.toISOString())
+      .lte('expires_at', oneDayAgo.toISOString())
+      .eq('is_converted', false)
+      .or('expired_email_sent.is.null,expired_email_sent.eq.false');
 
-    console.log(`Found ${expiredTrials.length} trials that expired recently`);
+    if (expiredError) {
+      console.error('Error fetching expired trials:', expiredError);
+      throw expiredError;
+    }
 
-    for (const trial of expiredTrials) {
+    console.log(`Found ${expiredTrials?.length || 0} trials that expired recently`);
+
+    for (const trial of expiredTrials || []) {
       try {
         await sendTrialExpiredEmail(trial.email, trial.expires_at);
         
-        db.db.prepare(`
-          UPDATE trials SET expired_email_sent = 1 WHERE id = ?
-        `).run(trial.id);
+        await db.supabase
+          .from('trials')
+          .update({ expired_email_sent: true })
+          .eq('id', trial.id);
         
         expiredCount++;
       } catch (error) {

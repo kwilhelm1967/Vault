@@ -66,7 +66,7 @@ router.post('/validate', async (req, res) => {
     }
     
     // Look up the license in database
-    const license = db.licenses.findByKey.get(normalizedKey);
+    const license = await db.licenses.findByKey(normalizedKey);
     
     if (!license) {
       return res.status(404).json({ 
@@ -92,20 +92,20 @@ router.post('/validate', async (req, res) => {
       // For family plans, check device count
       if (license.plan_type === 'family') {
         // Check if this hardware is already activated
-        const existingDevice = db.deviceActivations.findByLicenseAndHash.get(
+        const existingDevice = await db.deviceActivations.findByLicenseAndHash(
           license.id, 
           hardwareHash
         );
         
         if (existingDevice) {
           // Same device - update last seen
-          db.deviceActivations.updateLastSeen.run({
+          await db.deviceActivations.updateLastSeen({
             license_id: license.id,
             hardware_hash: hardwareHash,
           });
         } else {
           // New device - check if under limit
-          const deviceCount = db.deviceActivations.countByLicense.get(license.id);
+          const deviceCount = await db.deviceActivations.countByLicense(license.id);
           
           if (deviceCount.count >= license.max_devices) {
             return res.status(409).json({ 
@@ -115,14 +115,14 @@ router.post('/validate', async (req, res) => {
           }
           
           // Add new device
-          db.deviceActivations.create.run({
+          await db.deviceActivations.create({
             license_id: license.id,
             hardware_hash: hardwareHash,
             device_name: req.headers['user-agent'] || 'Unknown Device',
           });
           
           // Update activated_devices count
-          db.licenses.activate.run({
+          await db.licenses.activate({
             license_key: normalizedKey,
             hardware_hash: hardwareHash,
           });
@@ -141,14 +141,14 @@ router.post('/validate', async (req, res) => {
       }
     } else {
       // First activation
-      db.licenses.activate.run({
+      await db.licenses.activate({
         license_key: normalizedKey,
         hardware_hash: hardwareHash,
       });
       
       // For family plans, also record the first device
       if (license.plan_type === 'family') {
-        db.deviceActivations.create.run({
+        await db.deviceActivations.create({
           license_id: license.id,
           hardware_hash: hardwareHash,
           device_name: req.headers['user-agent'] || 'Unknown Device',
@@ -208,7 +208,7 @@ router.post('/validate', async (req, res) => {
  * Quick check if a license key exists (without activation)
  * Useful for validating keys before showing download page
  */
-router.get('/check/:key', (req, res) => {
+router.get('/check/:key', async (req, res) => {
   try {
     const normalizedKey = normalizeKey(req.params.key);
     
@@ -216,7 +216,7 @@ router.get('/check/:key', (req, res) => {
       return res.status(400).json({ valid: false, error: 'Invalid format' });
     }
     
-    const license = db.licenses.findByKey.get(normalizedKey);
+    const license = await db.licenses.findByKey(normalizedKey);
     
     if (!license) {
       return res.status(404).json({ valid: false, error: 'Not found' });
