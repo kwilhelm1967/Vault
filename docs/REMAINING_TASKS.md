@@ -40,15 +40,6 @@
 - Shows only local device (privacy-first approach)
 - Comment says "in real implementation, this would come from backend"
 
-**Options:**
-- **Option A:** Keep privacy-first (current) - only show local device
-- **Option B:** Add backend endpoint to list devices (requires one-time network call)
-  - Endpoint: `GET /api/licenses/:key/devices`
-  - Would show all activated devices for family plans
-  - Breaks privacy-first model (one network call after activation)
-
-**Recommendation:** Keep Option A (privacy-first) unless user explicitly wants device listing.
-
 ---
 
 ## 🟢 NICE TO HAVE (Optional Enhancements)
