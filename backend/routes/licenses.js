@@ -1,13 +1,3 @@
-/**
- * Legacy License Validation and Activation Routes
- * 
- * This route provides JWT-based license validation for legacy clients.
- * For new implementations, use /api/lpv/license/activate instead.
- * 
- * POST /api/licenses/validate - Validate and activate a license key (returns JWT token)
- * GET /api/licenses/check/:key - Quick check if license key exists
- */
-
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const db = require('../database/db');
@@ -15,35 +5,10 @@ const { normalizeKey, isValidFormat } = require('../services/licenseGenerator');
 
 const router = express.Router();
 
-/**
- * POST /api/licenses/validate
- * 
- * Validates a license key and activates it on the requesting device.
- * This is the main endpoint your Electron app calls.
- * 
- * Request body:
- * {
- *   "licenseKey": "XXXX-XXXX-XXXX-XXXX",
- *   "hardwareHash": "sha256-device-fingerprint"
- * }
- * 
- * Response (success):
- * {
- *   "success": true,
- *   "data": {
- *     "planType": "personal" | "family",
- *     "token": "jwt-token",
- *     "isNewActivation": true,
- *     "activationTime": "ISO-date",
- *     "maxDevices": 1
- *   }
- * }
- */
 router.post('/validate', async (req, res) => {
   try {
     const { licenseKey, hardwareHash } = req.body;
     
-    // Validate input
     if (!licenseKey) {
       return res.status(400).json({ 
         success: false, 
@@ -58,10 +23,8 @@ router.post('/validate', async (req, res) => {
       });
     }
     
-    // Normalize the license key
     const normalizedKey = normalizeKey(licenseKey);
     
-    // Validate format
     if (!isValidFormat(normalizedKey)) {
       return res.status(400).json({ 
         success: false, 
@@ -69,7 +32,6 @@ router.post('/validate', async (req, res) => {
       });
     }
     
-    // Look up the license in database
     const license = await db.licenses.findByKey(normalizedKey);
     
     if (!license) {
@@ -79,7 +41,6 @@ router.post('/validate', async (req, res) => {
       });
     }
     
-    // Check if license is active
     if (license.status !== 'active') {
       return res.status(400).json({ 
         success: false, 
@@ -87,28 +48,24 @@ router.post('/validate', async (req, res) => {
       });
     }
     
-    // Check device activation
     let isNewActivation = false;
     
     if (license.is_activated) {
-      // License already activated - check if same device or different
-      
-      // For family plans, check device count (both LPV and LLV family)
+      // Family plans support multiple devices
       if (license.plan_type === 'family' || license.plan_type === 'llv_family') {
-        // Check if this hardware is already activated
         const existingDevice = await db.deviceActivations.findByLicenseAndHash(
           license.id, 
           hardwareHash
         );
         
         if (existingDevice) {
-          // Same device - update last seen
+          // Device already registered, just update last seen
           await db.deviceActivations.updateLastSeen({
             license_id: license.id,
             hardware_hash: hardwareHash,
           });
         } else {
-          // New device - check if under limit
+          // New device - check device limit
           const deviceCount = await db.deviceActivations.countByLicense(license.id);
           
           if (deviceCount.count >= license.max_devices) {
@@ -118,14 +75,12 @@ router.post('/validate', async (req, res) => {
             });
           }
           
-          // Add new device
           await db.deviceActivations.create({
             license_id: license.id,
             hardware_hash: hardwareHash,
             device_name: req.headers['user-agent'] || 'Unknown Device',
           });
           
-          // Update activated_devices count
           await db.licenses.activate({
             license_key: normalizedKey,
             hardware_hash: hardwareHash,
@@ -134,14 +89,13 @@ router.post('/validate', async (req, res) => {
           isNewActivation = true;
         }
       } else {
-        // Personal plan - single device only
+        // Personal plans: single device only
         if (license.hardware_hash !== hardwareHash) {
           return res.status(409).json({ 
             success: false, 
             error: 'This license is already activated on another device' 
           });
         }
-        // Same device - valid
       }
     } else {
       // First activation
@@ -150,7 +104,7 @@ router.post('/validate', async (req, res) => {
         hardware_hash: hardwareHash,
       });
       
-      // For family plans, also record the first device (both LPV and LLV family)
+      // Track device for family plans
       if (license.plan_type === 'family' || license.plan_type === 'llv_family') {
         await db.deviceActivations.create({
           license_id: license.id,
@@ -162,7 +116,6 @@ router.post('/validate', async (req, res) => {
       isNewActivation = true;
     }
     
-    // Ensure JWT_SECRET is configured
     if (!process.env.JWT_SECRET) {
       console.error('CRITICAL: JWT_SECRET not configured');
       return res.status(500).json({ 
@@ -171,7 +124,7 @@ router.post('/validate', async (req, res) => {
       });
     }
 
-    // Generate JWT token for offline validation
+    // Generate JWT for offline validation
     const token = jwt.sign(
       {
         licenseKey: normalizedKey,
@@ -181,10 +134,9 @@ router.post('/validate', async (req, res) => {
         activatedAt: license.activated_at || new Date().toISOString(),
       },
       process.env.JWT_SECRET,
-      { expiresIn: '365d' } // Lifetime license - long expiry
+      { expiresIn: '365d' }
     );
     
-    // Success response
     res.json({
       success: true,
       data: {
@@ -206,12 +158,6 @@ router.post('/validate', async (req, res) => {
   }
 });
 
-/**
- * GET /api/licenses/check/:key
- * 
- * Quick check if a license key exists (without activation)
- * Useful for validating keys before showing download page
- */
 router.get('/check/:key', async (req, res) => {
   try {
     const normalizedKey = normalizeKey(req.params.key);

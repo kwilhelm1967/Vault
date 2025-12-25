@@ -1,38 +1,13 @@
-/**
- * Stripe Checkout Routes
- * 
- * POST /api/checkout/session - Create a Stripe Checkout session
- */
-
 const express = require('express');
 const { createCheckoutSession, createBundleCheckoutSession, PRODUCTS } = require('../services/stripe');
 
 const router = express.Router();
 
-/**
- * POST /api/checkout/session
- * 
- * Creates a Stripe Checkout session for purchasing a license.
- * 
- * Request body:
- * {
- *   "planType": "personal" | "family",
- *   "email": "user@example.com" (optional)
- * }
- * 
- * Response:
- * {
- *   "success": true,
- *   "sessionId": "cs_xxx",
- *   "url": "https://checkout.stripe.com/..."
- * }
- */
 router.post('/session', async (req, res) => {
   try {
     const { planType, email } = req.body;
-    
-    // Validate plan type - supports all products (LPV and LLV)
     const validPlanTypes = ['personal', 'family', 'llv_personal', 'llv_family'];
+    
     if (!planType || !validPlanTypes.includes(planType)) {
       return res.status(400).json({ 
         success: false, 
@@ -40,14 +15,10 @@ router.post('/session', async (req, res) => {
       });
     }
     
-    // Build success/cancel URLs
     const baseUrl = process.env.WEBSITE_URL || 'https://localpasswordvault.com';
-    
-    // Success URL includes session_id for retrieving the license key
     const successUrl = `${baseUrl}/purchase/success?session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl = `${baseUrl}/pricing?cancelled=true`;
     
-    // Create Stripe Checkout session
     const session = await createCheckoutSession(
       planType,
       email || null,
@@ -70,12 +41,6 @@ router.post('/session', async (req, res) => {
   }
 });
 
-/**
- * GET /api/checkout/session/:sessionId
- * 
- * Retrieve checkout session details (for success page)
- * Returns the license key if payment was successful
- */
 router.get('/session/:sessionId', async (req, res) => {
   try {
     const { sessionId } = req.params;
@@ -87,14 +52,10 @@ router.get('/session/:sessionId', async (req, res) => {
       });
     }
     
-    // Import db here to avoid circular dependency
     const db = require('../database/db');
-    
-    // Look up all licenses by session ID (handles bundles)
     const licenses = await db.licenses.findAllBySessionId(sessionId);
     
     if (!licenses || licenses.length === 0) {
-      // License not yet created - webhook may still be processing
       return res.status(404).json({ 
         success: false, 
         error: 'License not found. Please wait a moment and refresh.',
@@ -102,9 +63,8 @@ router.get('/session/:sessionId', async (req, res) => {
       });
     }
     
-    // Return license details (single or multiple for bundles)
+    // Single purchase
     if (licenses.length === 1) {
-      // Single purchase
       res.json({
         success: true,
         data: {
@@ -116,7 +76,7 @@ router.get('/session/:sessionId', async (req, res) => {
         },
       });
     } else {
-      // Bundle purchase - return all license keys
+      // Bundle purchase
       res.json({
         success: true,
         isBundle: true,
@@ -143,32 +103,10 @@ router.get('/session/:sessionId', async (req, res) => {
   }
 });
 
-/**
- * POST /api/checkout/bundle
- * 
- * Creates a Stripe Checkout session for a bundle purchase (multiple products).
- * 
- * Request body:
- * {
- *   "items": [
- *     { "productKey": "personal", "quantity": 1 },
- *     { "productKey": "llv_personal", "quantity": 1 }
- *   ],
- *   "email": "user@example.com" (optional)
- * }
- * 
- * Response:
- * {
- *   "success": true,
- *   "sessionId": "cs_xxx",
- *   "url": "https://checkout.stripe.com/..."
- * }
- */
 router.post('/bundle', async (req, res) => {
   try {
     const { items, email } = req.body;
     
-    // Validate items array
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ 
         success: false, 
@@ -176,7 +114,6 @@ router.post('/bundle', async (req, res) => {
       });
     }
     
-    // Validate each item
     for (const item of items) {
       if (!item.productKey || !PRODUCTS[item.productKey]) {
         return res.status(400).json({ 
@@ -186,12 +123,10 @@ router.post('/bundle', async (req, res) => {
       }
     }
     
-    // Build success/cancel URLs
     const baseUrl = process.env.WEBSITE_URL || 'https://localpasswordvault.com';
     const successUrl = `${baseUrl}/purchase/success?session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl = `${baseUrl}/pricing?cancelled=true`;
     
-    // Create bundle checkout session
     const session = await createBundleCheckoutSession(
       items,
       email || null,
@@ -214,11 +149,6 @@ router.post('/bundle', async (req, res) => {
   }
 });
 
-/**
- * GET /api/checkout/products
- * 
- * Returns available products and pricing
- */
 router.get('/products', (req, res) => {
   res.json({
     success: true,

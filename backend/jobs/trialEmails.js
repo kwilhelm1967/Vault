@@ -1,17 +1,3 @@
-/**
- * Trial Email Automation Job
- * 
- * Runs daily to send:
- * - 24-hour warning emails (trial expiring tomorrow)
- * - Trial expired emails (with 10% discount offer)
- * 
- * Usage:
- *   node jobs/trialEmails.js
- * 
- * Or with PM2 cron:
- *   pm2 start jobs/trialEmails.js --cron "0 9 * * *" --no-autorestart
- */
-
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 
 const db = require('../database/db');
@@ -19,14 +5,10 @@ const { sendEmail } = require('../services/email');
 const fs = require('fs');
 const path = require('path');
 
-/**
- * Load and process HTML email template
- */
 function loadTemplate(templateName, variables = {}) {
   const templatePath = path.join(__dirname, '..', 'templates', `${templateName}.html`);
   let html = fs.readFileSync(templatePath, 'utf-8');
   
-  // Replace template variables {{ params.X }}
   for (const [key, value] of Object.entries(variables)) {
     const regex = new RegExp(`\\{\\{\\s*params\\.${key}\\s*\\}\\}`, 'g');
     html = html.replace(regex, value);
@@ -35,9 +17,6 @@ function loadTemplate(templateName, variables = {}) {
   return html;
 }
 
-/**
- * Format date for display
- */
 function formatDate(date) {
   return new Date(date).toLocaleDateString('en-US', {
     year: 'numeric',
@@ -46,9 +25,6 @@ function formatDate(date) {
   });
 }
 
-/**
- * Send trial expiring email (24-hour warning)
- */
 async function sendTrialExpiringEmail(email, expiresAt) {
   const html = loadTemplate('trial-expires-tomorrow-email', {
     EXPIRES_AT: formatDate(expiresAt),
@@ -66,9 +42,6 @@ async function sendTrialExpiringEmail(email, expiresAt) {
   console.log(`✓ Expiring email sent to ${email}`);
 }
 
-/**
- * Send trial expired email (with discount)
- */
 async function sendTrialExpiredEmail(email, expiredDate) {
   const html = loadTemplate('trial-expired-email', {
     EXPIRED_DATE: formatDate(expiredDate),
@@ -87,19 +60,16 @@ async function sendTrialExpiredEmail(email, expiredDate) {
   console.log(`✓ Expired email sent to ${email}`);
 }
 
-/**
- * Main job function
- */
 async function checkTrialEmails() {
   console.log('\n========================================');
   console.log('Trial Email Job Started:', new Date().toISOString());
   console.log('========================================\n');
 
   const now = new Date();
-  
-  // Calculate time windows
+  // Find trials expiring in ~24 hours (23-25 hour window)
   const in23Hours = new Date(now.getTime() + 23 * 60 * 60 * 1000);
   const in25Hours = new Date(now.getTime() + 25 * 60 * 60 * 1000);
+  // Find trials that expired 1-2 days ago
   const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const twoDaysAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
 
@@ -108,10 +78,6 @@ async function checkTrialEmails() {
   let errorCount = 0;
 
   try {
-    // =========================================================================
-    // EXPIRING TRIALS (24-hour warning)
-    // =========================================================================
-    
     const { data: expiringTrials, error: expiringError } = await db.supabase
       .from('trials')
       .select('*')
@@ -143,10 +109,6 @@ async function checkTrialEmails() {
       }
     }
 
-    // =========================================================================
-    // EXPIRED TRIALS (with discount offer)
-    // =========================================================================
-    
     const { data: expiredTrials, error: expiredError } = await db.supabase
       .from('trials')
       .select('*')
@@ -183,7 +145,6 @@ async function checkTrialEmails() {
     errorCount++;
   }
 
-  // Summary
   console.log('\n========================================');
   console.log('Job Complete:', new Date().toISOString());
   console.log(`  Expiring emails sent: ${expiringCount}`);

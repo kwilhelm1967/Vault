@@ -1,19 +1,5 @@
-/**
- * Database Connection and Initialization
- * Uses Supabase (PostgreSQL)
- * 
- * This database supports both products:
- * - Local Password Vault (LPV): product_type='lpv'
- * - Local Legacy Vault (LLV): product_type='llv'
- * 
- * Both products share the same Supabase database and are distinguished by:
- * - License key prefix (PERS/FMLY vs LLVP/LLVF)
- * - product_type field in licenses table
- */
-
 const { createClient } = require('@supabase/supabase-js');
 
-// Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 
@@ -23,18 +9,10 @@ if (!supabaseUrl || !supabaseServiceKey) {
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-/**
- * Initialize database tables from schema
- * Note: Schema should be run manually in Supabase SQL Editor
- */
 async function initialize() {
   console.log('✓ Supabase connection initialized');
-  console.log('⚠ Note: Run schema.sql manually in Supabase SQL Editor');
+  console.log('⚠ Run schema.sql manually in Supabase SQL Editor');
 }
-
-// =============================================================================
-// CUSTOMER OPERATIONS
-// =============================================================================
 
 const customers = {
   async create({ email, stripe_customer_id, name }) {
@@ -55,7 +33,8 @@ const customers = {
       .eq('email', email)
       .single();
     
-    if (error && error.code !== 'PGRST116') throw error; // PGRST116 = not found
+    // PGRST116 = not found (expected, don't throw)
+    if (error && error.code !== 'PGRST116') throw error;
     return data;
   },
   
@@ -83,9 +62,6 @@ const customers = {
   },
 };
 
-// =============================================================================
-// LICENSE OPERATIONS
-// =============================================================================
 
 const licenses = {
   async create({
@@ -160,7 +136,7 @@ const licenses = {
   },
   
   async activate({ license_key, hardware_hash }) {
-    // First get current value to increment
+    // Get current count before incrementing
     const { data: current } = await supabase
       .from('licenses')
       .select('activated_devices')
@@ -211,9 +187,6 @@ const licenses = {
   },
 };
 
-// =============================================================================
-// TRIAL OPERATIONS
-// =============================================================================
 
 const trials = {
   async create({ email, trial_key, expires_at }) {
@@ -280,9 +253,6 @@ const trials = {
   },
 };
 
-// =============================================================================
-// DEVICE ACTIVATION OPERATIONS
-// =============================================================================
 
 const deviceActivations = {
   async create({ license_id, hardware_hash, device_name }) {
@@ -347,9 +317,6 @@ const deviceActivations = {
   },
 };
 
-// =============================================================================
-// WEBHOOK EVENT OPERATIONS
-// =============================================================================
 
 const webhookEvents = {
   async create({ stripe_event_id, event_type, payload }) {
@@ -368,6 +335,7 @@ const webhookEvents = {
   },
   
   async exists(stripe_event_id) {
+    // Check if webhook event was already processed (idempotency)
     const { data, error } = await supabase
       .from('webhook_events')
       .select('id')
@@ -403,15 +371,9 @@ const webhookEvents = {
   },
 };
 
-/**
- * Execute a raw SQL query with parameters
- * Note: Supabase doesn't support raw SQL directly from client
- * Use the query builder methods above instead
- * This function is kept for compatibility but should be refactored
- */
-async function run(sql, params = []) {
-  console.warn('db.run() called with raw SQL. Consider using query builder methods instead.');
-  throw new Error('Raw SQL execution not supported with Supabase. Use query builder methods.');
+// Legacy compatibility - raw SQL not supported with Supabase
+async function run() {
+  throw new Error('Raw SQL not supported. Use query builder methods.');
 }
 
 module.exports = {
