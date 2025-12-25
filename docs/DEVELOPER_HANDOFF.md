@@ -286,7 +286,6 @@ openssl rand -hex 32
 
 ## Reference Documents
 
-- `docs/ACTIVATION_AND_FIRST_USER.md` - Complete step-by-step deployment guide
 - `docs/PRODUCTION_LAUNCH_GUIDE.md` - Detailed production setup guide
 - `docs/PRODUCTION_CHECKLIST.md` - Comprehensive production checklist
 - `backend/README.md` - API documentation

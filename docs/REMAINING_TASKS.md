@@ -9,7 +9,7 @@
 
 The remaining tasks are deployment, configuration, and verification to get the system ready for users.
 
-**For complete deployment guide, see:** `docs/ACTIVATION_AND_FIRST_USER.md`
+**For complete deployment guide, see:** `docs/DEVELOPER_HANDOFF.md`
 
 ---
 
@@ -41,7 +41,7 @@ The remaining tasks are deployment, configuration, and verification to get the s
 - [ ] Verify offline operation after activation
 - [ ] Test error scenarios
 
-**Reference:** See `docs/ACTIVATION_AND_FIRST_USER.md` for detailed step-by-step instructions.
+**Reference:** See `docs/DEVELOPER_HANDOFF.md` for detailed step-by-step instructions.
 
 ---
 
@@ -75,7 +75,7 @@ These are nice-to-have improvements that can be added later:
 
 ## 📚 Reference Documents
 
-- **`docs/ACTIVATION_AND_FIRST_USER.md`** - ⭐ **START HERE** - Complete deployment guide
+- **`docs/DEVELOPER_HANDOFF.md`** - ⭐ **START HERE** - Complete deployment guide
 - `docs/PRODUCTION_LAUNCH_GUIDE.md` - Detailed production setup
 - `docs/PRODUCTION_CHECKLIST.md` - Production checklist
 - `docs/DEVELOPER_HANDOFF.md` - Deployment tasks reference
@@ -83,4 +83,4 @@ These are nice-to-have improvements that can be added later:
 ---
 
 **Last Updated:** January 2025  
-**Next Steps:** Follow `ACTIVATION_AND_FIRST_USER.md` to deploy and get first user
+**Next Steps:** Follow `DEVELOPER_HANDOFF.md` to deploy and get first user
