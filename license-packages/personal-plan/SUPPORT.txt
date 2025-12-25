@@ -6,10 +6,8 @@
                          📧 CONTACT SUPPORT
 ================================================================================
 
-Email:          support@LocalPasswordVault.com
-Response Time:  Within 48 hours (business days)
-Website:        https://LocalPasswordVault.com
-Knowledge Base: https://LocalPasswordVault.com/kb
+Email:   support@LocalPasswordVault.com
+Website: https://LocalPasswordVault.com
 
 ================================================================================
                          🔧 COMMON ISSUES & SOLUTIONS
@@ -74,25 +72,7 @@ ISSUE: Floating Panel Not Appearing
                          📚 SELF-HELP RESOURCES
 ================================================================================
 
-Knowledge Base
---------------
-Searchable articles covering:
-- Installation guides
-- Feature tutorials
-- Troubleshooting steps
-- Best practices
-
-Visit: https://LocalPasswordVault.com/kb
-
-Video Tutorials
----------------
-Step-by-step video guides for:
-- Getting started
-- Importing passwords
-- Using advanced features
-- Security best practices
-
-Visit: https://LocalPasswordVault.com/tutorials
+For help and resources, visit: https://LocalPasswordVault.com
 
 ================================================================================
                          📝 BEFORE CONTACTING SUPPORT
@@ -127,13 +107,11 @@ If someone asks for these, it's a scam. Report it to us immediately.
 Need more devices? Upgrade to Family Plan:
 - 5 device licenses
 - Same lifetime pricing model
-- Priority support
 
-Visit: https://LocalPasswordVault.com/upgrade
+Contact support for upgrade information or visit: https://LocalPasswordVault.com/pricing
 
 ================================================================================
 
 © 2025 Local Password Vault | https://LocalPasswordVault.com
 
 ================================================================================
-
