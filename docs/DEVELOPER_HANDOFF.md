@@ -38,9 +38,8 @@ openssl rand -hex 32
 
 ---
 
-### 1.2 Configure Nginx & SSL
-- [ ] Install Nginx (if not installed)
-- [ ] Configure SSL certificate (Let's Encrypt)
+### 1.2 Configure SSL & Reverse Proxy
+- [ ] Configure SSL certificate (Let's Encrypt or your preferred method)
 - [ ] Set up reverse proxy for API domain (api.localpasswordvault.com)
 - [ ] Test health endpoint: `curl https://api.localpasswordvault.com/health`
 
