@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document lists only the tasks that need to be completed to deploy the system and get it ready for users.
+**Everything listed below is a task that needs to be done.** All items have [ ] checkboxes - check them off as you complete each task.
 
 **For complete step-by-step instructions, see:** `docs/ACTIVATION_AND_FIRST_USER.md`
 
@@ -13,12 +13,12 @@ This document lists only the tasks that need to be completed to deploy the syste
 ### 1.1 Deploy Backend to Server
 
 **Required Steps:**
-1. SSH into production server (Linode/VPS)
-2. Clone or upload backend code to `/var/www/lpv-api`
-3. Install dependencies: `npm install`
-4. Create `.env` file with all required variables (see `backend/env.example`)
-5. Start with PM2: `pm2 start server.js --name lpv-api`
-6. Enable auto-start: `pm2 startup` and `pm2 save`
+- [ ] SSH into production server (Linode/VPS)
+- [ ] Clone or upload backend code to `/var/www/lpv-api`
+- [ ] Install dependencies: `npm install`
+- [ ] Create `.env` file with all required variables (see `backend/env.example`)
+- [ ] Start with PM2: `pm2 start server.js --name lpv-api`
+- [ ] Enable auto-start: `pm2 startup` and `pm2 save`
 
 **Required Environment Variables:**
 ```env
@@ -49,10 +49,10 @@ openssl rand -hex 32
 ### 1.2 Configure Nginx & SSL
 
 **Required Steps:**
-1. Install Nginx (if not installed)
-2. Configure SSL certificate (Let's Encrypt)
-3. Set up reverse proxy for API domain (api.localpasswordvault.com)
-4. Test health endpoint: `curl https://api.localpasswordvault.com/health`
+- [ ] Install Nginx (if not installed)
+- [ ] Configure SSL certificate (Let's Encrypt)
+- [ ] Set up reverse proxy for API domain (api.localpasswordvault.com)
+- [ ] Test health endpoint: `curl https://api.localpasswordvault.com/health`
 
 **Reference:** `docs/PRODUCTION_LAUNCH_GUIDE.md` - Step 2
 
@@ -61,13 +61,13 @@ openssl rand -hex 32
 ### 1.3 Database Setup
 
 **Required Steps:**
-1. Verify Supabase project exists
-2. Run database schema: Execute `backend/database/schema.sql` in Supabase SQL Editor
-3. Get connection details:
-   - Project URL (from Supabase Settings → API)
-   - Service Role Key (NOT anon key)
-4. Add to backend `.env` file
-5. Test connection from backend server
+- [ ] Verify Supabase project exists
+- [ ] Run database schema: Execute `backend/database/schema.sql` in Supabase SQL Editor
+- [ ] Get connection details:
+  - Project URL (from Supabase Settings → API)
+  - Service Role Key (NOT anon key)
+- [ ] Add to backend `.env` file
+- [ ] Test connection from backend server
 
 **Reference:** `docs/PRODUCTION_LAUNCH_GUIDE.md` - Step 1
 
@@ -78,26 +78,23 @@ openssl rand -hex 32
 ### 2.1 Stripe Configuration
 
 **Required Steps:**
-1. Create Stripe products (if not done):
-   - Personal Vault ($49) - Get Price ID
-   - Family Vault ($79) - Get Price ID
-   - LLV Personal ($49) - Get Price ID
-   - LLV Family ($129) - Get Price ID
-
-2. Configure Stripe Webhook:
-   - Add endpoint: `https://api.localpasswordvault.com/api/webhooks/stripe`
-   - Select event: `checkout.session.completed`
-   - Copy webhook signing secret
-   - Add to backend `.env` as `STRIPE_WEBHOOK_SECRET`
-
-3. Switch to Live Mode:
-   - Replace test keys with live keys in backend `.env`
-   - Update frontend environment with live publishable key
-
-4. Test Webhook:
-   - Send test event from Stripe dashboard
-   - Verify webhook received and processed
-   - Check backend logs for webhook processing
+- [ ] Create Stripe products (if not done):
+  - Personal Vault ($49) - Get Price ID
+  - Family Vault ($79) - Get Price ID
+  - LLV Personal ($49) - Get Price ID
+  - LLV Family ($129) - Get Price ID
+- [ ] Configure Stripe Webhook:
+  - Add endpoint: `https://api.localpasswordvault.com/api/webhooks/stripe`
+  - Select event: `checkout.session.completed`
+  - Copy webhook signing secret
+  - Add to backend `.env` as `STRIPE_WEBHOOK_SECRET`
+- [ ] Switch to Live Mode:
+  - Replace test keys with live keys in backend `.env`
+  - Update frontend environment with live publishable key
+- [ ] Test Webhook:
+  - Send test event from Stripe dashboard
+  - Verify webhook received and processed
+  - Check backend logs for webhook processing
 
 **Reference:** `docs/PRODUCTION_LAUNCH_GUIDE.md` - Step 3
 
@@ -106,11 +103,11 @@ openssl rand -hex 32
 ### 2.2 Email Service (Brevo)
 
 **Required Steps:**
-1. Create/verify Brevo account
-2. Generate API key with "Send emails" permission
-3. Verify sender email address in Brevo
-4. Add API key to backend `.env` as `BREVO_API_KEY`
-5. Test email sending
+- [ ] Create/verify Brevo account
+- [ ] Generate API key with "Send emails" permission
+- [ ] Verify sender email address in Brevo
+- [ ] Add API key to backend `.env` as `BREVO_API_KEY`
+- [ ] Test email sending
 
 **Reference:** `docs/PRODUCTION_LAUNCH_GUIDE.md` - Step 4
 
@@ -123,18 +120,18 @@ openssl rand -hex 32
 **Required Steps:**
 
 **Windows:**
-1. Run: `npm run dist:win`
-2. Test installer on clean Windows machine
-3. (Optional) Code sign installer if certificate available
+- [ ] Run: `npm run dist:win`
+- [ ] Test installer on clean Windows machine
+- [ ] (Optional) Code sign installer if certificate available
 
 **macOS:**
-1. Run: `npm run dist:mac`
-2. Test DMG on clean macOS machine
-3. (Optional) Code sign and notarize if Apple Developer account available
+- [ ] Run: `npm run dist:mac`
+- [ ] Test DMG on clean macOS machine
+- [ ] (Optional) Code sign and notarize if Apple Developer account available
 
 **Linux:**
-1. Run: `npm run dist:linux`
-2. Test AppImage on clean Linux machine
+- [ ] Run: `npm run dist:linux`
+- [ ] Test AppImage on clean Linux machine
 
 **Reference:** `docs/PRODUCTION_LAUNCH_GUIDE.md` - Step 5
 
@@ -143,15 +140,14 @@ openssl rand -hex 32
 ### 3.2 Create Download Packages
 
 **Required Steps:**
-1. Create ZIP package for each platform containing:
-   - Installer file (`.exe`, `.dmg`, or `.AppImage`)
-   - `README.txt` (if available)
-   - Documentation files (if available)
-
-2. Host packages:
-   - Upload to GitHub Releases (or alternative hosting)
-   - Get download URLs
-   - Update email templates with download URLs
+- [ ] Create ZIP package for each platform containing:
+  - Installer file (`.exe`, `.dmg`, or `.AppImage`)
+  - `README.txt` (if available)
+  - Documentation files (if available)
+- [ ] Host packages:
+  - Upload to GitHub Releases (or alternative hosting)
+  - Get download URLs
+  - Update email templates with download URLs
 
 **Files to Update:**
 - Email templates in `backend/templates/` - Update download links
