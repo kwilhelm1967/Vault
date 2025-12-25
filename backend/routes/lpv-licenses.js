@@ -87,6 +87,8 @@ router.post('/activate', async (req, res) => {
         max_devices: license.max_devices,
         activated_at: new Date().toISOString(),
         product_type: license.product_type || 'lpv',
+        transfer_count: license.transfer_count || 0,
+        last_transfer_at: license.last_transfer_at || null,
       });
       
       return res.json({
