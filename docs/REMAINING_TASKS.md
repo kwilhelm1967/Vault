@@ -18,7 +18,7 @@ The remaining tasks are deployment, configuration, and verification to get the s
 ### Backend Deployment
 - [ ] Deploy backend to production server
 - [ ] Configure environment variables (`.env` file)
-- [ ] Set up Nginx reverse proxy and SSL
+- [ ] Set up reverse proxy and SSL
 - [ ] Configure database connection (Supabase)
 - [ ] Start backend with PM2
 
