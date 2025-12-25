@@ -55,9 +55,14 @@ These are nice-to-have improvements that can be added later:
 - E2E tests for trial signup → purchase flow
 
 ### Monitoring & Logging
-- Enhanced error logging
-- Error tracking service integration
-- Webhook failure alerts
+- [ ] Implement structured error logging with error codes (backend)
+- [ ] Add context information to error logs (request ID, user ID, timestamp)
+- [ ] Replace basic `console.error` with structured logging
+- [ ] Set up error tracking service integration (optional - backend only)
+- [ ] Configure webhook failure alerts and monitoring
+- [ ] Implement local-only frontend error logging (100% offline - no network calls)
+
+**Note:** Backend logging/monitoring does not affect 100% offline promise. Frontend error logging must be local-only with zero network calls after activation.
 
 ### UI Improvements
 - Retry button for network errors
