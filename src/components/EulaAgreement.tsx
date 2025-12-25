@@ -85,6 +85,23 @@ export const EulaAgreement: React.FC<EulaAgreementProps> = ({
           </p>
 
           <h3 className="text-white font-semibold mt-6 mb-2">
+            2.1 License Transfers
+          </h3>
+          <p className="mb-4">
+            You may transfer your license to a new device, subject to the following limitations:
+          </p>
+          <ul className="list-disc pl-6 mb-4 space-y-1">
+            <li><strong>Transfer Limit:</strong> You are allowed up to <strong>three (3) transfers per year</strong></li>
+            <li><strong>Transfer Process:</strong> Each transfer deactivates the license on the previous device</li>
+            <li><strong>Internet Required:</strong> Transfers require an internet connection for validation</li>
+            <li><strong>Limit Exceeded:</strong> If you exceed 3 transfers in a 12-month period, contact support for assistance</li>
+            <li><strong>Annual Reset:</strong> Transfer count resets 12 months after your first transfer</li>
+          </ul>
+          <p className="mb-4 text-amber-300">
+            ⚠️ <strong>Important:</strong> The 3 transfers/year limit is strictly enforced. Plan your device changes accordingly.
+          </p>
+
+          <h3 className="text-white font-semibold mt-6 mb-2">
             3. Restrictions
           </h3>
           <p className="mb-2">You agree not to:</p>

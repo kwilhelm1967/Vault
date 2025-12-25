@@ -31,6 +31,9 @@ You MAY:
 - Export your data in supported formats
 - Receive free software updates
 - Transfer the license to a new device (deactivating the old one first)
+  * Transfer limit: Up to 3 transfers per year
+  * Each transfer requires internet connection for validation
+  * If you exceed the limit, contact support for assistance
 
 ================================================================================
                               3. RESTRICTIONS

@@ -39,7 +39,14 @@ A Trial License grants you:
 - One trial per user/device
 - No payment required during trial
 
-### 2.4 Restrictions
+### 2.4 License Transfers
+- You may transfer your license to a new device up to **three (3) times per year**
+- Each transfer deactivates the license on the previous device
+- Transfers require internet connection for validation
+- If you exceed the transfer limit, contact support for assistance
+- Transfer count resets annually (12 months from first transfer)
+
+### 2.5 Restrictions
 You may NOT:
 - Share license keys outside your authorized devices
 - Reverse engineer, decompile, or disassemble the Application
@@ -262,6 +269,7 @@ For questions about these Terms:
 | Topic | Summary |
 |-------|---------|
 | **License** | Personal (1 device) or Family (5 devices) |
+| **Transfers** | 3 transfers per year allowed |
 | **Trial** | 14 days, full features, no card required |
 | **Refunds** | 30-day money-back guarantee |
 | **Your Data** | Local only, your responsibility |
