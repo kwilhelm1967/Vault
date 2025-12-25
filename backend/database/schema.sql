@@ -1,12 +1,15 @@
 -- =============================================================================
--- Local Password Vault - Database Schema (PostgreSQL for Supabase)
+-- Local Password Vault & Local Legacy Vault - Database Schema (PostgreSQL for Supabase)
 -- =============================================================================
--- This schema supports:
--- • License key management (Personal $49, Family $79, LLV Personal $49, LLV Family $129)
--- • Trial signups (7-day free trial)
+-- This schema supports BOTH products:
+-- • Local Password Vault (LPV): Personal $49, Family $79
+-- • Local Legacy Vault (LLV): Personal $49, Family $129
+-- • Trial signups (7-day free trial) - LPV only
 -- • Customer records from Stripe
 -- • Hardware-bound activation tracking
--- • Bundle purchases with automatic discounts
+-- • Bundle purchases with automatic discounts (LPV + LLV combinations)
+-- 
+-- Database: Supabase (PostgreSQL) - NO SQLite support
 -- =============================================================================
 
 -- Customers table (synced from Stripe)
@@ -25,9 +28,11 @@ CREATE TABLE IF NOT EXISTS licenses (
     license_key TEXT NOT NULL UNIQUE,
     
     -- License type: 'personal', 'family', 'llv_personal', 'llv_family'
+    -- Supports both Local Password Vault (LPV) and Local Legacy Vault (LLV)
     plan_type TEXT NOT NULL CHECK (plan_type IN ('personal', 'family', 'llv_personal', 'llv_family')),
     
     -- Product type: 'lpv' (Local Password Vault) or 'llv' (Local Legacy Vault)
+    -- Both products use the same Supabase database, distinguished by this field
     product_type TEXT DEFAULT 'lpv' CHECK (product_type IN ('lpv', 'llv')),
     
     -- Customer association

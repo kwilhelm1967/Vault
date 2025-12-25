@@ -35,14 +35,15 @@ const PRODUCTS = {
     maxDevices: 5,
     productType: 'lpv',
   },
-  // Local Legacy Vault (LLV)
+  // Local Legacy Vault (LLV) - Separate product line
+  // Uses same Supabase database as LPV, but generates different license key prefixes (LLVP/LLVF)
   llv_personal: {
     name: 'Local Legacy Vault - Personal',
     description: 'Lifetime license for 1 device',
-    price: 4900, // $49.00 in cents (adjust as needed)
+    price: 4900, // $49.00 in cents
     priceId: process.env.STRIPE_PRICE_LLV_PERSONAL, // Set in .env
     maxDevices: 1,
-    productType: 'llv',
+    productType: 'llv', // Stored in database to distinguish from LPV
   },
   llv_family: {
     name: 'Local Legacy Vault - Family',
@@ -50,7 +51,7 @@ const PRODUCTS = {
     price: 12900, // $129.00 in cents
     priceId: process.env.STRIPE_PRICE_LLV_FAMILY, // Set in .env
     maxDevices: 5,
-    productType: 'llv',
+    productType: 'llv', // Stored in database to distinguish from LPV
   },
 };
 

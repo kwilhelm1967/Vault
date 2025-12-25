@@ -350,23 +350,31 @@ Before starting, ensure you have:
      - Amount: `$79.00`
    - **Save** and note the **Price ID**
 
-5. **Update backend `services/stripe.js` with Price IDs:**
-   ```javascript
-   const PRODUCTS = {
-     personal: {
-       name: 'Personal Vault',
-       priceId: 'price_xxxxxxxxxxxxx',  // Your Personal Price ID
-       price: 4900,  // $49.00 in cents
-       maxDevices: 1,
-     },
-     family: {
-       name: 'Family Vault',
-       priceId: 'price_xxxxxxxxxxxxx',  // Your Family Price ID
-       price: 7900,  // $79.00 in cents
-       maxDevices: 5,
-     },
-   };
+5. **Create Local Legacy Vault - Personal:**
+   - **Name:** `Local Legacy Vault - Personal`
+   - **Description:** `Lifetime license for 1 device`
+   - **Pricing:**
+     - Type: `One-time`
+     - Amount: `$49.00`
+   - **Save** and note the **Price ID**
+
+6. **Create Local Legacy Vault - Family:**
+   - **Name:** `Local Legacy Vault - Family`
+   - **Description:** `Lifetime license for 5 devices`
+   - **Pricing:**
+     - Type: `One-time`
+     - Amount: `$129.00`
+   - **Save** and note the **Price ID**
+
+7. **Add all Price IDs to backend `.env`:**
+   ```env
+   STRIPE_PRICE_PERSONAL=price_xxxxxxxxxxxxx
+   STRIPE_PRICE_FAMILY=price_xxxxxxxxxxxxx
+   STRIPE_PRICE_LLV_PERSONAL=price_xxxxxxxxxxxxx
+   STRIPE_PRICE_LLV_FAMILY=price_xxxxxxxxxxxxx
    ```
+
+**Note:** The `services/stripe.js` file already includes all four products (LPV Personal, LPV Family, LLV Personal, LLV Family). You only need to set the Price IDs in `.env` - no code changes needed.
 
 ### 3.2: Get API Keys
 

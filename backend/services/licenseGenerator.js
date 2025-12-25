@@ -68,6 +68,10 @@ function generateFamilyKey() {
 /**
  * Generate a Local Legacy Vault Personal key
  * Format: LLVP-XXXX-XXXX-XXXX
+ * 
+ * Local Legacy Vault (LLV) is a separate product line from Local Password Vault (LPV).
+ * Both products use the same Supabase database but are distinguished by license key prefix
+ * and product_type field in the database.
  */
 function generateLLVPersonalKey() {
   return generateLicenseKey('LLVP');
@@ -76,6 +80,10 @@ function generateLLVPersonalKey() {
 /**
  * Generate a Local Legacy Vault Family key
  * Format: LLVF-XXXX-XXXX-XXXX
+ * 
+ * Local Legacy Vault (LLV) is a separate product line from Local Password Vault (LPV).
+ * Both products use the same Supabase database but are distinguished by license key prefix
+ * and product_type field in the database.
  */
 function generateLLVFamilyKey() {
   return generateLicenseKey('LLVF');

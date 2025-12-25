@@ -163,10 +163,14 @@ async function handleCheckoutCompleted(session) {
       numKeys = 5; // Family plans get 5 separate keys
       keyGenerator = generateFamilyKey;
     } else if (product.key === 'llv_personal') {
+      // Local Legacy Vault - Personal: Generates LLVP-XXXX-XXXX-XXXX keys
+      // Uses same Supabase database as LPV, distinguished by product_type='llv'
       planType = 'llv_personal';
       numKeys = 1;
       keyGenerator = generateLLVPersonalKey;
     } else if (product.key === 'llv_family') {
+      // Local Legacy Vault - Family: Generates LLVF-XXXX-XXXX-XXXX keys (5 keys)
+      // Uses same Supabase database as LPV, distinguished by product_type='llv'
       planType = 'llv_family';
       numKeys = 5; // Family plans get 5 separate keys
       keyGenerator = generateLLVFamilyKey;

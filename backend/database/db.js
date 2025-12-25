@@ -1,6 +1,14 @@
 /**
  * Database Connection and Initialization
- * Uses Supabase (PostgreSQL)
+ * Uses Supabase (PostgreSQL) - NO SQLite support
+ * 
+ * This database supports both products:
+ * - Local Password Vault (LPV): product_type='lpv'
+ * - Local Legacy Vault (LLV): product_type='llv'
+ * 
+ * Both products share the same Supabase database and are distinguished by:
+ * - License key prefix (PERS/FMLY vs LLVP/LLVF)
+ * - product_type field in licenses table
  */
 
 const { createClient } = require('@supabase/supabase-js');
