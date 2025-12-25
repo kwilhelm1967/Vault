@@ -240,6 +240,50 @@ openssl rand -hex 32
 
 ---
 
+## Phase 6: Error Logging & Monitoring
+
+### 6.1 Structured Error Logging (Backend)
+- [ ] Implement structured error logging with error codes
+- [ ] Add context information to error logs (request ID, user ID, timestamp)
+- [ ] Replace basic `console.error` with structured logging
+- [ ] Log levels: ERROR, WARN, INFO, DEBUG
+- [ ] Include stack traces for errors
+
+**Note:** Backend logging only. Does not affect 100% offline promise.
+
+---
+
+### 6.2 Error Tracking Service Integration (Optional - Backend Only)
+- [ ] Set up error tracking service (e.g., Sentry, Rollbar)
+- [ ] Configure backend error reporting
+- [ ] Set up error alerts/notifications
+- [ ] Configure error grouping and filtering
+
+**Note:** Backend only. Frontend must remain 100% offline after activation.
+
+---
+
+### 6.3 Webhook Failure Alerts (Backend)
+- [ ] Monitor Stripe webhook processing
+- [ ] Set up alerts for webhook failures
+- [ ] Log webhook retry attempts
+- [ ] Alert on repeated webhook failures
+- [ ] Track webhook processing time
+
+**Note:** Backend monitoring only. Does not affect app offline operation.
+
+---
+
+### 6.4 Frontend Error Logging (Local Only - 100% Offline)
+- [ ] Implement local error logging (localStorage or local file)
+- [ ] Log errors with context (user actions, license status)
+- [ ] NO network calls for error logging (maintains 100% offline promise)
+- [ ] Optional: Allow user to export error logs for support
+
+**Critical:** Frontend error logging must be 100% local. Zero network calls after activation.
+
+---
+
 ## Reference Documents
 
 - `docs/ACTIVATION_AND_FIRST_USER.md` - Complete step-by-step deployment guide
