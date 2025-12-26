@@ -113,16 +113,21 @@ openssl rand -hex 32
 ---
 
 ### 3.2 Create Download Packages
+
+**Package Location:** All download packages are stored in the `download-packages/` directory at the project root.
+
 - [x] Create ZIP package for Windows (already created)
-  - Package script: `scripts/create-download-packages.ps1`
-  - Windows package: `download-packages/Local-Password-Vault-Windows-1.2.0.zip`
-  - Contains: Installer, README.txt, USER_MANUAL.md, QUICK_START_GUIDE.md, TROUBLESHOOTING_GUIDE.md
+  - **Location:** `download-packages/Local-Password-Vault-Windows-1.2.0.zip`
+  - **Package script:** `scripts/create-download-packages.ps1`
+  - **Contains:** Installer, README.txt, USER_MANUAL.md, QUICK_START_GUIDE.md, TROUBLESHOOTING_GUIDE.md
 - [ ] Create ZIP package for macOS:
   - Build macOS installer: `npm run dist:mac`
   - Run package script: `.\scripts\create-download-packages.ps1`
+  - **Location:** `download-packages/Local-Password-Vault-macOS-1.2.0.zip`
 - [ ] Create ZIP package for Linux:
   - Build Linux installer: `npm run dist:linux`
   - Run package script: `.\scripts\create-download-packages.ps1`
+  - **Location:** `download-packages/Local-Password-Vault-Linux-1.2.0.zip`
 - [ ] Host packages:
   - Upload ZIP files to GitHub Releases
     - Go to: https://github.com/kwilhelm1967/Vault/releases
