@@ -33,11 +33,13 @@ import {
   Smartphone,
   ExternalLink,
   Globe,
+  FileText,
 } from "lucide-react";
 import { APP_VERSION } from "../config/changelog";
 import { generateRecoveryPhrase, storeRecoveryPhrase } from "../utils/recoveryPhrase";
 import { storageService } from "../utils/storage";
 import { devError, devWarn } from "../utils/devLog";
+import { getErrorLogger } from "../utils/errorHandling";
 import { MobileAccess } from "./MobileAccess";
 
 // Color palette
@@ -866,6 +868,37 @@ export const Settings: React.FC<SettingsProps> = ({
               <p className="text-slate-500 text-xs truncate">LocalPasswordVault.com</p>
             </div>
             <ExternalLink className="w-4 h-4 text-slate-400" strokeWidth={1.5} />
+          </div>
+        </BouncyCard>
+
+        {/* Export Error Logs */}
+        <BouncyCard 
+          variant="accent" 
+          onClick={() => {
+            try {
+              const errorLogger = getErrorLogger();
+              const errorLogs = errorLogger.exportErrorLogs();
+              const blob = new Blob([errorLogs], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `lpv-error-logs-${new Date().toISOString().split('T')[0]}.json`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            } catch (error) {
+              devError('Failed to export error logs:', error);
+            }
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <FileText className="w-6 h-6" strokeWidth={1.5} style={{ color: colors.brandGold }} />
+            <div className="flex-1 min-w-0">
+              <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-0.5 text-sm">Export Error Logs</h3>
+              <p className="text-slate-500 text-xs truncate">For support requests</p>
+            </div>
+            <Download className="w-4 h-4 text-slate-400" strokeWidth={1.5} />
           </div>
         </BouncyCard>
       </div>

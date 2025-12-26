@@ -11,6 +11,7 @@ import {
   ArrowLeft,
   Download,
   Rocket,
+  RefreshCw,
 } from "lucide-react";
 import { analyticsService } from "../utils/analyticsService";
 import { licenseService, AppLicenseStatus } from "../utils/licenseService";
@@ -252,6 +253,8 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
         if (result.error?.includes("fetch") || result.error?.includes("Unable to connect")) {
           enhancedError = "Unable to connect to license server. Please check your internet connection and try again.";
           errorType = 'network';
+          // Store the license key for retry
+          setPendingLicenseKey(cleanKey);
         } else if (result.error?.includes("409") || result.error?.includes("already activated")) {
           enhancedError = "This license is already activated on another device. Use the transfer option to move it to this device.";
           errorType = 'device';
@@ -288,6 +291,8 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
       if (error instanceof TypeError && error.message.includes("fetch")) {
         enhancedError =
           "Unable to connect to license server. Please check your internet connection and try again.";
+        // Store the license key for retry
+        setPendingLicenseKey(licenseKey);
       } else if (error instanceof Error) {
         enhancedError = `License activation failed: ${error.message}`;
       }
@@ -697,7 +702,36 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
                       <div className="flex-1">
                         <p className="text-xs font-semibold mb-0.5" style={{ color: '#D97706' }}>Activation Error</p>
                         <p className="text-xs text-slate-200 mb-2">{error}</p>
-                        {error.includes("connect") && (
+                        {(error.includes("connect") || error.includes("network")) && pendingLicenseKey && (
+                          <div className="mt-2 space-y-2">
+                            <button
+                              onClick={() => {
+                                setError(null);
+                                setLicenseKey(pendingLicenseKey);
+                                handleActivateLicense();
+                              }}
+                              disabled={isActivating}
+                              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded text-xs font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                              style={{ 
+                                backgroundColor: 'rgba(91, 130, 184, 0.2)',
+                                border: '1px solid rgba(91, 130, 184, 0.4)',
+                                color: '#5B82B8'
+                              }}
+                            >
+                              <RefreshCw className={`w-3 h-3 ${isActivating ? 'animate-spin' : ''}`} />
+                              <span>Retry Activation</span>
+                            </button>
+                            <div className="p-2 rounded text-xs" style={{ backgroundColor: 'rgba(0, 0, 0, 0.2)' }}>
+                              <p className="text-slate-300">Troubleshooting:</p>
+                              <ul className="list-disc list-inside text-slate-400 mt-1 space-y-0.5">
+                                <li>Check your internet connection</li>
+                                <li>Try again in a few moments</li>
+                                <li>Contact support if problem persists</li>
+                              </ul>
+                            </div>
+                          </div>
+                        )}
+                        {error.includes("connect") && !pendingLicenseKey && (
                           <div className="mt-2 p-2 rounded text-xs" style={{ backgroundColor: 'rgba(0, 0, 0, 0.2)' }}>
                             <p className="text-slate-300">Troubleshooting:</p>
                             <ul className="list-disc list-inside text-slate-400 mt-1 space-y-0.5">

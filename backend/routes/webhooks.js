@@ -13,6 +13,71 @@ const performanceMonitor = require('../utils/performanceMonitor');
 
 const router = express.Router();
 
+// Webhook failure tracking for alerts
+const webhookFailureTracker = {
+  consecutiveFailures: 0,
+  lastFailureTime: null,
+  lastAlertTime: null,
+  FAILURE_THRESHOLD: 3, // Alert after 3 consecutive failures
+  ALERT_COOLDOWN: 3600000, // 1 hour between alerts
+};
+
+/**
+ * Check if webhook failure alert should be sent
+ */
+async function checkAndSendWebhookAlert(eventType, eventId, error) {
+  webhookFailureTracker.consecutiveFailures++;
+  webhookFailureTracker.lastFailureTime = new Date();
+
+  // Check if we should send an alert
+  if (webhookFailureTracker.consecutiveFailures >= webhookFailureTracker.FAILURE_THRESHOLD) {
+    const now = Date.now();
+    const lastAlert = webhookFailureTracker.lastAlertTime?.getTime() || 0;
+    
+    // Only send alert if cooldown period has passed
+    if (now - lastAlert > webhookFailureTracker.ALERT_COOLDOWN) {
+      webhookFailureTracker.lastAlertTime = new Date();
+      
+      try {
+        const { sendAlertEmail } = require('../services/email');
+        await sendAlertEmail({
+          subject: `⚠️ Webhook Failure Alert: ${webhookFailureTracker.consecutiveFailures} Consecutive Failures`,
+          message: `Webhook processing has failed ${webhookFailureTracker.consecutiveFailures} times in a row.\n\n` +
+                   `Event Type: ${eventType}\n` +
+                   `Event ID: ${eventId}\n` +
+                   `Error: ${error?.message || 'Unknown error'}\n` +
+                   `Time: ${new Date().toISOString()}\n\n` +
+                   `Please check the backend logs and Stripe webhook configuration.`,
+        });
+        
+        logger.warn('Webhook failure alert sent', {
+          consecutiveFailures: webhookFailureTracker.consecutiveFailures,
+          eventType,
+          eventId,
+          operation: 'webhook_alert',
+        });
+      } catch (alertError) {
+        logger.error('Failed to send webhook failure alert', alertError, {
+          operation: 'webhook_alert_send',
+        });
+      }
+    }
+  }
+}
+
+/**
+ * Reset failure counter on successful webhook
+ */
+function resetWebhookFailureCounter() {
+  if (webhookFailureTracker.consecutiveFailures > 0) {
+    logger.info('Webhook processing succeeded, resetting failure counter', {
+      previousFailures: webhookFailureTracker.consecutiveFailures,
+      operation: 'webhook_recovery',
+    });
+  }
+  webhookFailureTracker.consecutiveFailures = 0;
+}
+
 router.post('/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
   const signature = req.headers['stripe-signature'];
   const webhookStartTime = Date.now();
@@ -26,9 +91,14 @@ router.post('/stripe', express.raw({ type: 'application/json' }), async (req, re
   } catch (error) {
     logger.webhookError('signature_verification', null, error, {
       operation: 'webhook_verification',
+      requestId: req.requestId,
     });
     const duration = Date.now() - webhookStartTime;
     performanceMonitor.trackWebhook('signature_verification', false, duration);
+    
+    // Track signature verification failures
+    await checkAndSendWebhookAlert('signature_verification', null, error);
+    
     return res.status(400).json({ error: `Webhook Error: ${error.message}` });
   }
   
@@ -88,14 +158,21 @@ router.post('/stripe', express.raw({ type: 'application/json' }), async (req, re
     
     const webhookDuration = Date.now() - webhookStartTime;
     performanceMonitor.trackWebhook(event.type, webhookSuccess, webhookDuration);
+    
+    // Reset failure counter on success
+    resetWebhookFailureCounter();
   } catch (error) {
     logger.webhookError(event.type, event.id, error, {
       operation: 'webhook_processing',
+      requestId: req.requestId,
     });
     await db.webhookEvents.markError(event.id, error.message);
     
     const webhookDuration = Date.now() - webhookStartTime;
     performanceMonitor.trackWebhook(event.type, false, webhookDuration);
+    
+    // Check and send alert if threshold reached
+    await checkAndSendWebhookAlert(event.type, event.id, error);
   }
   
   res.json({ received: true });

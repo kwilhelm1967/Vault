@@ -259,11 +259,65 @@ async function verifyConnection() {
   }
 }
 
+/**
+ * Send alert email for system issues (webhook failures, etc.)
+ */
+async function sendAlertEmail({ subject, message }) {
+  const supportEmail = process.env.SUPPORT_EMAIL || process.env.FROM_EMAIL || 'support@localpasswordvault.com';
+  
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .alert { background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; }
+        .details { background-color: #f3f4f6; padding: 15px; border-radius: 5px; margin: 15px 0; }
+        pre { background-color: #1f2937; color: #f3f4f6; padding: 15px; border-radius: 5px; overflow-x: auto; }
+      </style>
+    </head>
+    <body>
+      <div class="alert">
+        <h2>⚠️ System Alert</h2>
+        <p><strong>${subject}</strong></p>
+      </div>
+      <div class="details">
+        <pre>${message}</pre>
+      </div>
+      <p style="color: #6b7280; font-size: 12px; margin-top: 20px;">
+        This is an automated alert from Local Password Vault backend.
+      </p>
+    </body>
+    </html>
+  `;
+  
+  const text = `${subject}\n\n${message}\n\nThis is an automated alert from Local Password Vault backend.`;
+  
+  try {
+    const response = await sendEmailViaBrevo({
+      to: supportEmail,
+      subject: `[ALERT] ${subject}`,
+      html,
+      text,
+    });
+    
+    console.log(`✓ Alert email sent to ${supportEmail}`);
+    performanceMonitor.trackEmail(true);
+    return response;
+  } catch (error) {
+    console.error(`✗ Failed to send alert email to ${supportEmail}:`, error.message);
+    performanceMonitor.trackEmail(false);
+    throw error;
+  }
+}
+
 module.exports = {
   sendPurchaseEmail,
   sendBundleEmail,
   sendTrialEmail,
   sendEmail,
+  sendAlertEmail,
   verifyConnection,
   loadTemplate,
 };

@@ -55,6 +55,19 @@ app.use('/api/', rateLimit({
   legacyHeaders: false,
 }));
 
+// Request ID middleware - generates unique ID for each request
+app.use((req, res, next) => {
+  // Generate unique request ID
+  const requestId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  req.requestId = requestId;
+  res.setHeader('X-Request-ID', requestId);
+  
+  // Attach to logger context
+  req.loggerContext = { requestId };
+  
+  next();
+});
+
 // Performance monitoring middleware (tracks response times - NO customer data)
 app.use((req, res, next) => {
   const startTime = Date.now();

@@ -24,16 +24,25 @@ class Logger {
    * Create structured log entry
    */
   createLogEntry(level, message, context = {}, error = null) {
+    // Extract request ID from context if available
+    const requestId = context.requestId || context.req?.requestId || null;
+    
     const entry = {
       timestamp: new Date().toISOString(),
       level,
       message,
+      requestId, // Include request ID for tracing
       context: {
         ...context,
         environment: process.env.NODE_ENV || 'development',
         service: 'local-password-vault-backend',
       },
     };
+    
+    // Remove requestId from context to avoid duplication
+    if (entry.context.requestId) {
+      delete entry.context.requestId;
+    }
 
     if (error) {
       entry.error = {
