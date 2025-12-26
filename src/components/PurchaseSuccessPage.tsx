@@ -103,7 +103,7 @@ export const PurchaseSuccessPage: React.FC = () => {
         // Otherwise, extract keys from URL params (legacy support)
         extractKeysFromURL(urlParams);
       } catch (err) {
-        console.error("Failed to load license keys:", err);
+        // Error handled via setError - no console output needed
         setError("Failed to load license keys. Please check your email or contact support@localpasswordvault.com");
       } finally {
         setIsLoading(false);
@@ -159,7 +159,7 @@ export const PurchaseSuccessPage: React.FC = () => {
         setCustomerEmail(data.data.email);
       }
     } catch (err) {
-      console.error("Error fetching session data:", err);
+      // Re-throw error to be handled by caller
       throw err;
     }
   };

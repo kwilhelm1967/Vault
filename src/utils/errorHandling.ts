@@ -64,8 +64,8 @@ class ErrorLogger {
         this.errorHistory = parsed.slice(-this.MAX_HISTORY);
       }
     } catch (error) {
-      // If parsing fails, clear corrupted data
-      console.warn('Failed to load error logs from localStorage:', error);
+      // If parsing fails, clear corrupted data silently
+      // Error logging system should not itself cause errors
       localStorage.removeItem(this.STORAGE_KEY);
       this.errorHistory = [];
     }
@@ -81,16 +81,15 @@ class ErrorLogger {
       const toSave = this.errorHistory.slice(-this.MAX_HISTORY);
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(toSave));
     } catch (error) {
-      // If storage fails (quota exceeded, etc.), log but don't crash
-      console.warn('Failed to save error logs to localStorage:', error);
-      // Try to clear old entries and retry
+      // If storage fails (quota exceeded, etc.), silently reduce history and retry
+      // Error logging system should not itself cause errors
       try {
         // Keep only most recent 50 entries
         this.errorHistory = this.errorHistory.slice(-50);
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.errorHistory));
-      } catch (retryError) {
+      } catch {
         // If still fails, give up silently
-        console.warn('Failed to save error logs after retry:', retryError);
+        // This prevents infinite loops if localStorage is completely unavailable
       }
     }
   }
@@ -150,8 +149,8 @@ class ErrorLogger {
     // Also clear from localStorage
     try {
       localStorage.removeItem(this.STORAGE_KEY);
-    } catch (error) {
-      console.warn('Failed to clear error logs from localStorage:', error);
+    } catch {
+      // Silently handle storage errors - error logging system should not cause errors
     }
   }
 

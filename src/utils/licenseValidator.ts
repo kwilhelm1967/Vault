@@ -49,7 +49,8 @@ export async function verifyLicenseSignature(signedLicense: {
     // Constant-time comparison
     return constantTimeEqual(signature, expectedSignature);
   } catch (error) {
-    console.error('License signature verification error:', error);
+    // Signature verification failed - return false without logging
+    // Errors are handled by calling code
     return false;
   }
 }
