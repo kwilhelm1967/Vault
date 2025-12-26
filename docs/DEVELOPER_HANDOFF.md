@@ -29,6 +29,7 @@ FROM_EMAIL=<sender-email>
 SUPPORT_EMAIL=<support-email>
 WEBSITE_URL=<website-url>
 API_URL=<api-url>
+SENTRY_DSN=<sentry-dsn-optional>
 ```
 
 **Generate LICENSE_SIGNING_SECRET:**
@@ -255,32 +256,39 @@ openssl rand -hex 32
 
 ---
 
-### 6.2 Error Tracking Service Integration (Optional - Backend Only)
-- [ ] Set up error tracking service (e.g., Sentry, Rollbar)
-- [ ] Configure backend error reporting
-- [ ] Set up error alerts/notifications
-- [ ] Configure error grouping and filtering
+### 6.2 Error Tracking Service Integration (Sentry - Backend Only)
+- [ ] Create Sentry account at https://sentry.io
+- [ ] Create new project (Node.js/Express)
+- [ ] Get DSN from Sentry project settings
+- [ ] Add `SENTRY_DSN` to backend `.env` file
+- [ ] Verify Sentry integration (errors automatically sent in production)
+- [ ] Configure Sentry alerts/notifications (optional)
+- [ ] Test error tracking by triggering a test error in production
 
-**Note:** Backend only. Frontend must remain 100% offline after activation.
+**Environment Variable:**
+```env
+SENTRY_DSN=https://xxxxx@xxxxx.ingest.sentry.io/xxxxx
+```
+
+**Note:** Sentry is already integrated in code. Only configuration needed. Backend only. Frontend must remain 100% offline after activation.
 
 ---
 
 ### 6.3 Webhook Failure Alerts (Backend)
-- [ ] Monitor Stripe webhook processing
-- [ ] Set up alerts for webhook failures
-- [ ] Log webhook retry attempts
-- [ ] Alert on repeated webhook failures
-- [ ] Track webhook processing time
+- [ ] Verify webhook failure alerting is working (already implemented)
+- [ ] Test webhook failure scenario (3 consecutive failures trigger alert)
+- [ ] Verify alert emails sent to `SUPPORT_EMAIL`
+- [ ] Monitor webhook processing in production
 
 **Note:** Backend monitoring only. Does not affect app offline operation.
 
 ---
 
 ### 6.4 Frontend Error Logging (Local Only - 100% Offline)
-- [ ] Implement local error logging (localStorage or local file)
-- [ ] Log errors with context (user actions, license status)
-- [ ] NO network calls for error logging (maintains 100% offline promise)
-- [ ] Optional: Allow user to export error logs for support
+- [ ] Verify local error logging is working (already implemented)
+- [ ] Test error log export from Settings → Help & Support
+- [ ] Verify error logs persist in localStorage
+- [ ] Confirm zero network calls for error logging
 
 **Critical:** Frontend error logging must be 100% local. Zero network calls after activation.
 
