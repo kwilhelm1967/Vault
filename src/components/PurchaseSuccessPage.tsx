@@ -13,6 +13,7 @@ import {
   Mail,
 } from "lucide-react";
 import environment from "../config/environment";
+import { LoadingSpinner } from "./LoadingSpinner";
 
 // Color palette matching LPV design system
 const colors = {
@@ -307,14 +308,13 @@ export const PurchaseSuccessPage: React.FC = () => {
           {/* Loading State */}
           {isLoading && (
             <div
-              className="rounded-xl p-8 mb-8 text-center"
+              className="rounded-xl p-8 mb-8"
               style={{
                 backgroundColor: `${colors.slateBackground}`,
                 border: `1px solid ${colors.steelBlue400}40`,
               }}
             >
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4" style={{ borderBottomColor: colors.steelBlue400 }}></div>
-              <p style={{ color: colors.warmIvory, opacity: 0.7 }}>Loading your license keys...</p>
+              <LoadingSpinner size="lg" text="Loading your license keys..." />
             </div>
           )}
 

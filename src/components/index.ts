@@ -26,6 +26,7 @@ export { LicenseScreen } from './LicenseScreen';
 export { KeyActivationScreen } from './KeyActivationScreen';
 export { LicenseKeyDisplay } from './LicenseKeyDisplay';
 export { LicenseTransferDialog } from './LicenseTransferDialog';
+export { LoadingSpinner, LoadingOverlay } from './LoadingSpinner';
 export { EulaAgreement } from './EulaAgreement';
 
 // ==================== Trial ====================

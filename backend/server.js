@@ -127,11 +127,13 @@ app.use((err, req, res, next) => {
     path: req.path,
     method: req.method,
     operation: 'server_error_handler',
+    requestId: req.requestId,
   });
 
-  // Send to Sentry
+  // Send to Sentry (already handled by logger.error, but keep for explicit tracking)
   captureException(err, {
     path: req.path,
+    requestId: req.requestId,
     method: req.method,
     operation: 'server_error_handler',
   });

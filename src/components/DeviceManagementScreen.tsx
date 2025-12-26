@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { licenseService } from "../utils/licenseService";
 import { devError } from "../utils/devLog";
+import { LoadingSpinner } from "./LoadingSpinner";
 
 const colors = {
   deepNavy: "#0F172A",
@@ -199,9 +200,8 @@ export const DeviceManagementScreen: React.FC<DeviceManagementScreenProps> = ({
 
         {/* Loading State */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <RefreshCw className="w-6 h-6 animate-spin" style={{ color: colors.steelBlue400 }} />
-            <span className="ml-3 text-slate-400">Loading devices...</span>
+          <div className="py-12">
+            <LoadingSpinner size="lg" text="Loading devices..." />
           </div>
         ) : devices.length === 0 ? (
           <div

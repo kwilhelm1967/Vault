@@ -26,6 +26,7 @@ import { RecoveryOptionsScreen } from "./RecoveryOptionsScreen";
 import { LicenseTransferDialog } from "./LicenseTransferDialog";
 import { DeviceManagementScreen } from "./DeviceManagementScreen";
 import { LicenseStatusDashboard } from "./LicenseStatusDashboard";
+import { LoadingSpinner } from "./LoadingSpinner";
 
 interface LicenseScreenProps {
   onLicenseValid: () => void;
@@ -424,12 +425,11 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
   // Show loading state while app status is being determined
   if (!appStatus) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-white text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p className="text-lg">Loading license screen...</p>
-        </div>
-      </div>
+      <LoadingSpinner 
+        size="xl" 
+        text="Loading license screen..." 
+        fullScreen 
+      />
     );
   }
 

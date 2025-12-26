@@ -2,8 +2,10 @@
  * Structured Error Logging Utility for Backend
  * 
  * Provides consistent, structured error logging with context, error codes,
- * and optional error tracking service integration.
+ * and Sentry error tracking service integration.
  */
+
+const { captureException, captureMessage, addBreadcrumb } = require('./sentry');
 
 class Logger {
   constructor() {
@@ -25,7 +27,15 @@ class Logger {
    */
   createLogEntry(level, message, context = {}, error = null) {
     // Extract request ID from context if available
-    const requestId = context.requestId || context.req?.requestId || null;
+    // Supports: context.requestId, context.req?.requestId, or req object directly
+    let requestId = context.requestId;
+    if (!requestId && context.req) {
+      requestId = context.req.requestId;
+    }
+    if (!requestId && typeof context === 'object' && context.constructor?.name === 'IncomingMessage') {
+      // If context itself is the req object
+      requestId = context.requestId;
+    }
     
     const entry = {
       timestamp: new Date().toISOString(),
@@ -80,10 +90,22 @@ class Logger {
         code: error.code,
       } : null,
       timestamp: entry.timestamp,
+      requestId: entry.requestId,
     });
 
-    // In production, could send to error tracking service
-    // Example: this.sendToErrorTracking(entry);
+    // Send to Sentry error tracking service (only in production)
+    if (error) {
+      captureException(error, {
+        ...context,
+        requestId: entry.requestId,
+        level: 'error',
+      });
+    } else {
+      captureMessage(message, 'error', {
+        ...context,
+        requestId: entry.requestId,
+      });
+    }
   }
 
   /**
@@ -93,7 +115,13 @@ class Logger {
     if (!this.shouldLog('warn')) return;
 
     const entry = this.createLogEntry('warn', message, context);
-    console.warn(`[WARN] ${message}`, { context, timestamp: entry.timestamp });
+    console.warn(`[WARN] ${message}`, { context, timestamp: entry.timestamp, requestId: entry.requestId });
+    
+    // Add breadcrumb to Sentry for warnings (helps with debugging)
+    addBreadcrumb(message, 'warning', 'warning', {
+      ...context,
+      requestId: entry.requestId,
+    });
   }
 
   /**
@@ -134,6 +162,7 @@ class Logger {
     this.error(`Webhook processing failed: ${eventType}`, error, {
       eventId,
       eventType,
+      operation: 'webhook_processing',
       ...context,
     });
   }
@@ -214,7 +243,42 @@ class Logger {
 }
 
 // Export singleton instance
-module.exports = new Logger();
+const loggerInstance = new Logger();
+
+/**
+ * Helper function for routes to log with automatic requestId inclusion
+ * Usage: logger.withRequest(req).error('message', error, context)
+ */
+loggerInstance.withRequest = function(req) {
+  return {
+    error: (message, error, context = {}) => {
+      return loggerInstance.error(message, error, {
+        ...context,
+        requestId: req?.requestId,
+      });
+    },
+    warn: (message, context = {}) => {
+      return loggerInstance.warn(message, {
+        ...context,
+        requestId: req?.requestId,
+      });
+    },
+    info: (message, context = {}) => {
+      return loggerInstance.info(message, {
+        ...context,
+        requestId: req?.requestId,
+      });
+    },
+    debug: (message, context = {}) => {
+      return loggerInstance.debug(message, {
+        ...context,
+        requestId: req?.requestId,
+      });
+    },
+  };
+};
+
+module.exports = loggerInstance;
 
 
 
