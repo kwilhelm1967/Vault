@@ -116,18 +116,34 @@ openssl rand -hex 32
 
 **Package Location:** All download packages are stored in the `download-packages/` directory at the project root.
 
-- [x] Create ZIP package for Windows (already created)
+**Package Script:** `scripts/create-download-packages.ps1` - Automatically creates ZIP packages for all available installers.
+
+- [x] Create ZIP package for Windows ✅ **COMPLETED**
   - **Location:** `download-packages/Local-Password-Vault-Windows-1.2.0.zip`
-  - **Package script:** `scripts/create-download-packages.ps1`
-  - **Contains:** Installer, README.txt, USER_MANUAL.md, QUICK_START_GUIDE.md, TROUBLESHOOTING_GUIDE.md
-- [ ] Create ZIP package for macOS:
-  - Build macOS installer: `npm run dist:mac`
-  - Run package script: `.\scripts\create-download-packages.ps1`
-  - **Location:** `download-packages/Local-Password-Vault-macOS-1.2.0.zip`
-- [ ] Create ZIP package for Linux:
-  - Build Linux installer: `npm run dist:linux`
-  - Run package script: `.\scripts\create-download-packages.ps1`
-  - **Location:** `download-packages/Local-Password-Vault-Linux-1.2.0.zip`
+  - **Status:** Created and verified
+  - **Contains:** 
+    - `Local Password Vault Setup 1.2.0.exe` (installer)
+    - `README.txt` (installation instructions)
+    - `USER_MANUAL.md` (complete user guide)
+    - `QUICK_START_GUIDE.md` (quick start instructions)
+    - `TROUBLESHOOTING_GUIDE.md` (troubleshooting help)
+  - **To recreate:** Run `.\scripts\create-download-packages.ps1` (requires installer in `release/` folder)
+
+- [ ] Create ZIP package for macOS ⚠️ **REQUIRES macOS BUILD**
+  - **Status:** Pending - Installer must be built on macOS system or via CI/CD
+  - **Steps:**
+    1. Build macOS installer: `npm run dist:mac` (on macOS system)
+    2. Run package script: `.\scripts\create-download-packages.ps1`
+    3. **Location:** `download-packages/Local-Password-Vault-macOS-1.2.0.zip`
+  - **Note:** Cannot be built on Windows. Requires macOS system or GitHub Actions/CI.
+
+- [ ] Create ZIP package for Linux ⚠️ **REQUIRES LINUX BUILD**
+  - **Status:** Pending - Installer must be built on Linux system or via CI/CD
+  - **Steps:**
+    1. Build Linux installer: `npm run dist:linux` (on Linux system)
+    2. Run package script: `.\scripts\create-download-packages.ps1`
+    3. **Location:** `download-packages/Local-Password-Vault-Linux-1.2.0.zip`
+  - **Note:** Cannot be built on Windows. Requires Linux system or GitHub Actions/CI.
 - [ ] Host packages:
   - Upload ZIP files to GitHub Releases
     - Go to: https://github.com/kwilhelm1967/Vault/releases

@@ -37,7 +37,7 @@ if (Test-Path $winInstaller) {
     
     # Copy installer
     Copy-Item $winInstaller -Destination "$winPackageDir\" -Force
-    Write-Host "  ✓ Copied Windows installer" -ForegroundColor Green
+    Write-Host "  [OK] Copied Windows installer" -ForegroundColor Green
     
     # Copy README
     Copy-Item "$packagesDir\README.txt" -Destination "$winPackageDir\" -Force
@@ -46,7 +46,7 @@ if (Test-Path $winInstaller) {
     foreach ($doc in $docFiles) {
         if (Test-Path $doc) {
             Copy-Item $doc -Destination "$winPackageDir\" -Force
-            Write-Host "  ✓ Copied $(Split-Path $doc -Leaf)" -ForegroundColor Green
+            Write-Host "  [OK] Copied $(Split-Path $doc -Leaf)" -ForegroundColor Green
         }
     }
     
@@ -56,9 +56,9 @@ if (Test-Path $winInstaller) {
         Remove-Item $zipPath -Force
     }
     Compress-Archive -Path "$winPackageDir\*" -DestinationPath $zipPath -Force
-    Write-Host "  ✓ Created ZIP: $zipPath" -ForegroundColor Green
+    Write-Host "  [OK] Created ZIP: $zipPath" -ForegroundColor Green
 } else {
-    Write-Host "  ✗ Windows installer not found: $winInstaller" -ForegroundColor Red
+    Write-Host "  [ERROR] Windows installer not found: $winInstaller" -ForegroundColor Red
 }
 
 # macOS Package (if exists)
@@ -86,9 +86,9 @@ if ($macDmg) {
         Remove-Item $zipPath -Force
     }
     Compress-Archive -Path "$macPackageDir\*" -DestinationPath $zipPath -Force
-    Write-Host "  ✓ Created ZIP: $zipPath" -ForegroundColor Green
+    Write-Host "  [OK] Created ZIP: $zipPath" -ForegroundColor Green
 } else {
-    Write-Host "  ⚠ macOS DMG not found (run: npm run dist:mac)" -ForegroundColor Yellow
+    Write-Host "  [WARNING] macOS DMG not found (run: npm run dist:mac)" -ForegroundColor Yellow
 }
 
 # Linux Package (if exists)
@@ -116,9 +116,9 @@ if ($linuxAppImage) {
         Remove-Item $zipPath -Force
     }
     Compress-Archive -Path "$linuxPackageDir\*" -DestinationPath $zipPath -Force
-    Write-Host "  ✓ Created ZIP: $zipPath" -ForegroundColor Green
+    Write-Host "  [OK] Created ZIP: $zipPath" -ForegroundColor Green
 } else {
-    Write-Host "  ⚠ Linux AppImage not found (run: npm run dist:linux)" -ForegroundColor Yellow
+    Write-Host "  [WARNING] Linux AppImage not found (run: npm run dist:linux)" -ForegroundColor Yellow
 }
 
 Write-Host "`nPackage creation complete!" -ForegroundColor Green

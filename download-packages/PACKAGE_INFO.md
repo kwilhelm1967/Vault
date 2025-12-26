@@ -16,11 +16,19 @@
 
 ### macOS Package ⚠️
 - **Status:** Not created (DMG not found)
-- **To create:** Run `npm run dist:mac` first, then re-run package script
+- **Requirement:** Must be built on macOS system or via CI/CD (cannot build on Windows)
+- **To create:**
+  1. Build macOS installer: `npm run dist:mac` (on macOS system)
+  2. Run package script: `.\scripts\create-download-packages.ps1`
+  3. Package will be created automatically: `Local-Password-Vault-macOS-1.2.0.zip`
 
 ### Linux Package ⚠️
 - **Status:** Not created (AppImage not found)
-- **To create:** Run `npm run dist:linux` first, then re-run package script
+- **Requirement:** Must be built on Linux system or via CI/CD (cannot build on Windows)
+- **To create:**
+  1. Build Linux installer: `npm run dist:linux` (on Linux system)
+  2. Run package script: `.\scripts\create-download-packages.ps1`
+  3. Package will be created automatically: `Local-Password-Vault-Linux-1.2.0.zip`
 
 ---
 
@@ -66,4 +74,5 @@ Copy-Item "docs\QUICK_START_GUIDE.md" -Destination "download-packages\windows\" 
 Copy-Item "docs\TROUBLESHOOTING_GUIDE.md" -Destination "download-packages\windows\" -Force
 Compress-Archive -Path "download-packages\windows\*" -DestinationPath "download-packages\Local-Password-Vault-Windows-1.2.0.zip" -Force
 ```
+
 
