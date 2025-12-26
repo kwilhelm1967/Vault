@@ -17,7 +17,7 @@ import environment from "../config/environment";
 import { trialService, TrialInfo } from "./trialService";
 import { getLPVDeviceFingerprint, isValidDeviceId } from "./deviceFingerprint";
 import { verifyLicenseSignature } from "./licenseValidator";
-import { devError } from "./devLog";
+import { devError, devWarn } from "./devLog";
 import { apiClient, ApiError } from "./apiClient";
 
 export type LicenseType = "personal" | "family" | "trial";
@@ -144,7 +144,7 @@ export class LicenseService {
   /**
    * Get local license file data with corruption checking
    */
-  getLocalLicenseFile(): LocalLicenseFile | null {
+  async getLocalLicenseFile(): Promise<LocalLicenseFile | null> {
     try {
       const stored = localStorage.getItem(LicenseService.LOCAL_LICENSE_FILE);
       if (!stored) {
@@ -193,7 +193,7 @@ export class LicenseService {
    * Returns true if local license matches current device and signature is valid
    */
   async validateLocalLicense(): Promise<{ valid: boolean; requiresTransfer: boolean }> {
-    const localLicense = this.getLocalLicenseFile();
+    const localLicense = await this.getLocalLicenseFile();
     
     if (!localLicense) {
       return { valid: false, requiresTransfer: false };
@@ -504,7 +504,7 @@ export class LicenseService {
           this.saveLocalLicenseFile(result.license_file);
         } else {
           // Fallback for development
-          const localLicense = this.getLocalLicenseFile();
+          const localLicense = await this.getLocalLicenseFile();
           this.saveLocalLicenseFile({
             license_key: cleanKey,
             device_id: deviceId,
@@ -594,7 +594,7 @@ export class LicenseService {
     licenseKey: string,
     deviceId: string
   ): Promise<{ success: boolean; error?: string; status?: string }> {
-    const localLicense = this.getLocalLicenseFile();
+    const localLicense = await this.getLocalLicenseFile();
     this.saveLocalLicenseFile({
       license_key: licenseKey,
       device_id: deviceId,
@@ -619,7 +619,7 @@ export class LicenseService {
     hasMismatch: boolean;
     licenseKey: string | null;
   }> {
-    const localLicense = this.getLocalLicenseFile();
+    const localLicense = await this.getLocalLicenseFile();
     
     if (!localLicense) {
       return { hasMismatch: false, licenseKey: null };
@@ -768,8 +768,8 @@ export class LicenseService {
   /**
    * Get max devices for current license
    */
-  getMaxDevices(): number {
-    const localLicense = this.getLocalLicenseFile();
+  async getMaxDevices(): Promise<number> {
+    const localLicense = await this.getLocalLicenseFile();
     return localLicense?.max_devices || 1;
   }
 
@@ -796,14 +796,14 @@ export class LicenseService {
    * Get detailed device information from local license file (100% offline)
    * Returns device info stored in the signed license file
    */
-  getLocalDeviceInfo(): {
+  async getLocalDeviceInfo(): Promise<{
     deviceId: string;
     licenseKey: string;
     planType: LicenseType;
     activatedAt: string;
     maxDevices: number;
-  } | null {
-    const localLicense = this.getLocalLicenseFile();
+  } | null> {
+    const localLicense = await this.getLocalLicenseFile();
     if (!localLicense) {
       return null;
     }

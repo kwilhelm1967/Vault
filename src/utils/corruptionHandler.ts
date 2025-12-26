@@ -227,6 +227,24 @@ export function checkVaultDataCorruption(vaultData: string | null): CorruptionCh
 
 /**
  * Attempt to recover corrupted vault data
+ * 
+ * Analyzes corrupted vault data and attempts to extract valid password entries.
+ * Uses checkVaultDataCorruption to assess corruption level and determine if
+ * recovery is possible. Filters out invalid entries and returns recoverable data.
+ * 
+ * @param vaultData - JSON string containing vault password entries (may be corrupted)
+ * @returns RecoveryResult with success status, recovery information, and recovered data
+ * 
+ * @example
+ * ```typescript
+ * const result = recoverVaultData(corruptedJson);
+ * if (result.success && result.recovered) {
+ *   // Save recovered data
+ *   storageService.importEntries(JSON.parse(result.data!));
+ * }
+ * ```
+ * 
+ * @see checkVaultDataCorruption for corruption detection logic
  */
 export function recoverVaultData(vaultData: string | null): RecoveryResult {
   if (!vaultData) {
@@ -284,7 +302,26 @@ export function recoverVaultData(vaultData: string | null): RecoveryResult {
 }
 
 /**
- * Validate and repair data structure
+ * Validate and repair data structure with type guard
+ * 
+ * Validates data against a type guard function and attempts to repair or filter
+ * invalid items. Useful for recovering from partial corruption in arrays or
+ * collections of typed objects.
+ * 
+ * @template T - The expected type of valid data items
+ * @param data - Data to validate (may be array or single item)
+ * @param guard - Type guard function to validate each item
+ * @param repair - Optional repair function to fix invalid items
+ * @returns Object with validation result, valid items, and repair statistics
+ * 
+ * @example
+ * ```typescript
+ * const result = validateAndRepair(
+ *   corruptedEntries,
+ *   isPasswordEntry,
+ *   (entry) => ({ ...entry, id: entry.id || generateId() })
+ * );
+ * ```
  */
 export function validateAndRepair<T>(
   data: unknown,

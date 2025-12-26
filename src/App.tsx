@@ -1,18 +1,25 @@
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
 import { PasswordEntry, Category, RawPasswordEntry } from "./types";
-import { storageService } from "./utils/storage";
+import { storageService, FIXED_CATEGORIES } from "./utils/storage";
 import { importService } from "./utils/importService";
 import { devError, devWarn } from "./utils/devLog";
 import { licenseService, AppLicenseStatus } from "./utils/licenseService";
 import { trialService, WarningPopupState } from "./utils/trialService";
 import { features } from "./config/environment";
-import { useElectron } from "./hooks/useElectron";
+import {
+  useElectron,
+  useAppStatus,
+  useVaultData,
+  useDarkTheme,
+  useFloatingMode,
+  useVaultStatusSync,
+} from "./hooks";
 
-// Essential components - load immediately
-import { LoginScreen } from "./components/LoginScreen";
-import { LicenseScreen } from "./components/LicenseScreen";
-import { LicenseTransferDialog } from "./components/LicenseTransferDialog";
-import { OfflineIndicator } from "./components/OfflineIndicator";
+// Essential components - lazy load for faster initial load
+const LoginScreen = lazy(() => import("./components/LoginScreen").then(m => ({ default: m.LoginScreen })));
+const LicenseScreen = lazy(() => import("./components/LicenseScreen").then(m => ({ default: m.LicenseScreen })));
+const LicenseTransferDialog = lazy(() => import("./components/LicenseTransferDialog").then(m => ({ default: m.LicenseTransferDialog })));
+const OfflineIndicator = lazy(() => import("./components/OfflineIndicator").then(m => ({ default: m.OfflineIndicator })));
 import { SkipLink } from "./components/accessibility";
 
 // Lazy load heavy components - only load when needed
@@ -44,7 +51,6 @@ const LoadingFallback = () => (
     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
   </div>
 );
-// MiniVaultButton removed - using Electron's FloatingButton instead
 
 /**
  * Reset all license and trial data when ?reset is in the URL
@@ -68,309 +74,12 @@ const checkForReset = () => {
 // Run reset check immediately on load
 checkForReset();
 
-// Fixed categories with proper typing
-const FIXED_CATEGORIES: Category[] = [
-  { id: "all", name: "All", color: "#3b82f6", icon: "Grid3X3" },
-  { id: "banking", name: "Banking", color: "#10b981", icon: "CircleDollarSign" },
-  { id: "shopping", name: "Shopping", color: "#f59e0b", icon: "ShoppingCart" },
-  { id: "entertainment", name: "Entertainment", color: "#a855f7", icon: "Ticket" },
-  { id: "email", name: "Email", color: "#f43f5e", icon: "Mail" },
-  { id: "work", name: "Work", color: "#3b82f6", icon: "Briefcase" },
-  { id: "business", name: "Business", color: "#8b5cf6", icon: "TrendingUp" },
-  { id: "other", name: "Other", color: "#6b7280", icon: "FileText" },
-] as const;
-
-// Custom hook for app status management
-const useAppStatus = () => {
-  const [appStatus, setAppStatus] = useState<AppLicenseStatus | null>(null);
-  const [checkingEnabled, setCheckingEnabled] = useState(true);
-
-  const updateAppStatus = useCallback(async () => {
-    const newStatus = await licenseService.getAppStatus();
-    setAppStatus(newStatus);
-    return newStatus;
-  }, []); // No dependencies needed - this function doesn't depend on any state
-
-  // Initialize app status on mount
-  useEffect(() => {
-    updateAppStatus();
-    
-    // Fix for existing users: if vault exists but onboarding_completed isn't set,
-    // set it now to prevent tutorial from showing on every login
-    if (storageService.vaultExists() && !localStorage.getItem("onboarding_completed")) {
-      localStorage.setItem("onboarding_completed", "true");
-    }
-  }, [updateAppStatus]);
-
-  // Handle trial expiration with immediate redirect
-  const handleTrialExpiration = useCallback(() => {
-    // Clear any vault data to prevent access
-    if (storageService.isVaultUnlocked()) {
-      storageService.lockVault();
-    }
-
-    // Update status immediately
-    updateAppStatus();
-
-    // Disable further checking after confirming expiration
-    setTimeout(() => {
-      setCheckingEnabled(false);
-    }, 5000);
-  }, [updateAppStatus]);
-
-  // Immediate status check function
-  const checkStatusImmediately = useCallback(async () => {
-    const currentStatus = await licenseService.getAppStatus();
-
-    // If trial has expired and we're not on license screen, force redirect
-    if (currentStatus.trialInfo.isExpired && currentStatus.canUseApp) {
-
-      // Force the license service to re-evaluate status
-      setAppStatus({
-        ...currentStatus,
-        canUseApp: false,
-        requiresPurchase: true
-      });
-    } else {
-      setAppStatus(currentStatus);
-    }
-  }, []);
-
-  useEffect(() => {
-    // Set up trial expiration callback
-    trialService.addExpirationCallback(handleTrialExpiration);
-
-    // Check trial status every 30 seconds
-    // But only if checking is enabled
-    const checkInterval = 30000;
-    const interval = checkingEnabled ? setInterval(async () => {
-      try {
-        const expirationDetected = await trialService.checkAndHandleExpiration();
-        await checkStatusImmediately();
-
-        // Handle trial expiration properly
-        const currentStatus = await licenseService.getAppStatus();
-        if (currentStatus.trialInfo.isExpired && currentStatus.canUseApp) {
-          // Use proper state management instead of force reload
-          await handleTrialExpiration();
-        }
-
-        // If expiration detected 3+ times, stop checking
-        if (expirationDetected && trialService.isExpirationConfirmed()) {
-          setCheckingEnabled(false);
-        }
-      } catch (error) {
-        // Log error but don't crash the app
-        devError('Trial status check failed:', error);
-        // Could optionally disable checking after multiple failures
-        // setCheckingEnabled(false);
-      }
-    }, checkInterval) : null;
-
-    // Initial check
-    checkStatusImmediately();
-
-    return () => {
-      trialService.removeExpirationCallback(handleTrialExpiration);
-      if (interval) clearInterval(interval);
-      
-    };
-  }, [updateAppStatus, handleTrialExpiration, checkStatusImmediately, checkingEnabled]);
-
-  return { appStatus, updateAppStatus, checkStatusImmediately };
-};
-
-// Custom hook for dark theme enforcement (optimized)
-const useDarkTheme = () => {
-  useEffect(() => {
-    // Apply dark theme using CSS custom properties for better performance
-    const root = document.documentElement;
-    const body = document.body;
-
-    // Set CSS custom properties for consistent theming
-    root.style.setProperty('--bg-primary', '#0f172a');
-    root.style.setProperty('--bg-secondary', '#1e293b');
-    root.style.setProperty('--text-primary', '#ffffff');
-    root.style.setProperty('--text-secondary', '#94a3b8');
-
-    // Set basic dark theme colors
-    root.style.backgroundColor = "var(--bg-primary)";
-    root.style.color = "var(--text-primary)";
-    body.style.backgroundColor = "var(--bg-primary)";
-    body.style.color = "var(--text-primary)";
-
-    // Add dark theme class for CSS-based theming
-    root.classList.add('dark-theme');
-
-    // Only run once on mount, not on every render
-  }, []); // Empty dependency array - runs only once
-};
-
-// Custom hook for vault data management
-const useVaultData = (isLocked: boolean, isElectron: boolean, loadSharedEntries?: () => Promise<RawPasswordEntry[]>, saveSharedEntries?: (entries: PasswordEntry[]) => Promise<boolean>) => {
-  const [entries, setEntries] = useState<PasswordEntry[]>([]);
-  const [isInitialized, setIsInitialized] = useState(false);
-
-  const loadEntries = useCallback(async () => {
-    if (isLocked || !storageService.isVaultUnlocked()) {
-      setEntries([]);
-      setIsInitialized(true);
-      return;
-    }
-
-    try {
-      let loadedEntries: PasswordEntry[] = [];
-
-      // In Electron, try to load from shared storage first
-      if (isElectron && loadSharedEntries) {
-        try {
-          const sharedEntries = await loadSharedEntries();
-          if (sharedEntries && sharedEntries.length > 0) {
-            loadedEntries = sharedEntries.map((entry: RawPasswordEntry) => ({
-              ...entry,
-              createdAt: new Date(entry.createdAt),
-              updatedAt: new Date(entry.updatedAt),
-            }));
-            // Also save to localStorage as backup
-            await storageService.saveEntries(loadedEntries);
-          }
-        } catch (error) {
-          // Fallback to localStorage
-          devError("Shared entries load failed, using localStorage:", error);
-        }
-      }
-
-      // If no shared entries or failed to load, use localStorage
-      if (loadedEntries.length === 0) {
-        loadedEntries = await storageService.loadEntries();
-
-        // Sync to shared storage for Electron floating panel
-        if (isElectron && saveSharedEntries && loadedEntries && loadedEntries.length > 0) {
-          try {
-            await saveSharedEntries(loadedEntries);
-          } catch (error) {
-            // Shared storage unavailable
-            devError("Failed to sync to shared storage:", error);
-          }
-        }
-      }
-
-      setEntries(loadedEntries || []);
-      setIsInitialized(true);
-
-      // Ensure fixed categories are saved
-      await storageService.saveCategories(FIXED_CATEGORIES);
-    } catch (error) {
-      devError("Failed to load entries:", error);
-      setEntries([]);
-      setIsInitialized(true);
-      if (error instanceof Error && error.message?.includes("locked")) {
-        throw error;
-      }
-    }
-  }, [isLocked, isElectron, loadSharedEntries, saveSharedEntries]);
-
-  // Initial load only
-  useEffect(() => {
-    if (!isInitialized) {
-      loadEntries();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isInitialized]); // Remove loadEntries dependency to prevent infinite loop
-
-  // Handle cross-window synchronization (only after initial load)
-  useEffect(() => {
-    if (!isElectron || !window.electronAPI?.onEntriesChanged || !isInitialized) return;
-
-    const handleEntriesChanged = async () => {
-      try {
-        if (isLocked || !storageService.isVaultUnlocked()) {
-          setEntries([]);
-          return;
-        }
-
-        // Reload from shared storage
-        if (loadSharedEntries) {
-          const sharedEntries = await loadSharedEntries();
-          if (sharedEntries) {
-            const mappedEntries = sharedEntries.map((entry: RawPasswordEntry) => ({
-              ...entry,
-              createdAt: new Date(entry.createdAt),
-              updatedAt: new Date(entry.updatedAt),
-            }));
-            setEntries(mappedEntries);
-            // Also update localStorage
-            await storageService.saveEntries(mappedEntries);
-          }
-        } else {
-          const loadedEntries = await storageService.loadEntries();
-          setEntries(loadedEntries || []);
-        }
-      } catch (error) {
-        devError("Failed to reload entries:", error);
-        setEntries([]);
-      }
-    };
-
-    window.electronAPI.onEntriesChanged(handleEntriesChanged);
-    return () => {
-      window.electronAPI?.removeEntriesChangedListener?.(handleEntriesChanged);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isElectron, isLocked, isInitialized]); // Remove loadSharedEntries dependency
-
-  // Reset initialization when vault locks/unlocks
-  useEffect(() => {
-    if (isLocked) {
-      setIsInitialized(false);
-    } else {
-      // When vault is unlocked, trigger data loading if not initialized
-      if (!isInitialized && storageService.isVaultUnlocked()) {
-        loadEntries();
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLocked, isInitialized]); // Remove loadEntries dependency
-
-  return useMemo(() => ({
-    entries,
-    setEntries,
-    loadEntries,
-    isInitialized
-  }), [entries, loadEntries, isInitialized]);
-};
-
-
-// Custom hook for floating mode
-const useFloatingMode = (isElectron: boolean) => {
-  const isFloatingMode = useMemo(() => window.location.hash === "#floating", []);
-
-  useEffect(() => {
-    if (isElectron && isFloatingMode && window.electronAPI?.setAlwaysOnTop) {
-      window.electronAPI.setAlwaysOnTop(true);
-    }
-  }, [isElectron, isFloatingMode]);
-
-  return isFloatingMode;
-};
-
-// Custom hook for vault status synchronization
-const useVaultStatusSync = (isElectron: boolean, setIsLocked: (locked: boolean) => void) => {
-  useEffect(() => {
-    if (!isElectron || !window.electronAPI?.onVaultStatusChange) return;
-
-    const handleVaultStatusChange = (_event: unknown, unlocked: boolean) => {
-      setIsLocked(!unlocked);
-    };
-
-    window.electronAPI.onVaultStatusChange(handleVaultStatusChange);
-    return () => {
-      window.electronAPI?.removeVaultStatusListener?.();
-    };
-  }, [isElectron, setIsLocked]);
-};
-
-// Entry management utilities
+/**
+ * Entry management hook (local implementation for App.tsx)
+ * 
+ * Handles CRUD operations for password entries with Electron cross-window sync.
+ * This is a local implementation with a different signature than the hook in hooks/.
+ */
 const useEntryManagement = (
   entries: PasswordEntry[],
   setEntries: (entries: PasswordEntry[]) => void,
@@ -626,7 +335,7 @@ function App() {
     return () => window.removeEventListener('show-keyboard-shortcuts', handleShowShortcuts);
   }, [openShortcuts]);
 
-  // Check for device mismatch on app startup
+  // Check for device mismatch on app startup - defer to avoid blocking render
   useEffect(() => {
     const checkDeviceMismatch = async () => {
       try {
@@ -640,8 +349,12 @@ function App() {
       }
     };
 
-    // Check on mount (app startup)
-    checkDeviceMismatch();
+    // Defer check to allow initial render
+    const timeoutId = setTimeout(() => {
+      checkDeviceMismatch();
+    }, 200);
+
+    return () => clearTimeout(timeoutId);
   }, []);
 
   // Check for security briefing when vault is unlocked
@@ -680,8 +393,16 @@ function App() {
       await trialService.checkWarningPopups();
     }, checkInterval);
 
-    // Initial check immediately
-    trialService.checkWarningPopups();
+    // Defer initial check to avoid blocking render
+    const initialCheckTimeout = setTimeout(() => {
+      trialService.checkWarningPopups();
+    }, 300);
+
+    return () => {
+      clearTimeout(initialCheckTimeout);
+      trialService.removeWarningPopupCallback(handleWarningPopup);
+      if (warningInterval) clearInterval(warningInterval);
+    };
 
     return () => {
       trialService.removeWarningPopupCallback(handleWarningPopup);
@@ -1117,16 +838,30 @@ function App() {
    * - User cannot use app (no valid license/trial)
    * - Trial has expired
    */
+  // Show loading state while app status is being determined
+  if (!appStatus) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#1F2534' }}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-slate-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   const requiresLicense = !appStatus.canUseApp || appStatus.trialInfo.isExpired;
   
   if (requiresLicense) {
     return (
-      <LicenseScreen
-        onLicenseValid={updateAppStatus}
-        showPricingPlans={showPricingPlans}
-        onHidePricingPlans={() => setShowPricingPlans(false)}
-        appStatus={appStatus}
-      />
+      <Suspense fallback={<LoadingFallback />}>
+        <LicenseScreen
+          onLicenseValid={updateAppStatus}
+          showPricingPlans={showPricingPlans}
+          onHidePricingPlans={() => setShowPricingPlans(false)}
+          appStatus={appStatus}
+        />
+      </Suspense>
     );
   }
 
@@ -1150,18 +885,24 @@ function App() {
   // SAFETY CHECK: Don't allow login screen if trial is expired
   if (isLocked) {
     // Double-check trial status before showing login screen
-    if (appStatus.trialInfo.isExpired) {
+    if (appStatus?.trialInfo.isExpired) {
       return (
-        <LicenseScreen
-          onLicenseValid={updateAppStatus}
-          showPricingPlans={showPricingPlans}
-          onHidePricingPlans={() => setShowPricingPlans(false)}
-          appStatus={appStatus}
-        />
+        <Suspense fallback={<LoadingFallback />}>
+          <LicenseScreen
+            onLicenseValid={updateAppStatus}
+            showPricingPlans={showPricingPlans}
+            onHidePricingPlans={() => setShowPricingPlans(false)}
+            appStatus={appStatus}
+          />
+        </Suspense>
       );
     }
 
-    return <LoginScreen onLogin={handleLogin} />;
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <LoginScreen onLogin={handleLogin} />
+      </Suspense>
+    );
   }
 
   // Main app
@@ -1254,31 +995,34 @@ function App() {
         </Suspense>
       )}
 
-      {/* Mini Vault Floating Button removed - using Electron's FloatingButton instead */}
 
       {/* Device Mismatch Dialog (Startup Check) */}
       {showStartupTransferDialog && (
-        <LicenseTransferDialog
-          isOpen={showStartupTransferDialog}
-          licenseKey={startupTransferKey}
-          onConfirmTransfer={async () => {
-            const result = await licenseService.transferLicense(startupTransferKey);
-            if (result.success) {
+        <Suspense fallback={null}>
+          <LicenseTransferDialog
+            isOpen={showStartupTransferDialog}
+            licenseKey={startupTransferKey}
+            onConfirmTransfer={async () => {
+              const result = await licenseService.transferLicense(startupTransferKey);
+              if (result.success) {
+                setShowStartupTransferDialog(false);
+                await updateAppStatus();
+                notify.success("License transferred successfully!");
+              }
+              return result;
+            }}
+            onCancel={() => {
               setShowStartupTransferDialog(false);
-              await updateAppStatus();
-              notify.success("License transferred successfully!");
-            }
-            return result;
-          }}
-          onCancel={() => {
-            setShowStartupTransferDialog(false);
-            // User cancelled - they'll need to transfer later
-          }}
-        />
+              // User cancelled - they'll need to transfer later
+            }}
+          />
+        </Suspense>
       )}
 
       {/* Offline indicator */}
-      <OfflineIndicator />
+      <Suspense fallback={null}>
+        <OfflineIndicator />
+      </Suspense>
 
       {/* Toast notifications */}
       <Notification notification={notification} onDismiss={dismissNotification} />

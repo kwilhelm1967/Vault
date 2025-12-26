@@ -1,3 +1,44 @@
+/**
+ * LicenseScreen Component
+ * 
+ * Main license management and activation interface. Handles:
+ * - License key activation (single and family plans)
+ * - Trial activation with 7-day limit
+ * - License transfer for device mismatches
+ * - Device management for family plans
+ * - License status dashboard
+ * - Recovery options (forgot license key)
+ * - EULA agreement flow
+ * - Download instructions and purchase flow
+ * - Trial expiration handling
+ * 
+ * @component
+ * 
+ * @example
+ * ```tsx
+ * <LicenseScreen
+ *   onLicenseValid={handleLicenseValid}
+ *   appStatus={appStatus}
+ *   showPricingPlans={false}
+ * />
+ * ```
+ * 
+ * @remarks
+ * This component orchestrates multiple sub-screens:
+ * - ExpiredTrialScreen
+ * - KeyActivationScreen
+ * - RecoveryOptionsScreen
+ * - LicenseTransferDialog
+ * - DeviceManagementScreen
+ * - LicenseStatusDashboard
+ * - DownloadInstructions
+ * - DownloadPage
+ * - EulaAgreement
+ * 
+ * State management handles transitions between these screens based on
+ * user actions and license status.
+ */
+
 import React, { useState, useCallback, useEffect } from "react";
 import {
   Lock,
@@ -59,6 +100,8 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
   
   // Device management state (for family plans)
   const [showDeviceManagement, setShowDeviceManagement] = useState(false);
+  const [localLicenseFile, setLocalLicenseFile] = useState<{ license_key: string; max_devices: number } | null>(null);
+  const [maxDevices, setMaxDevices] = useState<number>(1);
   
   // License status dashboard state
   const [showStatusDashboard, setShowStatusDashboard] = useState(false);
@@ -180,6 +223,13 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
     await handleActivateLicense();
   };
 
+  // Load max devices on mount
+  useEffect(() => {
+    licenseService.getMaxDevices().then(setMaxDevices).catch((error) => {
+      devError('Failed to load max devices:', error);
+    });
+  }, []);
+
   // Show expired trial screen when trial is expired
   useEffect(() => {
     if (localStorageTrialInfo.isExpired && !showExpiredTrialScreen && !showKeyActivationScreen && !showRecoveryOptions) {
@@ -203,6 +253,26 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
       setError(null);
     }
   }, [localStorageTrialInfo.isExpired, showLicenseInput]);
+
+  // Load license file and max devices when device management screen is shown
+  useEffect(() => {
+    if (showDeviceManagement) {
+      Promise.all([
+        licenseService.getLocalLicenseFile(),
+        licenseService.getMaxDevices()
+      ]).then(([file, maxDevicesCount]) => {
+        if (file) {
+          setLocalLicenseFile({
+            license_key: file.license_key,
+            max_devices: file.max_devices || maxDevicesCount,
+          });
+        }
+        setMaxDevices(maxDevicesCount);
+      }).catch((error) => {
+        devError('Failed to load license file:', error);
+      });
+    }
+  }, [showDeviceManagement]);
 
   const handleActivateLicense = async () => {
 
@@ -469,13 +539,18 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
 
   // Device Management Screen (for family plans)
   if (showDeviceManagement) {
-    const localLicense = licenseService.getLocalLicenseFile();
-    const maxDevices = localLicense?.max_devices || 5;
+    if (!localLicenseFile) {
+      return (
+        <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#0F172A' }}>
+          <div className="text-white">Loading...</div>
+        </div>
+      );
+    }
     return (
       <DeviceManagementScreen
         onBack={() => setShowDeviceManagement(false)}
-        licenseKey={localLicense?.license_key || ''}
-        maxDevices={maxDevices}
+        licenseKey={localLicenseFile.license_key}
+        maxDevices={localLicenseFile.max_devices}
       />
     );
   }
@@ -649,7 +724,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
                     }}
                   >
                     <Users className="w-4 h-4" />
-                    <span>Manage Devices ({licenseService.getMaxDevices()} max)</span>
+                    <span>Manage Devices ({maxDevices} max)</span>
                   </button>
                 )}
               </div>

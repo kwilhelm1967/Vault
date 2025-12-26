@@ -507,6 +507,20 @@ export class TrialService {
   }
 
   /**
+   * Register callback for trial expiration (alias for onExpiration)
+   */
+  addExpirationCallback(callback: () => void): void {
+    this.onExpiration(callback);
+  }
+
+  /**
+   * Unregister expiration callback (alias for offExpiration)
+   */
+  removeExpirationCallback(callback: () => void): void {
+    this.offExpiration(callback);
+  }
+
+  /**
    * Register callback for warning popups
    */
   onWarningPopup(callback: (state: WarningPopupState) => void): void {
@@ -518,6 +532,20 @@ export class TrialService {
    */
   offWarningPopup(callback: (state: WarningPopupState) => void): void {
     this.warningPopupCallbacks = this.warningPopupCallbacks.filter(cb => cb !== callback);
+  }
+
+  /**
+   * Register callback for warning popups (alias for onWarningPopup)
+   */
+  addWarningPopupCallback(callback: (state: WarningPopupState) => void): void {
+    this.onWarningPopup(callback);
+  }
+
+  /**
+   * Unregister warning popup callback (alias for offWarningPopup)
+   */
+  removeWarningPopupCallback(callback: (state: WarningPopupState) => void): void {
+    this.offWarningPopup(callback);
   }
 
   /**
@@ -571,6 +599,13 @@ export class TrialService {
         }
       });
     }
+  }
+
+  /**
+   * Check and trigger warning popups (alias for checkAndTriggerWarningPopups)
+   */
+  async checkWarningPopups(): Promise<void> {
+    return this.checkAndTriggerWarningPopups();
   }
 }
 

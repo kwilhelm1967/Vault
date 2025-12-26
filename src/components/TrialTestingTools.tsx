@@ -1,6 +1,7 @@
 import React from "react";
 import { trialService } from "../utils/trialService";
 import { safeParseJWT } from "../utils/safeUtils";
+import { devLog } from "../utils/devLog";
 
 // Constant determined at build time - never changes at runtime
 const IS_DEV = import.meta.env.DEV;
@@ -69,12 +70,12 @@ export const TrialTestingTools: React.FC<TrialTestingToolsProps> = ({ onShowWarn
   };
 
   const handleCheckWarningPopups = async () => {
-    console.log('🧪 MANUAL TRIGGER: Checking warning popups');
+    devLog('🧪 MANUAL TRIGGER: Checking warning popups');
     await trialService.checkWarningPopups();
   };
 
   const handleLogTrialStatus = async () => {
-    console.log('📊 MANUAL TRIGGER: Logging trial status');
+    devLog('📊 MANUAL TRIGGER: Logging trial status');
     await trialService.logTrialStatus();
   };
 
@@ -89,25 +90,25 @@ export const TrialTestingTools: React.FC<TrialTestingToolsProps> = ({ onShowWarn
       }>(token);
       
       if (tokenData) {
-        console.log('🔑 JWT TOKEN DECODED:', tokenData);
-        console.log('⚠️ WARNING TIMESTAMPS:', {
+        devLog('🔑 JWT TOKEN DECODED:', tokenData);
+        devLog('⚠️ WARNING TIMESTAMPS:', {
           warning1: tokenData.warningPopup1Timestamp,
           warning2: tokenData.warningPopup2Timestamp,
           expiry: tokenData.trialExpiryDate,
           isTrial: tokenData.isTrial
         });
       } else {
-        console.log('❌ FAILED TO DECODE JWT - invalid format');
+        devLog('❌ FAILED TO DECODE JWT - invalid format');
       }
     } else {
-      console.log('❌ NO LICENSE TOKEN FOUND');
+      devLog('❌ NO LICENSE TOKEN FOUND');
     }
   };
 
   const handleQuickJWTParse = () => {
-    console.log('🚀 TESTING QUICK JWT PARSE...');
+    devLog('🚀 TESTING QUICK JWT PARSE...');
     const result = trialService.quickJWTParse();
-    console.log('🎯 QUICK JWT RESULT:', result);
+    devLog('🎯 QUICK JWT RESULT:', result);
   };
 
   return (

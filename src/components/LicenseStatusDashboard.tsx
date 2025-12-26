@@ -1,3 +1,15 @@
+/**
+ * License Status Dashboard Component
+ * 
+ * Displays comprehensive license information including:
+ * - License type and status
+ * - Device information and binding
+ * - Transfer history and limits
+ * - Device management for family plans
+ * 
+ * @component
+ */
+
 import React, { useState, useEffect } from "react";
 import {
   Shield,
@@ -14,7 +26,7 @@ import {
   Lock,
   Unlock,
 } from "lucide-react";
-import { licenseService, LicenseType } from "../utils/licenseService";
+import { licenseService, LicenseType, LicenseInfo } from "../utils/licenseService";
 import { devError } from "../utils/devLog";
 
 const colors = {
@@ -40,9 +52,11 @@ export const LicenseStatusDashboard: React.FC<LicenseStatusDashboardProps> = ({
   onManageDevices,
   onUpgrade,
 }) => {
-  const [licenseInfo, setLicenseInfo] = useState<any>(null);
+  const [licenseInfo, setLicenseInfo] = useState<LicenseInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [deviceInfo, setDeviceInfo] = useState<{ deviceId: string; deviceName: string } | null>(null);
+  const [localLicense, setLocalLicense] = useState<any>(null);
+  const [maxDevices, setMaxDevices] = useState<number>(1);
 
   useEffect(() => {
     loadLicenseStatus();
@@ -56,6 +70,12 @@ export const LicenseStatusDashboard: React.FC<LicenseStatusDashboardProps> = ({
       
       const device = await licenseService.getCurrentDeviceInfo();
       setDeviceInfo(device);
+
+      const localLicenseFile = await licenseService.getLocalLicenseFile();
+      setLocalLicense(localLicenseFile);
+      
+      const maxDevicesCount = await licenseService.getMaxDevices();
+      setMaxDevices(maxDevicesCount);
     } catch (error) {
       devError('Failed to load license status:', error);
     } finally {
@@ -179,8 +199,6 @@ export const LicenseStatusDashboard: React.FC<LicenseStatusDashboardProps> = ({
   }
 
   const isFamilyPlan = licenseService.isFamilyPlan();
-  const maxDevices = licenseService.getMaxDevices();
-  const localLicense = licenseService.getLocalLicenseFile();
   const activatedDevices = 1; // Current device is activated
 
   return (

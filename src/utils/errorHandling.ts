@@ -245,6 +245,19 @@ export class AuthenticationError extends Error implements AppError {
 
 /**
  * Error handler that provides consistent error processing
+ * 
+ * Singleton class that normalizes errors, determines user-friendly messages,
+ * and manages error logging. Ensures all errors are handled consistently
+ * throughout the application with proper context and recovery guidance.
+ * 
+ * @example
+ * ```typescript
+ * const handler = ErrorHandler.getInstance();
+ * const result = handler.handle(new Error('Something went wrong'), 'user-action');
+ * if (result.shouldRetry) {
+ *   // Retry the operation
+ * }
+ * ```
  */
 export class ErrorHandler {
   private static instance: ErrorHandler;
@@ -258,6 +271,26 @@ export class ErrorHandler {
 
   /**
    * Handle an error with appropriate logging and user feedback
+   * 
+   * Normalizes the error, logs it with context, and returns structured
+   * information about how to handle the error (user message, retry guidance).
+   * 
+   * @param error - Error object (native Error or AppError)
+   * @param context - Optional context string describing where the error occurred
+   * @returns Object containing user message, retry guidance, and error code
+   * 
+   * @example
+   * ```typescript
+   * try {
+   *   await someOperation();
+   * } catch (error) {
+   *   const result = ErrorHandler.getInstance().handle(error, 'data-sync');
+   *   showNotification(result.userMessage);
+   *   if (result.shouldRetry) {
+   *     retryOperation();
+   *   }
+   * }
+   * ```
    */
   handle(error: Error | AppError, context?: string): {
     userMessage: string;
@@ -382,7 +415,30 @@ export function useErrorHandler() {
 }
 
 /**
- * Async operation wrapper with error handling
+ * Async operation wrapper with automatic error handling
+ * 
+ * Wraps an async operation in try-catch and returns a result object instead
+ * of throwing. This allows for functional error handling without try-catch
+ * blocks at every call site.
+ * 
+ * @template T - Return type of the operation
+ * @param operation - Async function to execute
+ * @param context - Optional context for error logging
+ * @returns Promise resolving to { data, error } object - exactly one will be non-null
+ * 
+ * @example
+ * ```typescript
+ * const { data, error } = await withErrorHandling(
+ *   () => apiClient.get('/endpoint'),
+ *   'fetch-user-data'
+ * );
+ * if (error) {
+ *   showError(error.userMessage);
+ *   return;
+ * }
+ * // Use data safely - TypeScript knows it's not null here
+ * processData(data);
+ * ```
  */
 export async function withErrorHandling<T>(
   operation: () => Promise<T>,
@@ -409,7 +465,35 @@ export async function withErrorHandling<T>(
 }
 
 /**
- * Retry mechanism for failed operations
+ * Retry mechanism for failed operations with exponential backoff
+ * 
+ * Executes an async operation with automatic retries on failure. Uses exponential
+ * backoff between retries to avoid overwhelming the system. Throws the last error
+ * if all retries are exhausted.
+ * 
+ * @template T - Return type of the operation
+ * @param operation - Async function to retry on failure
+ * @param maxRetries - Maximum number of retry attempts (default: 3)
+ * @param delay - Initial delay in milliseconds (default: 1000)
+ * @returns Promise resolving to operation result on success
+ * @throws Last error if all retries are exhausted
+ * 
+ * @example
+ * ```typescript
+ * try {
+ *   const data = await withRetry(
+ *     () => networkRequest(),
+ *     3,  // max retries
+ *     1000 // initial delay
+ *   );
+ *   // Success after retries
+ * } catch (error) {
+ *   // All retries exhausted
+ * }
+ * ```
+ * 
+ * @remarks
+ * Delay progression: 1s, 2s, 4s for default parameters (exponential backoff)
  */
 export async function withRetry<T>(
   operation: () => Promise<T>,

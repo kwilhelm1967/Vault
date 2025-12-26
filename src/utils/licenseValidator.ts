@@ -6,15 +6,28 @@
  */
 
 /**
+ * Signed license file structure from server
+ */
+export interface SignedLicenseFile {
+  signature: string;
+  signed_at: string;
+  license_key?: string;
+  device_id?: string;
+  plan_type?: string;
+  max_devices?: number;
+  transfer_count?: number;
+  last_transfer_at?: string;
+  product_type?: string;
+  [key: string]: unknown; // Allow additional properties for flexibility
+}
+
+/**
  * Verify a signed license file signature
+ * 
  * @param signedLicense - Signed license file from server
  * @returns Promise<boolean> - true if signature is valid
  */
-export async function verifyLicenseSignature(signedLicense: {
-  signature: string;
-  signed_at: string;
-  [key: string]: any;
-}): Promise<boolean> {
+export async function verifyLicenseSignature(signedLicense: SignedLicenseFile): Promise<boolean> {
   // In development, accept unsigned files
   if (import.meta.env.DEV && !signedLicense.signature) {
     return true;
@@ -56,7 +69,16 @@ export async function verifyLicenseSignature(signedLicense: {
 }
 
 /**
- * Generate HMAC-SHA256 signature
+ * Generate HMAC-SHA256 signature using Web Crypto API
+ * 
+ * @param data - The data string to sign
+ * @param secret - The signing secret (should match backend secret)
+ * @returns Promise resolving to hexadecimal HMAC-SHA256 signature
+ * 
+ * @example
+ * ```typescript
+ * const signature = await generateHMAC(canonicalData, signingSecret);
+ * ```
  */
 async function generateHMAC(data: string, secret: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -78,6 +100,17 @@ async function generateHMAC(data: string, secret: string): Promise<string> {
 
 /**
  * Constant-time string comparison to prevent timing attacks
+ * 
+ * Compares two strings in constant time to prevent attackers from using timing
+ * differences to determine correct signature values. Uses bitwise XOR to compare
+ * all characters regardless of where differences occur.
+ * 
+ * @param a - First string to compare
+ * @param b - Second string to compare
+ * @returns true if strings are equal, false otherwise
+ * 
+ * @security This function is critical for signature verification security.
+ * Never use regular string comparison (===) for cryptographic values.
  */
 function constantTimeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) {
@@ -93,14 +126,23 @@ function constantTimeEqual(a: string, b: string): boolean {
 }
 
 /**
- * Synchronous version for immediate validation
- * Note: This is a simplified version. For production, use async version.
+ * Synchronous version for immediate validation (structure check only)
+ * 
+ * Note: This is a simplified version that only validates structure and signature
+ * presence. For full cryptographic signature verification, use the async
+ * verifyLicenseSignature function.
+ * 
+ * @param signedLicense - Signed license file object
+ * @param signedLicense.signature - HMAC-SHA256 signature string
+ * @param signedLicense.signed_at - ISO timestamp when license was signed
+ * @returns true if signature is present and structure is valid, false otherwise
+ * 
+ * @remarks
+ * This function is used for quick validation checks where async crypto
+ * operations would be too slow. Full signature verification happens during
+ * license activation using the async verifyLicenseSignature function.
  */
-export function verifyLicenseSignatureSync(signedLicense: {
-  signature: string;
-  signed_at: string;
-  [key: string]: any;
-}): boolean {
+export function verifyLicenseSignatureSync(signedLicense: SignedLicenseFile): boolean {
   // In development, accept unsigned files
   if (import.meta.env.DEV && !signedLicense.signature) {
     return true;

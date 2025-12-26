@@ -22,3 +22,10 @@ export {
   usePerformanceSummary,
   onRenderCallback,
 } from './usePerformance';
+
+// ==================== App State Management ====================
+export { useAppStatus } from './useAppStatus';
+export { useVaultData } from './useVaultData';
+export { useDarkTheme } from './useDarkTheme';
+export { useFloatingMode } from './useFloatingMode';
+export { useVaultStatusSync } from './useVaultStatusSync';

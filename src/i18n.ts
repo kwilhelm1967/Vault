@@ -8,11 +8,8 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
-// Import translations
+// Import only English immediately - other languages loaded on demand
 import en from './locales/en.json';
-import es from './locales/es.json';
-import de from './locales/de.json';
-import fr from './locales/fr.json';
 
 // Available languages
 export const languages = [
@@ -38,15 +35,12 @@ const getSavedLanguage = (): string => {
   return 'en'; // Default to English
 };
 
-// Initialize i18n
+// Initialize i18n with English only initially
 i18n
   .use(initReactI18next)
   .init({
     resources: {
       en: { translation: en },
-      es: { translation: es },
-      de: { translation: de },
-      fr: { translation: fr },
     },
     lng: getSavedLanguage(),
     fallbackLng: 'en',
@@ -58,8 +52,46 @@ i18n
     },
   });
 
+// Lazy load other languages on demand
+const loadLanguage = async (langCode: string) => {
+  if (i18n.hasResourceBundle(langCode, 'translation')) {
+    return; // Already loaded
+  }
+
+  try {
+    switch (langCode) {
+      case 'es':
+        const es = await import('./locales/es.json');
+        i18n.addResourceBundle('es', 'translation', es.default || es);
+        break;
+      case 'de':
+        const de = await import('./locales/de.json');
+        i18n.addResourceBundle('de', 'translation', de.default || de);
+        break;
+      case 'fr':
+        const fr = await import('./locales/fr.json');
+        i18n.addResourceBundle('fr', 'translation', fr.default || fr);
+        break;
+    }
+  } catch (error) {
+    console.error(`Failed to load language ${langCode}:`, error);
+  }
+};
+
+// Load saved language if not English
+const savedLang = getSavedLanguage();
+if (savedLang !== 'en') {
+  // Load asynchronously to not block initial render
+  setTimeout(() => {
+    loadLanguage(savedLang).then(() => {
+      i18n.changeLanguage(savedLang);
+    });
+  }, 0);
+}
+
 // Function to change language and save preference
-export const changeLanguage = (langCode: string): void => {
+export const changeLanguage = async (langCode: string): Promise<void> => {
+  await loadLanguage(langCode);
   i18n.changeLanguage(langCode);
   localStorage.setItem('app_language', langCode);
 };

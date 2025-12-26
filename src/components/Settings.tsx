@@ -1,7 +1,42 @@
 /**
  * Settings Component
  * 
- * Settings page with bouncing cards and blue accents.
+ * Comprehensive settings interface for vault configuration. Handles:
+ * - Auto-lock timeout configuration (minutes)
+ * - Clipboard auto-clear timeout (seconds)
+ * - Default password visibility setting
+ * - Sound effects toggle
+ * - Master password change
+ * - Data export (CSV, encrypted JSON)
+ * - Data import (CSV, encrypted JSON)
+ * - Complete data deletion
+ * - Recovery phrase generation and display
+ * - Mobile access token management
+ * - App version and information display
+ * 
+ * @component
+ * 
+ * @example
+ * ```tsx
+ * <Settings
+ *   onExport={handleExport}
+ *   onExportEncrypted={handleExportEncrypted}
+ *   onImport={handleImport}
+ *   onImportEncrypted={handleImportEncrypted}
+ *   onChangePassword={handleChangePassword}
+ *   onClearAllData={handleClearAllData}
+ *   totalEntries={entries.length}
+ * />
+ * ```
+ * 
+ * @remarks
+ * Settings are persisted to localStorage using keys:
+ * - vault_auto_lock_timeout
+ * - vault_clipboard_clear_timeout
+ * - vault_show_passwords_default
+ * - vault_sound_effects_enabled
+ * 
+ * Uses bouncy card animations for visual feedback on interactions.
  */
 
 import React, { useState, useEffect } from "react";

@@ -2,7 +2,43 @@
  * MainVault Component
  * 
  * Primary vault interface with sidebar navigation and password grid.
- * Uses extracted vault sub-components for cleaner organization.
+ * Handles:
+ * - Password entry display, search, and filtering
+ * - CRUD operations (Create, Read, Update, Delete)
+ * - Entry detail viewing and editing
+ * - Bulk operations (bulk delete, bulk selection)
+ * - Sorting and filtering by category, favorites, weak passwords, reused passwords
+ * - TOTP code generation and display
+ * - Password history tracking
+ * - Dashboard view with statistics
+ * - Settings integration
+ * 
+ * @component
+ * 
+ * @example
+ * ```tsx
+ * <MainVault
+ *   entries={entries}
+ *   categories={categories}
+ *   onAddEntry={handleAddEntry}
+ *   onUpdateEntry={handleUpdateEntry}
+ *   onDeleteEntry={handleDeleteEntry}
+ *   onLock={handleLock}
+ *   searchTerm={searchTerm}
+ *   onSearchChange={setSearchTerm}
+ *   selectedCategory={selectedCategory}
+ *   onCategoryChange={setSelectedCategory}
+ * />
+ * ```
+ * 
+ * @remarks
+ * This component handles multiple responsibilities and is quite large.
+ * Consider extracting sub-components for:
+ * - Entry grid/list rendering
+ * - Entry detail modal
+ * - Search and filter controls
+ * - Sort controls
+ * - Bulk selection UI
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -53,16 +89,25 @@ import {
   getPasswordAge,
   DeleteConfirmModal,
   BulkDeleteConfirmModal,
+  CustomFieldDisplay,
 } from "./vault";
 
-// Helper function to find duplicate passwords
+/**
+ * Helper function to find duplicate passwords
+ * 
+ * @param entries - Array of all password entries
+ * @param currentEntry - Entry to check for duplicates
+ * @returns Array of entries with the same password as currentEntry
+ */
 const findDuplicates = (entries: PasswordEntry[], currentEntry: PasswordEntry): PasswordEntry[] => {
   return entries.filter(
     e => e.id !== currentEntry.id && e.password === currentEntry.password
   );
 };
 
-// Map category icon names to Lucide components
+/**
+ * Map category icon names to Lucide icon components
+ */
 const categoryIconMap: Record<string, LucideIcon> = {
   Grid3X3,
   CircleDollarSign,
@@ -75,55 +120,14 @@ const categoryIconMap: Record<string, LucideIcon> = {
   Key, // fallback
 };
 
-// Get the icon component for a category
+/**
+ * Get the icon component for a category
+ * 
+ * @param iconName - Name of the icon to retrieve
+ * @returns Lucide icon component, defaults to Key if not found
+ */
 const getCategoryIcon = (iconName: string): LucideIcon => {
   return categoryIconMap[iconName] || Key;
-};
-
-// Custom Field Display Component
-const CustomFieldDisplay: React.FC<{ field: CustomField }> = ({ field }) => {
-  const [visible, setVisible] = React.useState(!field.isSecret);
-  const [copied, setCopied] = React.useState(false);
-  
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(field.value);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-    const settings = getVaultSettings();
-    clearClipboardAfterTimeout(settings.clipboardClearTimeout, field.value);
-  };
-  
-  return (
-    <div className="bg-slate-700/30 rounded-lg p-3 flex items-center justify-between">
-      <div className="flex-1 min-w-0">
-        <span className="text-xs text-slate-500 block">{field.label}</span>
-        <span className="text-sm text-slate-200 font-mono truncate block">
-          {field.isSecret && !visible ? "••••••••" : field.value}
-        </span>
-      </div>
-      <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-        {field.isSecret && (
-          <button
-            onClick={() => setVisible(!visible)}
-            className="p-1.5 text-slate-500 hover:text-white rounded transition-colors"
-            title={visible ? "Hide" : "Show"}
-          >
-            {visible 
-              ? <EyeOff className="w-4 h-4" strokeWidth={1.5} />
-              : <Eye className="w-4 h-4" strokeWidth={1.5} />
-            }
-          </button>
-        )}
-        <button
-          onClick={handleCopy}
-          className="p-1.5 text-slate-500 hover:text-blue-400 rounded transition-colors"
-          title="Copy"
-        >
-          {copied ? <Check className="w-4 h-4 text-green-400" strokeWidth={1.5} /> : <Copy className="w-4 h-4" strokeWidth={1.5} />}
-        </button>
-      </div>
-    </div>
-  );
 };
 
 import { PasswordEntry, Category, CustomField } from "../types";

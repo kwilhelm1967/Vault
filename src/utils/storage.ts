@@ -44,7 +44,7 @@ import { devError, devWarn } from "./devLog";
  * Single source of truth for category definitions.
  * @constant {Category[]}
  */
-const FIXED_CATEGORIES: Category[] = [
+export const FIXED_CATEGORIES: Category[] = [
   { id: "all", name: "All", color: "#3b82f6", icon: "Grid3X3" },
   { id: "banking", name: "Banking", color: "#10b981", icon: "CircleDollarSign" },
   { id: "shopping", name: "Shopping", color: "#f59e0b", icon: "ShoppingCart" },

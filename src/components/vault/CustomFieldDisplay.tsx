@@ -1,7 +1,24 @@
 /**
  * CustomFieldDisplay Component
  * 
- * Displays a custom field with show/hide toggle for secrets and copy functionality.
+ * Displays custom fields (e.g., security questions, PINs) with:
+ * - Visibility toggle for secret fields
+ * - Copy to clipboard functionality
+ * - Auto-clear clipboard after timeout
+ * - Visual feedback for copied state
+ * 
+ * @component
+ * 
+ * @example
+ * ```tsx
+ * <CustomFieldDisplay
+ *   field={{
+ *     label: "Security Question",
+ *     value: "What is your mother's maiden name?",
+ *     isSecret: false
+ *   }}
+ * />
+ * ```
  */
 
 import React, { useState } from "react";
@@ -10,9 +27,13 @@ import { CustomField } from "../../types";
 import { clearClipboardAfterTimeout, getVaultSettings } from "../Settings";
 
 interface CustomFieldDisplayProps {
+  /** Custom field to display */
   field: CustomField;
 }
 
+/**
+ * Component for displaying custom fields with visibility and copy functionality
+ */
 export const CustomFieldDisplay: React.FC<CustomFieldDisplayProps> = ({ field }) => {
   const [visible, setVisible] = useState(!field.isSecret);
   const [copied, setCopied] = useState(false);
@@ -29,7 +50,7 @@ export const CustomFieldDisplay: React.FC<CustomFieldDisplayProps> = ({ field })
     <div className="bg-slate-700/30 rounded-lg p-3 flex items-center justify-between">
       <div className="flex-1 min-w-0">
         <span className="text-xs text-slate-500 block">{field.label}</span>
-        <span className="text-sm text-slate-200 truncate block">
+        <span className="text-sm text-slate-200 font-mono truncate block">
           {field.isSecret && !visible ? "••••••••" : field.value}
         </span>
       </div>
@@ -39,6 +60,7 @@ export const CustomFieldDisplay: React.FC<CustomFieldDisplayProps> = ({ field })
             onClick={() => setVisible(!visible)}
             className="p-1.5 text-slate-500 hover:text-white rounded transition-colors"
             title={visible ? "Hide" : "Show"}
+            aria-label={visible ? "Hide field value" : "Show field value"}
           >
             {visible 
               ? <EyeOff className="w-4 h-4" strokeWidth={1.5} />
@@ -49,28 +71,16 @@ export const CustomFieldDisplay: React.FC<CustomFieldDisplayProps> = ({ field })
         <button
           onClick={handleCopy}
           className="p-1.5 text-slate-500 hover:text-blue-400 rounded transition-colors"
-          title="Copy"
+          title="Copy to clipboard"
+          aria-label="Copy field value to clipboard"
         >
-          {copied 
-            ? <Check className="w-4 h-4 text-green-400" strokeWidth={1.5} /> 
-            : <Copy className="w-4 h-4" strokeWidth={1.5} />
-          }
+          {copied ? (
+            <Check className="w-4 h-4 text-green-400" strokeWidth={1.5} />
+          ) : (
+            <Copy className="w-4 h-4" strokeWidth={1.5} />
+          )}
         </button>
       </div>
     </div>
   );
 };
-
-export default CustomFieldDisplay;
-
-
-
-
-
-
-
-
-
-
-
-

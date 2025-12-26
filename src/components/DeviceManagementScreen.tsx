@@ -58,7 +58,7 @@ export const DeviceManagementScreen: React.FC<DeviceManagementScreenProps> = ({
     try {
       // Get device info from local license file (100% offline - no API calls)
       // All data comes from locally stored signed license file
-      const localDeviceInfo = licenseService.getLocalDeviceInfo();
+      const localDeviceInfo = await licenseService.getLocalDeviceInfo();
       const currentDeviceInfo = await licenseService.getCurrentDeviceInfo();
       
       if (!localDeviceInfo || !currentDeviceInfo) {
