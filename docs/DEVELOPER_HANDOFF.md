@@ -113,14 +113,26 @@ openssl rand -hex 32
 ---
 
 ### 3.2 Create Download Packages
-- [ ] Create ZIP package for each platform containing:
-  - Installer file (`.exe`, `.dmg`, or `.AppImage`)
-  - `README.txt` (if available)
-  - Documentation files (if available)
+- [x] Create ZIP package for Windows (already created)
+  - Package script: `scripts/create-download-packages.ps1`
+  - Windows package: `download-packages/Local-Password-Vault-Windows-1.2.0.zip`
+  - Contains: Installer, README.txt, USER_MANUAL.md, QUICK_START_GUIDE.md, TROUBLESHOOTING_GUIDE.md
+- [ ] Create ZIP package for macOS:
+  - Build macOS installer: `npm run dist:mac`
+  - Run package script: `.\scripts\create-download-packages.ps1`
+- [ ] Create ZIP package for Linux:
+  - Build Linux installer: `npm run dist:linux`
+  - Run package script: `.\scripts\create-download-packages.ps1`
 - [ ] Host packages:
-  - Upload to GitHub Releases 
-  - Get download URLs
-  - Update email templates with download URLs
+  - Upload ZIP files to GitHub Releases
+    - Go to: https://github.com/kwilhelm1967/Vault/releases
+    - Create new release (tag: `v1.2.0`)
+    - Upload ZIP files as release assets
+  - Get download URLs from GitHub Releases
+  - Update email templates with download URLs:
+    - `backend/templates/purchase-confirmation-email.html`
+    - `backend/templates/bundle-email.html`
+    - `backend/templates/trial-welcome-email.html`
 
 ---
 
