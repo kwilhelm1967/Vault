@@ -11,7 +11,105 @@ This guide explains how to sign your installers for Windows and Mac to make them
 
 ---
 
-## Windows Code Signing
+## Quick Setup Using Scripts (Recommended)
+
+The easiest way to set up code signing is using the provided setup scripts. These scripts automate the certificate configuration process.
+
+### Windows Setup Script
+
+**Location:** `scripts/setup-code-signing.ps1`
+
+**Usage:**
+```powershell
+# Run from project root
+.\scripts\setup-code-signing.ps1
+```
+
+**What it does:**
+1. Creates `certs/` directory (if it doesn't exist)
+2. Guides you through downloading certificate from SSL.com
+3. Copies certificate to `certs/` directory
+4. Prompts for certificate password
+5. Creates/updates `.env` file with:
+   - `CSC_LINK=certs/your-certificate.pfx`
+   - `CSC_KEY_PASSWORD=your_password`
+
+**After running the script:**
+```bash
+# Build signed installer
+npm run dist:win
+```
+
+### macOS/Linux Setup Script
+
+**Location:** `scripts/setup-code-signing.sh`
+
+**Usage:**
+```bash
+# Make executable (first time only)
+chmod +x scripts/setup-code-signing.sh
+
+# Run from project root
+./scripts/setup-code-signing.sh
+```
+
+**What it does:**
+- Same as Windows script but for macOS/Linux environment
+- Creates `certs/` directory
+- Guides certificate setup
+- Configures `.env` file
+
+### Verify Code Signing Configuration
+
+**Location:** `scripts/verify-code-signing.ps1`
+
+**Usage:**
+```powershell
+# Check if code signing is properly configured
+.\scripts\verify-code-signing.ps1
+```
+
+**What it checks:**
+- ✓ `.env` file exists
+- ✓ Certificate file exists at path specified in `CSC_LINK`
+- ✓ Certificate password is set in `CSC_KEY_PASSWORD`
+- ✓ Certificate files are in `.gitignore` (security check)
+
+**If verification fails:**
+- Run `.\scripts\setup-code-signing.ps1` to configure
+
+### Verify Installer Signature
+
+**Location:** `scripts/verify-installer.ps1`
+
+**Usage:**
+```powershell
+# Verify the built installer (auto-detects latest in release/ folder)
+.\scripts\verify-installer.ps1
+
+# Or specify installer path
+.\scripts\verify-installer.ps1 -InstallerPath "path\to\installer.exe"
+```
+
+**What it checks:**
+- File information (name, size, dates)
+- SHA-256 hash (for publishing on website)
+- Digital signature status (Valid/NotSigned/Invalid)
+- Certificate details (signer, issuer, expiration)
+- File size checks (malware indicators)
+- Dependency audit (npm vulnerabilities)
+
+**Example output:**
+```
+[PASS] Signature Status - Valid
+[INFO] Signer - CN=Your Company Name
+[INFO] Expires - 2025-12-31
+[INFO] SHA-256 - abc123... (for website)
+```
+
+---
+
+## Windows Code Signing (Manual Setup)
 
 ### Option 1: EV Code Signing Certificate (Recommended)
 
@@ -37,15 +135,32 @@ EV (Extended Validation) certificates provide instant reputation with SmartScree
 
 3. **Configure electron-builder**
    
+   **Option A: Use Setup Script (Recommended)**
+   ```powershell
+   .\scripts\setup-code-signing.ps1
+   ```
+   
+   **Option B: Manual Configuration**
+   
    Create `.env` file:
    ```env
    CSC_LINK=path/to/certificate.pfx
    CSC_KEY_PASSWORD=your_password
    ```
 
-4. **Build Signed Installer**
+4. **Verify Configuration**
+   ```powershell
+   .\scripts\verify-code-signing.ps1
+   ```
+
+5. **Build Signed Installer**
    ```bash
    npm run dist:win
+   ```
+
+6. **Verify Installer Signature**
+   ```powershell
+   .\scripts\verify-installer.ps1
    ```
 
 ### Option 2: Standard Code Signing Certificate
