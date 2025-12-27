@@ -60,7 +60,6 @@ export { FloatingPanel } from './FloatingPanel';
 export { ElectronFloatingPanel } from './ElectronFloatingPanel';
 
 // ==================== Landing & Download Pages ====================
-export { LandingPage } from './LandingPage';
 export { DownloadPage } from './DownloadPage';
 export { DownloadInstructions } from './DownloadInstructions';
 export { PurchaseSuccessPage } from './PurchaseSuccessPage';

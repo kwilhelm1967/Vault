@@ -51,7 +51,13 @@
     .hero p { font-size: 1.2rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto; }
 
     .pricing-section { padding: 60px 2rem; max-width: 1200px; margin: 0 auto; }
-    .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-bottom: 4rem; }
+    .pricing-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+      gap: 2rem; 
+      margin-bottom: 4rem;
+      align-items: stretch;
+    }
     
     .pricing-card {
       background: var(--bg-card);
@@ -60,6 +66,9 @@
       border: 1px solid var(--border-subtle);
       position: relative;
       transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
     }
     .pricing-card:hover { transform: translateY(-4px); border-color: var(--cyan-dark); }
     .pricing-card.popular { border: 2px solid var(--cyan); }
@@ -78,35 +87,72 @@
     }
     .pricing-card.best-value::before { content: 'Best Value'; }
     
-    .pricing-card h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; }
-    .pricing-card .subtitle { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem; }
-    .pricing-card .price { font-size: 3rem; font-weight: 700; margin-bottom: 0.25rem; }
-    .pricing-card .period { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
-    .pricing-card ul { list-style: none; margin-bottom: 2rem; }
+    .pricing-card h3 { 
+      font-size: 1.25rem; 
+      font-weight: 600; 
+      margin-bottom: 0.5rem;
+      line-height: 1.3;
+    }
+    .pricing-card .subtitle { 
+      color: var(--text-secondary); 
+      font-size: 0.9rem; 
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+      min-height: 2.25em;
+    }
+    .pricing-card .price { 
+      font-size: 3rem; 
+      font-weight: 700; 
+      margin-bottom: 0.25rem;
+      line-height: 1;
+    }
+    .pricing-card .period { 
+      color: var(--text-muted); 
+      font-size: 0.9rem; 
+      margin-bottom: 1.5rem;
+      line-height: 1.4;
+    }
+    .pricing-card ul { 
+      list-style: none; 
+      margin-bottom: auto;
+      padding: 0;
+      flex-grow: 1;
+    }
     .pricing-card ul li {
       display: flex;
-      align-items: start;
+      align-items: flex-start;
       gap: 0.75rem;
-      margin-bottom: 0.75rem;
+      margin-bottom: 0.875rem;
       color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    .pricing-card ul li:last-child {
+      margin-bottom: 0;
     }
     .pricing-card ul li::before {
       content: '✓';
       color: var(--green);
       font-weight: 700;
       flex-shrink: 0;
+      width: 18px;
+      text-align: center;
+      margin-top: 2px;
     }
     .pricing-card .cta {
       display: block;
       width: 100%;
-      padding: 14px;
+      padding: 14px 20px;
       background: var(--gradient-cyan);
       color: var(--bg-darker);
       text-decoration: none;
       border-radius: 10px;
       text-align: center;
       font-weight: 600;
+      font-size: 0.95rem;
       transition: transform 0.2s, box-shadow 0.2s;
+      margin-top: 2rem;
+      line-height: 1.4;
     }
     .pricing-card .cta:hover { transform: translateY(-2px); box-shadow: 0 10px 30px var(--cyan-glow); }
 
@@ -141,6 +187,205 @@
     }
     .guarantee-section p:last-child {
       margin-bottom: 0;
+    }
+
+    .bundle-section {
+      padding: 60px 2rem;
+      max-width: 1200px;
+      margin: 0 auto 4rem;
+    }
+    .bundle-section h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .bundle-section .subtitle {
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      margin-bottom: 3rem;
+    }
+    .bundle-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+      align-items: stretch;
+    }
+    .bundle-card {
+      background: var(--bg-card);
+      border-radius: 20px;
+      padding: 2.5rem;
+      border: 2px solid var(--border-subtle);
+      position: relative;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    .bundle-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--cyan);
+      box-shadow: 0 10px 40px rgba(6, 182, 212, 0.2);
+    }
+    .bundle-card.featured {
+      border: 2px solid var(--cyan);
+      background: linear-gradient(135deg, var(--bg-card) 0%, rgba(6, 182, 212, 0.05) 100%);
+    }
+    .bundle-card.featured::before {
+      content: 'Best Value';
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--gradient-cyan);
+      color: var(--bg-darker);
+      padding: 6px 20px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .bundle-card h3 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      line-height: 1.2;
+    }
+    .bundle-card .bundle-desc {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-bottom: 1.75rem;
+      line-height: 1.6;
+      min-height: 3.2em;
+    }
+    .bundle-price {
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1.75rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-subtle);
+      align-items: center;
+    }
+    .bundle-price .price {
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .bundle-price .original {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      text-decoration: line-through;
+      line-height: 1;
+    }
+    .bundle-price .savings {
+      font-size: 0.85rem;
+      color: var(--green);
+      font-weight: 600;
+      background: rgba(16, 185, 129, 0.1);
+      padding: 4px 10px;
+      border-radius: 6px;
+      line-height: 1.2;
+    }
+    .bundle-features {
+      list-style: none;
+      margin-bottom: auto;
+      padding: 0;
+    }
+    .bundle-features li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      margin-bottom: 0.875rem;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    .bundle-features li:last-child {
+      margin-bottom: 0;
+    }
+    .bundle-features li::before {
+      content: '✓';
+      color: var(--green);
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 2px;
+      width: 18px;
+      text-align: center;
+    }
+    .bundle-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.875rem;
+      margin-top: 2rem;
+    }
+    .bundle-cta {
+      display: block;
+      width: 100%;
+      padding: 14px 20px;
+      background: var(--gradient-cyan);
+      color: var(--bg-darker);
+      text-decoration: none;
+      border-radius: 10px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+      line-height: 1.4;
+    }
+    .bundle-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px var(--cyan-glow);
+    }
+    .bundle-cta.secondary {
+      background: transparent;
+      color: var(--cyan);
+      border: 2px solid var(--cyan);
+      padding: 12px 20px;
+    }
+    .bundle-cta.secondary:hover {
+      background: rgba(6, 182, 212, 0.1);
+      transform: translateY(-2px);
+    }
+    .bundle-info {
+      text-align: center;
+      padding: 2.5rem;
+      background: rgba(6, 182, 212, 0.05);
+      border-radius: 16px;
+      border: 1px solid var(--cyan-dark);
+      margin-top: 3rem;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .bundle-info p {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.7;
+      margin-bottom: 1.25rem;
+    }
+    .bundle-info p:last-child {
+      margin-bottom: 0;
+    }
+    .bundle-info strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    .bundle-info a {
+      color: var(--cyan);
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s;
+      display: inline-block;
+      margin-top: 0.5rem;
+    }
+    .bundle-info a:hover {
+      color: var(--cyan-light);
+      text-decoration: underline;
     }
 
     .comparison-section { padding: 60px 2rem; max-width: 1000px; margin: 0 auto; }
@@ -188,6 +433,12 @@
     @media (max-width: 768px) {
       .nav-links { display: none; }
       .pricing-grid { grid-template-columns: 1fr; }
+      .bundle-grid { grid-template-columns: 1fr; }
+      .bundle-section h2 { font-size: 2rem; }
+      .bundle-card { padding: 2rem; }
+      .bundle-price { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+      .bundle-price .savings { margin-top: 0.25rem; }
+      .bundle-info { padding: 1.5rem; }
       .footer-grid { grid-template-columns: 1fr 1fr; }
     }
   </style>
@@ -280,6 +531,66 @@
       </h3>
       <p>Not satisfied? Full refund, no questions asked.</p>
       <p>Your satisfaction is priority. If Local Password Vault isn't the right fit, contact me within 30 days and I will process a complete refund.</p>
+    </div>
+
+    <div class="bundle-section">
+      <h2>Complete Security Bundle</h2>
+      <p class="subtitle">Pair Local Password Vault with Local Legacy Vault for comprehensive offline security</p>
+      
+      <div class="bundle-grid">
+        <div class="bundle-card">
+          <h3>Personal Bundle</h3>
+          <p class="bundle-desc">Local Password Vault + Local Legacy Vault for one user</p>
+          <div class="bundle-price">
+            <span class="price">$89</span>
+            <span class="original">$98</span>
+            <span class="savings">Save $9</span>
+          </div>
+          <ul class="bundle-features">
+            <li>LPV Personal Vault (1 device)</li>
+            <li>LLV Personal License (1 device)</li>
+            <li>Lifetime licenses for both</li>
+            <li>All future updates included</li>
+            <li>Complete offline security suite</li>
+          </ul>
+          <div class="bundle-actions">
+            <a href="#" class="bundle-cta">Get Personal Bundle</a>
+            <a href="https://locallegacyvault.com" target="_blank" class="bundle-cta secondary">Learn About LLV →</a>
+          </div>
+        </div>
+
+        <div class="bundle-card featured">
+          <h3>Family Bundle</h3>
+          <p class="bundle-desc">Local Password Vault + Local Legacy Vault for your entire family</p>
+          <div class="bundle-price">
+            <span class="price">$139</span>
+            <span class="original">$157</span>
+            <span class="savings">Save $18</span>
+          </div>
+          <ul class="bundle-features">
+            <li>LPV Family Vault (5 devices)</li>
+            <li>LLV Family License (5 devices)</li>
+            <li>Lifetime licenses for both</li>
+            <li>All future updates included</li>
+            <li>Complete offline security suite</li>
+            <li>Perfect for families</li>
+          </ul>
+          <div class="bundle-actions">
+            <a href="#" class="bundle-cta">Get Family Bundle</a>
+            <a href="https://locallegacyvault.com" target="_blank" class="bundle-cta secondary">Learn About LLV →</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="bundle-info">
+        <p>
+          <strong>What is Local Legacy Vault?</strong> Local Legacy Vault is our secure document storage solution that keeps your important files 100% offline, just like Local Password Vault. 
+          Store wills, insurance documents, medical records, and more with the same military-grade encryption.
+        </p>
+        <p>
+          <a href="https://locallegacyvault.com" target="_blank">Visit Local Legacy Vault →</a> to learn more about features, security, and pricing options.
+        </p>
+      </div>
     </div>
 
     <div class="comparison-section">
