@@ -37,8 +37,8 @@ export default defineConfig(({ mode }) => {
       sourcemap: mode !== "production", // Enable source maps for development and test
       rollupOptions: {
         input: {
-          main: resolve(__dirname, "LPV/index.html"),
-          floatingButton: resolve(__dirname, "LPV/floating-button.html"),
+          main: resolve(__dirname, "../LPV/index.html"),
+          floatingButton: resolve(__dirname, "../LPV/floating-button.html"),
         },
         output: {
           // Code splitting for better caching and smaller initial bundle
