@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Why I Built Local Password Vault | Local Password Vault</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-dark: #0a0f1a;
+      --bg-darker: #060912;
+      --bg-card: #111827;
+      --bg-card-hover: #1f2937;
+      --cyan: #06b6d4;
+      --cyan-light: #22d3ee;
+      --cyan-dark: #0891b2;
+      --cyan-glow: rgba(6, 182, 212, 0.3);
+      --green: #10b981;
+      --text-primary: #f9fafb;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --gradient-cyan: linear-gradient(135deg, #22d3ee 0%, #0891b2 100%);
+      /* Keep old variables for content area compatibility */
+      --obsidian: #0a0e17;
+      --midnight: #0f172a;
+      --slate: #1e293b;
+      --steel: #334155;
+      --brandGold: #C9AE66;
+      --goldLight: #D4BC7D;
+      --goldDark: #B89B4D;
+      --steelBlue: #5B82B8;
+      --ivory: #F3F4F6;
+      --silver: #94a3b8;
+      --muted: #64748b;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-darker);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    /* Navigation - Matches other pages exactly */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      padding: 1rem 2rem;
+      background: rgba(6, 9, 18, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .nav-container {
+      max-width: 1600px;
+      width: 92%;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      background: var(--bg-dark);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px var(--cyan-glow), inset 0 0 0 1px var(--cyan-dark);
+    }
+
+    .logo-icon svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--cyan);
+      fill: none;
+    }
+
+    .logo-text {
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover,
+    .nav-links a.active {
+      color: var(--cyan);
+    }
+
+    .nav-cta {
+      padding: 10px 24px;
+      background: var(--gradient-cyan);
+      color: var(--bg-darker) !important;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+    
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+      }
+    }
+
+    /* Main Content */
+    .main-section {
+      padding-top: 140px;
+      padding-bottom: 4rem;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+    
+    @media (min-width: 1024px) {
+      .main-section {
+        padding-top: 140px;
+        padding-bottom: 5rem;
+      }
+    }
+    
+    /* Text content spacing */
+    .text-content {
+      padding-right: 0;
+    }
+    
+    @media (min-width: 1024px) {
+      .text-content {
+        padding-right: 2rem;
+      }
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 3rem;
+      align-items: start;
+    }
+
+    @media (min-width: 1024px) {
+      .content-grid {
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 4rem;
+        align-items: start;
+      }
+    }
+
+    .text-content h1 {
+      font-size: 2.5rem;
+      font-weight: 900;
+      line-height: 1.1;
+      margin-bottom: 1.25rem;
+      color: var(--text-primary);
+      letter-spacing: -0.025em;
+    }
+
+    @media (min-width: 1024px) {
+      .text-content h1 {
+        font-size: 3.5rem;
+        line-height: 1.05;
+        margin-bottom: 1.5rem;
+      }
+    }
+
+    .text-content h1 .highlight {
+      color: var(--cyan);
+      display: inline-block;
+    }
+
+    .text-content p {
+      font-size: 1rem;
+      line-height: 1.7;
+      margin-bottom: 1.25rem;
+      color: var(--text-secondary);
+      max-width: 100%;
+    }
+
+    @media (min-width: 1024px) {
+      .text-content p {
+        font-size: 1.125rem;
+        line-height: 1.75;
+        margin-bottom: 1.5rem;
+      }
+    }
+    
+    .text-content p:last-of-type {
+      margin-bottom: 2rem;
+    }
+
+    .contact-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 10px 24px;
+      border-radius: 8px;
+      background: var(--gradient-cyan);
+      color: var(--bg-darker) !important;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+      margin-top: 0.5rem;
+      border: none;
+      cursor: pointer;
+    }
+
+    .contact-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px var(--cyan-glow);
+    }
+
+    /* Image Container - Smaller and Optimized */
+    .image-container {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    @media (min-width: 1024px) {
+      .image-container {
+        justify-content: center; /* Center the video in its container */
+      }
+    }
+
+    .image-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 300px;
+      aspect-ratio: 3/4; /* Portrait ratio */
+      border-radius: 1rem;
+      overflow: hidden;
+      box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(91, 130, 184, 0.15);
+      background: var(--slate);
+      margin: 0 auto;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .image-wrapper:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(91, 130, 184, 0.25);
+    }
+    
+    @media (min-width: 1024px) {
+      .image-wrapper {
+        max-width: 320px;
+      }
+    }
+    
+    /* Play Button Overlay */
+    .play-button-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: rgba(6, 182, 212, 0.9);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 20px var(--cyan-glow);
+      cursor: pointer;
+    }
+    
+    .play-button-overlay:hover {
+      background: rgba(6, 182, 212, 1);
+      transform: translate(-50%, -50%) scale(1.15);
+      box-shadow: 0 8px 35px var(--cyan-glow);
+    }
+    
+    .play-button-overlay:active {
+      transform: translate(-50%, -50%) scale(1.05);
+    }
+    
+    .play-button-overlay.hidden {
+      display: none;
+    }
+    
+    .play-button-overlay svg {
+      width: 28px;
+      height: 28px;
+      fill: var(--bg-darker);
+      margin-left: 3px; /* Slight offset for visual centering */
+    }
+
+    .portrait-image,
+    .portrait-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 20%;
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
+      filter: brightness(1.05) contrast(1.08) saturate(1.02);
+      transition: opacity 0.3s ease-in-out;
+    }
+
+    .portrait-image[src=""],
+    .portrait-image:not([src]) {
+      opacity: 0;
+    }
+
+    .portrait-video {
+      /* Video-specific optimizations */
+      image-rendering: auto; /* Let browser optimize video */
+      background: var(--slate); /* Fallback background while loading */
+    }
+    
+    /* Ensure video loads properly */
+    video.portrait-video {
+      display: block;
+    }
+
+    /* Fallback placeholder */
+    .image-placeholder {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, var(--slate) 0%, var(--steel) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--silver);
+      font-size: 0.875rem;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .glow-effect {
+      position: absolute;
+      inset: -0.5rem;
+      border-radius: 1rem;
+      background: radial-gradient(circle, var(--cyan) 0%, transparent 70%);
+      opacity: 0.12;
+      filter: blur(1.2rem);
+      z-index: -1;
+      animation: pulse 4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.12; }
+      50% { opacity: 0.18; }
+    }
+
+
+    /* Animation classes - matches other pages */
+    .animate {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+    
+    .animate.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .delay-1 { transition-delay: 0.1s; }
+    .delay-2 { transition-delay: 0.2s; }
+    .delay-3 { transition-delay: 0.3s; }
+    .delay-4 { transition-delay: 0.4s; }
+
+    /* Security Features Section */
+    .security-features-section {
+      padding: 4rem 1.5rem;
+      background-color: var(--bg-dark);
+    }
+
+    .security-features-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .security-feature-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 28px;
+      border: 1px solid var(--border-subtle);
+      transition: all 0.3s ease;
+    }
+
+    .security-feature-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--cyan-dark);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Ensure icons don't change on hover */
+    .security-feature-card:hover h3 svg {
+      width: 20px !important;
+      height: 20px !important;
+      min-width: 20px !important;
+      max-width: 20px !important;
+      min-height: 20px !important;
+      max-height: 20px !important;
+      transform: none;
+    }
+
+    .security-feature-card h3 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text-primary);
+    }
+
+    /* Icon container - explicit size and centering */
+    .security-feature-card h3 svg {
+      width: 20px !important;
+      height: 20px !important;
+      min-width: 20px !important;
+      max-width: 20px !important;
+      min-height: 20px !important;
+      max-height: 20px !important;
+      stroke: var(--cyan) !important;
+      stroke-width: 2 !important;
+      flex-shrink: 0;
+      display: block;
+      box-sizing: border-box;
+      vertical-align: middle;
+      margin: 0;
+      padding: 0;
+    }
+    
+    /* Ensure consistent icon rendering - normalize all stroke elements */
+    .security-feature-card h3 svg path,
+    .security-feature-card h3 svg polyline,
+    .security-feature-card h3 svg circle,
+    .security-feature-card h3 svg line {
+      stroke-width: 2 !important;
+      stroke: var(--cyan) !important;
+    }
+
+    .security-feature-card p {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.7;
+      margin: 0;
+    }
+
+    @media (max-width: 968px) {
+      .security-features-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      /* Icons stay same size on tablet */
+      .security-feature-card h3 svg {
+        width: 20px !important;
+        height: 20px !important;
+        min-width: 20px !important;
+        max-width: 20px !important;
+        min-height: 20px !important;
+        max-height: 20px !important;
+      }
+    }
+
+    @media (max-width: 568px) {
+      .security-features-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      /* Icons stay same size on mobile */
+      .security-feature-card h3 svg {
+        width: 20px !important;
+        height: 20px !important;
+        min-width: 20px !important;
+        max-width: 20px !important;
+        min-height: 20px !important;
+        max-height: 20px !important;
+      }
+    }
+
+    /* Additional Content Section */
+    .additional-section {
+      padding: 4rem 1.5rem;
+      background-color: var(--bg-darker);
+    }
+
+    .additional-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      max-width: 1024px;
+      margin: 0 auto;
+    }
+
+    @media (min-width: 768px) {
+      .additional-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .additional-section h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+    }
+
+    .additional-section p {
+      color: var(--text-secondary);
+    }
+
+    /* Footer */
+    footer {
+      padding: 3rem 1.5rem;
+      border-top: 1px solid rgba(51, 65, 85, 0.3);
+      text-align: center;
+    }
+
+    footer p {
+      font-size: 0.875rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    footer a {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.875rem;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s ease, transform 0.2s ease;
+    }
+
+    footer a:hover {
+      color: var(--ivory);
+      transform: translateX(4px);
+    }
+
+  </style>
+</head>
+<body>
+  <!-- Navigation - Matches other pages exactly -->
+  <nav>
+    <div class="nav-container">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <span class="logo-text">Local Password Vault</span>
+      </a>
+      <div class="nav-links">
+        <a href="features.html">Features</a>
+        <a href="about.html" class="active">About</a>
+        <a href="security.html">Security</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="faq.html">FAQs</a>
+        <a href="pricing.html" class="nav-cta">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content Section -->
+  <section class="main-section">
+    <div class="container">
+      <div class="content-grid">
+        <!-- Left: Text Content -->
+        <div class="text-content">
+          <h1>
+            Why I Built
+            <br>
+            <span class="highlight">Local</span> <span class="highlight">Password</span> <span class="highlight">Vault</span>
+          </h1>
+          
+          <p>
+            Because your passwords shouldn't live on someone else's server. I created this after watching too many breaches, too many companies fail to protect user data, and too many people lose trust in cloud-based password managers.
+          </p>
+          
+          <p>
+            Local Password Vault is my answer: a password manager that puts you in complete control. Your data stays on your device, encrypted with military-grade security, accessible only to you. <span style="color: var(--cyan);">No cloud, no subscriptions, no compromises.</span>
+          </p>
+
+          <a href="mailto:support@localpasswordvault.com" class="contact-button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="stroke: var(--bg-darker);">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            Contact Support
+          </a>
+        </div>
+        
+        <!-- Right: Video/Image - Smaller and Better Rendered -->
+        <div class="image-container">
+          <div class="image-wrapper">
+            <!-- Video Option (primary) -->
+            <video
+              class="portrait-video"
+              playsinline
+              poster="about-portrait.jpg"
+              preload="metadata"
+            >
+              <source src="video.mp4" type="video/mp4">
+              <source src="demo.mp4" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
+            
+            <!-- Play Button Overlay -->
+            <div class="play-button-overlay" id="playButton">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+            </div>
+            
+            <!-- Image Fallback (if video doesn't load) -->
+            <img
+              src="about-portrait.jpg"
+              alt="Local Password Vault Creator - Kelly Wilhelm"
+              class="portrait-image"
+              loading="eager"
+              style="display: none;"
+              onerror="this.style.display='none';"
+            />
+            <div class="image-placeholder" style="display: none;">
+              <div>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin: 0 auto 1rem; opacity: 0.5;">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <div>Local Password Vault<br>Creator</div>
+              </div>
+            </div>
+            
+            <div class="glow-effect"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Security Features Section -->
+  <section class="security-features-section">
+    <div class="container">
+      <div class="security-features-grid">
+        <div class="security-feature-card animate delay-1">
+          <h3>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" style="width: 20px; height: 20px;">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            AES-256 Encryption
+          </h3>
+          <p>The same encryption standard used by governments and financial institutions worldwide.</p>
+        </div>
+        <div class="security-feature-card animate delay-2">
+          <h3>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" style="width: 20px; height: 20px;">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            Argon2id Key Derivation
+          </h3>
+          <p>Your master password is transformed using industry-leading key derivation to resist brute-force attacks.</p>
+        </div>
+        <div class="security-feature-card animate delay-3">
+          <h3>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" style="width: 20px; height: 20px;">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            100% Offline
+          </h3>
+          <p>No internet connection required. Your vault never phones home, syncs, or transmits data.</p>
+        </div>
+        <div class="security-feature-card animate delay-4">
+          <h3>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" style="width: 20px; height: 20px;">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            Zero Knowledge
+          </h3>
+          <p>I never see your passwords, your master key, or your vault contents. Only you have access.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Additional Content Section -->
+  <section class="additional-section">
+    <div class="container">
+      <div class="additional-grid">
+        <div>
+          <h2>Built with Privacy in Mind</h2>
+          <p>
+            Every design decision prioritizes your privacy and security. No tracking, no analytics, no data collection. Just you and your encrypted vault.
+          </p>
+        </div>
+        
+        <div>
+          <h2>One-Time Purchase</h2>
+          <p>
+            No subscriptions, no recurring fees. Pay once and own it forever. Your license includes all future updates at no additional cost.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>© 2025 Local Password Vault. All rights reserved.</p>
+      <a href="mailto:support@localpasswordvault.com">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+          <polyline points="22,6 12,13 2,6"></polyline>
+        </svg>
+        support@localpasswordvault.com
+      </a>
+    </div>
+  </footer>
+
+  <script>
+    // Animation observer - matches other pages
+    document.addEventListener('DOMContentLoaded', function() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) entry.target.classList.add('visible');
+        });
+      }, { threshold: 0.1 });
+      document.querySelectorAll('.animate').forEach(el => observer.observe(el));
+      
+      // Video play button functionality
+      const video = document.querySelector('.portrait-video');
+      const playButton = document.getElementById('playButton');
+      const imageWrapper = document.querySelector('.image-wrapper');
+      
+      if (video && playButton) {
+        // Click play button or video wrapper to play
+        function playVideo() {
+          video.play().then(() => {
+            playButton.classList.add('hidden');
+          }).catch(err => {
+            console.error('Error playing video:', err);
+          });
+        }
+        
+        playButton.addEventListener('click', function(e) {
+          e.stopPropagation();
+          playVideo();
+        });
+        
+        imageWrapper.addEventListener('click', function(e) {
+          if (!playButton.classList.contains('hidden')) {
+            playVideo();
+          }
+        });
+        
+        // Hide play button when video is playing
+        video.addEventListener('play', function() {
+          playButton.classList.add('hidden');
+        });
+        
+        // Show play button when video is paused (if user pauses it)
+        video.addEventListener('pause', function() {
+          if (video.currentTime > 0) {
+            playButton.classList.remove('hidden');
+          }
+        });
+        
+        // Show play button when video ends (if loop is disabled)
+        video.addEventListener('ended', function() {
+          playButton.classList.remove('hidden');
+        });
+      }
+    });
+  </script>
+</body>
+</html>
+
+

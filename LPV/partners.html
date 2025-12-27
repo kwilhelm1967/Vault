@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <title>Creator Partner Program - Local Password Vault</title>
+  <meta name="description" content="Partner with Local Password Vault. Earn 25% commission on every sale for life. Privacy-first, offline security products your audience will love.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-dark: #0a0f1a;
+      --bg-darker: #060912;
+      --bg-card: #111827;
+      --cyan: #06b6d4;
+      --cyan-light: #22d3ee;
+      --cyan-dark: #0891b2;
+      --cyan-glow: rgba(6, 182, 212, 0.3);
+      --green: #10b981;
+      --gold: #f59e0b;
+      --text-primary: #f9fafb;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --gradient-cyan: linear-gradient(135deg, #22d3ee 0%, #0891b2 100%);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; font-size: 16px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg-darker); color: var(--text-primary); line-height: 1.6; font-size: 16px; }
+
+    .animate { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+    .animate.visible { opacity: 1; transform: translateY(0); }
+    .delay-1 { transition-delay: 0.1s; }
+    .delay-2 { transition-delay: 0.2s; }
+    .delay-3 { transition-delay: 0.3s; }
+
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 1rem 2rem; background: rgba(6, 9, 18, 0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-subtle); }
+    .nav-container { max-width: 1600px; width: 92%; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .logo-icon { width: 44px; height: 44px; background: var(--bg-dark); border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px var(--cyan-glow), inset 0 0 0 1px var(--cyan-dark); }
+    .logo-icon svg { width: 24px; height: 24px; stroke: var(--cyan); fill: none; }
+    .logo-text { font-family: 'Space Grotesk', sans-serif; font-size: 1.15rem; font-weight: 600; color: var(--text-primary); }
+    .nav-links { display: flex; align-items: center; gap: 2rem; }
+    .nav-links a { color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; font-weight: 500; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--cyan); }
+    .nav-cta { padding: 10px 24px; background: var(--gradient-cyan); color: var(--bg-darker) !important; border-radius: 8px; font-weight: 600; }
+
+    /* Hero Section */
+    .hero {
+      padding: 160px 2rem 60px;
+      background: linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-darker) 100%);
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      border-radius: 100px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--cyan);
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2.5rem, 5vw, 3.5rem);
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 24px;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .hero h1 span { color: var(--cyan); }
+
+    .hero-subtitle {
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      max-width: 700px;
+      margin: 0 auto 16px;
+      line-height: 1.7;
+    }
+
+    .hero-commission {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--green);
+      margin-bottom: 40px;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 18px 40px;
+      background: var(--gradient-cyan);
+      color: var(--bg-darker);
+      text-decoration: none;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 40px var(--cyan-glow);
+    }
+
+    .hero-note {
+      margin-top: 16px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* Why Section */
+    .why-section {
+      padding: 60px 2rem 80px;
+      background: var(--bg-dark);
+    }
+
+    .section-container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .section-header h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.25rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .why-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 24px;
+      background: var(--bg-card);
+      border-radius: 12px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .why-item svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--green);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .why-item p {
+      color: var(--text-secondary);
+      font-size: 1rem;
+    }
+
+    .why-item strong {
+      color: var(--text-primary);
+    }
+
+    .evergreen-note {
+      text-align: center;
+      margin-top: 40px;
+      padding: 24px;
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.2);
+      border-radius: 12px;
+      color: var(--cyan);
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    /* Earnings Section */
+    .earnings-section {
+      padding: 60px 2rem;
+      background: var(--bg-darker);
+    }
+
+    .earnings-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .earning-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 32px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .earning-card h3 {
+      font-size: 1rem;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .earning-stat {
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .earning-stat:last-of-type {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .earning-stat .label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .earning-stat .value {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+    }
+
+    .earning-total {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 2px solid var(--cyan-dark);
+    }
+
+    .earning-total .label {
+      font-size: 0.9rem;
+      color: var(--cyan);
+      margin-bottom: 4px;
+    }
+
+    .earning-total .value {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    /* Products Section */
+    .products-section {
+      padding: 60px 2rem;
+      background: var(--bg-dark);
+    }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .product-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 32px;
+      border: 1px solid var(--border-subtle);
+      text-align: center;
+    }
+
+    .product-card h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.25rem;
+      margin-bottom: 8px;
+    }
+
+    .product-card .product-type {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 16px;
+    }
+
+    .product-card .product-price {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--cyan);
+    }
+
+    .product-card .product-commission {
+      color: var(--green);
+      font-weight: 600;
+      margin-top: 8px;
+    }
+
+    /* Provide Section */
+    .provide-section {
+      padding: 60px 2rem;
+      background: var(--bg-darker);
+    }
+
+    .provide-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .provide-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 20px 24px;
+      background: var(--bg-card);
+      border-radius: 12px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .provide-item svg {
+      width: 20px;
+      height: 20px;
+      stroke: var(--cyan);
+      flex-shrink: 0;
+    }
+
+    .provide-item span {
+      color: var(--text-secondary);
+    }
+
+    /* Payout Section */
+    .payout-section {
+      padding: 60px 2rem;
+      background: var(--bg-dark);
+    }
+
+    .payout-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 20px;
+    }
+
+    .payout-item {
+      text-align: center;
+      padding: 24px;
+      background: var(--bg-card);
+      border-radius: 12px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .payout-item .icon {
+      width: 48px;
+      height: 48px;
+      background: rgba(6, 182, 212, 0.1);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px;
+    }
+
+    .payout-item .icon svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--cyan);
+    }
+
+    .payout-item p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    /* Fit Section */
+    .fit-section {
+      padding: 60px 2rem;
+      background: var(--bg-darker);
+    }
+
+    .fit-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+    }
+
+    .fit-column h3 {
+      font-size: 1.1rem;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .fit-column.good h3 { color: var(--green); }
+    .fit-column.bad h3 { color: #ef4444; }
+
+    .fit-list {
+      list-style: none;
+    }
+
+    .fit-list li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .fit-list li:last-child {
+      border-bottom: none;
+    }
+
+    .fit-list li svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    .fit-column.good .fit-list li svg { stroke: var(--green); }
+    .fit-column.bad .fit-list li svg { stroke: #ef4444; }
+
+    /* Application Section */
+    .apply-section {
+      padding: 60px 2rem;
+      background: var(--bg-dark);
+    }
+
+    .apply-container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .apply-form {
+      background: var(--bg-card);
+      border-radius: 20px;
+      padding: 48px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 14px 18px;
+      background: var(--bg-darker);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-size: 1rem;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--cyan);
+    }
+
+    .form-group textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 18px;
+      background: var(--gradient-cyan);
+      color: var(--bg-darker);
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px var(--cyan-glow);
+    }
+
+    .apply-note {
+      text-align: center;
+      margin-top: 20px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* Footer */
+    .footer { padding: 60px 2rem 30px; background: var(--bg-darker); border-top: 1px solid var(--border-subtle); }
+    .footer-container { max-width: 1200px; margin: 0 auto; }
+    .footer-grid { display: grid; grid-template-columns: 2fr repeat(3, 1fr); gap: 40px; margin-bottom: 40px; }
+    .footer-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .footer-brand .logo-icon { width: 36px; height: 36px; }
+    .footer-brand .logo-icon svg { width: 18px; height: 18px; }
+    .footer-brand span { font-family: 'Space Grotesk', sans-serif; font-weight: 600; }
+    .footer-tagline { color: var(--text-muted); font-size: 0.9rem; }
+    .footer-title { font-weight: 600; margin-bottom: 16px; }
+    .footer-links { list-style: none; }
+    .footer-links li { margin-bottom: 10px; }
+    .footer-links a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--cyan); }
+    .footer-bottom { padding-top: 30px; border-top: 1px solid var(--border-subtle); text-align: center; }
+    .footer-copyright { color: var(--text-muted); font-size: 0.85rem; }
+
+    @media (max-width: 1024px) {
+      .earnings-grid, .products-grid { grid-template-columns: 1fr; max-width: 400px; margin: 0 auto; }
+      .payout-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .why-grid { grid-template-columns: 1fr; }
+      .provide-grid { grid-template-columns: 1fr; }
+      .payout-grid { grid-template-columns: 1fr 1fr; }
+      .fit-grid { grid-template-columns: 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-container">
+      <a href="index.html" class="logo">
+        <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <span class="logo-text">Local Password Vault</span>
+      </a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="features.html">Features</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="#apply" class="nav-cta">Apply Now</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <span class="hero-badge animate">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Creator Partner Program
+    </span>
+    <h1 class="animate delay-1">Help Your Audience Protect Their Family.<br><span>Get Paid Every Time.</span></h1>
+    <p class="hero-subtitle animate delay-2">Local Password Vault and Local Legacy Vault are privacy-first, offline products built for people who actually care about security and family protection.</p>
+    <p class="hero-commission animate delay-2">You earn 25% commission on every sale. For life.</p>
+    <a href="#apply" class="btn-primary animate delay-3">Apply to Partner</a>
+    <p class="hero-note animate delay-3">No fees. No contracts. Paid monthly.</p>
+  </section>
+
+  <!-- Why Creators Care -->
+  <section class="why-section">
+    <div class="section-container">
+      <div class="section-header animate">
+        <h2>Why Creators Choose to Partner With Us</h2>
+      </div>
+      <div class="why-grid">
+        <div class="why-item animate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <p><strong>Offline-only products.</strong> No cloud. No subscriptions. Real privacy.</p>
+        </div>
+        <div class="why-item animate delay-1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <p><strong>High-trust category</strong> with real buying intent. People need this.</p>
+        </div>
+        <div class="why-item animate delay-2">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <p><strong>Average order value: $79</strong> per customer. Your commission: <strong>$19.75</strong></p>
+        </div>
+        <div class="why-item animate delay-3">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <p><strong>Buyers frequently purchase both products.</strong> Double the commission.</p>
+        </div>
+        <div class="why-item animate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <p><strong>Monthly bonuses</strong> paid in cash for top performers.</p>
+        </div>
+        <div class="why-item animate delay-1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <p><strong>Lifetime attribution.</strong> Your referrals are yours forever.</p>
+        </div>
+      </div>
+      <div class="evergreen-note animate">
+        This is not a trend product. It is evergreen.
+      </div>
+    </div>
+  </section>
+
+  <!-- Earning Examples -->
+  <section class="earnings-section">
+    <div class="section-container">
+      <div class="section-header animate">
+        <h2>Real Earning Examples</h2>
+      </div>
+      <div class="earnings-grid">
+        <div class="earning-card animate">
+          <h3>Example 1</h3>
+          <div class="earning-stat">
+            <div class="label">Post Views</div>
+            <div class="value">10,000 views</div>
+          </div>
+          <div class="earning-stat">
+            <div class="label">Conversion Rate</div>
+            <div class="value">2%</div>
+          </div>
+          <div class="earning-stat">
+            <div class="label">Total Sales</div>
+            <div class="value">200 buyers × $79 = $15,800</div>
+          </div>
+          <div class="earning-total">
+            <div class="label">Your Earnings (25%)</div>
+            <div class="value">$3,950</div>
+          </div>
+        </div>
+        <div class="earning-card animate delay-1">
+          <h3>Example 2</h3>
+          <div class="earning-stat">
+            <div class="label">Multi-Post Campaign</div>
+            <div class="value">25,000 views</div>
+          </div>
+          <div class="earning-stat">
+            <div class="label">Conversion Rate</div>
+            <div class="value">2%</div>
+          </div>
+          <div class="earning-stat">
+            <div class="label">Total Sales</div>
+            <div class="value">500 buyers × $79 = $39,500</div>
+          </div>
+          <div class="earning-total">
+            <div class="label">Your Earnings (25%)</div>
+            <div class="value">$9,875</div>
+          </div>
+        </div>
+        <div class="earning-card animate delay-2">
+          <h3>Monthly Creator</h3>
+          <div class="earning-stat">
+            <div class="label">Monthly Referred Sales</div>
+            <div class="value">$2,500</div>
+          </div>
+          <div class="earning-stat">
+            <div class="label">Base Commission (25%)</div>
+            <div class="value">$625</div>
+          </div>
+          <div class="earning-stat">
+            <div class="label">Bonus Tier</div>
+            <div class="value">+$500</div>
+          </div>
+          <div class="earning-total">
+            <div class="label">Total Monthly</div>
+            <div class="value">$1,125</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Products They Promote -->
+  <section class="products-section">
+    <div class="section-container">
+      <div class="section-header animate">
+        <h2>What You Promote</h2>
+        <p style="color: var(--text-secondary);">Choose what fits your audience. No guessing.</p>
+      </div>
+      <div class="products-grid">
+        <div class="product-card animate">
+          <h3>Local Password Vault</h3>
+          <p class="product-type">Daily Security</p>
+          <p class="product-price">$49 - $79</p>
+          <p class="product-commission">Your commission: $12.25 - $19.75</p>
+        </div>
+        <div class="product-card animate delay-1">
+          <h3>Local Legacy Vault</h3>
+          <p class="product-type">Family Protection</p>
+          <p class="product-price">$79 - $129</p>
+          <p class="product-commission">Your commission: $19.75 - $32.25</p>
+        </div>
+        <div class="product-card animate delay-2">
+          <h3>Family Protection Bundle</h3>
+          <p class="product-type">Both Products</p>
+          <p class="product-price">$179</p>
+          <p class="product-commission">Your commission: $44.75</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- What We Provide -->
+  <section class="provide-section">
+    <div class="section-container">
+      <div class="section-header animate">
+        <h2>What You Get</h2>
+        <p style="color: var(--text-secondary);">No ghosting. No scrambling.</p>
+      </div>
+      <div class="provide-grid">
+        <div class="provide-item animate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          <span>Unique tracking link</span>
+        </div>
+        <div class="provide-item animate delay-1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          <span>Private discount codes</span>
+        </div>
+        <div class="provide-item animate delay-2">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          <span>Founder intro clip</span>
+        </div>
+        <div class="provide-item animate delay-3">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <span>Trust proof videos</span>
+        </div>
+        <div class="provide-item animate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <span>Monthly bonuses</span>
+        </div>
+        <div class="provide-item animate delay-1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <span>Transparent payouts</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Payout Terms -->
+  <section class="payout-section">
+    <div class="section-container">
+      <div class="section-header animate">
+        <h2>Payout Terms</h2>
+      </div>
+      <div class="payout-grid">
+        <div class="payout-item animate">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+          <p>25% commission on all direct sales</p>
+        </div>
+        <div class="payout-item animate delay-1">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+          <p>Monthly payout on the 5th</p>
+        </div>
+        <div class="payout-item animate delay-2">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+          <p>PayPal or Stripe</p>
+        </div>
+        <div class="payout-item animate delay-3">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          <p>Full transparent reporting</p>
+        </div>
+        <div class="payout-item animate">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+          <p>Lifetime attribution window</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Who This Is For -->
+  <section class="fit-section">
+    <div class="section-container">
+      <div class="section-header animate">
+        <h2>Is This Right For You?</h2>
+      </div>
+      <div class="fit-grid">
+        <div class="fit-column good animate">
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><polyline points="20 6 9 17 4 12"/></svg> Great Fit</h3>
+          <ul class="fit-list">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Privacy creators</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Security creators</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Estate planning creators</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Caregiver creators</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> 45+ finance creators</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Digital minimalism creators</li>
+          </ul>
+        </div>
+        <div class="fit-column bad animate delay-1">
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Not a Fit</h3>
+          <ul class="fit-list">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Coupon spam accounts</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Giveaway pages</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Fake engagement accounts</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Application Form -->
+  <section class="apply-section" id="apply">
+    <div class="apply-container">
+      <div class="section-header animate">
+        <h2>Apply to Become a Partner</h2>
+      </div>
+      <form class="apply-form animate delay-1">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" required>
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="platform">Primary Platform</label>
+            <select id="platform" name="platform" required>
+              <option value="">Select platform</option>
+              <option value="youtube">YouTube</option>
+              <option value="tiktok">TikTok</option>
+              <option value="instagram">Instagram</option>
+              <option value="twitter">Twitter/X</option>
+              <option value="linkedin">LinkedIn</option>
+              <option value="podcast">Podcast</option>
+              <option value="blog">Blog/Newsletter</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="followers">Follower Count</label>
+            <select id="followers" name="followers" required>
+              <option value="">Select range</option>
+              <option value="1k-10k">1,000 - 10,000</option>
+              <option value="10k-50k">10,000 - 50,000</option>
+              <option value="50k-100k">50,000 - 100,000</option>
+              <option value="100k-500k">100,000 - 500,000</option>
+              <option value="500k+">500,000+</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="audience-age">Audience Age Range</label>
+          <select id="audience-age" name="audience-age" required>
+            <option value="">Select primary age range</option>
+            <option value="18-24">18-24</option>
+            <option value="25-34">25-34</option>
+            <option value="35-44">35-44</option>
+            <option value="45-54">45-54</option>
+            <option value="55+">55+</option>
+            <option value="mixed">Mixed ages</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="why-fit">Why is this product a fit for your audience?</label>
+          <textarea id="why-fit" name="why-fit" placeholder="Tell us about your audience and why they would care about privacy-first security tools..." required></textarea>
+        </div>
+        <button type="submit" class="submit-btn">Apply to Partner</button>
+      </form>
+      <p class="apply-note animate delay-2">We review every application personally. We only approve creators who protect their audience's trust.</p>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand">
+            <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+            <span>Local Password Vault</span>
+          </div>
+          <p class="footer-tagline">Your passwords, secured locally. No cloud, no tracking, no risks.</p>
+        </div>
+        <div>
+          <h4 class="footer-title">Product</h4>
+          <ul class="footer-links">
+            <li><a href="features.html">Features</a></li>
+            <li><a href="security.html">Security</a></li>
+            <li><a href="pricing.html">Pricing</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="footer-title">Resources</h4>
+          <ul class="footer-links">
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="faq.html">FAQs</a></li>
+            <li><a href="support.html">Support</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="footer-title">Legal</h4>
+          <ul class="footer-links">
+            <li><a href="privacy.html">Privacy Policy</a></li>
+            <li><a href="disclaimer.html">Disclaimer</a></li>
+            <li><a href="eula.html">EULA</a></li>
+            <li><a href="refund.html">Refund Policy</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p class="footer-copyright">© 2025 Local Password Vault. All rights reserved. Built with ♥ in Dallas, Texas.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.animate').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
+
+

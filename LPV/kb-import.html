@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <title>Importing from Other Password Managers - Knowledge Base</title>
+  <meta name="description" content="How to migrate your passwords from LastPass, 1Password, Bitwarden, and other password managers to Local Password Vault.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-dark: #0a0f1a;
+      --bg-darker: #060912;
+      --bg-card: #111827;
+      --cyan: #06b6d4;
+      --cyan-light: #22d3ee;
+      --cyan-dark: #0891b2;
+      --cyan-glow: rgba(6, 182, 212, 0.3);
+      --green: #10b981;
+      --text-primary: #f9fafb;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --gradient-cyan: linear-gradient(135deg, #22d3ee 0%, #0891b2 100%);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; font-size: 16px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg-darker); color: var(--text-primary); line-height: 1.7; font-size: 16px; }
+
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 1rem 2rem; background: rgba(6, 9, 18, 0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-subtle); }
+    .nav-container { max-width: 1600px; width: 92%; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .logo-icon { width: 44px; height: 44px; background: var(--bg-dark); border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px var(--cyan-glow), inset 0 0 0 1px var(--cyan-dark); }
+    .logo-icon svg { width: 24px; height: 24px; stroke: var(--cyan); fill: none; }
+    .logo-text { font-family: 'Space Grotesk', sans-serif; font-size: 1.15rem; font-weight: 600; color: var(--text-primary); }
+    .nav-links { display: flex; align-items: center; gap: 2rem; }
+    .nav-links a { color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; font-weight: 500; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--cyan); }
+    .nav-cta { padding: 10px 24px; background: var(--gradient-cyan); color: var(--bg-darker) !important; border-radius: 8px; font-weight: 600; }
+
+    .article-hero { padding: 140px 2rem 30px; background: linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-darker) 100%); }
+    .article-hero-container { max-width: 800px; margin: 0 auto; }
+    .back-link { display: inline-flex; align-items: center; gap: 8px; color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; margin-bottom: 24px; transition: color 0.2s; }
+    .back-link:hover { color: var(--cyan); }
+    .back-link svg { width: 16px; height: 16px; }
+    .article-tag { display: inline-block; padding: 6px 14px; border-radius: 100px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 20px; background: rgba(6, 182, 212, 0.15); color: var(--cyan); border: 1px solid rgba(6, 182, 212, 0.3); }
+    .article-hero h1 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2rem, 4vw, 2.75rem); font-weight: 700; margin-bottom: 16px; line-height: 1.2; }
+    .article-meta { color: var(--text-muted); font-size: 0.9rem; }
+
+    .article-content { padding: 30px 2rem 80px; }
+    .article-container { max-width: 800px; margin: 0 auto; }
+    
+    .article-container h2 { font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; color: var(--cyan); margin: 48px 0 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border-subtle); }
+    .article-container h2:first-child { margin-top: 0; }
+    .article-container h3 { font-size: 1.2rem; margin: 32px 0 16px; color: var(--text-primary); }
+    .article-container p { color: var(--text-secondary); font-size: 1.05rem; margin-bottom: 20px; }
+    .article-container strong { color: var(--text-primary); }
+    
+    .article-container ul, .article-container ol { color: var(--text-secondary); margin: 0 0 24px 24px; font-size: 1.05rem; }
+    .article-container li { margin-bottom: 12px; }
+
+    .step-box { background: var(--bg-card); border-radius: 12px; padding: 24px 28px; margin: 24px 0; border-left: 4px solid var(--cyan); }
+    .step-box h4 { font-size: 1.1rem; margin-bottom: 12px; color: var(--text-primary); display: flex; align-items: center; gap: 12px; }
+    .step-number { background: var(--gradient-cyan); color: var(--bg-darker); width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; }
+    .step-box p { margin-bottom: 0; color: var(--text-secondary); }
+
+    .manager-card { background: var(--bg-card); border-radius: 12px; padding: 28px; margin: 24px 0; border: 1px solid var(--border-subtle); }
+    .manager-card h4 { font-size: 1.15rem; margin-bottom: 16px; color: var(--text-primary); }
+    .manager-card ol { margin-bottom: 0; }
+    .manager-card li { margin-bottom: 8px; }
+
+    .info-box { background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 12px; padding: 20px 24px; margin: 24px 0; }
+    .info-box p { margin: 0; color: var(--text-secondary); }
+    .info-box strong { color: var(--cyan); }
+
+    .warning-box { background: rgba(217, 119, 6, 0.1); border: 1px solid rgba(217, 119, 6, 0.3); border-radius: 12px; padding: 20px 24px; margin: 24px 0; }
+    .warning-box p { margin: 0; color: var(--text-secondary); }
+    .warning-box strong { color: #d97706; }
+
+    .success-box { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 20px 24px; margin: 24px 0; }
+    .success-box p { margin: 0; color: var(--text-secondary); }
+    .success-box strong { color: var(--green); }
+
+    .csv-example { background: var(--bg-darker); border-radius: 8px; padding: 16px 20px; margin: 16px 0; font-family: 'Space Grotesk', monospace; font-size: 0.9rem; color: var(--text-secondary); overflow-x: auto; }
+
+    .next-article { background: var(--bg-card); border-radius: 16px; padding: 32px; margin-top: 60px; border: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; }
+    .next-article-text { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 8px; }
+    .next-article-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; color: var(--text-primary); }
+    .next-article a { display: inline-flex; align-items: center; gap: 8px; color: var(--cyan); text-decoration: none; font-weight: 600; transition: gap 0.2s; }
+    .next-article a:hover { gap: 12px; }
+    .next-article a svg { width: 20px; height: 20px; }
+
+    .footer { padding: 60px 2rem 30px; background: var(--bg-darker); border-top: 1px solid var(--border-subtle); }
+    .footer-container { max-width: 1200px; margin: 0 auto; text-align: center; }
+    .footer-copyright { color: var(--text-muted); font-size: 0.85rem; }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .next-article { flex-direction: column; text-align: center; gap: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-container">
+      <a href="index.html" class="logo">
+        <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <span class="logo-text">Local Password Vault</span>
+      </a>
+      <div class="nav-links">
+        <a href="features.html">Features</a>
+        <a href="about.html">About</a>
+        <a href="security.html">Security</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="faq.html">FAQs</a>
+        <a href="pricing.html" class="nav-cta">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="article-hero">
+    <div class="article-hero-container">
+      <a href="kb.html" class="back-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Back to Knowledge Base
+      </a>
+      <span class="article-tag">Backup & Data</span>
+      <h1>Importing from Other Password Managers</h1>
+      <p class="article-meta">Migrate from LastPass, 1Password, Bitwarden, and more</p>
+    </div>
+  </section>
+
+  <section class="article-content">
+    <div class="article-container">
+
+      <h2>How Import Works</h2>
+      <p>Local Password Vault can import passwords from any password manager that exports to <strong>CSV format</strong>—which is almost all of them. The process is simple:</p>
+      <ol>
+        <li>Export your passwords from your current manager as a CSV file</li>
+        <li>Import that CSV into Local Password Vault</li>
+        <li>Review and organize your imported entries</li>
+        <li>Delete the CSV file securely</li>
+      </ol>
+
+      <div class="warning-box">
+        <p><strong>Security note:</strong> CSV export files contain your passwords in plain text. Handle them carefully and delete them immediately after import.</p>
+      </div>
+
+      <h2>Exporting from Popular Managers</h2>
+      <p>Here's how to export from the most common password managers:</p>
+
+      <div class="manager-card">
+        <h4>LastPass</h4>
+        <ol>
+          <li>Log into LastPass in your web browser</li>
+          <li>Click <strong>Account Options</strong> (gear icon) → <strong>Advanced</strong></li>
+          <li>Click <strong>Export</strong> → <strong>LastPass CSV File</strong></li>
+          <li>Enter your master password when prompted</li>
+          <li>Save the downloaded <strong>lastpass_export.csv</strong> file</li>
+        </ol>
+      </div>
+
+      <div class="manager-card">
+        <h4>1Password</h4>
+        <ol>
+          <li>Open the 1Password desktop app</li>
+          <li>Go to <strong>File</strong> → <strong>Export</strong> → <strong>All Items</strong></li>
+          <li>Select <strong>CSV</strong> as the format</li>
+          <li>Enter your master password</li>
+          <li>Choose a save location for the export file</li>
+        </ol>
+      </div>
+
+      <div class="manager-card">
+        <h4>Bitwarden</h4>
+        <ol>
+          <li>Log into the Bitwarden web vault</li>
+          <li>Go to <strong>Tools</strong> → <strong>Export Vault</strong></li>
+          <li>Select <strong>.csv</strong> as the file format</li>
+          <li>Enter your master password</li>
+          <li>Click <strong>Export Vault</strong></li>
+        </ol>
+      </div>
+
+      <div class="manager-card">
+        <h4>Dashlane</h4>
+        <ol>
+          <li>Open the Dashlane desktop app</li>
+          <li>Go to <strong>File</strong> → <strong>Export</strong> → <strong>Unsecured archive (CSV)</strong></li>
+          <li>Enter your master password</li>
+          <li>Save the CSV file</li>
+        </ol>
+      </div>
+
+      <div class="manager-card">
+        <h4>Chrome / Google Password Manager</h4>
+        <ol>
+          <li>Open Chrome and go to <strong>Settings</strong> → <strong>Passwords</strong></li>
+          <li>Or go to <strong>passwords.google.com</strong></li>
+          <li>Click the <strong>⋮</strong> menu → <strong>Export passwords</strong></li>
+          <li>Confirm with your computer password</li>
+          <li>Save the CSV file</li>
+        </ol>
+      </div>
+
+      <div class="manager-card">
+        <h4>Firefox</h4>
+        <ol>
+          <li>Open Firefox and go to <strong>Menu</strong> → <strong>Passwords</strong></li>
+          <li>Click the <strong>⋮</strong> menu → <strong>Export Logins</strong></li>
+          <li>Confirm with your computer password</li>
+          <li>Save the CSV file</li>
+        </ol>
+      </div>
+
+      <h2>Importing into Local Password Vault</h2>
+
+      <div class="step-box">
+        <h4><span class="step-number">1</span> Open the Import Tool</h4>
+        <p>In Local Password Vault, go to <strong>File</strong> → <strong>Import</strong>, or click <strong>Import</strong> from the welcome screen.</p>
+      </div>
+
+      <div class="step-box">
+        <h4><span class="step-number">2</span> Select Your Source</h4>
+        <p>Choose your previous password manager from the list (LastPass, 1Password, Bitwarden, etc.) or select <strong>Generic CSV</strong> for other sources.</p>
+      </div>
+
+      <div class="step-box">
+        <h4><span class="step-number">3</span> Select the CSV File</h4>
+        <p>Browse to the CSV file you exported and select it.</p>
+      </div>
+
+      <div class="step-box">
+        <h4><span class="step-number">4</span> Review the Preview</h4>
+        <p>You'll see a preview of what will be imported. Check that the columns mapped correctly (name, username, password, URL, notes).</p>
+      </div>
+
+      <div class="step-box">
+        <h4><span class="step-number">5</span> Import</h4>
+        <p>Click <strong>Import All</strong>. Your passwords will be added to your vault.</p>
+      </div>
+
+      <div class="success-box">
+        <p><strong>Done!</strong> Your passwords are now securely stored in Local Password Vault. They're encrypted locally and will never touch the cloud.</p>
+      </div>
+
+      <h2>CSV Format Requirements</h2>
+      <p>If you're importing from an unknown source or creating your own CSV, here's the format Local Password Vault expects:</p>
+
+      <div class="csv-example">
+name,url,username,password,notes<br>
+"Gmail","https://mail.google.com","john@gmail.com","myPassword123","Personal email"<br>
+"Bank of America","https://bankofamerica.com","john_doe","SecurePass!","Checking account"
+      </div>
+
+      <p>The columns can be in any order. Local Password Vault will attempt to auto-detect them, but you can manually map columns if needed.</p>
+
+      <h2>After Import: Clean Up</h2>
+
+      <h3>1. Delete the CSV File</h3>
+      <p>Your export file contains all your passwords in plain text. <strong>Delete it immediately</strong> after import:</p>
+      <ul>
+        <li><strong>Windows:</strong> Right-click → Delete, then empty the Recycle Bin</li>
+        <li><strong>Mac:</strong> Move to Trash, then empty Trash</li>
+        <li><strong>Better:</strong> Use a secure delete tool that overwrites the file</li>
+      </ul>
+
+      <h3>2. Review Your Entries</h3>
+      <p>After import, take a few minutes to:</p>
+      <ul>
+        <li>Check that important passwords imported correctly</li>
+        <li>Organize entries into categories</li>
+        <li>Delete duplicates or outdated entries</li>
+        <li>Add any passwords that didn't import</li>
+      </ul>
+
+      <h3>3. Disable Your Old Manager</h3>
+      <p>Once you've verified everything imported correctly:</p>
+      <ul>
+        <li>Delete your data from the old password manager</li>
+        <li>Cancel any subscriptions</li>
+        <li>Uninstall browser extensions</li>
+      </ul>
+
+      <div class="info-box">
+        <p><strong>Tip:</strong> Keep your old manager installed (but logged out) for a week or two, just in case you need to grab a password that didn't import correctly.</p>
+      </div>
+
+      <div class="next-article">
+        <div>
+          <p class="next-article-text">Back to</p>
+          <p class="next-article-title">Knowledge Base</p>
+        </div>
+        <a href="kb.html">
+          View All Articles
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <p class="footer-copyright">© 2025 Local Password Vault. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>
+
+

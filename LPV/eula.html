@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <title>End User License Agreement - Local Password Vault</title>
+  <meta name="description" content="End User License Agreement (EULA) for Local Password Vault software.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-dark: #0a0f1a;
+      --bg-darker: #060912;
+      --bg-card: #111827;
+      --cyan: #06b6d4;
+      --cyan-glow: rgba(6, 182, 212, 0.3);
+      --text-primary: #f9fafb;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --gradient-cyan: linear-gradient(135deg, #22d3ee 0%, #0891b2 100%);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; font-size: 16px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg-darker); color: var(--text-primary); line-height: 1.6; font-size: 16px; }
+
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 1rem 2rem; background: rgba(6, 9, 18, 0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-subtle); }
+    .nav-container { max-width: 1600px; width: 92%; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .logo-icon { width: 44px; height: 44px; background: var(--bg-dark); border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px var(--cyan-glow), inset 0 0 0 1px #0891b2; }
+    .logo-icon svg { width: 24px; height: 24px; stroke: var(--cyan); fill: none; }
+    .logo-text { font-family: 'Space Grotesk', sans-serif; font-size: 1.15rem; font-weight: 600; color: var(--text-primary); }
+    .nav-links { display: flex; align-items: center; gap: 2rem; }
+    .nav-links a { color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; font-weight: 500; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--cyan); }
+    .nav-cta { padding: 10px 24px; background: var(--gradient-cyan); color: var(--bg-darker) !important; border-radius: 8px; font-weight: 600; }
+
+    .page-hero { padding: 140px 2rem 32px; background: linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-darker) 100%); text-align: center; }
+    .page-hero h1 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; margin-bottom: 0.75rem; }
+    .page-hero p { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .legal-content { padding: 40px 2rem 100px; }
+    .legal-container { max-width: 800px; margin: 0 auto; }
+    .legal-container h2 { font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; margin: 40px 0 16px; color: var(--text-primary); }
+    .legal-container p { color: var(--text-secondary); margin-bottom: 16px; line-height: 1.8; }
+    .legal-container ul, .legal-container ol { color: var(--text-secondary); margin-bottom: 16px; padding-left: 24px; }
+    .legal-container li { margin-bottom: 8px; }
+    .effective-date { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 32px; }
+
+    .footer { padding: 60px 2rem 30px; background: var(--bg-darker); border-top: 1px solid var(--border-subtle); }
+    .footer-container { max-width: 1200px; margin: 0 auto; }
+    .footer-grid { display: grid; grid-template-columns: 2fr repeat(3, 1fr); gap: 40px; margin-bottom: 40px; }
+    .footer-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .footer-brand .logo-icon { width: 36px; height: 36px; }
+    .footer-brand .logo-icon svg { width: 18px; height: 18px; }
+    .footer-brand span { font-family: 'Space Grotesk', sans-serif; font-weight: 600; }
+    .footer-tagline { color: var(--text-muted); font-size: 0.9rem; }
+    .footer-title { font-weight: 600; margin-bottom: 16px; }
+    .footer-links { list-style: none; }
+    .footer-links li { margin-bottom: 10px; }
+    .footer-links a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--cyan); }
+    .footer-bottom { padding-top: 30px; border-top: 1px solid var(--border-subtle); text-align: center; }
+    .footer-copyright { color: var(--text-muted); font-size: 0.85rem; }
+
+    @media (max-width: 768px) { .nav-links { display: none; } .footer-grid { grid-template-columns: 1fr 1fr; } }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-container">
+      <a href="index.html" class="logo">
+        <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <span class="logo-text">Local Password Vault</span>
+      </a>
+      <div class="nav-links">
+        <a href="features.html">Features</a>
+        <a href="about.html">About</a>
+        <a href="security.html">Security</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="faq.html">FAQs</a>
+        <a href="pricing.html" class="nav-cta">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="page-hero">
+    <h1>End User License Agreement</h1>
+    <p>Terms governing your use of Local Password Vault</p>
+  </section>
+
+  <section class="legal-content">
+    <div class="legal-container">
+      <p class="effective-date">Effective Date: January 1, 2025</p>
+
+      <p>This End User License Agreement ("Agreement") is a legal agreement between you ("User") and Local Password Vault ("Licensor") for the use of Local Password Vault software ("Software").</p>
+
+      <p>By installing, copying, or using the Software, you agree to be bound by the terms of this Agreement. If you do not agree, do not install or use the Software.</p>
+
+      <h2>1. Grant of License</h2>
+      <p>Subject to the terms of this Agreement, Licensor grants you a limited, non-exclusive, non-transferable license to:</p>
+      <ul>
+        <li><strong>Personal License:</strong> Install and use the Software on one (1) computer for personal, non-commercial use</li>
+        <li><strong>Family License:</strong> Install and use the Software on up to five (5) computers within a single household</li>
+      </ul>
+
+      <h2>2. License Restrictions</h2>
+      <p>You may not:</p>
+      <ul>
+        <li>Copy, modify, or distribute the Software</li>
+        <li>Reverse engineer, decompile, or disassemble the Software</li>
+        <li>Rent, lease, or lend the Software to third parties</li>
+        <li>Use the Software for commercial purposes without a commercial license</li>
+        <li>Remove or alter any proprietary notices or labels</li>
+        <li>Transfer your license to another person</li>
+      </ul>
+
+      <h2>3. Ownership</h2>
+      <p>The Software is licensed, not sold. Licensor retains all rights, title, and interest in and to the Software, including all intellectual property rights. Your license confers no ownership rights.</p>
+
+      <h2>4. Updates</h2>
+      <p>Licensor may provide updates, patches, or new versions of the Software. These updates are subject to this Agreement unless accompanied by a separate license. Your license includes free updates for the lifetime of the product.</p>
+
+      <h2>5. Data and Privacy</h2>
+      <p>The Software operates entirely on your local device. Your data is encrypted and stored locally. Licensor does not have access to your vault contents, master password, or encryption keys. You are solely responsible for maintaining backups of your data.</p>
+
+      <h2>6. No Warranty</h2>
+      <p>THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. LICENSOR DOES NOT WARRANT THAT THE SOFTWARE WILL BE ERROR-FREE OR UNINTERRUPTED.</p>
+
+      <h2>7. Limitation of Liability</h2>
+      <p>IN NO EVENT SHALL LICENSOR BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING BUT NOT LIMITED TO LOSS OF DATA, PROFITS, OR BUSINESS OPPORTUNITIES, ARISING OUT OF OR RELATED TO YOUR USE OF THE SOFTWARE, EVEN IF LICENSOR HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.</p>
+
+      <h2>8. Indemnification</h2>
+      <p>You agree to indemnify and hold harmless Licensor from any claims, damages, or expenses arising from your use of the Software or violation of this Agreement.</p>
+
+      <h2>9. Termination</h2>
+      <p>This Agreement is effective until terminated. Your rights under this Agreement will terminate automatically without notice if you fail to comply with any term. Upon termination, you must cease all use of the Software and destroy all copies.</p>
+
+      <h2>10. Governing Law</h2>
+      <p>This Agreement shall be governed by and construed in accordance with the laws of the State of Texas, United States, without regard to its conflict of law provisions.</p>
+
+      <h2>11. Entire Agreement</h2>
+      <p>This Agreement constitutes the entire agreement between you and Licensor regarding the Software and supersedes all prior agreements and understandings.</p>
+
+      <h2>12. Severability</h2>
+      <p>If any provision of this Agreement is held to be unenforceable, the remaining provisions will continue in full force and effect.</p>
+
+      <h2>13. Contact Information</h2>
+      <p>For questions about this Agreement, contact: support@localpasswordvault.com</p>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand">
+            <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+            <span>Local Password Vault</span>
+          </div>
+          <p class="footer-tagline">Your passwords, secured locally. No cloud, no tracking, no risks.</p>
+        </div>
+        <div>
+          <h4 class="footer-title">Product</h4>
+          <ul class="footer-links">
+            <li><a href="features.html">Features</a></li>
+            <li><a href="security.html">Security</a></li>
+            <li><a href="pricing.html">Pricing</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="footer-title">Resources</h4>
+          <ul class="footer-links">
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="articles.html">Security Articles</a></li>
+            <li><a href="faq.html">FAQs</a></li>
+            <li><a href="support.html">Support</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="footer-title">Legal</h4>
+          <ul class="footer-links">
+            <li><a href="privacy.html">Privacy Policy</a></li>
+            <li><a href="disclaimer.html">Disclaimer</a></li>
+            <li><a href="eula.html">EULA</a></li>
+            <li><a href="refund.html">Refund Policy</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p class="footer-copyright">© 2025 Local Password Vault. All rights reserved. Built with ♥ in Dallas, Texas.</p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
+
+

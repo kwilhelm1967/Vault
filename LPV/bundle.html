@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <title>Family Protection Bundle - Local Password Vault + Local Legacy Vault</title>
+  <meta name="description" content="Complete family protection: Password Vault + Legacy Vault together. Save $29 with the Family Protection Bundle.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-dark: #0a0f1a;
+      --bg-darker: #060912;
+      --bg-card: #111827;
+      --cyan: #06b6d4;
+      --cyan-light: #22d3ee;
+      --cyan-dark: #0891b2;
+      --cyan-glow: rgba(6, 182, 212, 0.3);
+      --gold: #c9a24e;
+      --gold-dark: #a6873e;
+      --gold-glow: rgba(201, 162, 78, 0.3);
+      --green: #10b981;
+      --text-primary: #f9fafb;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --gradient-cyan: linear-gradient(135deg, #22d3ee 0%, #0891b2 100%);
+      --gradient-gold: linear-gradient(135deg, #c9a24e 0%, #a6873e 100%);
+      --gradient-bundle: linear-gradient(135deg, #06b6d4 0%, #c9a24e 100%);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; font-size: 16px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-darker);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    /* Hero */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 2rem;
+      background: 
+        radial-gradient(ellipse at 30% 30%, rgba(6, 182, 212, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 70%, rgba(201, 162, 78, 0.1) 0%, transparent 50%),
+        var(--bg-darker);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .hero-container {
+      max-width: 900px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .bundle-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 24px;
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(201, 162, 78, 0.15) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 100px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 32px;
+      color: var(--text-primary);
+    }
+
+    .bundle-badge svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .bundle-badge .cyan { stroke: var(--cyan); }
+    .bundle-badge .gold { stroke: var(--gold); }
+
+    h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 24px;
+    }
+
+    h1 .gradient {
+      background: var(--gradient-bundle);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-subtitle {
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto 48px;
+      line-height: 1.7;
+    }
+
+    /* Bundle Card */
+    .bundle-card {
+      background: var(--bg-card);
+      border-radius: 24px;
+      padding: 48px;
+      border: 2px solid transparent;
+      background-image: linear-gradient(var(--bg-card), var(--bg-card)), var(--gradient-bundle);
+      background-origin: border-box;
+      background-clip: padding-box, border-box;
+      box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 32px;
+      align-items: center;
+      margin-bottom: 40px;
+    }
+
+    .product-item {
+      text-align: center;
+      position: relative;
+    }
+    
+    .product-item .learn-more-btn {
+      margin-top: 16px;
+      padding: 8px 20px;
+      background: transparent;
+      border: 1px solid var(--text-muted);
+      color: var(--text-secondary);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    
+    .product-item.cyan .learn-more-btn:hover {
+      border-color: var(--cyan);
+      color: var(--cyan);
+      background: rgba(6, 182, 212, 0.1);
+    }
+    
+    .product-item.gold .learn-more-btn:hover {
+      border-color: var(--brandGold);
+      color: var(--brandGold);
+      background: rgba(201, 174, 102, 0.1);
+    }
+
+    .product-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+
+    .product-icon.cyan {
+      background: rgba(6, 182, 212, 0.15);
+      border: 2px solid var(--cyan-dark);
+    }
+
+    .product-icon.gold {
+      background: rgba(201, 162, 78, 0.15);
+      border: 2px solid var(--gold-dark);
+    }
+
+    .product-icon svg {
+      width: 40px;
+      height: 40px;
+    }
+
+    .product-icon.cyan svg { stroke: var(--cyan); }
+    .product-icon.gold svg { stroke: var(--gold); }
+
+    .product-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .product-tier {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .product-price {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+    }
+
+    .product-price s {
+      color: var(--text-muted);
+    }
+
+    .plus-sign {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 300;
+      color: var(--text-muted);
+    }
+
+    /* Pricing Section */
+    .bundle-pricing {
+      text-align: center;
+      padding: 40px;
+      background: var(--bg-darker);
+      border-radius: 16px;
+      margin-bottom: 32px;
+    }
+
+    .original-total {
+      font-size: 1rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .original-total s {
+      font-size: 1.25rem;
+    }
+
+    .bundle-price {
+      margin-bottom: 12px;
+    }
+
+    .bundle-price .currency {
+      font-size: 2rem;
+      vertical-align: top;
+      background: var(--gradient-bundle);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .bundle-price .amount {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 5rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .savings-badge {
+      display: inline-block;
+      padding: 8px 20px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid var(--green);
+      border-radius: 100px;
+      color: var(--green);
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .bundle-period {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    /* Features */
+    .bundle-features {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .feature-column h4 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .feature-column h4 svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .feature-column.cyan h4 { color: var(--cyan); }
+    .feature-column.cyan h4 svg { stroke: var(--cyan); }
+    .feature-column.gold h4 { color: var(--gold); }
+    .feature-column.gold h4 svg { stroke: var(--gold); }
+
+    .feature-column ul {
+      list-style: none;
+    }
+
+    .feature-column li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .feature-column li svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--green);
+      flex-shrink: 0;
+    }
+
+    /* CTA */
+    .bundle-cta {
+      display: block;
+      width: 100%;
+      padding: 20px 40px;
+      background: var(--gradient-bundle);
+      color: var(--bg-darker);
+      text-decoration: none;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 1.15rem;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .bundle-cta:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 40px rgba(6, 182, 212, 0.3), 0 16px 40px rgba(201, 162, 78, 0.2);
+    }
+
+    .bundle-note {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Bundle Discount Code */
+    .bundle-code-box {
+      background: var(--bg-darker);
+      border: 2px dashed rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .bundle-code-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .bundle-code-display {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .bundle-code {
+      font-family: 'Space Grotesk', monospace;
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: var(--gradient-bundle);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 2px;
+    }
+
+    .bundle-copy-btn {
+      padding: 8px 16px;
+      background: transparent;
+      border: 1px solid var(--text-muted);
+      color: var(--text-secondary);
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .bundle-copy-btn:hover {
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+
+    .bundle-copy-btn.copied {
+      background: var(--green);
+      border-color: var(--green);
+      color: white;
+    }
+
+    /* Guarantee */
+    .guarantee-section {
+      padding: 60px 2rem;
+      background: var(--bg-dark);
+    }
+
+    .guarantee-container {
+      max-width: 600px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .guarantee-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--bg-card);
+      padding: 24px 40px;
+      border-radius: 16px;
+      border: 1px solid var(--border-subtle);
+      margin-bottom: 20px;
+    }
+
+    .guarantee-badge svg {
+      width: 48px;
+      height: 48px;
+      stroke: var(--green);
+    }
+
+    .guarantee-badge-text h3 {
+      font-size: 1.25rem;
+      margin-bottom: 4px;
+    }
+
+    .guarantee-badge-text p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .guarantee-container > p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    /* What You Get */
+    .details-section {
+      padding: 50px 2rem;
+      background: var(--bg-darker);
+    }
+
+    .details-container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .details-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .details-header h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2rem;
+      margin-bottom: 12px;
+    }
+
+    .details-header p {
+      color: var(--text-secondary);
+    }
+
+    .details-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+    }
+
+    .detail-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 32px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .detail-card.cyan { border-top: 3px solid var(--cyan); }
+    .detail-card.gold { border-top: 3px solid var(--gold); }
+
+    .detail-card h3 {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.25rem;
+      margin-bottom: 16px;
+    }
+
+    .detail-card h3 svg {
+      width: 28px;
+      height: 28px;
+    }
+
+    .detail-card.cyan h3 svg { stroke: var(--cyan); }
+    .detail-card.gold h3 svg { stroke: var(--gold); }
+
+    .detail-card p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+
+    .detail-card ul {
+      list-style: none;
+    }
+
+    .detail-card li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .detail-card li svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--green);
+      flex-shrink: 0;
+      margin-top: 3px;
+    }
+
+    /* Footer CTA */
+    .footer-cta {
+      padding: 50px 2rem;
+      background: linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-darker) 100%);
+      text-align: center;
+    }
+
+    .footer-cta h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2rem;
+      margin-bottom: 16px;
+    }
+
+    .footer-cta p {
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+    }
+
+    .footer-cta .bundle-cta {
+      display: inline-block;
+      width: auto;
+      padding: 18px 48px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero { padding: 40px 1.5rem; }
+      .bundle-card { padding: 32px 24px; }
+      .products-grid { 
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+      .plus-sign { 
+        transform: rotate(90deg);
+        display: block;
+        text-align: center;
+      }
+      .bundle-features { grid-template-columns: 1fr; }
+      .bundle-price .amount { font-size: 4rem; }
+      .details-grid { grid-template-columns: 1fr; }
+      .guarantee-badge { 
+        flex-direction: column; 
+        text-align: center;
+        padding: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="hero">
+    <div class="hero-container">
+      <div class="bundle-badge">
+        <svg class="cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        +
+        <svg class="gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16" r="1"/></svg>
+        Family Protection Bundle
+      </div>
+      
+      <h1>Complete Protection<br><span class="gradient">For Your Entire Family</span></h1>
+      <p class="hero-subtitle">Secure your daily passwords and organize your legacy—together. Two essential tools, one discounted bundle.</p>
+
+      <div class="bundle-card">
+        <div class="products-grid">
+          <div class="product-item cyan">
+            <div class="product-icon cyan">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </div>
+            <h3 class="product-name">Local Password Vault</h3>
+            <p class="product-tier">Family Plan (5 devices)</p>
+            <p class="product-price"><s>$79</s> value</p>
+            <a href="features.html" class="learn-more-btn">Learn More</a>
+          </div>
+          
+          <div class="plus-sign">+</div>
+          
+          <div class="product-item gold">
+            <div class="product-icon gold">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                <circle cx="12" cy="16" r="1"/>
+              </svg>
+            </div>
+            <h3 class="product-name">Local Legacy Vault</h3>
+            <p class="product-tier">Family (5 devices)</p>
+            <p class="product-price"><s>$129</s> value</p>
+            <a href="#legacy-vault-details" class="learn-more-btn" onclick="document.getElementById('legacy-vault-details').scrollIntoView({behavior: 'smooth', block: 'start'}); return false;">Learn More</a>
+          </div>
+        </div>
+
+        <div class="bundle-pricing">
+          <p class="original-total">Total if purchased separately: <s>$208</s></p>
+          <div class="bundle-price">
+            <span class="currency">$</span><span class="amount">179</span>
+          </div>
+          <div class="savings-badge">Save $29 Today</div>
+          <p class="bundle-period">One-time payment • Lifetime licenses</p>
+        </div>
+
+        <div class="bundle-features">
+          <div class="feature-column cyan">
+            <h4>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Password Vault
+            </h4>
+            <ul>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> 5 device licenses</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> AES-256 encryption</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> 100% offline</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Unlimited passwords</li>
+            </ul>
+          </div>
+          <div class="feature-column gold">
+            <h4>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16" r="1"/></svg>
+              Legacy Vault
+            </h4>
+            <ul>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> 5 device licenses</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> 14+ document categories</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Printable binder export</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Share with family</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="bundle-code-box">
+          <p class="bundle-code-label">Use this code at checkout:</p>
+          <div class="bundle-code-display">
+            <span class="bundle-code">FAMILYBUNDLE</span>
+            <button class="bundle-copy-btn" onclick="copyBundleCode()">Copy</button>
+          </div>
+        </div>
+        
+        <a href="https://buy.stripe.com/REPLACE_WITH_BUNDLE_LINK" class="bundle-cta">Get the Family Protection Bundle</a>
+        <p class="bundle-note">Includes all future updates for both products</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="guarantee-section">
+    <div class="guarantee-container">
+      <div class="guarantee-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <polyline points="9 12 12 15 16 10"/>
+        </svg>
+        <div class="guarantee-badge-text">
+          <h3>30-Day Money-Back Guarantee</h3>
+          <p>Not satisfied? Full refund, no questions.</p>
+        </div>
+      </div>
+      <p>Both products are backed by a 30-day guarantee. If the bundle isn't right for your family, I will process a full refund.</p>
+    </div>
+  </section>
+
+  <section class="details-section">
+    <div class="details-container">
+      <div class="details-header">
+        <h2>What's Included</h2>
+        <p>Two complete solutions for family security and organization</p>
+      </div>
+      
+      <div class="details-grid">
+        <div class="detail-card cyan">
+          <h3>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Local Password Vault
+          </h3>
+          <p>Keep your family's passwords secure, offline, and under your control. No cloud, no tracking, no monthly fees.</p>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> 5 separate vaults for family members</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Military-grade AES-256 encryption</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Works 100% offline—no internet needed</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Quick search and categories</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Local backup to USB/external drive</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Windows, Mac, and Linux</li>
+          </ul>
+        </div>
+        
+        <div class="detail-card gold" id="legacy-vault-details">
+          <h3>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16" r="1"/></svg>
+            Local Legacy Vault
+          </h3>
+          <p>Organize everything your family needs when it matters most—documents, instructions, accounts, and final wishes.</p>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> 14+ categories for documents</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Financial, medical, legal records</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Account information and instructions</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Printable emergency binder</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> 100% offline and encrypted</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Share vaults with spouse/children</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="footer-cta">
+    <h2>Ready to Protect Your Family?</h2>
+    <p>One bundle. Complete protection. Lifetime ownership.</p>
+    <a href="https://buy.stripe.com/REPLACE_WITH_BUNDLE_LINK" class="bundle-cta">Get the Bundle — Save $29</a>
+  </section>
+
+  <script>
+    function copyBundleCode() {
+      const code = document.querySelector('.bundle-code').textContent;
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = document.querySelector('.bundle-copy-btn');
+        btn.textContent = '✓ Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>
+
+

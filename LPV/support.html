@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <title>Support - Local Password Vault</title>
+  <meta name="description" content="Get help with Local Password Vault. Email support, FAQs, and troubleshooting guides.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-dark: #0a0f1a;
+      --bg-darker: #060912;
+      --bg-card: #111827;
+      --cyan: #06b6d4;
+      --cyan-light: #22d3ee;
+      --cyan-dark: #0891b2;
+      --cyan-glow: rgba(6, 182, 212, 0.3);
+      --green: #10b981;
+      --text-primary: #f9fafb;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --gradient-cyan: linear-gradient(135deg, #22d3ee 0%, #0891b2 100%);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; font-size: 16px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg-darker); color: var(--text-primary); line-height: 1.6; font-size: 16px; }
+
+    .animate { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+    .animate.visible { opacity: 1; transform: translateY(0); }
+    .delay-1 { transition-delay: 0.1s; }
+    .delay-2 { transition-delay: 0.2s; }
+    .delay-3 { transition-delay: 0.3s; }
+
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 1rem 2rem; background: rgba(6, 9, 18, 0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-subtle); }
+    .nav-container { max-width: 1600px; width: 92%; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .logo-icon { width: 44px; height: 44px; background: var(--bg-dark); border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px var(--cyan-glow), inset 0 0 0 1px var(--cyan-dark); }
+    .logo-icon svg { width: 24px; height: 24px; stroke: var(--cyan); fill: none; }
+    .logo-text { font-family: 'Space Grotesk', sans-serif; font-size: 1.15rem; font-weight: 600; color: var(--text-primary); }
+    .nav-links { display: flex; align-items: center; gap: 2rem; }
+    .nav-links a { color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; font-weight: 500; transition: color 0.2s; }
+    .nav-links a:hover, .nav-links a.active { color: var(--cyan); }
+    .nav-cta { padding: 10px 24px; background: var(--gradient-cyan); color: var(--bg-darker) !important; border-radius: 8px; font-weight: 600; }
+
+    .page-hero { padding: 140px 2rem 32px; background: linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-darker) 100%); text-align: center; }
+    .page-hero h1 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.75rem, 5.5vw, 4rem); font-weight: 700; margin-bottom: 1rem; line-height: 1.2; }
+    .page-hero h1 span { color: var(--cyan); }
+    .page-hero .subtitle { font-size: 1.2rem; color: var(--text-secondary); max-width: 650px; margin: 0 auto; line-height: 1.7; }
+
+    .support-section { padding: 40px 2rem 100px; }
+    .support-container { max-width: 1000px; margin: 0 auto; }
+
+    .support-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 80px; }
+
+    .support-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 32px;
+      border: 1px solid var(--border-subtle);
+      text-align: center;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .support-card:hover { transform: translateY(-4px); border-color: var(--cyan-dark); }
+
+    .support-icon {
+      width: 64px;
+      height: 64px;
+      background: transparent;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      border: 1px solid var(--cyan-dark);
+      transition: all 0.3s ease;
+    }
+    
+    .support-card:hover .support-icon {
+      border-color: var(--cyan);
+      transform: translateY(-2px);
+    }
+
+    .support-icon svg {
+      width: 32px;
+      height: 32px;
+      stroke: var(--cyan);
+      stroke-width: 2;
+      transition: all 0.3s ease;
+    }
+    
+    .support-card:hover .support-icon svg {
+      stroke: var(--cyan-light);
+    }
+
+    .support-card h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 12px; }
+    .support-card p { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px; flex-grow: 1; }
+
+    .support-link {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 12px 24px;
+      background: var(--bg-darker);
+      color: var(--cyan);
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border: 1px solid var(--cyan-dark);
+      transition: all 0.2s;
+      margin-top: auto;
+    }
+
+    .support-link:hover { background: var(--cyan); color: var(--bg-darker); }
+
+    .contact-section { background: var(--bg-dark); border-radius: 20px; padding: 60px; margin-bottom: 80px; }
+    .contact-header { text-align: center; margin-bottom: 40px; }
+    .contact-header h2 { font-family: 'Space Grotesk', sans-serif; font-size: 1.75rem; margin-bottom: 12px; }
+    .contact-header p { color: var(--text-secondary); }
+
+    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+
+    /* ============================================
+       UNIFIED INPUT COMPONENT SYSTEM
+       All form fields and info boxes built from this base
+       ============================================ */
+    
+    /* Base input component - used by all form fields */
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      /* Layout */
+      width: 100%;
+      padding: 14px 16px;
+      box-sizing: border-box;
+      
+      /* Visual appearance */
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      
+      /* Typography - identical across all fields */
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      font-weight: 400;
+      font-style: normal;
+      line-height: 1.5;
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      
+      /* Interaction */
+      transition: border-color 0.2s ease;
+      outline: none;
+    }
+    
+    /* Placeholder text - consistent across all fields */
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+      color: var(--text-muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      font-weight: 400;
+      opacity: 1;
+    }
+    
+    /* Textarea specific */
+    .form-group textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+    
+    /* Dropdown specific - only difference is arrow icon */
+    .form-group select {
+      padding-right: 40px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      background-size: 16px;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      cursor: pointer;
+      font-weight: 400 !important;
+    }
+    
+    /* Dropdown options - match input styling exactly */
+    .form-group select option {
+      background-color: var(--bg-card);
+      color: var(--text-primary);
+      padding: 12px;
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      font-weight: 400 !important;
+      font-style: normal;
+    }
+    
+    /* Unified hover state - all fields */
+    .form-group input:hover,
+    .form-group textarea:hover,
+    .form-group select:hover {
+      border-color: var(--cyan-dark);
+      background-color: var(--bg-card);
+    }
+    
+    .form-group select:hover {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2306b6d4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      font-weight: 400 !important;
+    }
+    
+    /* Unified focus state - all fields */
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      border-color: var(--cyan-dark);
+      background-color: var(--bg-card);
+    }
+    
+    .form-group select:focus {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2306b6d4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      font-weight: 400 !important;
+    }
+    
+    .form-group select:active {
+      font-weight: 400 !important;
+    }
+    
+    .contact-form { display: flex; flex-direction: column; gap: 20px; }
+    .form-group label { 
+      display: block; 
+      font-size: 0.9rem; 
+      font-weight: 500; 
+      margin-bottom: 8px; 
+      color: var(--text-secondary);
+      font-family: 'Inter', sans-serif;
+    }
+
+    .submit-btn {
+      padding: 16px 32px;
+      background: var(--gradient-cyan);
+      color: var(--bg-darker);
+      border: none; border-radius: 10px;
+      font-weight: 600; font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px var(--cyan-glow); }
+
+    .contact-info { display: flex; flex-direction: column; gap: 20px; }
+
+    /* Info cards use the same base component system */
+    .info-card {
+      /* Same base styling as input fields */
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 14px 16px;
+      box-sizing: border-box;
+      
+      /* Same typography as input fields */
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      font-weight: 400;
+      line-height: 1.5;
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      
+      /* Same hover behavior */
+      transition: border-color 0.2s ease;
+    }
+    
+    .info-card:hover {
+      border-color: var(--cyan-dark);
+      background-color: var(--bg-card);
+    }
+    
+    .info-card h3 { 
+      display: flex; 
+      align-items: center; 
+      gap: 10px; 
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      font-weight: 400;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+    
+    .info-card h3 svg { 
+      width: 20px; 
+      height: 20px; 
+      stroke: var(--cyan);
+      flex-shrink: 0;
+    }
+    
+    .info-card p { 
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      font-weight: 400;
+      line-height: 1.5;
+      color: var(--text-secondary);
+    }
+    
+    .info-card a { 
+      color: var(--cyan); 
+      text-decoration: none;
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      font-weight: 400;
+    }
+    
+    .info-card a:hover { 
+      text-decoration: underline; 
+    }
+
+    .tips-section { margin-top: 0; }
+    .tips-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; text-align: center; margin-bottom: 32px; }
+
+    .tips-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .tip-card { background: var(--bg-card); padding: 24px; border-radius: 12px; border: 1px solid var(--border-subtle); }
+    .tip-card h4 { display: flex; align-items: center; gap: 10px; font-size: 1rem; margin-bottom: 10px; }
+    .tip-card h4 svg { width: 20px; height: 20px; stroke: var(--cyan); }
+    .tip-card p { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; }
+
+    .footer { padding: 60px 2rem 30px; background: var(--bg-darker); border-top: 1px solid var(--border-subtle); }
+    .footer-container { max-width: 1200px; margin: 0 auto; }
+    .footer-grid { display: grid; grid-template-columns: 2fr repeat(3, 1fr); gap: 40px; margin-bottom: 40px; }
+    .footer-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .footer-brand .logo-icon { width: 36px; height: 36px; }
+    .footer-brand .logo-icon svg { width: 18px; height: 18px; }
+    .footer-brand span { font-family: 'Space Grotesk', sans-serif; font-weight: 600; }
+    .footer-tagline { color: var(--text-muted); font-size: 0.9rem; }
+    .footer-title { font-weight: 600; margin-bottom: 16px; }
+    .footer-links { list-style: none; }
+    .footer-links li { margin-bottom: 10px; }
+    .footer-links a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--cyan); }
+    .footer-bottom { padding-top: 30px; border-top: 1px solid var(--border-subtle); text-align: center; }
+    .footer-copyright { color: var(--text-muted); font-size: 0.85rem; }
+
+    @media (max-width: 968px) {
+      .support-grid { grid-template-columns: 1fr; max-width: 400px; margin-left: auto; margin-right: auto; }
+      .contact-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .tips-grid { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+      .contact-section { padding: 40px 24px; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-container">
+      <a href="index.html" class="logo">
+        <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <span class="logo-text">Local Password Vault</span>
+      </a>
+      <div class="nav-links">
+        <a href="features.html">Features</a>
+        <a href="about.html">About</a>
+        <a href="security.html">Security</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="faq.html">FAQs</a>
+        <a href="pricing.html" class="nav-cta">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="page-hero">
+    <h1 class="animate">Support <span>Resources</span></h1>
+    <p class="subtitle animate delay-1">Questions about setup, features, or troubleshooting? I'm here to help.</p>
+  </section>
+
+  <section class="support-section">
+    <div class="support-container">
+
+      <div class="support-grid">
+        <div class="support-card animate delay-1">
+          <div class="support-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+          </div>
+          <h3>FAQs</h3>
+          <p>Find answers to common questions about installation, security, backups, and more.</p>
+          <a href="faq.html" class="support-link">View FAQs</a>
+        </div>
+        <div class="support-card animate delay-2">
+          <div class="support-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          <h3>Email Support</h3>
+          <p>Technical questions? License issues? Send a message and I'll help you out.</p>
+          <a href="mailto:support@LocalPasswordVault.com" class="support-link">Send Email</a>
+        </div>
+        <div class="support-card animate delay-3">
+          <div class="support-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          </div>
+          <h3>Documentation</h3>
+          <p>Step-by-step guides for getting started, importing data, and using features.</p>
+          <a href="faq.html" class="support-link">View FAQs</a>
+        </div>
+      </div>
+
+      <div class="contact-section animate">
+        <div class="contact-header">
+          <h2>Send a Message</h2>
+          <p>Describe your issue or question and include your OS and app version.</p>
+        </div>
+        <div class="contact-grid">
+          <form class="contact-form">
+            <div class="form-group">
+              <label for="name">Name</label>
+              <input type="text" id="name" name="name" placeholder="Your name" required>
+            </div>
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input type="email" id="email" name="email" placeholder="your@email.com" required>
+            </div>
+            <div class="form-group">
+              <label for="topic">Topic</label>
+              <select id="topic" name="topic">
+                <option value="general">General Question</option>
+                <option value="technical">Technical Issue</option>
+                <option value="license">License / Billing</option>
+                <option value="feature">Feature Request</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="message">Message</label>
+              <textarea id="message" name="message" placeholder="Describe your question or issue..." required></textarea>
+            </div>
+            <button type="submit" class="submit-btn">Send Message</button>
+          </form>
+          <div class="contact-info">
+            <div class="info-card">
+              <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Email</h3>
+              <p><a href="mailto:support@LocalPasswordVault.com">support@LocalPasswordVault.com</a></p>
+            </div>
+            <div class="info-card">
+              <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Documentation</h3>
+              <p>Check the <a href="faq.html">FAQs</a> first—most questions are answered there.</p>
+            </div>
+            <div class="info-card">
+              <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>Include in Your Message</h3>
+              <p>• Your operating system (Windows/Mac/Linux)<br>• App version<br>• Description of the issue</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tips-section animate">
+        <h2 class="tips-title">Quick Tips</h2>
+        <div class="tips-grid">
+          <div class="tip-card">
+            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Back Up Regularly</h4>
+            <p>Export your vault to a USB drive or external storage periodically. You control your backups.</p>
+          </div>
+          <div class="tip-card">
+            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Master Password</h4>
+            <p>Choose something strong but memorable. I cannot recover it if you forget.</p>
+          </div>
+          <div class="tip-card">
+            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Importing Data</h4>
+            <p>Export from your old password manager as CSV, then import into LPV. Delete the CSV after.</p>
+          </div>
+          <div class="tip-card">
+            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Quick Access</h4>
+            <p>Use the Floating Icon for fast credential access without opening the full app.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand">
+            <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+            <span>Local Password Vault</span>
+          </div>
+          <p class="footer-tagline">Your passwords, secured locally. No cloud, no tracking, no risks.</p>
+        </div>
+        <div>
+          <h4 class="footer-title">Product</h4>
+          <ul class="footer-links">
+            <li><a href="features.html">Features</a></li>
+            <li><a href="security.html">Security</a></li>
+            <li><a href="pricing.html">Pricing</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="footer-title">Resources</h4>
+          <ul class="footer-links">
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="articles.html">Security Articles</a></li>
+            <li><a href="faq.html">FAQs</a></li>
+            <li><a href="support.html">Support</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="footer-title">Legal</h4>
+          <ul class="footer-links">
+            <li><a href="privacy.html">Privacy Policy</a></li>
+            <li><a href="disclaimer.html">Disclaimer</a></li>
+            <li><a href="eula.html">EULA</a></li>
+            <li><a href="refund.html">Refund Policy</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p class="footer-copyright">© 2025 Local Password Vault. All rights reserved. Built with ♥ in Dallas, Texas.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.animate').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
+
+

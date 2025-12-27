@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <title>Security Resources - Local Password Vault</title>
+  <meta name="description" content="Educational articles on password security, cloud vulnerabilities, and protecting your digital life.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-dark: #0a0f1a;
+      --bg-darker: #060912;
+      --bg-card: #111827;
+      --cyan: #06b6d4;
+      --cyan-light: #22d3ee;
+      --cyan-dark: #0891b2;
+      --cyan-glow: rgba(6, 182, 212, 0.3);
+      --green: #10b981;
+      --red: #ef4444;
+      --orange: #f59e0b;
+      --text-primary: #f9fafb;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --gradient-cyan: linear-gradient(135deg, #22d3ee 0%, #0891b2 100%);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; font-size: 16px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg-darker); color: var(--text-primary); line-height: 1.6; font-size: 16px; }
+
+    .animate { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+    .animate.visible { opacity: 1; transform: translateY(0); }
+    .delay-1 { transition-delay: 0.1s; }
+    .delay-2 { transition-delay: 0.2s; }
+    .delay-3 { transition-delay: 0.3s; }
+    .delay-4 { transition-delay: 0.4s; }
+
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 1rem 2rem; background: rgba(6, 9, 18, 0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-subtle); }
+    .nav-container { max-width: 1600px; width: 92%; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .logo-icon { width: 44px; height: 44px; background: var(--bg-dark); border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px var(--cyan-glow), inset 0 0 0 1px var(--cyan-dark); }
+    .logo-icon svg { width: 24px; height: 24px; stroke: var(--cyan); fill: none; }
+    .logo-text { font-family: 'Space Grotesk', sans-serif; font-size: 1.15rem; font-weight: 600; color: var(--text-primary); }
+    .nav-links { display: flex; align-items: center; gap: 2rem; }
+    .nav-links a { color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; font-weight: 500; transition: color 0.2s; }
+    .nav-links a:hover, .nav-links a.active { color: var(--cyan); }
+    .nav-cta { padding: 10px 24px; background: var(--gradient-cyan); color: var(--bg-darker) !important; border-radius: 8px; font-weight: 600; }
+
+    .page-hero { padding: 140px 2rem 32px; background: linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-darker) 100%); text-align: center; }
+    .page-hero h1 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.75rem, 5.5vw, 4rem); font-weight: 700; margin-bottom: 1rem; line-height: 1.2; }
+    .page-hero h1 span { color: var(--cyan); }
+    .page-hero .subtitle { font-size: 1.2rem; color: var(--text-secondary); max-width: 700px; margin: 0 auto; line-height: 1.7; }
+
+    .articles-section { padding: 40px 2rem 100px; }
+    .articles-container { max-width: 1100px; margin: 0 auto; }
+
+    /* Featured Article */
+    .featured-article {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 40px;
+      background: var(--bg-card);
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid var(--border-subtle);
+      margin-bottom: 60px;
+      transition: all 0.3s ease;
+    }
+
+    .featured-article:hover {
+      border-color: var(--cyan-dark);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .featured-image {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(6, 182, 212, 0.1) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 320px;
+      position: relative;
+    }
+
+    .featured-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: absolute;
+      inset: 0;
+    }
+
+    .featured-image-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to right, transparent 0%, rgba(17, 24, 39, 0.8) 100%);
+    }
+
+    .featured-content {
+      padding: 40px 40px 40px 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .article-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 100px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 16px;
+      width: fit-content;
+    }
+
+    .article-tag.danger { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .article-tag.warning { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .article-tag.security { background: rgba(6, 182, 212, 0.15); color: var(--cyan); border: 1px solid rgba(6, 182, 212, 0.3); }
+
+    .featured-content h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      line-height: 1.3;
+    }
+
+    .featured-content p {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+
+    .read-article {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--cyan);
+      font-weight: 600;
+      text-decoration: none;
+      transition: gap 0.2s;
+    }
+
+    .read-article:hover { gap: 12px; }
+    .read-article svg { width: 18px; height: 18px; }
+
+    /* Article Categories */
+    .category-section { margin-bottom: 60px; }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 28px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .category-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--bg-card);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .category-icon svg { width: 24px; height: 24px; }
+    .category-icon.danger svg { stroke: #ef4444; }
+    .category-icon.warning svg { stroke: #f59e0b; }
+    .category-icon.security svg { stroke: var(--cyan); }
+
+    .category-header h2 { font-family: 'Space Grotesk', sans-serif; font-size: 1.75rem; font-weight: 700; }
+
+    .articles-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .article-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 28px;
+      border: 1px solid var(--border-subtle);
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .article-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--cyan-dark);
+    }
+
+    .article-card .article-tag { margin-bottom: 16px; }
+
+    .article-card h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    .article-card p {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.7;
+      margin-bottom: 20px;
+      flex-grow: 1;
+    }
+
+    .article-card .read-article { font-size: 0.9rem; }
+
+    /* CTA Section */
+    .cta-section {
+      padding: 50px 2rem;
+      background: var(--bg-dark);
+      text-align: center;
+    }
+
+    .cta-section h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2rem;
+      margin-bottom: 16px;
+    }
+
+    .cta-section p {
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 32px;
+      background: var(--gradient-cyan);
+      color: var(--bg-darker);
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: 600;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px var(--cyan-glow);
+    }
+
+    .footer { padding: 60px 2rem 30px; background: var(--bg-darker); border-top: 1px solid var(--border-subtle); }
+    .footer-container { max-width: 1200px; margin: 0 auto; }
+    .footer-grid { display: grid; grid-template-columns: 2fr repeat(3, 1fr); gap: 40px; margin-bottom: 40px; }
+    .footer-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .footer-brand .logo-icon { width: 36px; height: 36px; }
+    .footer-brand .logo-icon svg { width: 18px; height: 18px; }
+    .footer-brand span { font-family: 'Space Grotesk', sans-serif; font-weight: 600; }
+    .footer-tagline { color: var(--text-muted); font-size: 0.9rem; }
+    .footer-title { font-weight: 600; margin-bottom: 16px; }
+    .footer-links { list-style: none; }
+    .footer-links li { margin-bottom: 10px; }
+    .footer-links a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--cyan); }
+    .footer-bottom { padding-top: 30px; border-top: 1px solid var(--border-subtle); text-align: center; }
+    .footer-copyright { color: var(--text-muted); font-size: 0.85rem; }
+
+    @media (max-width: 1024px) {
+      .featured-article { grid-template-columns: 1fr; }
+      .featured-image { min-height: 200px; }
+      .featured-content { padding: 32px; }
+      .articles-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .articles-grid { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-container">
+      <a href="index.html" class="logo">
+        <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <span class="logo-text">Local Password Vault</span>
+      </a>
+      <div class="nav-links">
+        <a href="features.html">Features</a>
+        <a href="about.html">About</a>
+        <a href="security.html">Security</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="faq.html">FAQs</a>
+        <a href="pricing.html" class="nav-cta">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="page-hero">
+    <h1 class="animate">Security <span>Resources</span></h1>
+    <p class="subtitle animate delay-1">Understand the real threats to your digital security and how to protect yourself.</p>
+  </section>
+
+  <section class="articles-section">
+    <div class="articles-container">
+
+      <!-- Featured Article -->
+      <article class="featured-article animate">
+        <div class="featured-image">
+          <img src="hacker.jpg" alt="Hacker attacking cloud systems">
+          <div class="featured-image-overlay"></div>
+        </div>
+        <div class="featured-content">
+          <span class="article-tag danger">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Cloud Dangers
+          </span>
+          <h2>5 Hidden Dangers of Cloud Password Managers</h2>
+          <p>Cloud password managers carry hidden dangers because they store your encrypted vault on remote servers. If those servers are breached, scraped, or misconfigured, your data is exposed. A local password vault avoids this risk by keeping everything offline.</p>
+          <a href="article-hidden-dangers.html" class="read-article">
+            Read Full Article
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+        </div>
+      </article>
+
+      <!-- All Articles Grid -->
+      <div class="category-section animate">
+        <div class="category-header">
+          <div class="category-icon security">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <h2>Security Articles</h2>
+        </div>
+        <div class="articles-grid">
+          <article class="article-card">
+            <span class="article-tag security">Local Advantage</span>
+            <h3>The Real Advantages of a Local Password Vault</h3>
+            <p>Why more people are moving away from cloud-based managers. Your data never leaves your device, there's no account to create, and no company watching over you.</p>
+            <a href="article-advantages.html" class="read-article">Read Article <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+          </article>
+          <article class="article-card">
+            <span class="article-tag warning">Privacy Risk</span>
+            <h3>Why Your Password Manager Shouldn't "Phone Home"</h3>
+            <p>Most people never stop to ask what happens when their password manager "syncs." Every remote API or sync call creates a new attack surface for hackers.</p>
+            <a href="article-phone-home.html" class="read-article">Read Article <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+          </article>
+          <article class="article-card">
+            <span class="article-tag danger">Cloud Risk</span>
+            <h3>The Case for Staying Local: Why Cloud Password Managers Put You at Risk</h3>
+            <p>Keeping your password vault local gives you stronger security because your data never leaves your device. Cloud managers duplicate your vault across servers you don't control.</p>
+            <a href="article-staying-local.html" class="read-article">Read Article <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+          </article>
+          <article class="article-card">
+            <span class="article-tag security">Best Practice</span>
+            <h3>How Offline Password Management Improves Security</h3>
+            <p>Security experts increasingly recommend air-gapped solutions. Removing internet connectivity is one of the strongest protections you can implement.</p>
+            <a href="article-offline-security.html" class="read-article">Read Article <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+          </article>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="cta-section">
+    <h2 class="animate">Ready to Secure Your Passwords?</h2>
+    <p class="animate delay-1">Stop trusting the cloud with your most sensitive data. Go offline.</p>
+    <a href="pricing.html" class="btn-primary animate delay-2">Get Started Free</a>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand">
+            <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+            <span>Local Password Vault</span>
+          </div>
+          <p class="footer-tagline">Your passwords, secured locally. No cloud, no tracking, no risks.</p>
+        </div>
+        <div>
+          <h4 class="footer-title">Product</h4>
+          <ul class="footer-links">
+            <li><a href="features.html">Features</a></li>
+            <li><a href="security.html">Security</a></li>
+            <li><a href="pricing.html">Pricing</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="footer-title">Resources</h4>
+          <ul class="footer-links">
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="articles.html">Security Articles</a></li>
+            <li><a href="faq.html">FAQs</a></li>
+            <li><a href="support.html">Support</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="footer-title">Legal</h4>
+          <ul class="footer-links">
+            <li><a href="privacy.html">Privacy Policy</a></li>
+            <li><a href="disclaimer.html">Disclaimer</a></li>
+            <li><a href="eula.html">EULA</a></li>
+            <li><a href="refund.html">Refund Policy</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p class="footer-copyright">© 2025 Local Password Vault. All rights reserved. Built with ♥ in Dallas, Texas.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.animate').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
+
+

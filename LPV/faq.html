@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <title>FAQs - Local Password Vault</title>
+  <meta name="description" content="Frequently asked questions about Local Password Vault. Learn about security, setup, backups, and more.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-dark: #0a0f1a;
+      --bg-darker: #060912;
+      --bg-card: #111827;
+      --cyan: #06b6d4;
+      --cyan-light: #22d3ee;
+      --cyan-dark: #0891b2;
+      --cyan-glow: rgba(6, 182, 212, 0.3);
+      --green: #10b981;
+      --text-primary: #f9fafb;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --gradient-cyan: linear-gradient(135deg, #22d3ee 0%, #0891b2 100%);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; font-size: 16px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg-darker); color: var(--text-primary); line-height: 1.6; font-size: 16px; }
+
+    .animate { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.8s ease; }
+    .animate.visible { opacity: 1; transform: translateY(0); }
+    .delay-1 { transition-delay: 0.1s; }
+    .delay-2 { transition-delay: 0.2s; }
+
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 1rem 2rem; background: rgba(6, 9, 18, 0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-subtle); }
+    .nav-container { max-width: 1600px; width: 92%; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .logo-icon { width: 44px; height: 44px; background: var(--bg-dark); border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px var(--cyan-glow), inset 0 0 0 1px var(--cyan-dark); }
+    .logo-icon svg { width: 24px; height: 24px; stroke: var(--cyan); fill: none; }
+    .logo-text { font-family: 'Space Grotesk', sans-serif; font-size: 1.15rem; font-weight: 600; color: var(--text-primary); }
+    .nav-links { display: flex; align-items: center; gap: 2rem; }
+    .nav-links a { color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; font-weight: 500; transition: color 0.2s; }
+    .nav-links a:hover, .nav-links a.active { color: var(--cyan); }
+    .nav-cta { padding: 10px 24px; background: var(--gradient-cyan); color: var(--bg-darker) !important; border-radius: 8px; font-weight: 600; }
+
+    .page-hero { padding: 140px 2rem 32px; background: linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-darker) 100%); text-align: center; }
+    .page-hero h1 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.75rem, 5.5vw, 4rem); font-weight: 700; margin-bottom: 1rem; line-height: 1.2; }
+    .page-hero h1 span { color: var(--cyan); }
+    .page-hero .subtitle { font-size: 1.2rem; color: var(--text-secondary); max-width: 650px; margin: 0 auto; line-height: 1.7; }
+
+    .faq-section { padding: 40px 2rem 100px; max-width: 800px; margin: 0 auto; }
+
+    .faq-category { margin-bottom: 40px; }
+    .faq-category-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; color: var(--cyan); margin-bottom: 20px; display: flex; align-items: center; gap: 12px; }
+    .faq-category-title svg { width: 24px; height: 24px; stroke: var(--cyan); }
+
+    .faq-item { background: var(--bg-card); border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--border-subtle); overflow: hidden; }
+    .faq-question { width: 100%; padding: 20px 24px; background: none; border: none; color: var(--text-primary); font-size: 1rem; font-weight: 600; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
+    .faq-question:hover { background: rgba(255,255,255,0.02); }
+    .faq-question svg { width: 20px; height: 20px; stroke: var(--cyan); transition: transform 0.3s; flex-shrink: 0; margin-left: 16px; }
+    .faq-item.open .faq-question svg { transform: rotate(180deg); }
+    .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+    .faq-item.open .faq-answer { max-height: 500px; }
+    .faq-answer-content { padding: 0 24px 20px; color: var(--text-secondary); line-height: 1.7; }
+    .faq-answer-content p { margin-bottom: 12px; }
+    .faq-answer-content p:last-child { margin-bottom: 0; }
+    .faq-answer-content strong { color: var(--text-primary); }
+
+    .cta-section { padding: 50px 2rem; background: var(--bg-dark); text-align: center; }
+    .cta-section h2 { font-family: 'Space Grotesk', sans-serif; font-size: 2rem; margin-bottom: 16px; }
+    .cta-section p { color: var(--text-secondary); margin-bottom: 32px; }
+    .btn-primary { display: inline-flex; align-items: center; gap: 10px; padding: 16px 32px; background: var(--gradient-cyan); color: var(--bg-darker); text-decoration: none; border-radius: 10px; font-weight: 600; transition: transform 0.2s, box-shadow 0.2s; }
+    .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 12px 32px var(--cyan-glow); }
+
+    .footer { padding: 60px 2rem 30px; background: var(--bg-darker); border-top: 1px solid var(--border-subtle); }
+    .footer-container { max-width: 1200px; margin: 0 auto; }
+    .footer-grid { display: grid; grid-template-columns: 2fr repeat(3, 1fr); gap: 40px; margin-bottom: 40px; }
+    .footer-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .footer-brand .logo-icon { width: 36px; height: 36px; }
+    .footer-brand .logo-icon svg { width: 18px; height: 18px; }
+    .footer-brand span { font-family: 'Space Grotesk', sans-serif; font-weight: 600; }
+    .footer-tagline { color: var(--text-muted); font-size: 0.9rem; }
+    .footer-title { font-weight: 600; margin-bottom: 16px; }
+    .footer-links { list-style: none; }
+    .footer-links li { margin-bottom: 10px; }
+    .footer-links a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--cyan); }
+    .footer-bottom { padding-top: 30px; border-top: 1px solid var(--border-subtle); text-align: center; }
+    .footer-copyright { color: var(--text-muted); font-size: 0.85rem; }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-container">
+      <a href="index.html" class="logo">
+        <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <span class="logo-text">Local Password Vault</span>
+      </a>
+      <div class="nav-links">
+        <a href="features.html">Features</a>
+        <a href="about.html">About</a>
+        <a href="security.html">Security</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="faq.html" class="active">FAQs</a>
+        <a href="pricing.html" class="nav-cta">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="page-hero">
+    <h1 class="animate">Frequently Asked <span>Questions</span></h1>
+    <p class="subtitle animate delay-1">Everything you need to know about Local Password Vault.</p>
+  </section>
+
+  <section class="faq-section">
+
+    <!-- Getting Started -->
+    <div class="faq-category animate">
+      <h2 class="faq-category-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Getting Started</h2>
+      
+      <div class="faq-item">
+        <button class="faq-question">How do I get started with Local Password Vault?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-answer"><div class="faq-answer-content">
+          <p>After purchasing (or signing up for the free trial), you'll receive a download link for Windows, Mac, or Linux. Install the application, create your master password, and you're ready to go.</p>
+          <p>The app is straightforward—most people have it set up in under 5 minutes.</p>
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question">Can I try it before buying?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-answer"><div class="faq-answer-content">
+          <p><strong>Yes!</strong> A free 7-day trial is available with full access to all features. No credit card required.</p>
+          <p>When you upgrade to a paid license, all your passwords and data stay intact.</p>
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question">How do I migrate from another password manager?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-answer"><div class="faq-answer-content">
+          <p>Export your passwords from your current manager as a CSV file, then import them into Local Password Vault. Your data will be encrypted locally during import.</p>
+          <p><strong>Important:</strong> Delete the exported CSV afterward since it contains unencrypted passwords.</p>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- Security -->
+    <div class="faq-category animate">
+      <h2 class="faq-category-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Security and Privacy</h2>
+      
+      <div class="faq-item">
+        <button class="faq-question">How is my data secured?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-answer"><div class="faq-answer-content">
+          <p>Local Password Vault protects your vault with <strong>AES-256-GCM encryption</strong>. Your master password is processed using <strong>Argon2id key derivation</strong> with hundreds of thousands of iterations to create your encryption key.</p>
+          <p>Each vault has a unique salt, making every vault cryptographically independent.</p>
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question">Can you see my passwords?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-answer"><div class="faq-answer-content">
+          <p><strong>No.</strong> I have no access to your vault. Your data is encrypted locally on your device using a key derived from your master password. I cannot see your password, access your encryption keys, or view any of your vault contents.</p>
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question">What if I forget my master password?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-answer"><div class="faq-answer-content">
+          <p><strong>Important:</strong> For security reasons, I cannot recover or reset your vault. Your master password is the only way to decrypt and access your data.</p>
+          <p>Choose a strong but memorable master password and create encrypted backups regularly.</p>
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question">Does the app ever connect to the internet?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-answer"><div class="faq-answer-content">
+          <p><strong>No.</strong> Local Password Vault runs 100% offline. After you download and install the app, everything happens locally on your machine. There are no servers, no telemetry, and no background data sharing.</p>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- Using the Vault -->
+    <div class="faq-category animate">
+      <h2 class="faq-category-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>Using Your Vault</h2>
+      
+      <div class="faq-item">
+        <button class="faq-question">How do I backup my vault?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-answer"><div class="faq-answer-content">
+          <p>You can export your vault for safekeeping at any time. I recommend maintaining an encrypted backup on a USB drive or external hard drive for optimal data protection.</p>
+          <p>Because Local Password Vault never touches the cloud, you're in full control of backup and recovery.</p>
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question">What happens if my computer fails or is stolen?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-answer"><div class="faq-answer-content">
+          <p>If your device is lost, your vault remains secure. All passwords are encrypted with AES-256 and can only be unlocked with your master password.</p>
+          <p>If you have a backup, you can restore your vault on a new device. If you lose both your device and backups, your data cannot be recovered—that's part of the trade-off for true local privacy.</p>
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question">What is the Floating Icon feature?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-answer"><div class="faq-answer-content">
+          <p>The Floating Icon gives you quick access to your vault. It stays available on your desktop so you can copy and paste credentials without reopening the main window every time.</p>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- Pricing and Licensing -->
+    <div class="faq-category animate">
+      <h2 class="faq-category-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Pricing and Licensing</h2>
+      
+      <div class="faq-item">
+        <button class="faq-question">Is this a subscription?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-answer"><div class="faq-answer-content">
+          <p><strong>No.</strong> Local Password Vault is a one-time purchase. Pay once and own it forever. No subscriptions, no renewals, no hidden costs. Your license includes all future updates.</p>
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question">Can I install it on multiple computers?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-answer"><div class="faq-answer-content">
+          <p><strong>One license key = one device.</strong> Each key is bound to a single machine.</p>
+          <p>If you need multiple devices, consider the Family Vault which includes 5 device licenses, or purchase additional Personal licenses.</p>
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question">What's your refund policy?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-answer"><div class="faq-answer-content">
+          <p>A <strong>30-day money-back guarantee</strong> is available on all purchases. If you're not completely satisfied, contact me within 30 days of purchase and I will process a full refund—no questions asked.</p>
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question">What platforms are supported?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-answer"><div class="faq-answer-content">
+          <p>Local Password Vault is available for:</p>
+          <p><strong>Windows:</strong> Windows 10 and Windows 11<br>
+          <strong>Mac:</strong> macOS 10.15 (Catalina) and later<br>
+          <strong>Linux:</strong> Ubuntu, Debian, Fedora, and other major distributions</p>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- Support -->
+    <div class="faq-category animate">
+      <h2 class="faq-category-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Support</h2>
+      
+      <div class="faq-item">
+        <button class="faq-question">How do I get support?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-answer"><div class="faq-answer-content">
+          <p>Email <strong>support@LocalPasswordVault.com</strong>. Please include your operating system, application version, and a brief description of the issue. I respond to all inquiries within 24-48 hours during business days.</p>
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question">How are updates delivered?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-answer"><div class="faq-answer-content">
+          <p>You'll receive an email notification when a new version is available with a secure download link. You can choose when and how to update—nothing happens automatically behind the scenes.</p>
+        </div></div>
+      </div>
+    </div>
+
+  </section>
+
+  <section class="cta-section">
+    <h2 class="animate">Still Have Questions?</h2>
+    <a href="support.html" class="btn-primary animate delay-1">Contact Support</a>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand">
+            <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+            <span>Local Password Vault</span>
+          </div>
+          <p class="footer-tagline">Your passwords, secured locally. No cloud, no tracking, no risks.</p>
+        </div>
+        <div>
+          <h4 class="footer-title">Product</h4>
+          <ul class="footer-links">
+            <li><a href="features.html">Features</a></li>
+            <li><a href="security.html">Security</a></li>
+            <li><a href="pricing.html">Pricing</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="footer-title">Resources</h4>
+          <ul class="footer-links">
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="articles.html">Security Articles</a></li>
+            <li><a href="faq.html">FAQs</a></li>
+            <li><a href="support.html">Support</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="footer-title">Legal</h4>
+          <ul class="footer-links">
+            <li><a href="privacy.html">Privacy Policy</a></li>
+            <li><a href="disclaimer.html">Disclaimer</a></li>
+            <li><a href="eula.html">EULA</a></li>
+            <li><a href="refund.html">Refund Policy</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p class="footer-copyright">© 2025 Local Password Vault. All rights reserved. Built with ♥ in Dallas, Texas.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Scroll animations
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.animate').forEach(el => observer.observe(el));
+
+    // FAQ Accordion
+    document.querySelectorAll('.faq-question').forEach(button => {
+      button.addEventListener('click', () => {
+        const item = button.parentElement;
+        const isOpen = item.classList.contains('open');
+        document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+        if (!isOpen) item.classList.add('open');
+      });
+    });
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,2232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <title>Local Password Vault - Offline Password Security</title>
+  <meta name="description" content="Keep your passwords secure, offline, and under your control. No cloud, no tracking, no risks. AES-256 encrypted, 100% local.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-dark: #0a0f1a;
+      --bg-darker: #060912;
+      --bg-card: #111827;
+      --bg-card-hover: #1f2937;
+      --cyan: #06b6d4;
+      --cyan-light: #22d3ee;
+      --cyan-dark: #0891b2;
+      --cyan-glow: rgba(6, 182, 212, 0.3);
+      --green: #10b981;
+      --red: #ef4444;
+      --text-primary: #f9fafb;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --gradient-cyan: linear-gradient(135deg, #22d3ee 0%, #0891b2 100%);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { 
+      scroll-behavior: smooth;
+      font-size: 16px;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-darker);
+      color: var(--text-primary);
+      font-size: 1rem;
+      line-height: 1.6;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .animate {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+
+    .animate.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .delay-1 { transition-delay: 0.1s; }
+    .delay-2 { transition-delay: 0.2s; }
+    .delay-3 { transition-delay: 0.3s; }
+    .delay-4 { transition-delay: 0.4s; }
+
+    /* Navigation */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      padding: 1rem 2rem;
+      background: rgba(6, 9, 18, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .nav-container {
+      max-width: 1600px;
+      width: 92%;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      background: var(--bg-dark);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px var(--cyan-glow), inset 0 0 0 1px var(--cyan-dark);
+      position: relative;
+    }
+
+    .logo-icon svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--cyan);
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .logo-text {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover,
+    .nav-links a.active { color: var(--cyan); }
+
+    .nav-cta {
+      padding: 10px 24px;
+      background: var(--gradient-cyan);
+      color: var(--bg-darker) !important;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .nav-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px var(--cyan-glow);
+    }
+
+    /* Hero Section */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 120px 2rem 80px;
+      background: 
+        radial-gradient(ellipse at 20% 20%, rgba(6, 182, 212, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(6, 182, 212, 0.05) 0%, transparent 50%),
+        var(--bg-darker);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2306b6d4' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      opacity: 0.5;
+    }
+
+    .hero-container {
+      max-width: 1600px;
+      width: 92%;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1.25fr;
+      gap: 50px;
+      align-items: start;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-content {
+      animation: fadeInUp 1s ease;
+      padding-top: 20px;
+      max-width: 550px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      border-radius: 100px;
+      font-size: 14px;
+      color: var(--cyan);
+      margin-bottom: 24px;
+    }
+
+    .hero-badge svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .hero h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 80px;
+      font-weight: 700;
+      line-height: 1.05;
+      margin-bottom: 28px;
+      letter-spacing: -0.03em;
+    }
+    
+    @media (max-width: 1400px) {
+      .hero h1 { font-size: 72px; }
+    }
+    
+    @media (max-width: 1200px) {
+      .hero h1 { font-size: 64px; }
+    }
+    
+    @media (max-width: 992px) {
+      .hero h1 { font-size: 52px; }
+    }
+
+    .hero h1 .highlight {
+      background: var(--gradient-cyan);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-subtitle {
+      font-size: 19px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      line-height: 1.7;
+      max-width: 500px;
+    }
+
+    .hero-platforms {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 16px;
+      flex-wrap: nowrap;
+      align-items: center;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      background: var(--gradient-cyan);
+      color: var(--bg-darker);
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      white-space: nowrap;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px var(--cyan-glow);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      background: transparent;
+      color: var(--cyan);
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      white-space: nowrap;
+      border: 2px solid var(--cyan);
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: var(--cyan);
+      color: var(--bg-darker);
+    }
+
+    /* Hero Visual - Dramatic Image */
+    .hero-visual {
+      display: flex;
+      justify-content: flex-end;
+      align-items: flex-start;
+      animation: fadeInUp 1s ease 0.3s both;
+      padding-top: 10px;
+    }
+
+    .hero-image-container {
+      position: relative;
+      width: 100%;
+      max-width: 620px;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 
+        0 30px 100px rgba(0, 0, 0, 0.6),
+        0 0 100px rgba(6, 182, 212, 0.4),
+        0 0 60px rgba(6, 182, 212, 0.3),
+        0 0 30px rgba(6, 182, 212, 0.2),
+        0 0 0 2px rgba(6, 182, 212, 0.25);
+    }
+
+    .hero-image-container::before {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 23px;
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.5) 0%, rgba(6, 182, 212, 0.2) 50%, rgba(6, 182, 212, 0.3) 100%);
+      z-index: -1;
+      opacity: 0.8;
+      filter: blur(8px);
+    }
+
+    .hero-image-container::after {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: 21px;
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.4), transparent, rgba(6, 182, 212, 0.2));
+      z-index: -1;
+      opacity: 0.6;
+    }
+
+    .hero-image-container img {
+      width: 100%;
+      height: auto;
+      display: block;
+      filter: brightness(0.95) contrast(1.05);
+    }
+
+    .hero-image-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, rgba(15, 18, 24, 0.95) 0%, rgba(15, 18, 24, 0.7) 50%, transparent 100%);
+      padding: 60px 28px 28px;
+      z-index: 10;
+    }
+
+    .hero-stat {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .hero-stat-number {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #f97316;
+      line-height: 1;
+    }
+
+    .hero-stat-text {
+      font-size: 0.95rem;
+      color: #f97316;
+      line-height: 1.4;
+    }
+
+    .hero-safe-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 10px;
+    }
+
+    .hero-safe-badge svg {
+      width: 20px;
+      height: 20px;
+      stroke: var(--green);
+    }
+
+    .hero-safe-badge span {
+      color: var(--green);
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .vault-status::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    /* Trust Badges */
+    .trust-section {
+      padding: 60px 2rem;
+      background: var(--bg-dark);
+      border-top: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .trust-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      flex-wrap: wrap;
+    }
+
+    .trust-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    .trust-item svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--cyan);
+    }
+
+    /* Breach Ticker */
+    .breach-ticker {
+      background: linear-gradient(180deg, rgba(204, 102, 0, 0.08) 0%, rgba(204, 102, 0, 0.03) 100%);
+      border-top: 1px solid rgba(204, 102, 0, 0.2);
+      border-bottom: 1px solid rgba(204, 102, 0, 0.2);
+      padding: 16px 0;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .breach-ticker::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      width: 100px;
+      z-index: 2;
+      pointer-events: none;
+      background: linear-gradient(270deg, var(--bg-darker) 0%, transparent 100%);
+    }
+
+    .breach-ticker-label {
+      flex-shrink: 0;
+      background: var(--bg-darker);
+      border-right: 1px solid rgba(204, 102, 0, 0.4);
+      color: #cc6600;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      z-index: 3;
+    }
+
+    .breach-ticker-label::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: #cc6600;
+      border-radius: 50%;
+      animation: pulse-orange 2s infinite;
+    }
+
+    @keyframes pulse-orange {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .breach-scroll-container {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .breach-scroll-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 40px;
+      z-index: 2;
+      pointer-events: none;
+      background: linear-gradient(90deg, var(--bg-darker) 0%, transparent 100%);
+    }
+
+    .breach-track {
+      display: flex;
+      animation: scroll-ticker 45s linear infinite;
+      width: max-content;
+    }
+
+    .breach-track:hover {
+      animation-play-state: paused;
+    }
+
+    @keyframes scroll-ticker {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .breach-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 40px;
+      white-space: nowrap;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+    }
+
+    .breach-item svg {
+      width: 14px;
+      height: 14px;
+      stroke: #cc6600;
+      flex-shrink: 0;
+    }
+
+    .breach-name {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .breach-count {
+      color: #cc6600;
+      font-weight: 600;
+    }
+
+    .breach-date {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+
+    /* Stats Section */
+    .stats-section {
+      padding: 80px 2rem;
+      background: var(--bg-darker);
+    }
+
+    .stats-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .stats-layout {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr;
+      gap: 80px;
+      align-items: center;
+      margin-bottom: 60px;
+    }
+
+    .stats-visual {
+      position: relative;
+      overflow: visible;
+      border-radius: 16px;
+      padding-bottom: 30px;
+    }
+
+    .stats-image {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--border-subtle);
+      object-fit: cover;
+    }
+
+    .stats-image-badge {
+      position: absolute;
+      bottom: 0px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-card);
+      border: 2px solid var(--cyan-dark);
+      padding: 12px 24px;
+      border-radius: 100px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--cyan);
+      box-shadow: 0 8px 24px rgba(6, 182, 212, 0.3);
+      white-space: nowrap;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .stats-content .section-header {
+      text-align: left;
+      margin-bottom: 32px;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .section-badge {
+      display: inline-block;
+      padding: 8px 20px;
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.2);
+      border-radius: 100px;
+      font-size: 0.85rem;
+      color: var(--cyan);
+      margin-bottom: 20px;
+      font-weight: 500;
+    }
+
+    .section-header h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2.25rem, 4.5vw, 3.15rem);
+      font-weight: 700;
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+
+    .section-header p {
+      color: var(--text-secondary);
+      font-size: 1.15rem;
+      max-width: 650px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 32px 24px;
+      text-align: center;
+      border: 1px solid var(--border-subtle);
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--cyan-dark);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .stat-number {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--cyan);
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .stat-source {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    /* Why Section */
+    .why-section {
+      padding: 60px 2rem;
+      background: var(--bg-dark);
+    }
+
+    .why-container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+    }
+
+    .why-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 32px 24px;
+      border: 1px solid rgba(6, 182, 212, 0.25);
+      transition: all 0.3s ease;
+      box-shadow: 
+        0 4px 20px rgba(6, 182, 212, 0.25),
+        0 0 0 1px rgba(6, 182, 212, 0.15),
+        0 0 30px rgba(6, 182, 212, 0.1);
+    }
+
+    .why-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--cyan);
+      box-shadow: 
+        0 12px 40px rgba(6, 182, 212, 0.4),
+        0 0 0 1px rgba(6, 182, 212, 0.3),
+        0 0 50px rgba(6, 182, 212, 0.2);
+    }
+
+    .why-icon {
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .why-icon svg {
+      width: 28px;
+      height: 28px;
+      stroke: var(--cyan);
+    }
+
+    .why-card h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .why-card p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    /* Product Demo Section */
+    .demo-section {
+      padding: 60px 2rem;
+      background: var(--bg-dark);
+    }
+
+    .demo-container {
+      max-width: 1500px;
+      margin: 0 auto;
+    }
+
+    .demo-header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .demo-header h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .demo-header h2 span {
+      color: var(--cyan);
+    }
+
+    .demo-header p {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .demo-video-wrapper {
+      max-width: 45%;
+      margin: 0 auto 40px;
+    }
+
+    .demo-video {
+      width: 100%;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    }
+
+    .demo-video video {
+      width: 100%;
+      display: block;
+      border-radius: 16px;
+    }
+
+    .demo-captions {
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      margin-bottom: 48px;
+      flex-wrap: wrap;
+    }
+
+    .demo-caption {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-secondary);
+      font-size: 1rem;
+    }
+
+    .demo-caption svg {
+      width: 20px;
+      height: 20px;
+      stroke: var(--cyan);
+      flex-shrink: 0;
+    }
+
+    .demo-screenshots {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 40px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .demo-screenshot {
+      text-align: center;
+    }
+
+    .demo-screenshot img {
+      width: 100%;
+      max-width: 450px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      transition: transform 0.3s;
+    }
+
+    .demo-screenshot img:hover {
+      transform: translateY(-5px);
+    }
+
+    .demo-screenshot span {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 992px) {
+      .demo-video-wrapper {
+        max-width: 100%;
+      }
+      .demo-screenshots {
+        grid-template-columns: 1fr;
+        max-width: 500px;
+        margin: 0 auto;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .demo-captions {
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+      }
+    }
+
+    /* Features Section */
+    .features-section {
+      padding: 60px 2rem;
+      background: var(--bg-darker);
+    }
+
+    .features-container {
+      max-width: 1400px;
+      width: 92%;
+      margin: 0 auto;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 32px;
+      border: 1px solid var(--border-subtle);
+      transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--cyan-dark);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .feature-card h3 {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .feature-card h3 svg {
+      width: 20px;
+      height: 20px;
+      stroke: var(--cyan);
+    }
+
+    .feature-card p {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+
+    /* Testimonials - Featured Design */
+    .testimonials-section {
+      padding: 60px 2rem;
+      background: var(--bg-dark);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .testimonials-section::before {
+      content: '"';
+      position: absolute;
+      top: 60px;
+      left: 10%;
+      font-size: 20rem;
+      font-family: Georgia, serif;
+      color: rgba(6, 182, 212, 0.05);
+      line-height: 1;
+      pointer-events: none;
+    }
+
+    .testimonials-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .featured-testimonial {
+      text-align: center;
+      margin-bottom: 60px;
+      padding: 40px 0;
+    }
+
+    .featured-stars {
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+      margin-bottom: 24px;
+    }
+
+    .featured-stars svg {
+      width: 24px;
+      height: 24px;
+      fill: #fbbf24;
+      stroke: #fbbf24;
+    }
+
+    .featured-quote {
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      color: var(--text-primary);
+      line-height: 1.5;
+      max-width: 800px;
+      margin: 0 auto 32px;
+      font-weight: 500;
+    }
+
+    .featured-author {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .featured-avatar {
+      width: 56px;
+      height: 56px;
+      background: var(--gradient-cyan);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--bg-darker);
+    }
+
+    .featured-info { text-align: left; }
+    .featured-name { font-weight: 600; font-size: 1.1rem; }
+    .featured-role { color: var(--text-muted); font-size: 0.9rem; }
+
+    .testimonials-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .testimonial-mini {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 28px;
+      border: 1px solid var(--border-subtle);
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .testimonial-mini:hover {
+      transform: translateY(-4px);
+      border-color: var(--cyan-dark);
+    }
+
+    .mini-stars {
+      display: flex;
+      gap: 2px;
+      margin-bottom: 16px;
+      flex-shrink: 0;
+    }
+
+    .mini-stars svg {
+      width: 16px;
+      height: 16px;
+      fill: #fbbf24;
+      stroke: #fbbf24;
+    }
+
+    .mini-quote {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 16px;
+      flex-grow: 1;
+    }
+
+    .mini-author {
+      display: flex;
+      margin-top: auto;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .mini-avatar {
+      width: 36px;
+      height: 36px;
+      background: var(--gradient-cyan);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.8rem;
+      color: var(--bg-darker);
+    }
+
+    .mini-name { font-weight: 600; font-size: 0.9rem; }
+    .mini-role { color: var(--text-muted); font-size: 0.8rem; }
+
+    .testimonial-name {
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .testimonial-role {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Pricing Preview */
+    .pricing-section {
+      padding: 60px 2rem;
+      background: var(--bg-darker);
+    }
+
+    .pricing-container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      align-items: stretch;
+    }
+
+    .pricing-card {
+      background: var(--bg-card);
+      border-radius: 20px;
+      padding: 40px 32px;
+      border: 2px solid var(--cyan);
+      display: flex;
+      flex-direction: column;
+      transition: all 0.3s ease;
+    }
+
+    .pricing-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .pricing-card.featured {
+      border-color: var(--cyan);
+      box-shadow: 0 0 60px var(--cyan-glow);
+    }
+
+    .pricing-badge {
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 6px 20px;
+      background: var(--cyan);
+      color: var(--bg-darker);
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      border-radius: 100px;
+    }
+
+    .pricing-card.featured {
+      position: relative;
+    }
+
+    .pricing-name {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .pricing-desc {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+    }
+
+    .pricing-price {
+      margin-bottom: 8px;
+      text-align: center;
+      padding-top: 8px;
+    }
+
+    .pricing-price .currency {
+      font-size: 1.75rem;
+      color: var(--cyan);
+      vertical-align: top;
+      font-weight: 600;
+    }
+
+    .pricing-price .amount {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 4.5rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .pricing-period {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+    }
+
+    .pricing-features {
+      list-style: none;
+      margin-bottom: 32px;
+      flex-grow: 1;
+    }
+
+    .pricing-features li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 0;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .pricing-features li svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--green);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .pricing-cta {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      text-align: center;
+      border-radius: 10px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      margin-top: auto;
+    }
+
+    .pricing-cta.primary {
+      background: var(--gradient-cyan);
+      color: var(--bg-darker);
+    }
+
+    .pricing-cta.primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px var(--cyan-glow);
+    }
+
+    .pricing-cta.secondary {
+      background: transparent;
+      border: 2px solid var(--cyan);
+      color: var(--cyan);
+    }
+
+    .pricing-cta.secondary:hover {
+      background: var(--cyan);
+      color: var(--bg-darker);
+    }
+
+    /* CTA Section */
+    .cta-section {
+      padding: 60px 2rem;
+      background: linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-darker) 100%);
+      text-align: center;
+    }
+
+    .cta-container {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .cta-section h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .cta-section p {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      margin-bottom: 32px;
+    }
+
+    /* Strategic Legacy Awareness Section - PROMINENT */
+    .legacy-awareness {
+      padding: 100px 2rem;
+      background: linear-gradient(135deg, rgba(201, 162, 78, 0.08) 0%, rgba(6, 182, 212, 0.05) 100%);
+      border-top: 2px solid rgba(201, 162, 78, 0.3);
+      border-bottom: 2px solid rgba(201, 162, 78, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .legacy-awareness::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, #c9a24e, transparent);
+    }
+
+    .legacy-awareness-container {
+      max-width: 1300px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 100px;
+      align-items: center;
+    }
+
+    .legacy-visual {
+      position: relative;
+      overflow: visible;
+      border-radius: 20px;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .legacy-visual img {
+      width: 100%;
+      display: block;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    }
+
+    .legacy-badge {
+      position: absolute;
+      top: 0px;
+      right: 0px;
+      background: linear-gradient(135deg, #c9a24e 0%, #7a5d2a 100%);
+      color: #0f1218;
+      padding: 10px 20px;
+      border-radius: 100px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(201, 162, 78, 0.4);
+      z-index: 10;
+    }
+
+    .legacy-content {
+      padding-left: 20px;
+    }
+
+    .legacy-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(201, 162, 78, 0.15);
+      border: 1px solid rgba(201, 162, 78, 0.3);
+      border-radius: 100px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #c9a24e;
+      margin-bottom: 32px;
+    }
+
+    .legacy-awareness h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(1.75rem, 3vw, 2.5rem);
+      font-weight: 700;
+      margin-bottom: 28px;
+      color: var(--text-primary);
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+    }
+
+    .legacy-awareness p {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      line-height: 1.8;
+      margin-bottom: 40px;
+      max-width: 90%;
+    }
+
+    .legacy-features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px 24px;
+      margin-bottom: 44px;
+    }
+
+    .legacy-feature {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      padding: 4px 0;
+    }
+
+    .legacy-feature svg {
+      width: 16px;
+      height: 16px;
+      stroke: #c9a24e;
+    }
+
+    .legacy-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 18px 36px;
+      background: linear-gradient(135deg, #c9a24e 0%, #7a5d2a 100%);
+      color: #0f1218;
+      text-decoration: none;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 1.05rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 24px rgba(201, 162, 78, 0.3);
+      margin-top: 8px;
+    }
+
+    .legacy-cta:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(201, 162, 78, 0.4);
+      gap: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .legacy-awareness {
+        padding: 60px 1.5rem;
+      }
+      .legacy-awareness-container {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 50px;
+      }
+      .legacy-content {
+        padding-left: 0;
+      }
+      .legacy-visual { 
+        max-width: 400px; 
+        margin: 0 auto;
+        padding: 15px;
+      }
+      .legacy-features { 
+        justify-content: center;
+        gap: 16px;
+      }
+      .legacy-awareness p {
+        max-width: 100%;
+      }
+    }
+
+    /* Footer */
+    .footer {
+      padding: 48px 2rem 24px;
+      background: var(--bg-darker);
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .footer-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr repeat(3, 1fr);
+      gap: 32px;
+      margin-bottom: 32px;
+    }
+
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .footer-brand .logo-icon {
+      width: 36px;
+      height: 36px;
+    }
+
+    .footer-brand .logo-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .footer-brand span {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .footer-tagline {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .footer-title {
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .footer-links {
+      list-style: none;
+    }
+
+    .footer-links li { margin-bottom: 10px; }
+
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover { color: var(--cyan); }
+
+    .footer-bottom {
+      padding-top: 30px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-copyright {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .footer-legal {
+      display: flex;
+      gap: 24px;
+    }
+
+    .footer-legal a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: color 0.2s;
+    }
+
+    .footer-legal a:hover { color: var(--cyan); }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .hero-container {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 40px;
+      }
+      .hero-visual {
+        justify-content: center;
+        padding-top: 0;
+      }
+      .hero-image-container {
+        max-width: 500px;
+      }
+      .hero-buttons { 
+        justify-content: center;
+        flex-wrap: nowrap;
+      }
+      .stats-layout { grid-template-columns: 1fr; gap: 50px; }
+      .stats-content .section-header { text-align: center; }
+      .stats-visual { 
+        max-width: 450px; 
+        margin: 0 auto;
+        padding-bottom: 35px;
+      }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .why-grid { grid-template-columns: repeat(2, 1fr); }
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .hero { padding: 100px 1.5rem 60px; }
+      .hero-content { padding-top: 0; }
+      .hero-buttons {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .btn-primary, .btn-secondary {
+        padding: 12px 24px;
+        font-size: 14px;
+      }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .why-grid { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: 1fr; }
+      .testimonials-strip { grid-template-columns: 1fr; }
+      .pricing-grid { grid-template-columns: 1fr; max-width: 400px; margin: 0 auto; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+      .footer-bottom { flex-direction: column; gap: 16px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-container">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <span class="logo-text">Local Password Vault</span>
+      </a>
+      <div class="nav-links">
+        <a href="features.html">Features</a>
+        <a href="about.html">About</a>
+        <a href="security.html">Security</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="faq.html">FAQs</a>
+        <a href="pricing.html" class="nav-cta">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-container">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          100% Offline Security
+        </div>
+        <h1>Your Passwords.<br><span class="highlight">Your Device.</span><br>Your Rules.</h1>
+        <p class="hero-subtitle">Keep your passwords secure, offline, and under your control. No cloud, no tracking, no risks. AES-256 encrypted and completely local.</p>
+        <p class="hero-platforms">Available for Windows, macOS, and Linux</p>
+        <div class="hero-buttons">
+          <a href="pricing.html" class="btn-primary">
+            Get Started Free
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+          <a href="features.html" class="btn-secondary">See Features</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="hero-image-container">
+          <img src="hacker.jpg" alt="Hackers targeting cloud passwords">
+          <div class="hero-image-overlay">
+            <div class="hero-stat">
+              <div class="hero-stat-number">1.7B+</div>
+              <div class="hero-stat-text">passwords exposed<br>in cloud breaches (2024)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trust Badges -->
+  <section class="trust-section">
+    <div class="trust-container">
+      <div class="trust-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>AES-256 Encryption</span>
+      </div>
+      <div class="trust-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        <span>Zero Cloud Connection</span>
+      </div>
+      <div class="trust-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>One-Time Purchase</span>
+      </div>
+      <div class="trust-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <span>Code Signed and Verified</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Breach Ticker -->
+  <div class="breach-ticker">
+    <span class="breach-ticker-label">Cloud Breaches In The News</span>
+    <div class="breach-scroll-container">
+    <div class="breach-track">
+      <!-- First set -->
+      <div class="breach-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span class="breach-name">LastPass</span> &mdash; <span class="breach-count">25M+ password vaults</span> <span class="breach-date">Dec 2022</span>
+      </div>
+      <div class="breach-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span class="breach-name">Norton LifeLock</span> &mdash; <span class="breach-count">925K password accounts</span> <span class="breach-date">Jan 2023</span>
+      </div>
+      <div class="breach-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span class="breach-name">Okta</span> &mdash; <span class="breach-count">All customer credentials</span> <span class="breach-date">Oct 2023</span>
+      </div>
+      <div class="breach-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span class="breach-name">1Password (via Okta)</span> &mdash; <span class="breach-count">Internal systems</span> <span class="breach-date">Oct 2023</span>
+      </div>
+      <div class="breach-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span class="breach-name">Passwordstate</span> &mdash; <span class="breach-count">29K enterprise customers</span> <span class="breach-date">Apr 2021</span>
+      </div>
+      <div class="breach-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span class="breach-name">OneLogin</span> &mdash; <span class="breach-count">Customer credentials exposed</span> <span class="breach-date">May 2017</span>
+      </div>
+      <div class="breach-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span class="breach-name">Dashlane Phishing</span> &mdash; <span class="breach-count">Targeted attacks</span> <span class="breach-date">2023</span>
+      </div>
+      <div class="breach-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span class="breach-name">Bitwarden Phishing</span> &mdash; <span class="breach-count">Fake login pages</span> <span class="breach-date">2023</span>
+      </div>
+      <!-- Duplicate set for seamless loop -->
+      <div class="breach-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span class="breach-name">LastPass</span> &mdash; <span class="breach-count">25M+ password vaults</span> <span class="breach-date">Dec 2022</span>
+      </div>
+      <div class="breach-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span class="breach-name">Norton LifeLock</span> &mdash; <span class="breach-count">925K password accounts</span> <span class="breach-date">Jan 2023</span>
+      </div>
+      <div class="breach-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span class="breach-name">Okta</span> &mdash; <span class="breach-count">All customer credentials</span> <span class="breach-date">Oct 2023</span>
+      </div>
+      <div class="breach-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span class="breach-name">1Password (via Okta)</span> &mdash; <span class="breach-count">Internal systems</span> <span class="breach-date">Oct 2023</span>
+      </div>
+      <div class="breach-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span class="breach-name">Passwordstate</span> &mdash; <span class="breach-count">29K enterprise customers</span> <span class="breach-date">Apr 2021</span>
+      </div>
+      <div class="breach-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span class="breach-name">OneLogin</span> &mdash; <span class="breach-count">Customer credentials exposed</span> <span class="breach-date">May 2017</span>
+      </div>
+      <div class="breach-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span class="breach-name">Dashlane Phishing</span> &mdash; <span class="breach-count">Targeted attacks</span> <span class="breach-date">2023</span>
+      </div>
+      <div class="breach-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span class="breach-name">Bitwarden Phishing</span> &mdash; <span class="breach-count">Fake login pages</span> <span class="breach-date">2023</span>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <!-- Stats Section -->
+  <section class="stats-section">
+    <div class="stats-container">
+      <div class="stats-layout">
+        <div class="stats-visual animate">
+          <img src="lockwithlights.jpg" alt="Secure offline protection" class="stats-image">
+          <div class="stats-image-badge">100% Offline Protection</div>
+        </div>
+        <div class="stats-content">
+          <div class="section-header animate delay-1">
+            <span class="section-badge">The Cloud Problem</span>
+            <h2>Why Offline Matters</h2>
+            <p>Cloud-based password managers put your data at risk. The numbers don't lie.</p>
+          </div>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card animate delay-1">
+          <div class="stat-number">82%</div>
+          <div class="stat-label">of breaches involve cloud data</div>
+          <div class="stat-source">IBM 2023</div>
+        </div>
+        <div class="stat-card animate delay-2">
+          <div class="stat-number">75%</div>
+          <div class="stat-label">rise in cloud intrusions</div>
+          <div class="stat-source">CrowdStrike</div>
+        </div>
+        <div class="stat-card animate delay-3">
+          <div class="stat-number">$5.08M</div>
+          <div class="stat-label">average ransomware breach cost</div>
+          <div class="stat-source">IBM 2024</div>
+        </div>
+        <div class="stat-card animate delay-4">
+          <div class="stat-number">94%</div>
+          <div class="stat-label">of companies had API security issues</div>
+          <div class="stat-source">Salt Security</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why Section -->
+  <section class="why-section">
+    <div class="why-container">
+      <div class="section-header animate">
+        <span class="section-badge">The Solution</span>
+        <h2>Why Local Password Vault?</h2>
+        <p>True security doesn't need the cloud.</p>
+      </div>
+      <div class="why-grid">
+        <div class="why-card animate delay-1">
+          <div class="why-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <h3>100% Offline</h3>
+          <p>Your vault never connects to the internet. No servers, no syncing, no exposure.</p>
+        </div>
+        <div class="why-card animate delay-2">
+          <div class="why-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h3>Military-Grade Encryption</h3>
+          <p>AES-256 encryption with Argon2id key derivation. Your data is mathematically secure.</p>
+        </div>
+        <div class="why-card animate delay-3">
+          <div class="why-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          </div>
+          <h3>No Tracking</h3>
+          <p>Zero telemetry, no analytics, no hidden connections. Complete privacy by design.</p>
+        </div>
+        <div class="why-card animate delay-4">
+          <div class="why-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <h3>One-Time Purchase</h3>
+          <p>Pay once, own forever. No subscriptions, no renewals, no hidden costs.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Product Demo Section -->
+  <section class="demo-section">
+    <div class="demo-container">
+      <div class="demo-header animate">
+        <h2>See How <span>It Works</span></h2>
+        <p>Simple, secure, and completely under your control.</p>
+      </div>
+      
+      <div class="demo-video-wrapper animate">
+        <div class="demo-video">
+          <video autoplay muted loop playsinline>
+            <source src="demo.mp4" type="video/mp4">
+          </video>
+        </div>
+      </div>
+
+      <div class="demo-captions animate">
+        <div class="demo-caption">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Organize everything in one place</span>
+        </div>
+        <div class="demo-caption">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Add new records in seconds</span>
+        </div>
+        <div class="demo-caption">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Fully offline by design</span>
+        </div>
+      </div>
+
+      <div class="demo-screenshots">
+        <div class="demo-screenshot animate">
+          <img src="screenshot-1.jpg" alt="Password vault main view">
+          <span>Your secure dashboard</span>
+        </div>
+        <div class="demo-screenshot animate delay-1">
+          <img src="screenshot-2.jpg" alt="Adding a new password">
+          <span>Add entries effortlessly</span>
+        </div>
+        <div class="demo-screenshot animate delay-2">
+          <img src="screenshot-3.jpg" alt="App settings and security options">
+          <span>Customize your security settings</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Preview -->
+  <section class="features-section">
+    <div class="features-container">
+      <div class="section-header animate">
+        <span class="section-badge">Features</span>
+        <h2>Your Passwords. Your Device. <span class="highlight">Your Rules.</span></h2>
+        <p>Offline password security with full local control. No cloud. No tracking. No nonsense.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card animate delay-1">
+          <h3>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Easy Setup
+          </h3>
+          <p>Install, create your master password, and start adding logins right away. You'll be set up in minutes—no accounts or cloud sync required.</p>
+        </div>
+        <div class="feature-card animate delay-2">
+          <h3>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Quick Search
+          </h3>
+          <p>Find any password instantly. Type a few letters and jump straight to what you need—no scrolling required.</p>
+        </div>
+        <div class="feature-card animate delay-3">
+          <h3>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Local Backup
+          </h3>
+          <p>Create encrypted backups to USB or external drive. You decide where your data lives and how it's recovered.</p>
+        </div>
+        <div class="feature-card animate delay-4">
+          <h3>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+            Categories
+          </h3>
+          <p>Organize your passwords your way. Banking, work, shopping, personal—or anything you choose.</p>
+        </div>
+        <div class="feature-card animate delay-5">
+          <h3>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Quick Copy
+          </h3>
+          <p>Copy login details with one click. Use the floating shortcut for fast access without opening the full app.</p>
+        </div>
+        <div class="feature-card animate delay-6">
+          <h3>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Import and Export
+          </h3>
+          <p>Move your data in or out with simple CSV import and export. No lock-in. Your data always stays yours.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="testimonials-section">
+    <div class="testimonials-container">
+      
+      <!-- Featured Testimonial -->
+      <div class="featured-testimonial animate">
+        <div class="featured-stars">
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <p class="featured-quote">"I switched because I was tired of cloud breaches. Local Password Vault gave me the peace of mind I didn't know I needed."</p>
+        <div class="featured-author">
+          <div class="featured-avatar">ST</div>
+          <div class="featured-info">
+            <div class="featured-name">Sarah T.</div>
+            <div class="featured-role">Cybersecurity Analyst</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Supporting Testimonials -->
+      <div class="testimonials-strip">
+        <div class="testimonial-mini animate delay-1">
+          <div class="mini-stars">
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <p class="mini-quote">"Up and running in minutes. Exactly what I need—secure password storage without complexity."</p>
+          <div class="mini-author">
+            <div class="mini-avatar">TS</div>
+            <div>
+              <div class="mini-name">Tish S.</div>
+              <div class="mini-role">Medical Equipment Sales</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-mini animate delay-2">
+          <div class="mini-stars">
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <p class="mini-quote">"The Family plan is a lifesaver. We both keep our logins secure without juggling apps."</p>
+          <div class="mini-author">
+            <div class="mini-avatar">PM</div>
+            <div>
+              <div class="mini-name">Priya M.</div>
+              <div class="mini-role">Mom/House Manager</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-mini animate delay-3">
+          <div class="mini-stars">
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <p class="mini-quote">"I handle sensitive client accounts. Can't risk cloud vaults. This gives me control."</p>
+          <div class="mini-author">
+            <div class="mini-avatar">MV</div>
+            <div>
+              <div class="mini-name">Milo V.</div>
+              <div class="mini-role">Account Manager</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section class="pricing-section">
+    <div class="pricing-container">
+      <div class="section-header animate">
+        <span class="section-badge">Pricing</span>
+        <h2>Own Your Security For Life</h2>
+        <p>No subscriptions. No cloud. Just total control.</p>
+      </div>
+      <div class="pricing-grid">
+        <div class="pricing-card animate delay-1">
+          <h3 class="pricing-name">Free Trial</h3>
+          <p class="pricing-desc">Try before you buy</p>
+          <div class="pricing-price">
+            <span class="currency">$</span><span class="amount">0</span>
+          </div>
+          <p class="pricing-period">7 days free</p>
+          <ul class="pricing-features">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Full feature access</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> One device</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> No credit card required</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Keep your data when you upgrade</li>
+          </ul>
+          <a href="trial.html" class="pricing-cta secondary">Start Free Trial</a>
+        </div>
+        <div class="pricing-card featured animate delay-2">
+          <span class="pricing-badge">Most Popular</span>
+          <h3 class="pricing-name">Personal Vault</h3>
+          <p class="pricing-desc">For individuals</p>
+          <div class="pricing-price">
+            <span class="currency">$</span><span class="amount">49</span>
+          </div>
+          <p class="pricing-period">one-time payment</p>
+          <ul class="pricing-features">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Lifetime license</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> One device</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> AES-256 encryption</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> All future updates</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Local backup/restore</li>
+          </ul>
+          <a href="https://buy.stripe.com/YOUR_PERSONAL_VAULT_LINK" class="pricing-cta primary">Get Personal Vault</a>
+        </div>
+        <div class="pricing-card featured animate delay-3">
+          <span class="pricing-badge">Best Value</span>
+          <h3 class="pricing-name">Family Vault</h3>
+          <p class="pricing-desc">For families</p>
+          <div class="pricing-price">
+            <span class="currency">$</span><span class="amount">79</span>
+          </div>
+          <p class="pricing-period">one-time payment</p>
+          <ul class="pricing-features">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Everything in Personal</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> <strong>5 device licenses</strong></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> 5 separate vaults</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> All future updates</li>
+          </ul>
+          <a href="https://buy.stripe.com/YOUR_FAMILY_VAULT_LINK" class="pricing-cta secondary">Get Family Vault</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <div class="cta-container animate">
+      <h2>Ready to Take Back Control?</h2>
+      <p>Your password manager shouldn't phone home. Start protecting your passwords the smart way—offline.</p>
+      <a href="pricing.html" class="btn-primary">Get Started Free</a>
+    </div>
+  </section>
+
+  <!-- Strategic Cross-sell: Legacy Awareness - PROMINENT -->
+  <section class="legacy-awareness">
+    <div class="legacy-awareness-container">
+      <div class="legacy-visual animate">
+        <img src="meeting.jpg?v=2" alt="Protect your family's future" onerror="this.src='meeting.jpg'; this.onerror=null;">
+        <span class="legacy-badge">From the Maker of Local Password Vault</span>
+      </div>
+      <div class="legacy-content animate delay-1">
+        <span class="legacy-eyebrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          For Your Family
+        </span>
+        <h2>What Happens to Your Passwords When You're Gone?</h2>
+        <p>Securing your passwords is step one. Making sure your family can access your accounts, documents, and final wishes when they need them? That's step two.</p>
+        <div class="legacy-features">
+          <span class="legacy-feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Document storage</span>
+          <span class="legacy-feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Account instructions</span>
+          <span class="legacy-feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Final wishes</span>
+          <span class="legacy-feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> 100% offline</span>
+        </div>
+        <a href="https://locallegacyvault.com" class="legacy-cta" target="_blank">
+          Explore Legacy Vault
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Security Resources Teaser -->
+  <section class="resources-teaser" style="padding: 50px 2rem; background: var(--bg-dark); border-top: 1px solid var(--border-subtle);">
+    <div style="max-width: 900px; margin: 0 auto;">
+      <div class="section-header animate" style="margin-bottom: 32px;">
+        <span class="section-badge">Learn More</span>
+        <h2>Security Resources</h2>
+        <p>Understand the real threats to your passwords and how to protect yourself.</p>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;" class="animate delay-1">
+        <a href="https://localpasswordvault.com/5-hidden-dangers-of-cloud-password-managers-2/" target="_blank" style="background: var(--bg-card); padding: 24px; border-radius: 12px; border: 1px solid var(--border-subtle); text-decoration: none; transition: all 0.3s ease;" onmouseover="this.style.borderColor='var(--cyan-dark)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border-subtle)'; this.style.transform='translateY(0)'">
+          <span style="display: inline-block; padding: 4px 10px; background: rgba(239, 68, 68, 0.15); color: #ef4444; border-radius: 100px; font-size: 0.75rem; font-weight: 600; margin-bottom: 12px;">CLOUD DANGERS</span>
+          <h3 style="font-size: 1rem; color: var(--text-primary); margin-bottom: 8px;">5 Hidden Dangers of Cloud Password Managers</h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary);">Why centralized servers are an irresistible target for attackers.</p>
+        </a>
+        <a href="https://localpasswordvault.com/the-case-for-staying-local-why-cloud-password-managers-put-you-at-risk/" target="_blank" style="background: var(--bg-card); padding: 24px; border-radius: 12px; border: 1px solid var(--border-subtle); text-decoration: none; transition: all 0.3s ease;" onmouseover="this.style.borderColor='var(--cyan-dark)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border-subtle)'; this.style.transform='translateY(0)'">
+          <span style="display: inline-block; padding: 4px 10px; background: rgba(6, 182, 212, 0.15); color: var(--cyan); border-radius: 100px; font-size: 0.75rem; font-weight: 600; margin-bottom: 12px;">LOCAL SECURITY</span>
+          <h3 style="font-size: 1rem; color: var(--text-primary); margin-bottom: 8px;">The Case for Staying Local</h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary);">Why keeping your vault offline offers the strongest protection.</p>
+        </a>
+      </div>
+      <div style="text-align: center; margin-top: 28px;" class="animate delay-2">
+        <a href="articles.html" style="color: var(--cyan); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: gap 0.2s;" onmouseover="this.style.gap='12px'" onmouseout="this.style.gap='8px'">
+          View All Resources
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand">
+            <div class="logo-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </div>
+            <span>Local Password Vault</span>
+          </div>
+          <p class="footer-tagline">Your passwords, secured locally. No cloud, no tracking, no risks. 100% offline password management.</p>
+        </div>
+        <div>
+          <h4 class="footer-title">Product</h4>
+          <ul class="footer-links">
+            <li><a href="features.html">Features</a></li>
+            <li><a href="security.html">Security</a></li>
+            <li><a href="pricing.html">Pricing</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="footer-title">Resources</h4>
+          <ul class="footer-links">
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="articles.html">Security Articles</a></li>
+            <li><a href="faq.html">FAQs</a></li>
+            <li><a href="support.html">Support</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="footer-title">Legal</h4>
+          <ul class="footer-links">
+            <li><a href="privacy.html">Privacy Policy</a></li>
+            <li><a href="disclaimer.html">Disclaimer</a></li>
+            <li><a href="eula.html">EULA</a></li>
+            <li><a href="refund.html">Refund Policy</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p class="footer-copyright">© 2025 Local Password Vault. All rights reserved.</p>
+        <div class="footer-legal">
+          <span style="color: var(--text-muted); font-size: 0.85rem;">Built with ♥ in Dallas, Texas</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scroll Animation Script -->
+  <script>
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.animate').forEach(el => {
+      observer.observe(el);
+    });
+  </script>
+</body>
+</html>
+

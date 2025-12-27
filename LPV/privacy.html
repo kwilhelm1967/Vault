@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <title>Privacy Policy - Local Password Vault</title>
+  <meta name="description" content="Privacy Policy for Local Password Vault. We collect no data because your vault never leaves your device.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-dark: #0a0f1a;
+      --bg-darker: #060912;
+      --bg-card: #111827;
+      --cyan: #06b6d4;
+      --cyan-glow: rgba(6, 182, 212, 0.3);
+      --text-primary: #f9fafb;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --gradient-cyan: linear-gradient(135deg, #22d3ee 0%, #0891b2 100%);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; font-size: 16px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg-darker); color: var(--text-primary); line-height: 1.6; font-size: 16px; }
+
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 1rem 2rem; background: rgba(6, 9, 18, 0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-subtle); }
+    .nav-container { max-width: 1600px; width: 92%; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .logo-icon { width: 44px; height: 44px; background: var(--bg-dark); border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px var(--cyan-glow), inset 0 0 0 1px #0891b2; }
+    .logo-icon svg { width: 24px; height: 24px; stroke: var(--cyan); fill: none; }
+    .logo-text { font-family: 'Space Grotesk', sans-serif; font-size: 1.15rem; font-weight: 600; color: var(--text-primary); }
+    .nav-links { display: flex; align-items: center; gap: 2rem; }
+    .nav-links a { color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; font-weight: 500; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--cyan); }
+    .nav-cta { padding: 10px 24px; background: var(--gradient-cyan); color: var(--bg-darker) !important; border-radius: 8px; font-weight: 600; }
+
+    .page-hero { padding: 140px 2rem 32px; background: linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-darker) 100%); text-align: center; }
+    .page-hero h1 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; margin-bottom: 0.75rem; }
+    .page-hero p { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .legal-content { padding: 40px 2rem 100px; }
+    .legal-container { max-width: 800px; margin: 0 auto; }
+    .legal-container h2 { font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; margin: 40px 0 16px; color: var(--text-primary); }
+    .legal-container h3 { font-size: 1.2rem; margin: 32px 0 12px; color: var(--cyan); }
+    .legal-container p { color: var(--text-secondary); margin-bottom: 16px; line-height: 1.8; }
+    .legal-container ul { color: var(--text-secondary); margin-bottom: 16px; padding-left: 24px; }
+    .legal-container li { margin-bottom: 8px; }
+    .effective-date { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 32px; }
+    .highlight-box { background: var(--bg-card); border-left: 4px solid var(--cyan); padding: 20px 24px; border-radius: 0 12px 12px 0; margin: 24px 0; }
+    .highlight-box p { margin-bottom: 0; color: var(--text-primary); }
+
+    .footer { padding: 60px 2rem 30px; background: var(--bg-darker); border-top: 1px solid var(--border-subtle); }
+    .footer-container { max-width: 1200px; margin: 0 auto; }
+    .footer-grid { display: grid; grid-template-columns: 2fr repeat(3, 1fr); gap: 40px; margin-bottom: 40px; }
+    .footer-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .footer-brand .logo-icon { width: 36px; height: 36px; }
+    .footer-brand .logo-icon svg { width: 18px; height: 18px; }
+    .footer-brand span { font-family: 'Space Grotesk', sans-serif; font-weight: 600; }
+    .footer-tagline { color: var(--text-muted); font-size: 0.9rem; }
+    .footer-title { font-weight: 600; margin-bottom: 16px; }
+    .footer-links { list-style: none; }
+    .footer-links li { margin-bottom: 10px; }
+    .footer-links a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--cyan); }
+    .footer-bottom { padding-top: 30px; border-top: 1px solid var(--border-subtle); text-align: center; }
+    .footer-copyright { color: var(--text-muted); font-size: 0.85rem; }
+
+    @media (max-width: 768px) { .nav-links { display: none; } .footer-grid { grid-template-columns: 1fr 1fr; } }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-container">
+      <a href="index.html" class="logo">
+        <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <span class="logo-text">Local Password Vault</span>
+      </a>
+      <div class="nav-links">
+        <a href="features.html">Features</a>
+        <a href="about.html">About</a>
+        <a href="security.html">Security</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="faq.html">FAQs</a>
+        <a href="pricing.html" class="nav-cta">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="page-hero">
+    <h1>Privacy Policy</h1>
+    <p>Your privacy is protected by design, not by policy.</p>
+  </section>
+
+  <section class="legal-content">
+    <div class="legal-container">
+      <p class="effective-date">Effective Date: January 1, 2025</p>
+
+      <div class="highlight-box">
+        <p><strong>The Short Version:</strong> Local Password Vault is designed so that I have no access to your data. Your vault is stored locally on your device, encrypted with keys I never see. I cannot read, access, or sell your passwords because I never receive them.</p>
+      </div>
+
+      <h2>Information I Do Not Collect</h2>
+      <p>Because Local Password Vault operates entirely offline on your device, I do not collect:</p>
+      <ul>
+        <li>Your passwords or vault contents</li>
+        <li>Your master password or encryption keys</li>
+        <li>Usage data or analytics from the application</li>
+        <li>Device fingerprints or identifiers</li>
+        <li>Location data</li>
+        <li>Any telemetry or tracking information</li>
+      </ul>
+
+      <h2>Information I May Collect</h2>
+      <p>The only information I may collect is:</p>
+      
+      <h3>Purchase Information</h3>
+      <p>When you purchase a license, I receive your email address and payment confirmation from our payment processor (Stripe). This information is used solely to deliver your license key and provide purchase-related support.</p>
+
+      <h3>Support Communications</h3>
+      <p>If you contact me for support, I retain our email correspondence to provide effective assistance and maintain support records. This includes your email address and the content of your messages.</p>
+
+      <h3>Trial Signups</h3>
+      <p>If you sign up for a free trial, I collect your email address to deliver your trial key and send occasional product updates. You can unsubscribe from product updates at any time.</p>
+
+      <h2>How Your Data is Protected</h2>
+      <p>Local Password Vault uses AES-256-GCM encryption with Argon2id key derivation. Your vault is encrypted on your device before it's ever saved. The encryption key is derived from your master password, which I never see or store.</p>
+
+      <h2>Data Sharing</h2>
+      <p>I do not sell, rent, or share your personal information with third parties for marketing purposes. The only sharing that occurs is:</p>
+      <ul>
+        <li>Payment processing through Stripe (for purchases)</li>
+        <li>Email delivery services (for license keys and support)</li>
+      </ul>
+
+      <h2>Your Rights</h2>
+      <p>You have the right to:</p>
+      <ul>
+        <li>Request deletion of any email or purchase records I hold</li>
+        <li>Unsubscribe from any email communications</li>
+        <li>Request a copy of any data I have about you</li>
+      </ul>
+
+      <h2>Children's Privacy</h2>
+      <p>Local Password Vault is not intended for children under 13. I do not knowingly collect information from children.</p>
+
+      <h2>Changes to This Policy</h2>
+      <p>I may update this privacy policy from time to time. Any changes will be posted on this page with an updated effective date.</p>
+
+      <h2>Contact</h2>
+      <p>If you have questions about this privacy policy, please contact me at support@localpasswordvault.com.</p>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand">
+            <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+            <span>Local Password Vault</span>
+          </div>
+          <p class="footer-tagline">Your passwords, secured locally. No cloud, no tracking, no risks.</p>
+        </div>
+        <div>
+          <h4 class="footer-title">Product</h4>
+          <ul class="footer-links">
+            <li><a href="features.html">Features</a></li>
+            <li><a href="security.html">Security</a></li>
+            <li><a href="pricing.html">Pricing</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="footer-title">Resources</h4>
+          <ul class="footer-links">
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="articles.html">Security Articles</a></li>
+            <li><a href="faq.html">FAQs</a></li>
+            <li><a href="support.html">Support</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="footer-title">Legal</h4>
+          <ul class="footer-links">
+            <li><a href="privacy.html">Privacy Policy</a></li>
+            <li><a href="disclaimer.html">Disclaimer</a></li>
+            <li><a href="eula.html">EULA</a></li>
+            <li><a href="refund.html">Refund Policy</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p class="footer-copyright">© 2025 Local Password Vault. All rights reserved. Built with ♥ in Dallas, Texas.</p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
+
+
