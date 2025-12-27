@@ -136,7 +136,11 @@ LocalPasswordVault/
 │   ├── types/         # TypeScript definitions
 │   └── config/        # Environment configuration
 ├── public/            # Static assets
-└── index.html         # Entry point with CSP
+├── LPV/               # Front-end HTML pages
+│   ├── index.html     # Entry point with CSP (React app)
+│   ├── pricing.html   # Pricing page
+│   ├── success.html   # Purchase success page
+│   └── ...            # Other static pages
 ```
 
 ---

@@ -156,7 +156,7 @@ const createWindow = () => {
       mainWindow.webContents.openDevTools();
     }
   } else {
-    mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
+    mainWindow.loadFile(path.join(__dirname, "../dist/LPV/index.html"));
   }
 
   // Show window when ready to prevent visual flash
@@ -364,7 +364,7 @@ const createFloatingWindow = () => {
         floatingWindow.webContents.openDevTools();
       }
     } else {
-      floatingWindow.loadFile(path.join(__dirname, "../dist/index.html"), {
+      floatingWindow.loadFile(path.join(__dirname, "../dist/LPV/index.html"), {
         hash: "floating",
       });
     }
