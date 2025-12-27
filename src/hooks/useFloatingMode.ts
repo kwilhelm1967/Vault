@@ -29,3 +29,4 @@ export const useFloatingMode = (isElectron: boolean) => {
   return isFloatingMode;
 };
 
+

@@ -34,3 +34,4 @@ export const useVaultStatusSync = (
   }, [isElectron, setIsLocked]);
 };
 
+
