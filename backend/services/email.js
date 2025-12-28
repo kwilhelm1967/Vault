@@ -372,12 +372,177 @@ async function sendAlertEmail({ subject, message }) {
   }
 }
 
+/**
+ * Send ticket creation confirmation email to customer
+ */
+async function sendTicketCreatedEmail({ to, ticketNumber, subject }) {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; }
+        .ticket-info { background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .ticket-number { font-size: 24px; font-weight: bold; color: #06b6d4; }
+        .button { display: inline-block; padding: 12px 24px; background: #06b6d4; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+        .footer { text-align: center; color: #6b7280; font-size: 12px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>Support Ticket Created</h1>
+      </div>
+      <div class="content">
+        <p>Thank you for contacting Local Password Vault support!</p>
+        
+        <div class="ticket-info">
+          <p><strong>Ticket Number:</strong></p>
+          <p class="ticket-number">${ticketNumber}</p>
+          <p><strong>Subject:</strong> ${subject}</p>
+        </div>
+        
+        <p>We've received your support request and will respond as soon as possible. You can track your ticket status and add additional information by visiting our support page.</p>
+        
+        <p>If you need to add more information or check the status of your ticket, please use the ticket number above.</p>
+        
+        <p>We typically respond within 24-48 hours during business days.</p>
+      </div>
+      <div class="footer">
+        <p>This is an automated email from Local Password Vault.</p>
+        <p>If you didn't create this ticket, please ignore this email.</p>
+      </div>
+    </body>
+    </html>
+  `;
+  
+  const text = `
+Support Ticket Created
+
+Thank you for contacting Local Password Vault support!
+
+Ticket Number: ${ticketNumber}
+Subject: ${subject}
+
+We've received your support request and will respond as soon as possible. We typically respond within 24-48 hours during business days.
+
+If you need to add more information or check the status of your ticket, please use the ticket number above.
+
+This is an automated email from Local Password Vault.
+  `.trim();
+  
+  try {
+    const response = await sendEmailViaBrevo({
+      to,
+      subject: `Support Ticket Created: ${ticketNumber}`,
+      html,
+      text,
+    });
+    
+    logger.email('sent', to, {
+      operation: 'email_ticket_created',
+      ticket_number: ticketNumber,
+    });
+    performanceMonitor.trackEmail(true);
+    return response;
+  } catch (error) {
+    logger.emailError('ticket_created', to, error, {
+      operation: 'email_ticket_created',
+      ticket_number: ticketNumber,
+    });
+    performanceMonitor.trackEmail(false);
+    throw error;
+  }
+}
+
+/**
+ * Send ticket response notification email
+ */
+async function sendTicketResponseEmail({ to, ticketNumber, customerEmail, customerName, message }) {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #f59e0b; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; }
+        .ticket-info { background: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b; }
+        .message { background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 15px 0; white-space: pre-wrap; }
+        .footer { text-align: center; color: #6b7280; font-size: 12px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h2>New Ticket Response</h2>
+      </div>
+      <div class="content">
+        <div class="ticket-info">
+          <p><strong>Ticket:</strong> ${ticketNumber}</p>
+          <p><strong>Customer:</strong> ${customerName || customerEmail}</p>
+          <p><strong>Email:</strong> ${customerEmail}</p>
+        </div>
+        
+        <p><strong>New Message:</strong></p>
+        <div class="message">${message}</div>
+        
+        <p>Please respond to this ticket through the support dashboard.</p>
+      </div>
+      <div class="footer">
+        <p>Local Password Vault Support System</p>
+      </div>
+    </body>
+    </html>
+  `;
+  
+  const text = `
+New Ticket Response
+
+Ticket: ${ticketNumber}
+Customer: ${customerName || customerEmail}
+Email: ${customerEmail}
+
+New Message:
+${message}
+
+Please respond to this ticket through the support dashboard.
+  `.trim();
+  
+  try {
+    const response = await sendEmailViaBrevo({
+      to,
+      subject: `[Ticket ${ticketNumber}] New Customer Response`,
+      html,
+      text,
+    });
+    
+    logger.email('sent', to, {
+      operation: 'email_ticket_response',
+      ticket_number: ticketNumber,
+    });
+    performanceMonitor.trackEmail(true);
+    return response;
+  } catch (error) {
+    logger.emailError('ticket_response', to, error, {
+      operation: 'email_ticket_response',
+      ticket_number: ticketNumber,
+    });
+    performanceMonitor.trackEmail(false);
+    throw error;
+  }
+}
+
 module.exports = {
   sendPurchaseEmail,
   sendBundleEmail,
   sendTrialEmail,
   sendEmail,
   sendAlertEmail,
+  sendTicketCreatedEmail,
+  sendTicketResponseEmail,
   verifyConnection,
   loadTemplate,
 };

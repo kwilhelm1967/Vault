@@ -5,7 +5,13 @@
  * Only active in development mode.
  */
 
-import { devLog, devWarn } from "./devLog";
+import { devLog, devWarn, devError } from "./devLog";
+import { 
+  checkRenderBudget, 
+  checkOperationBudget, 
+  checkMemoryBudget,
+  getPerformanceBudgets 
+} from "../config/performanceBudgets";
 
 const isDev = import.meta.env.DEV;
 
@@ -23,9 +29,13 @@ const metrics: PerformanceMetrics = {
 };
 
 /**
- * Track component render performance
+ * Track component render performance with budget checking
  */
-export function trackRender(componentName: string, renderTime: number): void {
+export function trackRender(
+  componentName: string, 
+  renderTime: number, 
+  isMount: boolean = false
+): void {
   if (!isDev) return;
   
   const existing = metrics.componentRenders.get(componentName) || { count: 0, totalTime: 0, lastTime: 0 };
@@ -35,9 +45,19 @@ export function trackRender(componentName: string, renderTime: number): void {
     lastTime: renderTime,
   });
   
-  // Warn on slow renders (> 16ms = dropped frame)
-  if (renderTime > 16) {
-    devWarn(`⚠️ Slow render: ${componentName} took ${renderTime.toFixed(2)}ms`);
+  // Check against performance budgets
+  const budgetCheck = checkRenderBudget(renderTime, isMount);
+  
+  if (budgetCheck.exceeds) {
+    devError(
+      `❌ Budget exceeded: ${componentName} took ${renderTime.toFixed(2)}ms ` +
+      `(budget: ${budgetCheck.budget}ms, threshold: ${budgetCheck.warningThreshold}ms)`
+    );
+  } else if (budgetCheck.warning) {
+    devWarn(
+      `⚠️ Budget warning: ${componentName} took ${renderTime.toFixed(2)}ms ` +
+      `(threshold: ${budgetCheck.warningThreshold}ms)`
+    );
   }
 }
 
@@ -64,9 +84,19 @@ export async function measureOperation<T>(
         avgTime: newTotal / newCount,
       });
       
-      // Warn on slow operations (> 100ms)
-      if (duration > 100) {
-        devWarn(`⚠️ Slow operation: ${operationName} took ${duration.toFixed(2)}ms`);
+      // Check against performance budgets
+      const budgetCheck = checkOperationBudget(duration, true);
+      
+      if (budgetCheck.exceeds) {
+        devError(
+          `❌ Budget exceeded: ${operationName} took ${duration.toFixed(2)}ms ` +
+          `(budget: ${budgetCheck.budget}ms, threshold: ${budgetCheck.warningThreshold}ms)`
+        );
+      } else if (budgetCheck.warning) {
+        devWarn(
+          `⚠️ Budget warning: ${operationName} took ${duration.toFixed(2)}ms ` +
+          `(threshold: ${budgetCheck.warningThreshold}ms)`
+        );
       }
     }
     
@@ -98,8 +128,19 @@ export function measureSync<T>(operationName: string, operation: () => T): T {
         avgTime: newTotal / newCount,
       });
       
-      if (duration > 50) {
-        devWarn(`⚠️ Slow sync operation: ${operationName} took ${duration.toFixed(2)}ms`);
+      // Check against performance budgets
+      const budgetCheck = checkOperationBudget(duration, false);
+      
+      if (budgetCheck.exceeds) {
+        devError(
+          `❌ Budget exceeded: ${operationName} took ${duration.toFixed(2)}ms ` +
+          `(budget: ${budgetCheck.budget}ms, threshold: ${budgetCheck.warningThreshold}ms)`
+        );
+      } else if (budgetCheck.warning) {
+        devWarn(
+          `⚠️ Budget warning: ${operationName} took ${duration.toFixed(2)}ms ` +
+          `(threshold: ${budgetCheck.warningThreshold}ms)`
+        );
       }
     }
     
@@ -123,10 +164,44 @@ export function snapshotMemory(): void {
   };
   
   if (performance.memory) {
+    const memoryMB = performance.memory.usedJSHeapSize / 1024 / 1024;
     metrics.memorySnapshots.push({
       timestamp: Date.now(),
       usedJSHeapSize: performance.memory.usedJSHeapSize,
     });
+    
+    // Check against performance budgets
+    const budgetCheck = checkMemoryBudget(memoryMB);
+    
+    if (budgetCheck.exceeds) {
+      devError(
+        `❌ Memory budget exceeded: ${memoryMB.toFixed(2)}MB ` +
+        `(budget: ${budgetCheck.budget}MB, threshold: ${budgetCheck.warningThreshold}MB)`
+      );
+    } else if (budgetCheck.warning) {
+      devWarn(
+        `⚠️ Memory budget warning: ${memoryMB.toFixed(2)}MB ` +
+        `(threshold: ${budgetCheck.warningThreshold}MB)`
+      );
+    }
+    
+    // Check for memory leaks (rapid growth)
+    if (metrics.memorySnapshots.length >= 2) {
+      const budgets = getPerformanceBudgets();
+      const recent = metrics.memorySnapshots.slice(-2);
+      const growthMB = (recent[1].usedJSHeapSize - recent[0].usedJSHeapSize) / 1024 / 1024;
+      const timeDiff = (recent[1].timestamp - recent[0].timestamp) / 1000 / 60; // minutes
+      
+      if (timeDiff > 0) {
+        const growthPerMinute = growthMB / timeDiff;
+        if (growthPerMinute > budgets.memory.maxMemoryGrowthMB) {
+          devWarn(
+            `⚠️ Potential memory leak: ${growthPerMinute.toFixed(2)}MB/min growth ` +
+            `(threshold: ${budgets.memory.maxMemoryGrowthMB}MB/min)`
+          );
+        }
+      }
+    }
     
     // Keep only last 100 snapshots
     if (metrics.memorySnapshots.length > 100) {

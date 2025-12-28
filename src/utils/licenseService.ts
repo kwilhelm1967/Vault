@@ -19,6 +19,8 @@ import { getLPVDeviceFingerprint, isValidDeviceId } from "./deviceFingerprint";
 import { verifyLicenseSignature } from "./licenseValidator";
 import { devError, devWarn } from "./devLog";
 import { apiClient, ApiError } from "./apiClient";
+import { validateLicenseKey } from "./validation";
+import { measureOperation } from "./performanceMonitor";
 
 export type LicenseType = "personal" | "family" | "trial";
 
@@ -283,16 +285,17 @@ export class LicenseService {
     const isDevMode = import.meta.env.DEV;
 
     try {
-      // Sanitize and validate license key format
-      const cleanKey = licenseKey.replace(/[^A-Z0-9-]/g, "");
-      const isValidFormat = /^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4,5}$/.test(cleanKey);
+      // Enhanced validation using centralized validation utility
+      const validation = validateLicenseKey(licenseKey);
       
-      if (!isValidFormat) {
+      if (!validation.valid || !validation.cleaned) {
         return { 
           success: false, 
-          error: "Invalid license key format. Please check that your key follows the format: XXXX-XXXX-XXXX-XXXX (no spaces or special characters)." 
+          error: validation.error || ERROR_MESSAGES.LICENSE.INVALID_FORMAT 
         };
       }
+      
+      const cleanKey = validation.cleaned;
 
       // Check if this is a trial key (starts with TRIA-)
       if (cleanKey.startsWith('TRIA-')) {
@@ -336,17 +339,20 @@ export class LicenseService {
         }
       }
 
-      // Call activation API using centralized API client
-      const response = await apiClient.post<ActivationResponse>(
-        "/api/lpv/license/activate",
-        {
-          license_key: cleanKey,
-          device_id: deviceId,
-        },
-        {
-          retries: 2,
-          timeout: 10000,
-        }
+      // Call activation API using centralized API client with performance monitoring
+      const response = await measureOperation(
+        'license-activation',
+        () => apiClient.post<ActivationResponse>(
+          "/api/lpv/license/activate",
+          {
+            license_key: cleanKey,
+            device_id: deviceId,
+          },
+          {
+            retries: 2,
+            timeout: 10000,
+          }
+        )
       );
 
       const result = response.data;
@@ -366,7 +372,7 @@ export class LicenseService {
         return {
           success: false,
           status: result.status,
-          error: result.error || "This license key is not valid. Please check that you entered it correctly. If you believe this is an error, contact support@LocalPasswordVault.com"
+          error: result.error || ERROR_MESSAGES.LICENSE.INVALID_KEY
         };
       }
       
@@ -427,7 +433,7 @@ export class LicenseService {
 
       return { 
         success: false, 
-        error: result.error || "License activation failed. Please check your internet connection and try again. If the problem continues, contact support@LocalPasswordVault.com"
+        error: result.error || ERROR_MESSAGES.LICENSE.ACTIVATION_FAILED_RETRY
       };
 
     } catch (error) {
@@ -439,18 +445,18 @@ export class LicenseService {
         if (apiError.code === "NETWORK_ERROR" || apiError.code === "REQUEST_TIMEOUT") {
           return {
             success: false,
-            error: "Unable to connect to license server. Please check your internet connection and try again. The app requires internet access for initial activation only.",
+            error: ERROR_MESSAGES.NETWORK.UNABLE_TO_CONNECT_ACTIVATION_ONLY,
           };
         }
         return {
           success: false,
-          error: apiError.message || "License activation failed. Please try again, or contact support@LocalPasswordVault.com if the problem persists.",
+          error: apiError.message || ERROR_MESSAGES.GENERIC.RETRY_SUGGESTION,
         };
       }
 
       return { 
         success: false, 
-        error: "License activation failed. Please check your internet connection and try again. If the problem continues, contact support@LocalPasswordVault.com"
+        error: ERROR_MESSAGES.LICENSE.ACTIVATION_FAILED_RETRY
       };
     }
   }
@@ -459,6 +465,25 @@ export class LicenseService {
    * Transfer license to current device
    * 
    * Called when user confirms transfer after device_mismatch
+   */
+  /**
+   * Transfer license to current device
+   * 
+   * Transfers an existing license from one device to another. This allows users
+   * to move their license when they get a new device or need to reinstall.
+   * 
+   * @param licenseKey - The license key to transfer
+   * @returns Promise resolving to transfer result with success status and optional error
+   * 
+   * @example
+   * ```typescript
+   * const result = await licenseService.transferLicense('PERS-XXXX-XXXX-XXXX');
+   * if (result.success) {
+   *   // License transferred successfully
+   * } else {
+   *   // Handle error
+   * }
+   * ```
    */
   async transferLicense(licenseKey: string): Promise<{
     success: boolean;
@@ -474,17 +499,20 @@ export class LicenseService {
         return this.transferLocalLicense(cleanKey, deviceId);
       }
 
-      // Call transfer API using centralized API client
-      const response = await apiClient.post<TransferResponse>(
-        "/api/lpv/license/transfer",
-        {
-          license_key: cleanKey,
-          new_device_id: deviceId,
-        },
-        {
-          retries: 2,
-          timeout: 10000,
-        }
+      // Call transfer API using centralized API client with performance monitoring
+      const response = await measureOperation(
+        'license-transfer',
+        () => apiClient.post<TransferResponse>(
+          "/api/lpv/license/transfer",
+          {
+            license_key: cleanKey,
+            new_device_id: deviceId,
+          },
+          {
+            retries: 2,
+            timeout: 10000,
+          }
+        )
       );
 
       const result = response.data;
@@ -546,7 +574,7 @@ export class LicenseService {
         if (apiError.code === "NETWORK_ERROR" || apiError.code === "REQUEST_TIMEOUT") {
           return {
             success: false,
-            error: "Unable to connect to license server. Please check your internet connection and try again. Internet access is required for license transfers.",
+            error: ERROR_MESSAGES.NETWORK.UNABLE_TO_CONNECT_TRANSFER,
           };
         }
         return {

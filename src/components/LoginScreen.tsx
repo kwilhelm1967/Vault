@@ -79,9 +79,15 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     
     // Load saved hint for existing vaults
     if (vaultExists) {
-      storageService.getPasswordHint().then(hint => {
-        setSavedHint(hint);
-      });
+      const loadPasswordHint = async () => {
+        try {
+          const hint = await storageService.getPasswordHint();
+          setSavedHint(hint);
+        } catch (error) {
+          devError('Failed to load password hint:', error);
+        }
+      };
+      loadPasswordHint();
     }
     
     // Check initial lockout status

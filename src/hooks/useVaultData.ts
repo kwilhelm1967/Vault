@@ -47,7 +47,7 @@ export const useVaultData = (
   const [entries, setEntries] = useState<PasswordEntry[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  const loadEntries = useCallback(async () => {
+  const loadEntries = useCallback(async (signal?: AbortSignal) => {
     if (isLocked || !storageService.isVaultUnlocked()) {
       setEntries([]);
       setIsInitialized(true);
@@ -57,10 +57,15 @@ export const useVaultData = (
     try {
       let loadedEntries: PasswordEntry[] = [];
 
+      // Check if aborted before starting
+      if (signal?.aborted) return;
+
       // In Electron, try to load from shared storage first
       if (isElectron && loadSharedEntries) {
         try {
           const sharedEntries = await loadSharedEntries();
+          if (signal?.aborted) return;
+          
           if (sharedEntries && sharedEntries.length > 0) {
             loadedEntries = sharedEntries.map((entry: RawPasswordEntry) => ({
               ...entry,
@@ -68,17 +73,24 @@ export const useVaultData = (
               updatedAt: new Date(entry.updatedAt),
             }));
             // Also save to localStorage as backup
-            await storageService.saveEntries(loadedEntries);
+            if (!signal?.aborted) {
+              await storageService.saveEntries(loadedEntries);
+            }
           }
         } catch (error) {
+          if (signal?.aborted) return;
           // Fallback to localStorage
           devError("Shared entries load failed, using localStorage:", error);
         }
       }
 
+      // Check if aborted before continuing
+      if (signal?.aborted) return;
+
       // If no shared entries or failed to load, use localStorage
       if (loadedEntries.length === 0) {
         loadedEntries = await storageService.loadEntries();
+        if (signal?.aborted) return;
 
         // Sync to shared storage for Electron floating panel
         if (isElectron && saveSharedEntries && loadedEntries && loadedEntries.length > 0) {
@@ -91,12 +103,17 @@ export const useVaultData = (
         }
       }
 
+      if (signal?.aborted) return;
+
       setEntries(loadedEntries || []);
       setIsInitialized(true);
 
       // Ensure fixed categories are saved
-      await storageService.saveCategories(FIXED_CATEGORIES);
+      if (!signal?.aborted) {
+        await storageService.saveCategories(FIXED_CATEGORIES);
+      }
     } catch (error) {
+      if (signal?.aborted) return;
       devError("Failed to load entries:", error);
       setEntries([]);
       setIsInitialized(true);
@@ -109,16 +126,27 @@ export const useVaultData = (
   // Initial load only
   useEffect(() => {
     if (!isInitialized) {
-      loadEntries();
+      const abortController = new AbortController();
+      loadEntries(abortController.signal);
+      
+      return () => {
+        abortController.abort();
+      };
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isInitialized]); // Remove loadEntries dependency to prevent infinite loop
+    // Note: loadEntries is intentionally omitted from dependencies to prevent infinite loops.
+    // It's stable due to useCallback with proper dependencies (isLocked, isElectron, loadSharedEntries, saveSharedEntries)
+  }, [isInitialized, loadEntries]);
 
   // Handle cross-window synchronization (only after initial load)
   useEffect(() => {
     if (!isElectron || !window.electronAPI?.onEntriesChanged || !isInitialized) return;
 
+    const abortController = new AbortController();
+    const signal = abortController.signal;
+
     const handleEntriesChanged = async () => {
+      if (signal.aborted) return;
+      
       try {
         if (isLocked || !storageService.isVaultUnlocked()) {
           setEntries([]);
@@ -128,32 +156,42 @@ export const useVaultData = (
         // Reload from shared storage
         if (loadSharedEntries) {
           const sharedEntries = await loadSharedEntries();
+          if (signal.aborted) return;
+          
           if (sharedEntries) {
             const mappedEntries = sharedEntries.map((entry: RawPasswordEntry) => ({
               ...entry,
               createdAt: new Date(entry.createdAt),
               updatedAt: new Date(entry.updatedAt),
             }));
-            setEntries(mappedEntries);
-            // Also update localStorage
-            await storageService.saveEntries(mappedEntries);
+            if (!signal.aborted) {
+              setEntries(mappedEntries);
+              // Also update localStorage
+              await storageService.saveEntries(mappedEntries);
+            }
           }
         } else {
           const loadedEntries = await storageService.loadEntries();
-          setEntries(loadedEntries || []);
+          if (!signal.aborted) {
+            setEntries(loadedEntries || []);
+          }
         }
       } catch (error) {
-        devError("Failed to reload entries:", error);
-        setEntries([]);
+        if (!signal.aborted) {
+          devError("Failed to reload entries:", error);
+          setEntries([]);
+        }
       }
     };
 
     window.electronAPI.onEntriesChanged(handleEntriesChanged);
     return () => {
+      abortController.abort();
       window.electronAPI?.removeEntriesChangedListener?.(handleEntriesChanged);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isElectron, isLocked, isInitialized]); // Remove loadSharedEntries dependency
+    // Note: loadSharedEntries is intentionally omitted to prevent unnecessary re-subscriptions.
+    // The handler closure captures the current loadSharedEntries value at effect execution time.
+  }, [isElectron, isLocked, isInitialized, loadSharedEntries]);
 
   // Reset initialization when vault locks/unlocks
   useEffect(() => {
@@ -162,11 +200,16 @@ export const useVaultData = (
     } else {
       // When vault is unlocked, trigger data loading if not initialized
       if (!isInitialized && storageService.isVaultUnlocked()) {
-        loadEntries();
+        const abortController = new AbortController();
+        loadEntries(abortController.signal);
+        
+        return () => {
+          abortController.abort();
+        };
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLocked, isInitialized]); // Remove loadEntries dependency
+    // Note: loadEntries is stable due to useCallback, safe to include in dependencies
+  }, [isLocked, isInitialized, loadEntries]);
 
   return useMemo(
     () => ({
@@ -178,5 +221,6 @@ export const useVaultData = (
     [entries, loadEntries, isInitialized]
   );
 };
+
 
 

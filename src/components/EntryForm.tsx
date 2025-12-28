@@ -16,6 +16,7 @@ import {
   Shield,
   LockKeyhole,
   StickyNote,
+  Loader2,
 } from "lucide-react";
 import { PasswordEntry, Category, CustomField } from "../types";
 import { devError } from "../utils/devLog";
@@ -106,6 +107,7 @@ interface EntryFormProps {
   ) => Promise<void>;
   onCancel: () => void;
   onDelete?: () => Promise<void>;
+  isLoading?: boolean;
 }
 
 export const EntryForm: React.FC<EntryFormProps> = ({
@@ -116,6 +118,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
   onSubmit,
   onCancel,
   onDelete,
+  isLoading = false,
 }) => {
   const [entryType, setEntryType] = useState<"password" | "secure_note">(entry?.entryType || "password");
   const [formData, setFormData] = useState({
@@ -362,20 +365,39 @@ export const EntryForm: React.FC<EntryFormProps> = ({
       username?: string;
       password?: string;
       category?: string;
+      website?: string;
     } = {};
 
-    if (!formData.accountName.trim()) {
-      errors.accountName = isSecureNote ? "Title is required" : "Account name is required";
+    // Validate account name using centralized validation
+    const accountNameValidation = validateAccountName(formData.accountName);
+    if (!accountNameValidation.valid) {
+      errors.accountName = accountNameValidation.error || (isSecureNote ? "Title is required" : "Account name is required");
+    }
+
+    // Validate website if provided
+    if (formData.website && formData.website.trim()) {
+      const urlValidation = validateUrl(formData.website);
+      if (!urlValidation.valid) {
+        errors.website = urlValidation.error || "Invalid URL format";
+      }
     }
 
     // Username and password only required for password entries
     if (!isSecureNote) {
+      // Validate username using centralized validation
+      const usernameValidation = validateUsername(formData.username);
       if (!formData.username.trim()) {
         errors.username = "Username/Email is required";
+      } else if (!usernameValidation.valid) {
+        errors.username = usernameValidation.error || "Invalid username format";
       }
 
+      // Validate password using centralized validation
+      const passwordValidation = validateEntryPassword(formData.password);
       if (!formData.password.trim()) {
         errors.password = "Password is required";
+      } else if (!passwordValidation.valid) {
+        errors.password = passwordValidation.error || "Invalid password";
       }
     }
     
@@ -522,6 +544,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
             onClick={onCancel}
             className="form-back-button"
             title="Back"
+            aria-label="Go back"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -617,10 +640,11 @@ export const EntryForm: React.FC<EntryFormProps> = ({
               
               {/* Account Name / Title */}
               <div className="form-field">
-                <label className="form-label form-label-required">
+                <label className="form-label form-label-required" htmlFor="account-name-input">
                   {isSecureNote ? "Title" : "Account Name"}
                 </label>
                 <input
+                  id="account-name-input"
                   ref={accountNameRef}
                   type="text"
                   value={formData.accountName}
@@ -635,21 +659,28 @@ export const EntryForm: React.FC<EntryFormProps> = ({
                   }}
                   className={`form-input ${fieldErrors.accountName ? "border-red-500" : ""}`}
                   placeholder="e.g., Gmail, Bank of America"
+                  aria-describedby={fieldErrors.accountName ? "account-name-error" : undefined}
+                  aria-invalid={!!fieldErrors.accountName}
                 />
                 {fieldErrors.accountName && (
-                  <p className="form-helper" style={{ color: '#EF4444' }}>{fieldErrors.accountName}</p>
+                  <p id="account-name-error" className="form-helper" style={{ color: '#EF4444' }} role="alert">{fieldErrors.accountName}</p>
                 )}
               </div>
 
               {/* Category */}
               <div className="form-field">
-                <label className="form-label form-label-required">Category</label>
+                <label className="form-label form-label-required" htmlFor="category-selector">Category</label>
                 <div ref={dropdownRef} className="relative">
                   <button
+                    id="category-selector"
                     ref={categoryRef}
                     type="button"
                     onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
                     className={`form-input flex items-center justify-between text-left cursor-pointer ${fieldErrors.category ? "border-red-500" : ""}`}
+                    aria-describedby={fieldErrors.category ? "category-error" : undefined}
+                    aria-invalid={!!fieldErrors.category}
+                    aria-expanded={showCategoryDropdown}
+                    aria-haspopup="listbox"
                   >
                     <span style={{ color: formData.category ? '#E8EDF2' : '#6B7280' }}>
                       {formData.category
@@ -724,7 +755,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
                   )}
 
                   {fieldErrors.category && (
-                    <p className="form-helper" style={{ color: '#EF4444' }}>{fieldErrors.category}</p>
+                    <p id="category-error" className="form-helper" style={{ color: '#EF4444' }} role="alert">{fieldErrors.category}</p>
                   )}
                 </div>
               </div>
@@ -737,8 +768,9 @@ export const EntryForm: React.FC<EntryFormProps> = ({
 
                 {/* Username */}
                 <div className="form-field">
-                  <label className="form-label form-label-required">Username/Email</label>
+                  <label className="form-label form-label-required" htmlFor="username-input">Username/Email</label>
                   <input
+                    id="username-input"
                     ref={usernameRef}
                     type="text"
                     value={formData.username}
@@ -750,9 +782,11 @@ export const EntryForm: React.FC<EntryFormProps> = ({
                     }}
                     className={`form-input ${fieldErrors.username ? "border-red-500" : ""}`}
                     placeholder="username@example.com"
+                    aria-describedby={fieldErrors.username ? "username-error" : undefined}
+                    aria-invalid={!!fieldErrors.username}
                   />
                   {fieldErrors.username && (
-                    <p className="form-helper" style={{ color: '#EF4444' }}>{fieldErrors.username}</p>
+                    <p id="username-error" className="form-helper" style={{ color: '#EF4444' }} role="alert">{fieldErrors.username}</p>
                   )}
                 </div>
 
@@ -788,6 +822,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
                     <div>
                       <div className="relative">
                         <input
+                          id="password-input"
                           ref={passwordRef}
                           type={showPassword ? "text" : "password"}
                           value={formData.password}
@@ -799,6 +834,8 @@ export const EntryForm: React.FC<EntryFormProps> = ({
                           }}
                           className={`form-input pr-12 ${fieldErrors.password ? "border-red-500" : ""}`}
                           placeholder="Enter password or use generator"
+                          aria-describedby={fieldErrors.password ? "password-error" : undefined}
+                          aria-invalid={!!fieldErrors.password}
                         />
                         <button
                           type="button"
@@ -808,6 +845,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
                           onMouseEnter={(e) => e.currentTarget.style.color = '#E8EDF2'}
                           onMouseLeave={(e) => e.currentTarget.style.color = '#6B7280'}
                           title={showPassword ? "Hide password" : "Show password"}
+                          aria-label={showPassword ? "Hide password" : "Show password"}
                         >
                           {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
@@ -851,17 +889,28 @@ export const EntryForm: React.FC<EntryFormProps> = ({
 
                 {/* Website URL */}
                 <div className="form-field">
-                  <label className="form-label flex items-center gap-2">
+                  <label className="form-label flex items-center gap-2" htmlFor="website-input">
                     <Globe className="w-4 h-4" strokeWidth={1.5} style={{ color: '#C9AE66' }} />
                     <span>Website URL</span>
                   </label>
                   <input
+                    id="website-input"
                     type="url"
                     value={formData.website}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, website: e.target.value }))}
-                    className="form-input"
+                    onChange={(e) => {
+                      setFormData((prev) => ({ ...prev, website: e.target.value }));
+                      if (fieldErrors.website && e.target.value.trim()) {
+                        setFieldErrors(prev => ({ ...prev, website: undefined }));
+                      }
+                    }}
+                    className={`form-input ${fieldErrors.website ? "border-red-500" : ""}`}
+                    aria-describedby={fieldErrors.website ? "website-error" : undefined}
+                    aria-invalid={!!fieldErrors.website}
                     placeholder="https://example.com"
                   />
+                  {fieldErrors.website && (
+                    <p id="website-error" className="form-helper" style={{ color: '#EF4444' }} role="alert">{fieldErrors.website}</p>
+                  )}
                 </div>
               </div>
             )}
@@ -966,6 +1015,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
                               color: field.isSecret ? '#5B82B8' : '#6B7280',
                             }}
                             title={field.isSecret ? "Secret field (hidden)" : "Make secret"}
+                            aria-label={field.isSecret ? "Field is secret (hidden), click to make visible" : "Make field secret (hidden)"}
                           >
                             <Lock className="w-4 h-4" strokeWidth={1.5} />
                           </button>
@@ -977,6 +1027,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
                             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'; e.currentTarget.style.color = '#EF4444'; }}
                             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#6B7280'; }}
                             title="Remove field"
+                            aria-label={`Remove custom field ${field.label || 'field'}`}
                           >
                             <Trash2 className="w-4 h-4" strokeWidth={1.5} />
                           </button>
@@ -998,6 +1049,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
                               style={{ color: '#6B7280' }}
                               onMouseEnter={(e) => e.currentTarget.style.color = '#E8EDF2'}
                               onMouseLeave={(e) => e.currentTarget.style.color = '#6B7280'}
+                              aria-label={visibleSecretFields.has(field.id) ? `Hide ${field.label || 'field'} value` : `Show ${field.label || 'field'} value`}
                             >
                               {visibleSecretFields.has(field.id) 
                                 ? <EyeOff className="w-4 h-4" strokeWidth={1.5} />
@@ -1024,17 +1076,29 @@ export const EntryForm: React.FC<EntryFormProps> = ({
               </button>
               <button
                 type="submit"
-                className="form-btn-primary"
+                disabled={isLoading}
+                className="form-btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Save className="w-4 h-4" strokeWidth={2} />
-                <span>{entry ? "Save Changes" : (isSecureNote ? "Save Note" : "Add Account")}</span>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2} />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" strokeWidth={2} />
+                    <span>{entry ? "Save Changes" : (isSecureNote ? "Save Note" : "Add Account")}</span>
+                  </>
+                )}
               </button>
               {onDelete && (
                 <button
                   type="button"
                   onClick={handleDeleteClick}
+                  aria-label={`Delete ${entry?.accountName || 'entry'}`}
                   className="form-btn-danger"
                   title="Delete"
+                  disabled={isLoading}
                 >
                   <Trash2 className="w-4 h-4" strokeWidth={1.5} />
                 </button>

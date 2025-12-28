@@ -10,7 +10,9 @@ import {
   sanitizePassword,
   sanitizeNotes,
   sanitizeUrl,
-  escapeHtml
+  escapeHtml,
+  sanitizePasswordEntry,
+  containsDangerousContent,
 } from '../utils/sanitization';
 
 describe('Text Field Sanitization', () => {
@@ -39,13 +41,13 @@ describe('Text Field Sanitization', () => {
   });
 
   it('should handle null input', () => {
-    const input = null as any;
+    const input = null as unknown;
     const result = sanitizeTextField(input);
     expect(result).toBe('');
   });
 
   it('should handle undefined input', () => {
-    const input = undefined as any;
+    const input = undefined as unknown;
     const result = sanitizeTextField(input);
     expect(result).toBe('');
   });
@@ -210,8 +212,8 @@ describe('Sanitization Edge Cases', () => {
     const functions = [sanitizeTextField, sanitizePassword, sanitizeNotes, sanitizeUrl, escapeHtml];
 
     functions.forEach(func => {
-      expect(func(null as any)).toBeDefined();
-      expect(func(undefined as any)).toBeDefined();
+      expect(func(null as unknown)).toBeDefined();
+      expect(func(undefined as unknown)).toBeDefined();
     });
   });
 
@@ -222,7 +224,8 @@ describe('Sanitization Edge Cases', () => {
 
     functions.forEach(func => {
       inputs.forEach(input => {
-        const result = func(input as any);
+        // Test with various non-string types to ensure functions handle them gracefully
+        const result = func(input as unknown as string);
         expect(typeof result).toBe('string');
       });
     });
@@ -259,5 +262,119 @@ describe('Sanitization Edge Cases', () => {
     const input = 'Emojis: 😀🎉🚀❤️🔥';
     const result = sanitizeTextField(input);
     expect(result).toBe(input); // Should preserve emoji
+  });
+});
+
+describe('sanitizePasswordEntry', () => {
+  it('should sanitize all fields in password entry', () => {
+    const entry = {
+      accountName: '  Test Account  ',
+      username: 'user@example.com',
+      password: 'P@ssw0rd!',
+      website: 'example.com',
+      category: 'Banking',
+      notes: 'Important account',
+      balance: '$1,000.00',
+    };
+
+    const sanitized = sanitizePasswordEntry(entry);
+
+    expect(sanitized.accountName).toBe('Test Account');
+    expect(sanitized.username).toBe('user@example.com');
+    expect(sanitized.password).toBe('P@ssw0rd!');
+    expect(sanitized.website).toBe('https://example.com');
+    expect(sanitized.category).toBe('Banking');
+    expect(sanitized.notes).toBe('Important account');
+    expect(sanitized.balance).toBe('$1,000.00');
+  });
+
+  it('should handle optional fields', () => {
+    const entry = {
+      accountName: 'Test',
+      username: 'user',
+      password: 'pass',
+      category: 'Other',
+    };
+
+    const sanitized = sanitizePasswordEntry(entry);
+
+    expect(sanitized.website).toBeUndefined();
+    expect(sanitized.notes).toBeUndefined();
+    expect(sanitized.balance).toBeUndefined();
+  });
+
+  it('should sanitize dangerous URLs', () => {
+    const entry = {
+      accountName: 'Test',
+      username: 'user',
+      password: 'pass',
+      website: 'javascript:alert("xss")',
+      category: 'Other',
+    };
+
+    const sanitized = sanitizePasswordEntry(entry);
+
+    expect(sanitized.website).toBe('');
+  });
+
+  it('should limit field lengths', () => {
+    const entry = {
+      accountName: 'a'.repeat(300),
+      username: 'b'.repeat(300),
+      password: 'c'.repeat(300),
+      category: 'd'.repeat(100),
+      notes: 'e'.repeat(6000),
+      balance: 'f'.repeat(200),
+    };
+
+    const sanitized = sanitizePasswordEntry(entry);
+
+    expect(sanitized.accountName.length).toBeLessThanOrEqual(200);
+    expect(sanitized.username.length).toBeLessThanOrEqual(200);
+    expect(sanitized.password.length).toBeLessThanOrEqual(256);
+    expect(sanitized.category.length).toBeLessThanOrEqual(50);
+    expect(sanitized.notes!.length).toBeLessThanOrEqual(5000);
+    expect(sanitized.balance!.length).toBeLessThanOrEqual(100);
+  });
+});
+
+describe('containsDangerousContent', () => {
+  it('should detect script tags', () => {
+    expect(containsDangerousContent('<script>alert("xss")</script>')).toBe(true);
+    expect(containsDangerousContent('<SCRIPT>alert("xss")</SCRIPT>')).toBe(true);
+  });
+
+  it('should detect javascript: protocol', () => {
+    expect(containsDangerousContent('javascript:alert("xss")')).toBe(true);
+    expect(containsDangerousContent('JAVASCRIPT:alert("xss")')).toBe(true);
+  });
+
+  it('should detect event handlers', () => {
+    expect(containsDangerousContent('onclick="alert(1)"')).toBe(true);
+    expect(containsDangerousContent('onerror=alert(1)')).toBe(true);
+    expect(containsDangerousContent('onload="alert(1)"')).toBe(true);
+  });
+
+  it('should detect data: URLs', () => {
+    expect(containsDangerousContent('data:text/html,<script>alert(1)</script>')).toBe(true);
+  });
+
+  it('should detect vbscript: protocol', () => {
+    expect(containsDangerousContent('vbscript:alert("xss")')).toBe(true);
+  });
+
+  it('should return false for safe content', () => {
+    expect(containsDangerousContent('Normal text')).toBe(false);
+    expect(containsDangerousContent('https://example.com')).toBe(false);
+    expect(containsDangerousContent('<div>Safe HTML</div>')).toBe(false);
+  });
+
+  it('should handle empty strings', () => {
+    expect(containsDangerousContent('')).toBe(false);
+  });
+
+  it('should handle null/undefined', () => {
+    expect(containsDangerousContent(null as unknown as string)).toBe(false);
+    expect(containsDangerousContent(undefined as unknown as string)).toBe(false);
   });
 });

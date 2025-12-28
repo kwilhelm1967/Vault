@@ -49,45 +49,60 @@ export const DeviceManagementScreen: React.FC<DeviceManagementScreenProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadDevices();
-  }, []);
+    const abortController = new AbortController();
+    const signal = abortController.signal;
 
-  const loadDevices = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      // Get device info from local license file (100% offline - no API calls)
-      // All data comes from locally stored signed license file
-      const localDeviceInfo = await licenseService.getLocalDeviceInfo();
-      const currentDeviceInfo = await licenseService.getCurrentDeviceInfo();
-      
-      if (!localDeviceInfo || !currentDeviceInfo) {
-        setError('Unable to retrieve device information. Please ensure your license is activated.');
-        return;
+    const loadDevices = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        // Get device info from local license file (100% offline - no API calls)
+        // All data comes from locally stored signed license file
+        const localDeviceInfo = await licenseService.getLocalDeviceInfo();
+        const currentDeviceInfo = await licenseService.getCurrentDeviceInfo();
+        
+        if (signal.aborted) return;
+        
+        if (!localDeviceInfo || !currentDeviceInfo) {
+          setError('Unable to retrieve device information. Please ensure your license is activated.');
+          return;
+        }
+        
+        // Verify current device matches license file (security check)
+        const deviceMatches = localDeviceInfo.deviceId === currentDeviceInfo.deviceId;
+        
+        // Show current device with info from local license file
+        // All data is local - no network calls
+        const currentDevice: Device = {
+          id: localDeviceInfo.deviceId,
+          hardware_hash: localDeviceInfo.deviceId,
+          device_name: currentDeviceInfo.deviceName,
+          last_seen_at: localDeviceInfo.activatedAt, // Use activation date from license file
+          is_active: deviceMatches, // Active if device matches license
+          is_current_device: true,
+        };
+        
+        if (!signal.aborted) {
+          setDevices([currentDevice]);
+        }
+      } catch (err) {
+        if (!signal.aborted) {
+          devError('Failed to load devices:', err);
+          setError('Failed to load device information');
+        }
+      } finally {
+        if (!signal.aborted) {
+          setIsLoading(false);
+        }
       }
-      
-      // Verify current device matches license file (security check)
-      const deviceMatches = localDeviceInfo.deviceId === currentDeviceInfo.deviceId;
-      
-      // Show current device with info from local license file
-      // All data is local - no network calls
-      const currentDevice: Device = {
-        id: localDeviceInfo.deviceId,
-        hardware_hash: localDeviceInfo.deviceId,
-        device_name: currentDeviceInfo.deviceName,
-        last_seen_at: localDeviceInfo.activatedAt, // Use activation date from license file
-        is_active: deviceMatches, // Active if device matches license
-        is_current_device: true,
-      };
-      
-      setDevices([currentDevice]);
-    } catch (err) {
-      devError('Failed to load devices:', err);
-      setError('Failed to load device information');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
+
+    loadDevices();
+
+    return () => {
+      abortController.abort();
+    };
+  }, []);
 
   const getDeviceName = (): string => {
     const ua = navigator.userAgent;

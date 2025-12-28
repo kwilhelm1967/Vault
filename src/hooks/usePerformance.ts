@@ -17,13 +17,16 @@ const isDev = import.meta.env.DEV;
 export function useRenderTracking(componentName: string): void {
   const renderCount = useRef(0);
   const lastRenderTime = useRef(performance.now());
+  const isFirstRender = useRef(true);
   
   useEffect(() => {
     if (!isDev) return;
     
     const renderTime = performance.now() - lastRenderTime.current;
     renderCount.current += 1;
-    trackRender(componentName, renderTime);
+    const isMount = isFirstRender.current;
+    trackRender(componentName, renderTime, isMount);
+    isFirstRender.current = false;
     lastRenderTime.current = performance.now();
   });
 }
@@ -83,12 +86,14 @@ export const onRenderCallback = (
 ): void => {
   if (!isDev) return;
   
-  trackRender(`${id} (${phase})`, actualDuration);
+  const isMount = phase === "mount";
+  trackRender(`${id} (${phase})`, actualDuration, isMount);
   
-  // Warn on expensive base renders
+  // Additional detailed logging for expensive renders
   if (baseDuration > 16) {
     devWarn(
       `⚠️ Expensive component: ${id}`,
+      `\n  Phase: ${phase}`,
       `\n  Actual: ${actualDuration.toFixed(2)}ms`,
       `\n  Base: ${baseDuration.toFixed(2)}ms`,
       `\n  Commit: ${(commitTime - startTime).toFixed(2)}ms`

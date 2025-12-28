@@ -1,277 +1,305 @@
 /**
- * Input Validation Utilities
+ * Enhanced Input Validation Utilities
  * 
- * Comprehensive validation and sanitization for all user inputs.
+ * Provides robust validation for user inputs with security-focused checks.
+ * All validation is performed client-side (100% offline after activation).
  */
 
-// ============================================
-// SANITIZATION
-// ============================================
+import { ERROR_MESSAGES, LICENSE_KEY_PATTERN, TRIAL_KEY_PATTERN } from '../constants/errorMessages';
 
 /**
- * Sanitize user input to prevent XSS and injection attacks
+ * License key validation result
  */
-export function sanitizeInput(input: string | null | undefined, maxLength?: number): string {
-  if (input === null || input === undefined) {
-    return '';
-  }
-
-  let sanitized = String(input)
-    // Remove script tags and their content
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    // Remove HTML tags
-    .replace(/<[^>]*>/g, '')
-    // Remove event handlers
-    .replace(/on\w+\s*=/gi, '')
-    // Remove javascript: URLs
-    .replace(/javascript:/gi, '')
-    // Remove data: URLs (can contain scripts)
-    .replace(/data:/gi, '')
-    // Trim whitespace
-    .trim();
-
-  // Limit length if specified
-  if (maxLength && sanitized.length > maxLength) {
-    sanitized = sanitized.substring(0, maxLength);
-  }
-
-  return sanitized;
-}
-
-/**
- * Sanitize for HTML display (escapes HTML entities)
- */
-export function escapeHtml(input: string): string {
-  const map: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;',
-  };
-  return input.replace(/[&<>"']/g, (char) => map[char]);
-}
-
-// ============================================
-// PASSWORD VALIDATION
-// ============================================
-
-export interface PasswordValidationResult {
-  isValid: boolean;
-  strength: 'weak' | 'medium' | 'strong';
-  score: number;
-  errors: string[];
-  warnings: string[];
-}
-
-const COMMON_PASSWORDS = [
-  'password', '123456', 'qwerty', 'letmein', 'welcome',
-  'admin', 'login', 'master', 'passw0rd', 'password1',
-];
-
-const COMMON_PATTERNS = [
-  /^(.)\1+$/,           // All same characters
-  /^(012|123|234|345|456|567|678|789|890)+$/,  // Sequential numbers
-  /^(abc|bcd|cde|def|efg|fgh|ghi|hij|ijk|jkl|klm|lmn|mno|nop|opq|pqr|qrs|rst|stu|tuv|uvw|vwx|wxy|xyz)+$/i,  // Sequential letters
-];
-
-/**
- * Validate master password strength and requirements
- */
-export function validateMasterPassword(password: string): PasswordValidationResult {
-  const errors: string[] = [];
-  const warnings: string[] = [];
-  let score = 0;
-
-  // Minimum length
-  if (password.length < 12) {
-    errors.push('Password must be at least 12 characters');
-  } else {
-    score += 20;
-    if (password.length >= 16) score += 10;
-    if (password.length >= 20) score += 10;
-  }
-
-  // Character variety
-  const hasLowercase = /[a-z]/.test(password);
-  const hasUppercase = /[A-Z]/.test(password);
-  const hasNumbers = /[0-9]/.test(password);
-  const hasSpecial = /[^a-zA-Z0-9]/.test(password);
-
-  if (hasLowercase) score += 10;
-  if (hasUppercase) score += 10;
-  if (hasNumbers) score += 10;
-  if (hasSpecial) score += 20;
-
-  // Character variety warnings
-  if (!hasUppercase) warnings.push('Add uppercase letters for stronger password');
-  if (!hasNumbers) warnings.push('Add numbers for stronger password');
-  if (!hasSpecial) warnings.push('Add special characters for stronger password');
-
-  // Check for common passwords
-  const lowerPassword = password.toLowerCase();
-  if (COMMON_PASSWORDS.some(common => lowerPassword.includes(common))) {
-    warnings.push('Password contains common patterns');
-    score -= 20;
-  }
-
-  // Check for common patterns
-  if (COMMON_PATTERNS.some(pattern => pattern.test(password))) {
-    warnings.push('Password contains sequential or repeated characters');
-    score -= 15;
-  }
-
-  // Determine strength
-  let strength: 'weak' | 'medium' | 'strong';
-  if (score < 30) {
-    strength = 'weak';
-  } else if (score < 60) {
-    strength = 'medium';
-  } else {
-    strength = 'strong';
-  }
-
-  return {
-    isValid: errors.length === 0,
-    strength,
-    score: Math.max(0, Math.min(100, score)),
-    errors,
-    warnings,
-  };
-}
-
-// ============================================
-// LICENSE KEY VALIDATION
-// ============================================
-
-export interface LicenseKeyValidationResult {
-  isValid: boolean;
-  normalized: string;
+export interface LicenseKeyValidation {
+  valid: boolean;
   error?: string;
+  cleaned?: string;
 }
 
 /**
- * Validate and normalize license key format
+ * Enhanced license key validation
+ * 
+ * Validates format, checks known prefixes, and performs basic checksum validation.
+ * All validation is local - no network calls.
+ * 
+ * @param key - License key to validate
+ * @returns Validation result with cleaned key if valid
  */
-export function validateLicenseKey(key: string): LicenseKeyValidationResult {
+export function validateLicenseKey(key: string): LicenseKeyValidation {
   if (!key || typeof key !== 'string') {
-    return { isValid: false, normalized: '', error: 'License key is required' };
-  }
-
-  // Normalize: uppercase, remove extra spaces
-  const normalized = key.trim().toUpperCase();
-
-  // Remove any dashes and check if it's alphanumeric
-  const cleaned = normalized.replace(/-/g, '');
-
-  // Should be 16-17 alphanumeric characters (with optional trailing digit)
-  if (!/^[A-Z0-9]{16,17}$/.test(cleaned)) {
-    return { 
-      isValid: false, 
-      normalized, 
-      error: 'Invalid license key format' 
+    return {
+      valid: false,
+      error: ERROR_MESSAGES.LICENSE.INVALID_FORMAT,
     };
   }
 
-  // Format as XXXX-XXXX-XXXX-XXXX or XXXX-XXXX-XXXX-XXXX#
-  const formatted = cleaned.length === 17 
-    ? `${cleaned.slice(0, 4)}-${cleaned.slice(4, 8)}-${cleaned.slice(8, 12)}-${cleaned.slice(12, 17)}`
-    : `${cleaned.slice(0, 4)}-${cleaned.slice(4, 8)}-${cleaned.slice(8, 12)}-${cleaned.slice(12, 16)}`;
+  // Clean the key: remove spaces, convert to uppercase
+  const cleaned = key.trim().replace(/\s+/g, '').toUpperCase();
 
-  return { isValid: true, normalized: formatted };
+  // Check minimum length
+  if (cleaned.length < 16) {
+    return {
+      valid: false,
+      error: ERROR_MESSAGES.LICENSE.INVALID_FORMAT,
+    };
+  }
+
+  // Validate format pattern
+  if (!LICENSE_KEY_PATTERN.test(cleaned)) {
+    return {
+      valid: false,
+      error: ERROR_MESSAGES.LICENSE.INVALID_FORMAT,
+    };
+  }
+
+  // Check for known prefixes (security: prevents invalid key types)
+  const validPrefixes = ['PERS', 'FAMI', 'LLV_', 'TRIAL', 'TRIA'];
+  const prefix = cleaned.substring(0, 4);
+  const hasValidPrefix = validPrefixes.some(p => cleaned.startsWith(p));
+
+  if (!hasValidPrefix && !cleaned.startsWith('TRIA-')) {
+    return {
+      valid: false,
+      error: ERROR_MESSAGES.LICENSE.INVALID_KEY,
+    };
+  }
+
+  // Basic checksum: ensure key has reasonable character distribution
+  // This is a simple heuristic, not cryptographic validation
+  const segments = cleaned.split('-');
+  if (segments.length < 4) {
+    return {
+      valid: false,
+      error: ERROR_MESSAGES.LICENSE.INVALID_FORMAT,
+    };
+  }
+
+  // Check each segment has reasonable length
+  for (const segment of segments) {
+    if (segment.length < 4 || segment.length > 5) {
+      return {
+        valid: false,
+        error: ERROR_MESSAGES.LICENSE.INVALID_FORMAT,
+      };
+    }
+  }
+
+  return {
+    valid: true,
+    cleaned,
+  };
 }
 
-// ============================================
-// EMAIL VALIDATION
-// ============================================
-
 /**
- * Validate email format
+ * Trial key validation
+ * 
+ * @param key - Trial key to validate
+ * @returns Validation result
  */
-export function validateEmail(email: string): boolean {
-  if (!email || typeof email !== 'string') return false;
-  
-  // Basic email regex - not perfect but covers most cases
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email.trim());
+export function validateTrialKey(key: string): LicenseKeyValidation {
+  if (!key || typeof key !== 'string') {
+    return {
+      valid: false,
+      error: ERROR_MESSAGES.TRIAL.INVALID_TRIAL_KEY,
+    };
+  }
+
+  const cleaned = key.trim().toUpperCase();
+
+  if (!TRIAL_KEY_PATTERN.test(cleaned)) {
+    return {
+      valid: false,
+      error: ERROR_MESSAGES.TRIAL.INVALID_TRIAL_KEY,
+    };
+  }
+
+  return {
+    valid: true,
+    cleaned,
+  };
 }
 
-// ============================================
-// URL VALIDATION
-// ============================================
-
 /**
- * Validate URL format (allows URLs without protocol)
+ * URL validation with security checks
+ * 
+ * Validates URLs and ensures only safe protocols are allowed.
+ * 
+ * @param url - URL to validate
+ * @returns Validation result
  */
-export function validateUrl(url: string): boolean {
-  if (!url || typeof url !== 'string') return false;
-  
+export interface UrlValidation {
+  valid: boolean;
+  error?: string;
+  cleaned?: string;
+}
+
+export function validateUrl(url: string): UrlValidation {
+  if (!url || typeof url !== 'string') {
+    return {
+      valid: false,
+      error: 'URL is required',
+    };
+  }
+
   const trimmed = url.trim();
-  if (trimmed.length === 0) return false;
+  if (!trimmed) {
+    return {
+      valid: false,
+      error: 'URL cannot be empty',
+    };
+  }
 
-  // Add protocol if missing for validation
-  const urlToTest = trimmed.startsWith('http://') || trimmed.startsWith('https://')
-    ? trimmed
-    : `https://${trimmed}`;
+  // Allow URLs without protocol (will be prefixed with https://)
+  let urlToValidate = trimmed;
+  if (!trimmed.match(/^https?:\/\//i)) {
+    urlToValidate = `https://${trimmed}`;
+  }
 
   try {
-    new URL(urlToTest);
-    return true;
+    const urlObj = new URL(urlToValidate);
+
+    // Only allow http and https protocols (security: prevent javascript:, data:, etc.)
+    const allowedProtocols = ['http:', 'https:'];
+    if (!allowedProtocols.includes(urlObj.protocol)) {
+      return {
+        valid: false,
+        error: 'Only HTTP and HTTPS URLs are allowed',
+      };
+    }
+
+    // Check for dangerous patterns
+    if (urlObj.hostname.includes('javascript:') || 
+        urlObj.hostname.includes('data:') ||
+        urlObj.hostname.includes('vbscript:')) {
+      return {
+        valid: false,
+        error: 'Invalid URL format',
+      };
+    }
+
+    return {
+      valid: true,
+      cleaned: urlToValidate,
+    };
   } catch {
-    return false;
+    return {
+      valid: false,
+      error: 'Invalid URL format',
+    };
   }
-}
-
-// ============================================
-// FIELD VALIDATORS
-// ============================================
-
-/**
- * Validate account name
- */
-export function validateAccountName(name: string): { isValid: boolean; error?: string } {
-  const sanitized = sanitizeInput(name);
-  
-  if (!sanitized) {
-    return { isValid: false, error: 'Account name is required' };
-  }
-  
-  if (sanitized.length > 100) {
-    return { isValid: false, error: 'Account name must be 100 characters or less' };
-  }
-  
-  return { isValid: true };
 }
 
 /**
- * Validate username
+ * Account name validation
+ * 
+ * @param name - Account name to validate
+ * @returns Validation result
  */
-export function validateUsername(username: string): { isValid: boolean; error?: string } {
-  const sanitized = sanitizeInput(username);
-  
-  if (!sanitized) {
-    return { isValid: false, error: 'Username is required' };
+export interface NameValidation {
+  valid: boolean;
+  error?: string;
+}
+
+export function validateAccountName(name: string): NameValidation {
+  if (!name || typeof name !== 'string') {
+    return {
+      valid: false,
+      error: 'Account name is required',
+    };
   }
-  
-  if (sanitized.length > 200) {
-    return { isValid: false, error: 'Username must be 200 characters or less' };
+
+  const trimmed = name.trim();
+  if (!trimmed) {
+    return {
+      valid: false,
+      error: 'Account name cannot be empty',
+    };
   }
-  
-  return { isValid: true };
+
+  if (trimmed.length > 200) {
+    return {
+      valid: false,
+      error: 'Account name must be 200 characters or less',
+    };
+  }
+
+  // Check for dangerous patterns (XSS prevention)
+  if (/<script|javascript:|on\w+\s*=/i.test(trimmed)) {
+    return {
+      valid: false,
+      error: 'Account name contains invalid characters',
+    };
+  }
+
+  return {
+    valid: true,
+  };
 }
 
 /**
- * Validate notes field
+ * Password validation (for entry passwords, not master password)
+ * 
+ * @param password - Password to validate
+ * @returns Validation result
  */
-export function validateNotes(notes: string): { isValid: boolean; error?: string } {
-  if (!notes) return { isValid: true }; // Notes are optional
-  
-  const sanitized = sanitizeInput(notes);
-  
-  if (sanitized.length > 10000) {
-    return { isValid: false, error: 'Notes must be 10,000 characters or less' };
-  }
-  
-  return { isValid: true };
+export interface PasswordValidation {
+  valid: boolean;
+  error?: string;
 }
 
+export function validateEntryPassword(password: string): PasswordValidation {
+  if (!password || typeof password !== 'string') {
+    return {
+      valid: false,
+      error: 'Password is required',
+    };
+  }
+
+  // Entry passwords can be any length (some services have very long passwords)
+  // But we'll set a reasonable maximum
+  if (password.length > 1000) {
+    return {
+      valid: false,
+      error: 'Password is too long (maximum 1000 characters)',
+    };
+  }
+
+  return {
+    valid: true,
+  };
+}
+
+/**
+ * Username validation
+ * 
+ * @param username - Username to validate
+ * @returns Validation result
+ */
+export function validateUsername(username: string): NameValidation {
+  if (!username || typeof username !== 'string') {
+    return {
+      valid: true, // Username is optional
+    };
+  }
+
+  const trimmed = username.trim();
+  
+  if (trimmed.length > 500) {
+    return {
+      valid: false,
+      error: 'Username must be 500 characters or less',
+    };
+  }
+
+  // Check for dangerous patterns
+  if (/<script|javascript:|on\w+\s*=/i.test(trimmed)) {
+    return {
+      valid: false,
+      error: 'Username contains invalid characters',
+    };
+  }
+
+  return {
+    valid: true,
+  };
+}

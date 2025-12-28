@@ -1,6 +1,7 @@
 import { generateHardwareFingerprint } from "./hardwareFingerprint";
 import { verifyLicenseSignature } from "./licenseValidator";
 import { devError, devLog } from "./devLog";
+import { ERROR_MESSAGES } from "../constants/errorMessages";
 import { apiClient, ApiError } from "./apiClient";
 import { getLPVDeviceFingerprint } from "./deviceFingerprint";
 
@@ -128,7 +129,7 @@ export class TrialService {
       if (result.status === "invalid") {
         return {
           success: false,
-          error: result.error || "Invalid trial key. Please check your email for the correct trial key (format: TRIA-XXXX-XXXX-XXXX-XXXX). If you can't find it, contact support@LocalPasswordVault.com",
+          error: result.error || ERROR_MESSAGES.TRIAL.INVALID_TRIAL_KEY,
         };
       }
 
@@ -163,7 +164,7 @@ export class TrialService {
         if (apiError.code === "NETWORK_ERROR" || apiError.code === "REQUEST_TIMEOUT") {
           return {
             success: false,
-            error: "Unable to connect to license server. Please check your internet connection and try again. Internet access is required for trial activation.",
+            error: ERROR_MESSAGES.NETWORK.UNABLE_TO_CONNECT_TRIAL,
           };
         }
         return {

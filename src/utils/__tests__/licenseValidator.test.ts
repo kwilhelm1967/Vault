@@ -41,7 +41,7 @@ describe('License Validator', () => {
         signed_at: new Date().toISOString(),
       };
 
-      const result = await verifyLicenseSignature(licenseFile as any);
+      const result = await verifyLicenseSignature(licenseFile as Parameters<typeof verifyLicenseSignature>[0]);
       
       expect(result).toBe(true);
 
@@ -73,7 +73,7 @@ describe('License Validator', () => {
         signed_at: new Date().toISOString(),
       };
 
-      const result = await verifyLicenseSignature(licenseFile as any);
+      const result = await verifyLicenseSignature(licenseFile as Parameters<typeof verifyLicenseSignature>[0]);
       
       expect(result).toBe(false);
 
@@ -127,7 +127,7 @@ describe('License Validator', () => {
         encode: jest.fn((str: string) => new Uint8Array(str.length)),
       })) as any;
 
-      const result = await verifyLicenseSignature(licenseFile as any);
+      const result = await verifyLicenseSignature(licenseFile as Parameters<typeof verifyLicenseSignature>[0]);
       
       expect(mockCrypto.subtle.importKey).toHaveBeenCalled();
       expect(mockCrypto.subtle.sign).toHaveBeenCalled();
@@ -171,7 +171,7 @@ describe('License Validator', () => {
 
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
-      const result = await verifyLicenseSignature(licenseFile as any);
+      const result = await verifyLicenseSignature(licenseFile as Parameters<typeof verifyLicenseSignature>[0]);
       
       expect(result).toBe(false);
       expect(consoleSpy).toHaveBeenCalled();
@@ -211,7 +211,7 @@ describe('License Validator', () => {
         signed_at: new Date().toISOString(),
       };
 
-      const result = await verifyLicenseSignature(licenseFile as any);
+      const result = await verifyLicenseSignature(licenseFile as Parameters<typeof verifyLicenseSignature>[0]);
       
       expect(result).toBe(false);
 
@@ -243,7 +243,7 @@ describe('License Validator', () => {
         signed_at: new Date().toISOString(),
       };
 
-      const result = verifyLicenseSignatureSync(licenseFile as any);
+      const result = verifyLicenseSignatureSync(licenseFile as Parameters<typeof verifyLicenseSignatureSync>[0]);
       
       expect(result).toBe(true);
 
@@ -275,7 +275,7 @@ describe('License Validator', () => {
         signed_at: new Date().toISOString(),
       };
 
-      const result = verifyLicenseSignatureSync(licenseFile as any);
+      const result = verifyLicenseSignatureSync(licenseFile as Parameters<typeof verifyLicenseSignatureSync>[0]);
       
       expect(result).toBe(false);
 
@@ -313,7 +313,7 @@ describe('License Validator', () => {
       };
 
       // Sync version does basic structure check
-      const result = verifyLicenseSignatureSync(licenseFile as any);
+      const result = verifyLicenseSignatureSync(licenseFile as Parameters<typeof verifyLicenseSignatureSync>[0]);
       
       expect(result).toBe(true);
 

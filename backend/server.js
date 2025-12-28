@@ -20,6 +20,7 @@ const lpvLicensesRouter = require('./routes/lpv-licenses');
 const trialRouter = require('./routes/trial');
 const webhooksRouter = require('./routes/webhooks');
 const checkoutRouter = require('./routes/checkout');
+const ticketsRouter = require('./routes/tickets');
 const db = require('./database/db');
 
 const app = express();
@@ -113,6 +114,7 @@ app.use('/api/lpv/license', lpvLicensesRouter);
 app.use('/api/trial', trialRouter);
 app.use('/api/webhooks', webhooksRouter);
 app.use('/api/checkout', checkoutRouter);
+app.use('/api/tickets', ticketsRouter);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Endpoint not found' });

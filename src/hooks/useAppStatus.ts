@@ -34,9 +34,14 @@ export const useAppStatus = () => {
 
   // Initialize app status on mount - defer to avoid blocking initial render
   useEffect(() => {
+    const abortController = new AbortController();
+    const signal = abortController.signal;
+    
     // Defer status check to next tick to allow initial render
-    const timeoutId = setTimeout(() => {
-      updateAppStatus();
+    const timeoutId = setTimeout(async () => {
+      if (!signal.aborted) {
+        await updateAppStatus();
+      }
     }, 0);
     
     // Fix for existing users: if vault exists but onboarding_completed isn't set,
@@ -45,7 +50,10 @@ export const useAppStatus = () => {
       localStorage.setItem("onboarding_completed", "true");
     }
     
-    return () => clearTimeout(timeoutId);
+    return () => {
+      abortController.abort();
+      clearTimeout(timeoutId);
+    };
   }, [updateAppStatus]);
 
   // Handle trial expiration with immediate redirect
@@ -82,18 +90,28 @@ export const useAppStatus = () => {
   }, []);
 
   useEffect(() => {
+    const abortController = new AbortController();
+    const signal = abortController.signal;
+    
     // Set up trial expiration callback
     trialService.addExpirationCallback(handleTrialExpiration);
 
     // Check trial status every 30 seconds (but only if checking is enabled)
     const checkInterval = 30000;
     const interval = checkingEnabled ? setInterval(async () => {
+      if (signal.aborted) return;
+      
       try {
         const expirationDetected = await trialService.checkAndHandleExpiration();
+        if (signal.aborted) return;
+        
         await checkStatusImmediately();
+        if (signal.aborted) return;
 
         // Handle trial expiration properly
         const currentStatus = await licenseService.getAppStatus();
+        if (signal.aborted) return;
+        
         if (currentStatus.trialInfo.isExpired && currentStatus.canUseApp) {
           // Use proper state management instead of force reload
           await handleTrialExpiration();
@@ -105,16 +123,21 @@ export const useAppStatus = () => {
         }
       } catch (error) {
         // Log error but don't crash the app
-        devError('Trial status check failed:', error);
+        if (!signal.aborted) {
+          devError('Trial status check failed:', error);
+        }
       }
     }, checkInterval) : null;
 
     // Defer initial check to avoid blocking render
     const initialCheckTimeout = setTimeout(() => {
-      checkStatusImmediately();
+      if (!signal.aborted) {
+        checkStatusImmediately();
+      }
     }, 100);
 
     return () => {
+      abortController.abort();
       clearTimeout(initialCheckTimeout);
       trialService.removeExpirationCallback(handleTrialExpiration);
       if (interval) clearInterval(interval);

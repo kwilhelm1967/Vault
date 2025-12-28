@@ -415,9 +415,45 @@
         </div>
       </div>
 
+      <!-- Ticket Status Section -->
+      <div class="contact-section animate" id="ticket-status-section" style="display: none; margin-bottom: 40px;">
+        <div class="contact-header">
+          <h2>Check Ticket Status</h2>
+          <p>Enter your email and ticket number to view your support ticket.</p>
+        </div>
+        <div style="max-width: 500px; margin: 0 auto;">
+          <form id="ticket-lookup-form" style="display: flex; flex-direction: column; gap: 16px;">
+            <div class="form-group">
+              <label for="lookup-email">Email</label>
+              <input type="email" id="lookup-email" name="email" placeholder="your@email.com" required>
+            </div>
+            <div class="form-group">
+              <label for="lookup-ticket">Ticket Number</label>
+              <input type="text" id="lookup-ticket" name="ticket_number" placeholder="TKT-2025-001234" required>
+            </div>
+            <button type="submit" class="submit-btn">View Ticket</button>
+          </form>
+          <div id="ticket-display" style="display: none; margin-top: 32px;"></div>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-bottom: 32px;" class="animate">
+        <button onclick="document.getElementById('ticket-status-section').style.display = 
+                         document.getElementById('ticket-status-section').style.display === 'none' ? 'block' : 'none';
+                         if (document.getElementById('ticket-status-section').style.display === 'block') {
+                           document.getElementById('ticket-status-section').scrollIntoView({ behavior: 'smooth' });
+                         }" 
+                style="padding: 12px 24px; background: transparent; border: 2px solid var(--cyan); color: var(--cyan); 
+                       border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;"
+                onmouseover="this.style.background='var(--cyan)'; this.style.color='var(--bg-darker)';"
+                onmouseout="this.style.background='transparent'; this.style.color='var(--cyan)';">
+          View My Tickets
+        </button>
+      </div>
+
       <div class="contact-section animate">
         <div class="contact-header">
-          <h2>Send a Message</h2>
+          <h2>Create Support Ticket</h2>
           <p>Describe your issue or question and include your OS and app version.</p>
         </div>
         <div class="contact-grid">
@@ -431,19 +467,30 @@
               <input type="email" id="email" name="email" placeholder="your@email.com" required>
             </div>
             <div class="form-group">
-              <label for="topic">Topic</label>
-              <select id="topic" name="topic">
-                <option value="general">General Question</option>
+              <label for="category">Category</label>
+              <select id="category" name="category" required>
+                <option value="other">General Question</option>
                 <option value="technical">Technical Issue</option>
-                <option value="license">License / Billing</option>
+                <option value="billing">License / Billing</option>
+                <option value="license">License Activation</option>
                 <option value="feature">Feature Request</option>
+                <option value="bug">Bug Report</option>
               </select>
             </div>
             <div class="form-group">
-              <label for="message">Message</label>
-              <textarea id="message" name="message" placeholder="Describe your question or issue..." required></textarea>
+              <label for="license_key">License Key (Optional)</label>
+              <input type="text" id="license_key" name="license_key" placeholder="XXXX-XXXX-XXXX-XXXX">
             </div>
-            <button type="submit" class="submit-btn">Send Message</button>
+            <div class="form-group">
+              <label for="subject">Subject</label>
+              <input type="text" id="subject" name="subject" placeholder="Brief description of your issue" required>
+            </div>
+            <div class="form-group">
+              <label for="message">Message</label>
+              <textarea id="message" name="message" placeholder="Describe your question or issue in detail..." required></textarea>
+            </div>
+            <button type="submit" class="submit-btn" id="submit-btn">Send Message</button>
+            <div id="form-message" style="display: none; margin-top: 16px; padding: 12px; border-radius: 8px;"></div>
           </form>
           <div class="contact-info">
             <div class="info-card">
@@ -535,6 +582,292 @@
       entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
     }, { threshold: 0.1 });
     document.querySelectorAll('.animate').forEach(el => observer.observe(el));
+
+    // Ticket API base URL
+    const API_BASE_URL = 'https://api.localpasswordvault.com/api/tickets';
+
+    // Form submission handler
+    const contactForm = document.querySelector('.contact-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const formMessage = document.getElementById('form-message');
+
+    contactForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = {
+        name: document.getElementById('name').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        subject: document.getElementById('subject').value.trim(),
+        description: document.getElementById('message').value.trim(),
+        category: document.getElementById('category').value,
+        license_key: document.getElementById('license_key').value.trim() || undefined,
+      };
+
+      // Validate
+      if (!formData.email || !formData.subject || !formData.description) {
+        showMessage('Please fill in all required fields.', 'error');
+        return;
+      }
+
+      // Disable submit button
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending...';
+
+      try {
+        const response = await fetch(API_BASE_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showMessage(
+            `Ticket created successfully! Your ticket number is: <strong>${data.ticket.ticket_number}</strong><br>
+            Please save this number. You'll receive a confirmation email shortly.`,
+            'success'
+          );
+          contactForm.reset();
+          
+          // Show ticket status section
+          document.getElementById('ticket-status-section').style.display = 'block';
+          document.getElementById('lookup-email').value = formData.email;
+          document.getElementById('lookup-ticket').value = data.ticket.ticket_number;
+        } else {
+          showMessage(data.error || 'Failed to create ticket. Please try again.', 'error');
+        }
+      } catch (error) {
+        console.error('Error creating ticket:', error);
+        showMessage('Failed to create ticket. Please try again later or email support@localpasswordvault.com', 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Send Message';
+      }
+    });
+
+    // Ticket lookup handler
+    const ticketLookupForm = document.getElementById('ticket-lookup-form');
+    const ticketDisplay = document.getElementById('ticket-display');
+
+    ticketLookupForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('lookup-email').value.trim();
+      const ticketNumber = document.getElementById('lookup-ticket').value.trim();
+
+      if (!email || !ticketNumber) {
+        showTicketMessage('Please enter both email and ticket number.', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/${ticketNumber}?email=${encodeURIComponent(email)}`);
+        const data = await response.json();
+
+        if (data.success) {
+          displayTicket(data.ticket);
+        } else {
+          showTicketMessage(data.error || 'Ticket not found.', 'error');
+          ticketDisplay.style.display = 'none';
+        }
+      } catch (error) {
+        console.error('Error fetching ticket:', error);
+        showTicketMessage('Failed to load ticket. Please try again later.', 'error');
+        ticketDisplay.style.display = 'none';
+      }
+    });
+
+    function showMessage(message, type) {
+      formMessage.style.display = 'block';
+      formMessage.innerHTML = message;
+      formMessage.style.backgroundColor = type === 'success' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)';
+      formMessage.style.border = `1px solid ${type === 'success' ? '#10b981' : '#ef4444'}`;
+      formMessage.style.color = type === 'success' ? '#10b981' : '#ef4444';
+      
+      // Scroll to message
+      formMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function showTicketMessage(message, type) {
+      ticketDisplay.style.display = 'block';
+      ticketDisplay.innerHTML = `
+        <div style="padding: 16px; border-radius: 8px; background: ${type === 'success' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; 
+                     border: 1px solid ${type === 'success' ? '#10b981' : '#ef4444'}; 
+                     color: ${type === 'success' ? '#10b981' : '#ef4444'};">
+          ${message}
+        </div>
+      `;
+    }
+
+    function displayTicket(ticket) {
+      const statusColors = {
+        open: '#06b6d4',
+        in_progress: '#f59e0b',
+        waiting_customer: '#8b5cf6',
+        resolved: '#10b981',
+        closed: '#6b7280',
+      };
+
+      const statusLabels = {
+        open: 'Open',
+        in_progress: 'In Progress',
+        waiting_customer: 'Waiting for Customer',
+        resolved: 'Resolved',
+        closed: 'Closed',
+      };
+
+      const categoryLabels = {
+        technical: 'Technical Issue',
+        billing: 'Billing',
+        license: 'License',
+        feature: 'Feature Request',
+        bug: 'Bug Report',
+        other: 'General Question',
+      };
+
+      let messagesHtml = '';
+      if (ticket.messages && ticket.messages.length > 0) {
+        messagesHtml = ticket.messages.map(msg => `
+          <div style="margin-bottom: 20px; padding: 16px; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-subtle);">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+              <div>
+                <strong style="color: ${msg.sender_type === 'customer' ? 'var(--cyan)' : 'var(--green)'};">
+                  ${msg.sender_type === 'customer' ? 'You' : 'Support'}
+                </strong>
+                <span style="color: var(--text-muted); font-size: 0.9rem; margin-left: 12px;">
+                  ${new Date(msg.created_at).toLocaleString()}
+                </span>
+              </div>
+            </div>
+            <div style="color: var(--text-secondary); white-space: pre-wrap; line-height: 1.6;">
+              ${escapeHtml(msg.message)}
+            </div>
+          </div>
+        `).join('');
+      }
+
+      ticketDisplay.style.display = 'block';
+      ticketDisplay.innerHTML = `
+        <div style="background: var(--bg-card); border-radius: 12px; padding: 32px; border: 1px solid var(--border-subtle);">
+          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+            <div>
+              <h3 style="font-size: 1.5rem; margin-bottom: 8px;">${escapeHtml(ticket.subject)}</h3>
+              <p style="color: var(--text-muted);">Ticket: <strong style="color: var(--cyan);">${ticket.ticket_number}</strong></p>
+            </div>
+            <div style="text-align: right;">
+              <span style="display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;
+                           background: ${statusColors[ticket.status]}20; color: ${statusColors[ticket.status]};">
+                ${statusLabels[ticket.status]}
+              </span>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; padding: 20px; background: var(--bg-darker); border-radius: 8px;">
+            <div>
+              <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 4px;">Category</div>
+              <div style="font-weight: 600;">${categoryLabels[ticket.category] || ticket.category}</div>
+            </div>
+            <div>
+              <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 4px;">Created</div>
+              <div style="font-weight: 600;">${new Date(ticket.created_at).toLocaleDateString()}</div>
+            </div>
+            <div>
+              <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 4px;">Last Updated</div>
+              <div style="font-weight: 600;">${new Date(ticket.updated_at).toLocaleDateString()}</div>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 32px;">
+            <h4 style="margin-bottom: 12px; color: var(--text-primary);">Initial Message</h4>
+            <div style="padding: 16px; background: var(--bg-darker); border-radius: 8px; color: var(--text-secondary); white-space: pre-wrap; line-height: 1.6;">
+              ${escapeHtml(ticket.description)}
+            </div>
+          </div>
+
+          ${ticket.messages && ticket.messages.length > 0 ? `
+            <div style="margin-bottom: 24px;">
+              <h4 style="margin-bottom: 16px; color: var(--text-primary);">Conversation (${ticket.messages.length} message${ticket.messages.length !== 1 ? 's' : ''})</h4>
+              ${messagesHtml}
+            </div>
+          ` : ''}
+
+          <div style="border-top: 1px solid var(--border-subtle); padding-top: 24px; margin-top: 24px;">
+            <h4 style="margin-bottom: 16px; color: var(--text-primary);">Add a Reply</h4>
+            <form id="reply-form" style="display: flex; flex-direction: column; gap: 16px;">
+              <textarea id="reply-message" placeholder="Type your message..." required 
+                        style="width: 100%; padding: 14px 16px; background: var(--bg-darker); border: 1px solid var(--border-subtle); 
+                               border-radius: 10px; color: var(--text-primary); font-family: 'Inter', sans-serif; 
+                               font-size: 1rem; min-height: 120px; resize: vertical;"></textarea>
+              <button type="submit" class="submit-btn" style="align-self: flex-start;">Send Reply</button>
+            </form>
+          </div>
+        </div>
+      `;
+
+      // Handle reply form
+      const replyForm = document.getElementById('reply-form');
+      if (replyForm) {
+        replyForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const message = document.getElementById('reply-message').value.trim();
+          if (!message) return;
+
+          const submitBtn = replyForm.querySelector('button[type="submit"]');
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Sending...';
+
+          try {
+            const response = await fetch(`${API_BASE_URL}/${ticket.ticket_number}/messages`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                email: document.getElementById('lookup-email').value.trim(),
+                name: ticket.name || '',
+                message: message,
+              }),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+              // Reload ticket to show new message
+              ticketLookupForm.dispatchEvent(new Event('submit'));
+              document.getElementById('reply-message').value = '';
+            } else {
+              alert(data.error || 'Failed to send reply');
+            }
+          } catch (error) {
+            console.error('Error sending reply:', error);
+            alert('Failed to send reply. Please try again.');
+          } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Send Reply';
+          }
+        });
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Check for ticket number in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const ticketNumber = urlParams.get('ticket');
+    const email = urlParams.get('email');
+    if (ticketNumber && email) {
+      document.getElementById('ticket-status-section').style.display = 'block';
+      document.getElementById('lookup-email').value = email;
+      document.getElementById('lookup-ticket').value = ticketNumber;
+      // Auto-load ticket
+      setTimeout(() => ticketLookupForm.dispatchEvent(new Event('submit')), 500);
+    }
   </script>
 </body>
 </html>

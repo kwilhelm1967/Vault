@@ -3,11 +3,20 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import { ErrorBoundary } from './components/ErrorBoundary.tsx';
 import { LiveRegionProvider } from './components/accessibility';
-import { devLog } from './utils/devLog';
+import { devLog, devError } from './utils/devLog';
 import './i18n'; // Initialize i18n for localization
 import './index.css';
 
 // NO SENTRY - 100% offline after activation. No data collection from user's app.
+
+// Global unhandled promise rejection handler
+// Prevents unhandled promise rejections from crashing the app
+window.addEventListener('unhandledrejection', (event) => {
+  devError('Unhandled promise rejection:', event.reason);
+  // Prevent default browser error handling for unhandled rejections
+  // This allows the app to continue running instead of crashing
+  event.preventDefault();
+});
 
 // Ensure dark background is set immediately
 document.documentElement.style.backgroundColor = '#1F2534';

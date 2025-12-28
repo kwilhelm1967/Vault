@@ -39,7 +39,7 @@
  * user actions and license status.
  */
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   Lock,
   Key,
@@ -57,6 +57,8 @@ import {
 import { analyticsService } from "../utils/analyticsService";
 import { licenseService, AppLicenseStatus } from "../utils/licenseService";
 import { devError } from "../utils/devLog";
+import { withErrorHandling } from "../utils/errorHandling";
+import { ERROR_MESSAGES, getErrorMessage } from "../constants/errorMessages";
 import { EulaAgreement } from "./EulaAgreement";
 import { DownloadInstructions } from "./DownloadInstructions";
 import { DownloadPage } from "./DownloadPage";
@@ -76,7 +78,7 @@ interface LicenseScreenProps {
   appStatus: AppLicenseStatus; // Receive appStatus as a prop
 }
 
-export const LicenseScreen: React.FC<LicenseScreenProps> = ({
+const LicenseScreenComponent: React.FC<LicenseScreenProps> = ({
   onLicenseValid,
   showPricingPlans = false,
   onHidePricingPlans,
@@ -100,7 +102,13 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
   
   // Device management state (for family plans)
   const [showDeviceManagement, setShowDeviceManagement] = useState(false);
-  const [localLicenseFile, setLocalLicenseFile] = useState<{ license_key: string; max_devices: number } | null>(null);
+  // Type definition for local license file
+  interface LocalLicenseFileInfo {
+    license_key: string;
+    max_devices: number;
+  }
+
+  const [localLicenseFile, setLocalLicenseFile] = useState<LocalLicenseFileInfo | null>(null);
   const [maxDevices, setMaxDevices] = useState<number>(1);
   
   // License status dashboard state
@@ -194,7 +202,11 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
 
     // Hide floating button when user goes to purchase
     if (window.electronAPI?.hideFloatingButton) {
-      window.electronAPI.hideFloatingButton();
+      try {
+        window.electronAPI.hideFloatingButton();
+      } catch (error) {
+        devError('Failed to hide floating button:', error);
+      }
     }
   };
 
@@ -223,11 +235,34 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
     await handleActivateLicense();
   };
 
+  // AbortController for cleanup
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   // Load max devices on mount
   useEffect(() => {
-    licenseService.getMaxDevices().then(setMaxDevices).catch((error) => {
-      devError('Failed to load max devices:', error);
-    });
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+
+    const loadMaxDevices = async () => {
+      const { data, error } = await withErrorHandling(
+        () => licenseService.getMaxDevices(),
+        'load-max-devices'
+      );
+      
+      if (!signal.aborted) {
+        if (error) {
+          devError('Failed to load max devices:', error);
+          setMaxDevices(1); // Fallback value
+        } else if (data !== null) {
+          setMaxDevices(data);
+        }
+      }
+    };
+    loadMaxDevices();
+
+    return () => {
+      abortControllerRef.current?.abort();
+    };
   }, []);
 
   // Show expired trial screen when trial is expired
@@ -241,7 +276,11 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
   useEffect(() => {
     if (showExpiredTrialScreen && window.electronAPI?.hideFloatingButton) {
       // Hide floating button when trial expires
-      window.electronAPI.hideFloatingButton();
+      try {
+        window.electronAPI.hideFloatingButton();
+      } catch (error) {
+        devError('Failed to hide floating button:', error);
+      }
     }
   }, [showExpiredTrialScreen]);
 
@@ -257,20 +296,36 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
   // Load license file and max devices when device management screen is shown
   useEffect(() => {
     if (showDeviceManagement) {
-      Promise.all([
-        licenseService.getLocalLicenseFile(),
-        licenseService.getMaxDevices()
-      ]).then(([file, maxDevicesCount]) => {
-        if (file) {
-          setLocalLicenseFile({
-            license_key: file.license_key,
-            max_devices: file.max_devices || maxDevicesCount,
-          });
+      const abortController = new AbortController();
+      const signal = abortController.signal;
+
+      const loadLicenseData = async () => {
+        try {
+          const [file, maxDevicesCount] = await Promise.all([
+            licenseService.getLocalLicenseFile(),
+            licenseService.getMaxDevices()
+          ]);
+          if (!signal.aborted) {
+            if (file) {
+              setLocalLicenseFile({
+                license_key: file.license_key,
+                max_devices: file.max_devices || maxDevicesCount,
+              });
+            }
+            setMaxDevices(maxDevicesCount);
+          }
+        } catch (error) {
+          if (!signal.aborted) {
+            devError('Failed to load license file:', error);
+            setMaxDevices(1); // Fallback value
+          }
         }
-        setMaxDevices(maxDevicesCount);
-      }).catch((error) => {
-        devError('Failed to load license file:', error);
-      });
+      };
+      loadLicenseData();
+
+      return () => {
+        abortController.abort();
+      };
     }
   }, [showDeviceManagement]);
 
@@ -304,7 +359,11 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
 
         // Show floating button again when license is successfully activated
         if (window.electronAPI?.showFloatingButton) {
-          window.electronAPI.showFloatingButton();
+          try {
+            window.electronAPI.showFloatingButton();
+          } catch (error) {
+            devError('Failed to show floating button:', error);
+          }
         }
       } else if (result.requiresTransfer) {
         // Device mismatch - show transfer dialog
@@ -317,33 +376,21 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
           { status: result.status }
         );
       } else {
-        // Enhanced error messages with clear, actionable guidance
-        let enhancedError = result.error || "License activation failed";
+        // Use centralized error messages
+        const enhancedError = getErrorMessage(result.error || ERROR_MESSAGES.LICENSE.ACTIVATION_FAILED);
         let errorType: 'network' | 'invalid' | 'revoked' | 'device' | 'generic' = 'generic';
 
-        if (result.error?.includes("fetch") || result.error?.includes("Unable to connect")) {
-          enhancedError = "Unable to connect to license server. Please check your internet connection and try again.";
+        // Determine error type for analytics
+        if (result.error?.includes("fetch") || result.error?.includes("Unable to connect") || result.error?.includes("network")) {
           errorType = 'network';
           // Store the license key for retry
           setPendingLicenseKey(cleanKey);
         } else if (result.error?.includes("409") || result.error?.includes("already activated")) {
-          enhancedError = "This license is already activated on another device. Use the transfer option to move it to this device.";
           errorType = 'device';
         } else if (result.error?.includes("404") || result.error?.includes("not found") || result.error?.includes("not a valid")) {
-          enhancedError = "This license key is not valid. Please check that you entered it correctly (format: XXXX-XXXX-XXXX-XXXX). If you believe this is an error, contact support@LocalPasswordVault.com";
           errorType = 'invalid';
         } else if (result.error?.includes("revoked")) {
-          enhancedError = "This license has been revoked. If you believe this is an error, please contact support@LocalPasswordVault.com for assistance.";
           errorType = 'revoked';
-        } else if (result.error?.includes("trial")) {
-          enhancedError = "This key was for your trial period. To continue using the app, please purchase a lifetime license key at LocalPasswordVault.com";
-          errorType = 'invalid';
-        } else if (result.error?.includes("signature") || result.error?.includes("verification failed")) {
-          enhancedError = "License verification failed. The license file appears to be corrupted. Please try activating again, or contact support@LocalPasswordVault.com if the problem persists.";
-          errorType = 'invalid';
-        } else if (result.error?.includes("network")) {
-          enhancedError = "Network error occurred. Please check your internet connection and try again. Internet access is required for initial activation only.";
-          errorType = 'network';
         }
 
         setError(enhancedError);
@@ -357,15 +404,12 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
         );
       }
     } catch (error) {
-      let enhancedError = "License activation failed. Please try again.";
-
+      // Use centralized error messages
+      const enhancedError = getErrorMessage(error);
+      
+      // Store the license key for retry if it's a network error
       if (error instanceof TypeError && error.message.includes("fetch")) {
-        enhancedError =
-          "Unable to connect to license server. Please check your internet connection and try again.";
-        // Store the license key for retry
         setPendingLicenseKey(licenseKey);
-      } else if (error instanceof Error) {
-        enhancedError = `License activation failed: ${error.message}`;
       }
 
       setError(enhancedError);
@@ -398,7 +442,11 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
       
       // Show floating button again
       if (window.electronAPI?.showFloatingButton) {
-        window.electronAPI.showFloatingButton();
+        try {
+          window.electronAPI.showFloatingButton();
+        } catch (error) {
+          devError('Failed to show floating button after transfer:', error);
+        }
       }
     }
     
@@ -420,9 +468,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
     });
 
     // Show a message to the user
-    setError(
-      "License activation cancelled. You must accept the EULA to use the software."
-    );
+        setError(ERROR_MESSAGES.LICENSE.ACTIVATION_CANCELLED);
   };
 
   const handlePurchase = (plan: "single" | "family") => {
@@ -431,7 +477,11 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
 
     // Hide floating button during purchase flow
     if (window.electronAPI?.hideFloatingButton) {
-      window.electronAPI.hideFloatingButton();
+      try {
+        window.electronAPI.hideFloatingButton();
+      } catch (error) {
+        devError('Failed to hide floating button:', error);
+      }
     }
   };
 
@@ -477,10 +527,10 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
         analyticsService.trackLicenseActivated(trialKey.trim(), 'trial');
         onLicenseValid();
       } else {
-        setTrialKeyError(result.error || 'Invalid trial key. Please check your email for the correct trial key (format: TRIA-XXXX-XXXX-XXXX-XXXX).');
+        setTrialKeyError(result.error || ERROR_MESSAGES.TRIAL.INVALID_TRIAL_KEY);
       }
     } catch (err) {
-      setTrialKeyError('Failed to activate trial key. Please check your internet connection and try again. If the problem persists, contact support@LocalPasswordVault.com');
+      setTrialKeyError(ERROR_MESSAGES.TRIAL.TRIAL_ACTIVATION_FAILED);
     } finally {
       setIsActivatingTrial(false);
     }
@@ -703,6 +753,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
               <div className="mt-4 flex flex-wrap gap-3 justify-center">
                 <button
                   onClick={() => setShowStatusDashboard(true)}
+                  aria-label="View license status and details"
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all"
                   style={{
                     backgroundColor: 'rgba(91, 130, 184, 0.1)',
@@ -716,6 +767,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
                 {licenseService.isFamilyPlan() && (
                   <button
                     onClick={() => setShowDeviceManagement(true)}
+                    aria-label={`Manage devices (${maxDevices} max devices allowed)`}
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all"
                     style={{
                       backgroundColor: 'rgba(91, 130, 184, 0.1)',
@@ -839,6 +891,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
                   <button
                     onClick={handleActivateLicense}
                     disabled={isActivating || !licenseKey.trim()}
+                    aria-label={isActivating ? "Activating license..." : "Activate license key"}
                     className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-slate-600 disabled:to-slate-600 text-white py-3 px-4 rounded-lg font-medium transition-all disabled:cursor-not-allowed flex items-center justify-center space-x-2 mt-auto"
                   >
                     {isActivating ? (
@@ -869,7 +922,11 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
                           );
                         }
                         if (window.electronAPI?.hideFloatingButton) {
-                          window.electronAPI.hideFloatingButton();
+                          try {
+                            window.electronAPI.hideFloatingButton();
+                          } catch (error) {
+                            devError('Failed to hide floating button:', error);
+                          }
                         }
                       }}
                       className="text-blue-400 hover:text-blue-300 text-sm transition-colors inline-flex items-center space-x-1"
@@ -922,6 +979,7 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
                   <button
                     onClick={handleActivateTrialKey}
                     disabled={isActivatingTrial || !trialKey.trim()}
+                    aria-label={isActivatingTrial ? "Activating trial..." : "Start 7-day free trial"}
                     className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:from-slate-600 disabled:to-slate-600 text-white py-3 px-4 rounded-lg font-medium transition-all disabled:cursor-not-allowed flex items-center justify-center space-x-2 mt-auto"
                   >
                     {isActivatingTrial ? (
@@ -1100,3 +1158,13 @@ export const LicenseScreen: React.FC<LicenseScreenProps> = ({
     </div>
   );
 };
+
+// Memoize component to prevent unnecessary re-renders
+export const LicenseScreen = React.memo(LicenseScreenComponent, (prevProps, nextProps) => {
+  // Only re-render if appStatus changes or showPricingPlans changes
+  return (
+    prevProps.appStatus?.isLicensed === nextProps.appStatus?.isLicensed &&
+    prevProps.appStatus?.trialStatus === nextProps.appStatus?.trialStatus &&
+    prevProps.showPricingPlans === nextProps.showPricingPlans
+  );
+});

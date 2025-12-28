@@ -38,6 +38,7 @@ import { PasswordEntry, Category, RawPasswordEntry } from "../types";
 import { memorySecurity } from "./memorySecurity";
 import { sanitizeTextField, sanitizePassword, sanitizeNotes } from "./sanitization";
 import { devError, devWarn } from "./devLog";
+import { measureOperation } from "./performanceMonitor";
 
 /**
  * Fixed categories available in the vault.
@@ -434,6 +435,23 @@ export class StorageService {
     return this.encryption.vaultExists();
   }
 
+  /**
+   * Save password entries to encrypted storage
+   * 
+   * Validates, sanitizes, and encrypts password entries before saving.
+   * Automatically uses Electron file storage when available, falls back to localStorage.
+   * 
+   * @param entries - Array of password entries to save
+   * @throws Error if vault is locked or entries array is invalid
+   * 
+   * @example
+   * ```typescript
+   * const entries = [
+   *   { id: '1', accountName: 'Gmail', username: 'user@example.com', ... }
+   * ];
+   * await storageService.saveEntries(entries);
+   * ```
+   */
   async saveEntries(entries: PasswordEntry[]): Promise<void> {
     if (!this.encryption.isUnlocked()) {
       throw new Error("Vault is locked. Please unlock vault first.");
@@ -489,11 +507,13 @@ export class StorageService {
 
       // Encrypt the entries before saving (encryption happens in renderer process)
       const entriesJson = JSON.stringify(validEntries);
-      const encryptedData = await this.encryption.encryptData(entriesJson);
+      const encryptedData = await measureOperation(
+        'encrypt-entries',
+        () => this.encryption.encryptData(entriesJson)
+      );
 
       // SECURE: Use Electron file storage when available (encrypted data only, no master password)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const electronAPI = (window as any).electronAPI;
+      const electronAPI = window.electronAPI;
       if (electronAPI && electronAPI.saveVaultEncrypted) {
         try {
           // Save encrypted data to secure file storage (OS-level permissions)
@@ -563,6 +583,21 @@ export class StorageService {
     }
   }
 
+  /**
+   * Load password entries from encrypted storage
+   * 
+   * Decrypts and loads entries from storage. Automatically tries Electron file storage
+   * first, then falls back to localStorage. Handles data migration and corruption recovery.
+   * 
+   * @returns Promise resolving to array of password entries
+   * @throws Error if vault is locked or decryption fails
+   * 
+   * @example
+   * ```typescript
+   * const entries = await storageService.loadEntries();
+   * console.log(`Loaded ${entries.length} entries`);
+   * ```
+   */
   async loadEntries(): Promise<PasswordEntry[]> {
     if (!this.encryption.isUnlocked()) {
       throw new Error("Vault is locked. Please unlock vault first.");
@@ -570,8 +605,7 @@ export class StorageService {
 
     try {
       // SECURE: Try Electron file storage first (encrypted data only)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const electronAPI = (window as any).electronAPI;
+      const electronAPI = window.electronAPI;
       let encryptedData: string | null = null;
       
       if (electronAPI && electronAPI.loadVaultEncrypted) {
@@ -725,6 +759,21 @@ export class StorageService {
     return FIXED_CATEGORIES;
   }
 
+  /**
+   * Export vault data as CSV format
+   * 
+   * Exports all entries in CSV format for backup or migration purposes.
+   * Includes all entry fields: account name, username, password, category, etc.
+   * 
+   * @returns Promise resolving to CSV-formatted string
+   * @throws Error if vault is locked
+   * 
+   * @example
+   * ```typescript
+   * const csv = await storageService.exportData();
+   * // Save to file or clipboard
+   * ```
+   */
   async exportData(): Promise<string> {
     if (!this.encryption.isUnlocked()) {
       throw new Error("Vault is locked. Please unlock vault first.");

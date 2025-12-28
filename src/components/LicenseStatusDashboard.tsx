@@ -59,29 +59,48 @@ export const LicenseStatusDashboard: React.FC<LicenseStatusDashboardProps> = ({
   const [maxDevices, setMaxDevices] = useState<number>(1);
 
   useEffect(() => {
+    const abortController = new AbortController();
+    const signal = abortController.signal;
+
+    const loadLicenseStatus = async () => {
+      setIsLoading(true);
+      try {
+        const info = await licenseService.getLicenseInfo();
+        if (!signal.aborted) {
+          setLicenseInfo(info);
+        }
+        
+        const device = await licenseService.getCurrentDeviceInfo();
+        if (!signal.aborted) {
+          setDeviceInfo(device);
+        }
+
+        const localLicenseFile = await licenseService.getLocalLicenseFile();
+        if (!signal.aborted) {
+          setLocalLicense(localLicenseFile);
+        }
+        
+        const maxDevicesCount = await licenseService.getMaxDevices();
+        if (!signal.aborted) {
+          setMaxDevices(maxDevicesCount);
+        }
+      } catch (error) {
+        if (!signal.aborted) {
+          devError('Failed to load license status:', error);
+        }
+      } finally {
+        if (!signal.aborted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
     loadLicenseStatus();
+
+    return () => {
+      abortController.abort();
+    };
   }, []);
-
-  const loadLicenseStatus = async () => {
-    setIsLoading(true);
-    try {
-      const info = await licenseService.getLicenseInfo();
-      setLicenseInfo(info);
-      
-      const device = await licenseService.getCurrentDeviceInfo();
-      setDeviceInfo(device);
-
-      const localLicenseFile = await licenseService.getLocalLicenseFile();
-      setLocalLicense(localLicenseFile);
-      
-      const maxDevicesCount = await licenseService.getMaxDevices();
-      setMaxDevices(maxDevicesCount);
-    } catch (error) {
-      devError('Failed to load license status:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const formatDate = (dateString: string | null): string => {
     if (!dateString) return 'Unknown';

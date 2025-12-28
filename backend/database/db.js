@@ -497,6 +497,227 @@ const webhookEvents = {
   },
 };
 
+const supportTickets = {
+  async create({
+    ticket_number, email, name, customer_id, subject, description,
+    category, priority, license_key, license_id
+  }) {
+    const startTime = Date.now();
+    const { data, error } = await supabase
+      .from('support_tickets')
+      .insert({
+        ticket_number,
+        email,
+        name,
+        customer_id,
+        subject,
+        description,
+        category,
+        priority,
+        license_key,
+        license_id,
+      })
+      .select()
+      .single();
+    
+    const duration = Date.now() - startTime;
+    performanceMonitor.trackDatabaseQuery('insert', 'support_tickets', duration);
+    
+    if (error) throw error;
+    return data;
+  },
+  
+  async findByNumber(ticket_number) {
+    const startTime = Date.now();
+    const { data, error } = await supabase
+      .from('support_tickets')
+      .select('*')
+      .eq('ticket_number', ticket_number)
+      .single();
+    
+    const duration = Date.now() - startTime;
+    performanceMonitor.trackDatabaseQuery('select', 'support_tickets', duration);
+    
+    if (error && error.code !== 'PGRST116') throw error;
+    return data;
+  },
+  
+  async findByEmail(email) {
+    const startTime = Date.now();
+    const { data, error } = await supabase
+      .from('support_tickets')
+      .select('*')
+      .eq('email', email)
+      .order('created_at', { ascending: false });
+    
+    const duration = Date.now() - startTime;
+    performanceMonitor.trackDatabaseQuery('select', 'support_tickets', duration);
+    
+    if (error) throw error;
+    return data || [];
+  },
+  
+  async updateStatus(ticket_id, status, additionalFields = {}) {
+    const startTime = Date.now();
+    const updateData = {
+      status,
+      updated_at: new Date().toISOString(),
+      ...additionalFields,
+    };
+    
+    // Set resolved_at or closed_at based on status
+    if (status === 'resolved' && !updateData.resolved_at) {
+      updateData.resolved_at = new Date().toISOString();
+    }
+    if (status === 'closed' && !updateData.closed_at) {
+      updateData.closed_at = new Date().toISOString();
+    }
+    
+    const { data, error } = await supabase
+      .from('support_tickets')
+      .update(updateData)
+      .eq('id', ticket_id)
+      .select()
+      .single();
+    
+    const duration = Date.now() - startTime;
+    performanceMonitor.trackDatabaseQuery('update', 'support_tickets', duration);
+    
+    if (error) throw error;
+    return data;
+  },
+  
+  async assignTicket(ticket_id, assigned_to) {
+    const startTime = Date.now();
+    const { data, error } = await supabase
+      .from('support_tickets')
+      .update({
+        assigned_to,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', ticket_id)
+      .select()
+      .single();
+    
+    const duration = Date.now() - startTime;
+    performanceMonitor.trackDatabaseQuery('update', 'support_tickets', duration);
+    
+    if (error) throw error;
+    return data;
+  },
+  
+  async updateLastResponse(ticket_id, response_by) {
+    const startTime = Date.now();
+    const { data: current } = await supabase
+      .from('support_tickets')
+      .select('response_count')
+      .eq('id', ticket_id)
+      .single();
+    
+    const { data, error } = await supabase
+      .from('support_tickets')
+      .update({
+        last_response_at: new Date().toISOString(),
+        last_response_by: response_by,
+        response_count: (current?.response_count || 0) + 1,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', ticket_id)
+      .select()
+      .single();
+    
+    const duration = Date.now() - startTime;
+    performanceMonitor.trackDatabaseQuery('update', 'support_tickets', duration);
+    
+    if (error) throw error;
+    return data;
+  },
+  
+  async findAll(filters = {}) {
+    const startTime = Date.now();
+    let query = supabase
+      .from('support_tickets')
+      .select('*');
+    
+    if (filters.status) {
+      query = query.eq('status', filters.status);
+    }
+    if (filters.category) {
+      query = query.eq('category', filters.category);
+    }
+    if (filters.priority) {
+      query = query.eq('priority', filters.priority);
+    }
+    if (filters.assigned_to) {
+      query = query.eq('assigned_to', filters.assigned_to);
+    }
+    
+    query = query.order('created_at', { ascending: false });
+    
+    if (filters.limit) {
+      query = query.limit(filters.limit);
+    }
+    
+    const { data, error } = await query;
+    
+    const duration = Date.now() - startTime;
+    performanceMonitor.trackDatabaseQuery('select', 'support_tickets', duration);
+    
+    if (error) throw error;
+    return data || [];
+  },
+};
+
+const ticketMessages = {
+  async create({
+    ticket_id, message, sender_type, sender_email, sender_name,
+    attachments, is_internal_note
+  }) {
+    const startTime = Date.now();
+    const { data, error } = await supabase
+      .from('ticket_messages')
+      .insert({
+        ticket_id,
+        message,
+        sender_type,
+        sender_email,
+        sender_name,
+        attachments: attachments ? JSON.stringify(attachments) : null,
+        is_internal_note: is_internal_note || false,
+      })
+      .select()
+      .single();
+    
+    const duration = Date.now() - startTime;
+    performanceMonitor.trackDatabaseQuery('insert', 'ticket_messages', duration);
+    
+    if (error) throw error;
+    return data;
+  },
+  
+  async findByTicket(ticket_id, includeInternal = false) {
+    const startTime = Date.now();
+    let query = supabase
+      .from('ticket_messages')
+      .select('*')
+      .eq('ticket_id', ticket_id);
+    
+    if (!includeInternal) {
+      query = query.eq('is_internal_note', false);
+    }
+    
+    query = query.order('created_at', { ascending: true });
+    
+    const { data, error } = await query;
+    
+    const duration = Date.now() - startTime;
+    performanceMonitor.trackDatabaseQuery('select', 'ticket_messages', duration);
+    
+    if (error) throw error;
+    return data || [];
+  },
+};
+
 // Legacy compatibility - raw SQL not supported with Supabase
 async function run() {
   throw new Error('Raw SQL not supported. Use query builder methods.');
@@ -511,4 +732,6 @@ module.exports = {
   trials,
   deviceActivations,
   webhookEvents,
+  supportTickets,
+  ticketMessages,
 };

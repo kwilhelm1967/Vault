@@ -141,6 +141,8 @@ import { generateTOTP, getTimeRemaining, isValidTOTPSecret } from "../utils/totp
 import { TrialStatusBanner } from "./TrialStatusBanner";
 import { playLockSound, playCopySound, playDeleteSound } from "../utils/soundEffects";
 import { devError } from "../utils/devLog";
+import { useRenderTracking } from "../hooks/usePerformance";
+import { PerformanceProfiler } from "./PerformanceProfiler";
 
 interface MainVaultProps {
   entries: PasswordEntry[];
@@ -161,7 +163,7 @@ interface MainVaultProps {
   onShowPricingPlans?: () => void;
 }
 
-export const MainVault: React.FC<MainVaultProps> = ({
+const MainVaultComponent: React.FC<MainVaultProps> = ({
   entries,
   categories,
   onAddEntry,
@@ -179,6 +181,9 @@ export const MainVault: React.FC<MainVaultProps> = ({
   onMinimize,
   onShowPricingPlans,
 }) => {
+  // Track render performance in development
+  useRenderTracking('MainVault');
+
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingEntry, setEditingEntry] = useState<PasswordEntry | null>(null);
   const [viewingEntry, setViewingEntry] = useState<PasswordEntry | null>(null);
@@ -199,6 +204,8 @@ export const MainVault: React.FC<MainVaultProps> = ({
   const [showPasswordHistory, setShowPasswordHistory] = useState(false);
   const [totpCode, setTotpCode] = useState<string>("");
   const [totpTimeRemaining, setTotpTimeRemaining] = useState(30);
+  const [isSavingEntry, setIsSavingEntry] = useState(false);
+  const [isDeletingEntry, setIsDeletingEntry] = useState(false);
   
   // Local search input state for debouncing
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
@@ -483,7 +490,8 @@ export const MainVault: React.FC<MainVaultProps> = ({
   };
 
   return (
-    <div className="h-screen flex overflow-hidden">
+    <PerformanceProfiler id="MainVault">
+      <div className="h-screen flex overflow-hidden">
       
       {/* Left Sidebar */}
       <aside className="w-64 bg-slate-800/50 backdrop-blur-sm border-r flex flex-col" style={{ borderColor: 'rgba(201, 174, 102, 0.2)' }}>
@@ -546,6 +554,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
         <div className="px-3 mb-2">
           <button
             onClick={() => setShowAddForm(true)}
+            aria-label="Add new password entry"
             className="w-full py-2 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
             style={{ 
               backgroundColor: colors.steelBlue600,
@@ -1206,6 +1215,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
                       <div className="flex gap-1 items-center" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={() => toggleFavorite(entry)}
+                          aria-label={entry.isFavorite ? "Remove from Favorites" : "Add to Favorites"}
                           className={`p-1.5 rounded-lg transition-colors ${
                             entry.isFavorite 
                               ? "text-amber-400 hover:text-amber-300" 
@@ -1217,6 +1227,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
                         </button>
                         <button
                           onClick={() => setViewingEntry(entry)}
+                          aria-label={`View details for ${entry.accountName}`}
                           className="p-1.5 text-slate-500 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors"
                           title="View"
                         >
@@ -1224,6 +1235,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
                         </button>
                         <button
                           onClick={() => setEditingEntry(entry)}
+                          aria-label={`Edit ${entry.accountName}`}
                           className="p-1.5 text-slate-500 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors"
                           title="Edit"
                         >
@@ -1231,6 +1243,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
                         </button>
                         <button
                           onClick={() => handleDeleteClick(entry)}
+                          aria-label={`Delete ${entry.accountName}`}
                           className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                           title="Delete"
                         >
@@ -1239,6 +1252,8 @@ export const MainVault: React.FC<MainVaultProps> = ({
                         {/* Expand/Collapse Arrow */}
                         <button
                           onClick={() => toggleEntryExpanded(entry.id)}
+                          aria-label={isExpanded ? `Collapse ${entry.accountName} details` : `Expand ${entry.accountName} details`}
+                          aria-expanded={isExpanded}
                           className="p-1.5 text-slate-500 hover:text-white hover:bg-slate-700/50 rounded-lg transition-all ml-1"
                           title={isExpanded ? "Collapse" : "Expand"}
                         >
@@ -1281,6 +1296,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
                               {entry.username && (
                                 <button
                                   onClick={() => copyToClipboard(entry.username, entry.id + "-user")}
+                                  aria-label={`Copy username for ${entry.accountName}`}
                                   className={`p-1.5 rounded transition-colors flex-shrink-0 ${
                                     copiedId === entry.id + "-user"
                                     ? "text-emerald-400" 
@@ -1304,6 +1320,8 @@ export const MainVault: React.FC<MainVaultProps> = ({
                               <div className="flex gap-1 flex-shrink-0">
                                 <button
                                   onClick={() => togglePasswordVisibility(entry.id)}
+                                  aria-label={isPasswordVisible ? `Hide password for ${entry.accountName}` : `Show password for ${entry.accountName}`}
+                                  aria-pressed={isPasswordVisible}
                                   className="p-1.5 text-slate-500 hover:text-white rounded transition-colors"
                                   title={isPasswordVisible ? "Hide" : "Show"}
                                 >
@@ -1311,6 +1329,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
                                 </button>
                                 <button
                                   onClick={() => copyToClipboard(entry.password, entry.id)}
+                                  aria-label={`Copy password for ${entry.accountName}`}
                                   className={`p-1.5 rounded transition-colors ${
                                     copiedId === entry.id 
                                     ? "text-emerald-400" 
@@ -1454,6 +1473,7 @@ export const MainVault: React.FC<MainVaultProps> = ({
                     <span style={{ color: colors.warmIvory }} className="text-sm">{viewingEntry.username}</span>
                     <button
                       onClick={() => copyToClipboard(viewingEntry.username, `user-${viewingEntry.id}`)}
+                      aria-label={`Copy username for ${viewingEntry.accountName}`}
                       className="p-1.5 text-slate-500 hover:text-white rounded transition-colors"
                     >
                       <Copy className="w-4 h-4" strokeWidth={1.5} />
@@ -1470,12 +1490,15 @@ export const MainVault: React.FC<MainVaultProps> = ({
                     <div className="flex gap-1">
                       <button
                         onClick={() => togglePasswordVisibility(viewingEntry.id)}
+                        aria-label={visiblePasswords.has(viewingEntry.id) ? `Hide password for ${viewingEntry.accountName}` : `Show password for ${viewingEntry.accountName}`}
+                        aria-pressed={visiblePasswords.has(viewingEntry.id)}
                         className="p-1.5 text-slate-500 hover:text-white rounded transition-colors"
                       >
                         {visiblePasswords.has(viewingEntry.id) ? <EyeOff className="w-4 h-4" strokeWidth={1.5} /> : <Eye className="w-4 h-4" strokeWidth={1.5} />}
                       </button>
                       <button
                         onClick={() => copyToClipboard(viewingEntry.password, `pwd-${viewingEntry.id}`)}
+                        aria-label={`Copy password for ${viewingEntry.accountName}`}
                         className="p-1.5 text-slate-500 hover:text-white rounded transition-colors"
                       >
                         <Copy className="w-4 h-4" strokeWidth={1.5} />
@@ -1736,12 +1759,17 @@ export const MainVault: React.FC<MainVaultProps> = ({
               allEntries={entries}
               defaultCategory={!editingEntry && selectedCategory !== "all" ? selectedCategory : undefined}
               onSubmit={async (data) => {
-                if (editingEntry) {
-                  await onUpdateEntry({ ...editingEntry, ...data, updatedAt: new Date() });
-                  setEditingEntry(null);
-                } else {
-                  await onAddEntry(data);
-                  setShowAddForm(false);
+                setIsSavingEntry(true);
+                try {
+                  if (editingEntry) {
+                    await onUpdateEntry({ ...editingEntry, ...data, updatedAt: new Date() });
+                    setEditingEntry(null);
+                  } else {
+                    await onAddEntry(data);
+                    setShowAddForm(false);
+                  }
+                } finally {
+                  setIsSavingEntry(false);
                 }
               }}
               onCancel={() => {
@@ -1749,10 +1777,16 @@ export const MainVault: React.FC<MainVaultProps> = ({
                 setEditingEntry(null);
               }}
               onDelete={editingEntry ? async () => {
-                await onDeleteEntry(editingEntry.id);
-                setEditingEntry(null);
-                setViewingEntry(null);
+                setIsDeletingEntry(true);
+                try {
+                  await onDeleteEntry(editingEntry.id);
+                  setEditingEntry(null);
+                  setViewingEntry(null);
+                } finally {
+                  setIsDeletingEntry(false);
+                }
               } : undefined}
+              isLoading={isSavingEntry || isDeletingEntry}
             />
           </div>
         </div>
@@ -1799,6 +1833,34 @@ export const MainVault: React.FC<MainVaultProps> = ({
         </div>
       )}
 
-    </div>
+      </div>
+    </PerformanceProfiler>
   );
 };
+
+// Memoize component to prevent unnecessary re-renders
+// Custom comparison: return true if props are equal (skip re-render), false if different (re-render)
+export const MainVault = React.memo(MainVaultComponent, (prevProps, nextProps) => {
+  // Re-render if entries array length or identity changed
+  if (prevProps.entries.length !== nextProps.entries.length || prevProps.entries !== nextProps.entries) {
+    return false; // Props changed, re-render needed
+  }
+  
+  // Re-render if search term changed
+  if (prevProps.searchTerm !== nextProps.searchTerm) {
+    return false; // Props changed, re-render needed
+  }
+  
+  // Re-render if selected category changed
+  if (prevProps.selectedCategory !== nextProps.selectedCategory) {
+    return false; // Props changed, re-render needed
+  }
+  
+  // Re-render if categories array changed
+  if (prevProps.categories !== nextProps.categories) {
+    return false; // Props changed, re-render needed
+  }
+  
+  // All props are equal, skip re-render
+  return true;
+});

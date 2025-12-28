@@ -399,10 +399,16 @@ export const Settings: React.FC<SettingsProps> = ({
     setSettings(loadedSettings);
     
     // Load current password hint
-    storageService.getPasswordHint().then(hint => {
-      setCurrentHint(hint);
-      setNewHint(hint || "");
-    });
+    const loadPasswordHint = async () => {
+      try {
+        const hint = await storageService.getPasswordHint();
+        setCurrentHint(hint);
+        setNewHint(hint || "");
+      } catch (error) {
+        devError('Failed to load password hint:', error);
+      }
+    };
+    loadPasswordHint();
   }, []);
   
   // Handle regenerating recovery phrase

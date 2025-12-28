@@ -121,6 +121,65 @@ CREATE TABLE IF NOT EXISTS webhook_events (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Support tickets table
+CREATE TABLE IF NOT EXISTS support_tickets (
+    id SERIAL PRIMARY KEY,
+    ticket_number TEXT NOT NULL UNIQUE, -- Human-readable ticket number (e.g., TKT-2025-001234)
+    
+    -- Customer information
+    email TEXT NOT NULL,
+    name TEXT,
+    customer_id INTEGER REFERENCES customers(id),
+    
+    -- Ticket details
+    subject TEXT NOT NULL,
+    description TEXT NOT NULL,
+    category TEXT NOT NULL CHECK (category IN ('technical', 'billing', 'license', 'feature', 'bug', 'other')),
+    priority TEXT DEFAULT 'normal' CHECK (priority IN ('low', 'normal', 'high', 'urgent')),
+    
+    -- Status tracking
+    status TEXT DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'waiting_customer', 'resolved', 'closed')),
+    
+    -- Assignment
+    assigned_to TEXT, -- Support agent email/name
+    
+    -- License association (if applicable)
+    license_key TEXT,
+    license_id INTEGER REFERENCES licenses(id),
+    
+    -- Response tracking
+    last_response_at TIMESTAMP,
+    last_response_by TEXT, -- 'customer' or 'support'
+    response_count INTEGER DEFAULT 0,
+    
+    -- Timestamps
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    resolved_at TIMESTAMP,
+    closed_at TIMESTAMP
+);
+
+-- Ticket messages/thread (for conversation history)
+CREATE TABLE IF NOT EXISTS ticket_messages (
+    id SERIAL PRIMARY KEY,
+    ticket_id INTEGER NOT NULL REFERENCES support_tickets(id) ON DELETE CASCADE,
+    
+    -- Message content
+    message TEXT NOT NULL,
+    sender_type TEXT NOT NULL CHECK (sender_type IN ('customer', 'support')),
+    sender_email TEXT NOT NULL,
+    sender_name TEXT,
+    
+    -- Attachments (stored as JSON array of file info)
+    attachments JSONB,
+    
+    -- Internal notes (only visible to support)
+    is_internal_note BOOLEAN DEFAULT FALSE,
+    
+    -- Timestamps
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- =============================================================================
 -- INDEXES for performance
 -- =============================================================================
@@ -132,3 +191,9 @@ CREATE INDEX IF NOT EXISTS idx_trials_email ON trials(email);
 CREATE INDEX IF NOT EXISTS idx_trials_key ON trials(trial_key);
 CREATE INDEX IF NOT EXISTS idx_device_activations_license ON device_activations(license_id);
 CREATE INDEX IF NOT EXISTS idx_webhook_events_stripe_id ON webhook_events(stripe_event_id);
+CREATE INDEX IF NOT EXISTS idx_support_tickets_email ON support_tickets(email);
+CREATE INDEX IF NOT EXISTS idx_support_tickets_number ON support_tickets(ticket_number);
+CREATE INDEX IF NOT EXISTS idx_support_tickets_status ON support_tickets(status);
+CREATE INDEX IF NOT EXISTS idx_support_tickets_customer ON support_tickets(customer_id);
+CREATE INDEX IF NOT EXISTS idx_ticket_messages_ticket ON ticket_messages(ticket_id);
+CREATE INDEX IF NOT EXISTS idx_ticket_messages_created ON ticket_messages(created_at);

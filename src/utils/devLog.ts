@@ -11,8 +11,8 @@ try {
   // Check if we're in a test environment first
   if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
     isDev = true;
-  } else if (typeof window !== 'undefined' && (window as any).__DEV__ !== undefined) {
-    isDev = (window as any).__DEV__;
+  } else if (typeof window !== 'undefined' && window.__DEV__ !== undefined) {
+    isDev = window.__DEV__;
   } else {
     // @ts-ignore - import.meta may not be available in all environments
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

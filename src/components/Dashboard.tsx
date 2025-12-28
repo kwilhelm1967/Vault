@@ -5,6 +5,8 @@
  */
 
 import React, { useMemo, useState } from "react";
+import { useRenderTracking } from "../hooks/usePerformance";
+import { PerformanceProfiler } from "./PerformanceProfiler";
 import {
   Shield,
   Key,
@@ -42,12 +44,17 @@ interface DashboardProps {
   onImport?: () => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({
+const DashboardComponent: React.FC<DashboardProps> = ({
   entries,
   categories: _categories,
   onAddEntry,
   onViewCategory,
   onViewEntry: _onViewEntry,
+}) => {
+  // Track render performance in development
+  useRenderTracking('Dashboard');
+
+  // Calculate statistics
   onEditEntry: _onEditEntry,
   onDeleteEntry: _onDeleteEntry,
   onViewWeakPasswords,
@@ -250,7 +257,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   return (
-    <div className="p-6 space-y-6 overflow-y-auto h-full">
+    <PerformanceProfiler id="Dashboard">
+      <div className="p-6 space-y-6 overflow-y-auto h-full">
       {/* Welcome Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -707,6 +715,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </PerformanceProfiler>
   );
 };
+
+// Memoize Dashboard to prevent unnecessary re-renders
+export const Dashboard = React.memo(DashboardComponent, (prevProps, nextProps) => {
+  // Only re-render if entries or categories change
+  return (
+    prevProps.entries.length === nextProps.entries.length &&
+    prevProps.categories.length === nextProps.categories.length &&
+    JSON.stringify(prevProps.entries.map(e => e.id).sort()) === 
+    JSON.stringify(nextProps.entries.map(e => e.id).sort())
+  );
+});

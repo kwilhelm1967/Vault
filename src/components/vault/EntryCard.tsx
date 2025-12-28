@@ -76,7 +76,7 @@ interface EntryCardProps {
   onView: () => void;
 }
 
-export const EntryCard: React.FC<EntryCardProps> = ({
+const EntryCardComponent: React.FC<EntryCardProps> = ({
   entry,
   isExpanded,
   isPasswordVisible,
@@ -334,4 +334,21 @@ export const EntryCard: React.FC<EntryCardProps> = ({
     </div>
   );
 };
+
+// Memoize EntryCard to prevent unnecessary re-renders
+export const EntryCard = React.memo(EntryCardComponent, (prevProps, nextProps) => {
+  // Only re-render if entry data changes
+  return (
+    prevProps.entry.id === nextProps.entry.id &&
+    prevProps.entry.accountName === nextProps.entry.accountName &&
+    prevProps.entry.username === nextProps.entry.username &&
+    prevProps.entry.password === nextProps.entry.password &&
+    prevProps.entry.isFavorite === nextProps.entry.isFavorite &&
+    prevProps.entry.updatedAt === nextProps.entry.updatedAt &&
+    prevProps.isExpanded === nextProps.isExpanded &&
+    prevProps.isPasswordVisible === nextProps.isPasswordVisible &&
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.bulkSelectMode === nextProps.bulkSelectMode
+  );
+});
 

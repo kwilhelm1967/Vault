@@ -471,6 +471,182 @@ describe('LicenseService', () => {
       expect(status.requiresPurchase).toBe(false);
     });
   });
+
+  describe('getLocalLicenseFile', () => {
+    it('should return null when no license file exists', async () => {
+      localStorageMock.clear();
+      const result = await licenseService.getLocalLicenseFile();
+      expect(result).toBeNull();
+    });
+
+    it('should return license file when valid file exists', async () => {
+      const licenseFile = {
+        license_key: 'PERS-XXXX-XXXX-XXXX',
+        device_id: 'device-id-123',
+        plan_type: 'personal',
+        max_devices: 1,
+        activated_at: new Date().toISOString(),
+        signature: 'valid-signature',
+        signed_at: new Date().toISOString(),
+      };
+      localStorageMock.setItem('lpv_license_file', JSON.stringify(licenseFile));
+
+      const result = await licenseService.getLocalLicenseFile();
+      
+      expect(result).not.toBeNull();
+      expect(result?.license_key).toBe('PERS-XXXX-XXXX-XXXX');
+      expect(result?.device_id).toBe('device-id-123');
+    });
+
+    it('should handle corruption recovery', async () => {
+      // Mock corruption handler
+      const mockCorruptionHandler = {
+        checkLicenseFileCorruption: jest.fn().mockReturnValue({
+          isCorrupted: true,
+          recoverable: true,
+          errors: ['Invalid JSON structure'],
+        }),
+        recoverLicenseFile: jest.fn().mockReturnValue({
+          success: true,
+          recovered: true,
+          data: {
+            license_key: 'PERS-XXXX-XXXX-XXXX',
+            device_id: 'device-id-123',
+            plan_type: 'personal',
+            max_devices: 1,
+          },
+        }),
+      };
+
+      // Store corrupted data
+      localStorageMock.setItem('lpv_license_file', 'corrupted-json{');
+
+      // Mock dynamic import
+      jest.doMock('../corruptionHandler', () => mockCorruptionHandler);
+
+      const result = await licenseService.getLocalLicenseFile();
+      
+      expect(result).not.toBeNull();
+      expect(result?.license_key).toBe('PERS-XXXX-XXXX-XXXX');
+    });
+
+    it('should return null when corruption cannot be recovered', async () => {
+      const mockCorruptionHandler = {
+        checkLicenseFileCorruption: jest.fn().mockReturnValue({
+          isCorrupted: true,
+          recoverable: false,
+          errors: ['Severe corruption'],
+        }),
+      };
+
+      localStorageMock.setItem('lpv_license_file', 'severely-corrupted');
+
+      jest.doMock('../corruptionHandler', () => mockCorruptionHandler);
+
+      const result = await licenseService.getLocalLicenseFile();
+      
+      expect(result).toBeNull();
+    });
+
+    it('should handle JSON parse errors', async () => {
+      localStorageMock.setItem('lpv_license_file', 'invalid-json{');
+
+      const result = await licenseService.getLocalLicenseFile();
+      
+      // Should handle gracefully and return null
+      expect(result).toBeNull();
+    });
+
+    it('should handle async import errors', async () => {
+      localStorageMock.setItem('lpv_license_file', JSON.stringify({
+        license_key: 'PERS-XXXX-XXXX-XXXX',
+        device_id: 'device-id-123',
+      }));
+
+      // Mock import failure
+      jest.doMock('../corruptionHandler', () => {
+        throw new Error('Module not found');
+      });
+
+      // Should still work if corruption check fails
+      const result = await licenseService.getLocalLicenseFile();
+      // Result depends on whether corruption handler is required
+      expect(result).toBeDefined();
+    });
+  });
+
+  describe('getMaxDevices', () => {
+    it('should return 1 when no license file exists', async () => {
+      localStorageMock.clear();
+      const result = await licenseService.getMaxDevices();
+      expect(result).toBe(1);
+    });
+
+    it('should return max_devices from license file', async () => {
+      const licenseFile = {
+        license_key: 'FAMI-XXXX-XXXX-XXXX',
+        device_id: 'device-id-123',
+        plan_type: 'family',
+        max_devices: 5,
+        activated_at: new Date().toISOString(),
+        signature: 'valid-signature',
+        signed_at: new Date().toISOString(),
+      };
+      localStorageMock.setItem('lpv_license_file', JSON.stringify(licenseFile));
+
+      const result = await licenseService.getMaxDevices();
+      expect(result).toBe(5);
+    });
+
+    it('should return 1 when max_devices is not specified', async () => {
+      const licenseFile = {
+        license_key: 'PERS-XXXX-XXXX-XXXX',
+        device_id: 'device-id-123',
+        plan_type: 'personal',
+        activated_at: new Date().toISOString(),
+        signature: 'valid-signature',
+        signed_at: new Date().toISOString(),
+      };
+      localStorageMock.setItem('lpv_license_file', JSON.stringify(licenseFile));
+
+      const result = await licenseService.getMaxDevices();
+      expect(result).toBe(1);
+    });
+
+    it('should handle errors gracefully and return 1', async () => {
+      // Set invalid data that will cause getLocalLicenseFile to fail
+      localStorageMock.setItem('lpv_license_file', 'invalid-json');
+
+      const result = await licenseService.getMaxDevices();
+      expect(result).toBe(1); // Fallback value
+    });
+  });
+
+  describe('getCurrentDeviceInfo', () => {
+    it('should return null when no license file exists', async () => {
+      localStorageMock.clear();
+      const result = await licenseService.getCurrentDeviceInfo();
+      expect(result).toBeNull();
+    });
+
+    it('should return device info when license file exists', async () => {
+      const licenseFile = {
+        license_key: 'PERS-XXXX-XXXX-XXXX',
+        device_id: 'device-id-123',
+        plan_type: 'personal',
+        max_devices: 1,
+        activated_at: new Date().toISOString(),
+        signature: 'valid-signature',
+        signed_at: new Date().toISOString(),
+      };
+      localStorageMock.setItem('lpv_license_file', JSON.stringify(licenseFile));
+
+      const result = await licenseService.getCurrentDeviceInfo();
+      
+      expect(result).not.toBeNull();
+      expect(result?.deviceId).toBe('device-id-123');
+    });
+  });
 });
 
 

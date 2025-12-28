@@ -4,14 +4,31 @@
  * Tests for error handling utilities and patterns
  */
 
+// Mock import.meta.env before importing the module
+Object.defineProperty(globalThis, 'import', {
+  value: {
+    meta: {
+      env: {
+        DEV: false,
+      },
+    },
+  },
+  writable: true,
+});
+
 import {
   ErrorHandler,
+  ErrorLogger,
   ValidationError,
   NetworkError,
   StorageError,
   AuthenticationError,
   withErrorHandling,
-  withRetry
+  withRetry,
+  createError,
+  getErrorLogger,
+  ERROR_CODES,
+  type AppError,
 } from '../utils/errorHandling';
 
 describe('Error Classes', () => {
@@ -236,5 +253,274 @@ describe('useErrorHandler hook', () => {
     expect(result.userMessage).toBe('Test error');
     // Regular errors are not retryable
     expect(result.shouldRetry).toBe(false);
+  });
+});
+
+describe('ErrorLogger', () => {
+  let logger: ErrorLogger;
+  let localStorageMock: Record<string, string>;
+
+  beforeEach(() => {
+    localStorageMock = {};
+    jest.spyOn(Storage.prototype, 'getItem').mockImplementation((key: string) => {
+      return localStorageMock[key] || null;
+    });
+    jest.spyOn(Storage.prototype, 'setItem').mockImplementation((key: string, value: string) => {
+      localStorageMock[key] = value;
+    });
+    jest.spyOn(Storage.prototype, 'removeItem').mockImplementation((key: string) => {
+      delete localStorageMock[key];
+    });
+
+    logger = ErrorLogger.getInstance();
+    logger.clearHistory();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('should be a singleton', () => {
+    const logger1 = ErrorLogger.getInstance();
+    const logger2 = ErrorLogger.getInstance();
+    
+    expect(logger1).toBe(logger2);
+  });
+
+  it('should log errors with context', () => {
+    const error: AppError = {
+      code: 'TEST_ERROR',
+      message: 'Test error message',
+      recoverable: true,
+      userMessage: 'User-friendly message',
+    };
+
+    const entry = logger.logError(error, 'test-context');
+
+    expect(entry.code).toBe('TEST_ERROR');
+    expect(entry.message).toBe('Test error message');
+    expect(entry.context).toBe('test-context');
+    expect(entry.timestamp).toBeDefined();
+  });
+
+  it('should store errors in history', () => {
+    const error: AppError = {
+      code: 'TEST_ERROR',
+      message: 'Test error',
+      recoverable: true,
+    };
+
+    logger.logError(error);
+    const history = logger.getErrorHistory();
+
+    expect(history.length).toBe(1);
+    expect(history[0].code).toBe('TEST_ERROR');
+  });
+
+  it('should limit history to MAX_HISTORY', () => {
+    const error: AppError = {
+      code: 'TEST_ERROR',
+      message: 'Test error',
+      recoverable: true,
+    };
+
+    // Log more than MAX_HISTORY (100) errors
+    for (let i = 0; i < 150; i++) {
+      logger.logError({ ...error, code: `ERROR_${i}` });
+    }
+
+    const history = logger.getErrorHistory(200);
+    expect(history.length).toBeLessThanOrEqual(100);
+  });
+
+  it('should get recent error history with limit', () => {
+    const error: AppError = {
+      code: 'TEST_ERROR',
+      message: 'Test error',
+      recoverable: true,
+    };
+
+    for (let i = 0; i < 20; i++) {
+      logger.logError({ ...error, code: `ERROR_${i}` });
+    }
+
+    const recent = logger.getErrorHistory(5);
+    expect(recent.length).toBe(5);
+  });
+
+  it('should clear error history', () => {
+    const error: AppError = {
+      code: 'TEST_ERROR',
+      message: 'Test error',
+      recoverable: true,
+    };
+
+    logger.logError(error);
+    expect(logger.getErrorHistory().length).toBe(1);
+
+    logger.clearHistory();
+    expect(logger.getErrorHistory().length).toBe(0);
+  });
+
+  it('should export error logs as JSON', () => {
+    const error: AppError = {
+      code: 'TEST_ERROR',
+      message: 'Test error',
+      recoverable: true,
+    };
+
+    logger.logError(error);
+    const exported = logger.exportErrorLogs();
+    const parsed = JSON.parse(exported);
+
+    expect(parsed.totalErrors).toBe(1);
+    expect(parsed.errors).toHaveLength(1);
+    expect(parsed.exportedAt).toBeDefined();
+    expect(parsed.appVersion).toBeDefined();
+  });
+
+  it('should get error statistics', () => {
+    const errors = [
+      { code: 'ERROR_A', message: 'Error A', recoverable: true },
+      { code: 'ERROR_A', message: 'Error A again', recoverable: true },
+      { code: 'ERROR_B', message: 'Error B', recoverable: true },
+    ];
+
+    errors.forEach(err => logger.logError(err as AppError));
+    const stats = logger.getErrorStats();
+
+    expect(stats.total).toBe(3);
+    expect(stats.byCode['ERROR_A']).toBe(2);
+    expect(stats.byCode['ERROR_B']).toBe(1);
+    expect(stats.recent).toBeGreaterThanOrEqual(0);
+  });
+
+  it('should persist errors to localStorage', () => {
+    const error: AppError = {
+      code: 'TEST_ERROR',
+      message: 'Test error',
+      recoverable: true,
+    };
+
+    logger.logError(error);
+
+    expect(Storage.prototype.setItem).toHaveBeenCalled();
+  });
+
+  it('should load errors from localStorage on initialization', () => {
+    const storedErrors = [
+      {
+        code: 'STORED_ERROR',
+        message: 'Stored error',
+        timestamp: new Date().toISOString(),
+      },
+    ];
+    localStorageMock['lpv_error_logs'] = JSON.stringify(storedErrors);
+
+    const newLogger = ErrorLogger.getInstance();
+    const history = newLogger.getErrorHistory();
+
+    expect(history.length).toBeGreaterThan(0);
+  });
+
+  it('should handle corrupted localStorage data gracefully', () => {
+    localStorageMock['lpv_error_logs'] = 'invalid json!!!';
+
+    const newLogger = ErrorLogger.getInstance();
+    const history = newLogger.getErrorHistory();
+
+    // Should handle gracefully and return empty history
+    expect(Array.isArray(history)).toBe(true);
+  });
+});
+
+describe('createError', () => {
+  it('should create structured error with code', () => {
+    const error = createError('TEST_ERROR', 'Test message');
+
+    expect(error.code).toBe('TEST_ERROR');
+    expect(error.message).toBe('Test message');
+    expect(error.recoverable).toBe(false);
+    expect(error.timestamp).toBeDefined();
+  });
+
+  it('should create error with options', () => {
+    const error = createError('TEST_ERROR', 'Test message', {
+      details: { field: 'email' },
+      recoverable: true,
+      userMessage: 'User-friendly message',
+      context: 'validation',
+    });
+
+    expect(error.code).toBe('TEST_ERROR');
+    expect(error.details).toEqual({ field: 'email' });
+    expect(error.recoverable).toBe(true);
+    expect(error.userMessage).toBe('User-friendly message');
+    expect(error.context).toBe('validation');
+  });
+
+  it('should use message as default userMessage', () => {
+    const error = createError('TEST_ERROR', 'Test message');
+
+    expect(error.userMessage).toBe('Test message');
+  });
+});
+
+describe('ERROR_CODES', () => {
+  it('should export all error code constants', () => {
+    expect(ERROR_CODES.VALIDATION_ERROR).toBe('VALIDATION_ERROR');
+    expect(ERROR_CODES.NETWORK_ERROR).toBe('NETWORK_ERROR');
+    expect(ERROR_CODES.STORAGE_ERROR).toBe('STORAGE_ERROR');
+    expect(ERROR_CODES.AUTH_ERROR).toBe('AUTH_ERROR');
+    expect(ERROR_CODES.UNKNOWN_ERROR).toBe('UNKNOWN_ERROR');
+  });
+});
+
+describe('getErrorLogger', () => {
+  it('should return ErrorLogger instance', () => {
+    const logger = getErrorLogger();
+
+    expect(logger).toBeInstanceOf(ErrorLogger);
+    expect(logger).toBe(ErrorLogger.getInstance());
+  });
+});
+
+describe('ErrorHandler - normalizeError', () => {
+  let errorHandler: ErrorHandler;
+
+  beforeEach(() => {
+    errorHandler = ErrorHandler.getInstance();
+  });
+
+  it('should infer NETWORK_ERROR from error message', () => {
+    const error = new Error('Network connection failed');
+    const result = errorHandler.handle(error);
+
+    expect(result.errorCode).toBe('NETWORK_ERROR');
+    expect(result.shouldRetry).toBe(true);
+  });
+
+  it('should infer STORAGE_ERROR from error message', () => {
+    const error = new Error('localStorage quota exceeded');
+    const result = errorHandler.handle(error);
+
+    expect(result.errorCode).toBe('STORAGE_ERROR');
+  });
+
+  it('should infer AUTH_ERROR from error message', () => {
+    const error = new Error('Permission denied');
+    const result = errorHandler.handle(error);
+
+    expect(result.errorCode).toBe('AUTH_ERROR');
+    expect(result.shouldRetry).toBe(true);
+  });
+
+  it('should handle errors with stack traces', () => {
+    const error = new Error('Test error');
+    error.stack = 'Error: Test error\n    at test.js:1:1';
+
+    const result = errorHandler.handle(error);
+
+    expect(result.errorCode).toBe('UNKNOWN_ERROR');
   });
 });

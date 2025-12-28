@@ -448,7 +448,11 @@ function App() {
     storageService.lockVault();
 
     if (isElectron && window.electronAPI?.vaultLocked) {
-      await window.electronAPI.vaultLocked();
+      try {
+        await window.electronAPI.vaultLocked();
+      } catch (error) {
+        devError('Failed to notify Electron of vault lock:', error);
+      }
     }
 
     setIsLocked(true);
@@ -541,7 +545,12 @@ function App() {
         await storageService.initializeVault(password);
         setIsLocked(false);
         if (isElectron && window.electronAPI?.vaultUnlocked) {
-          await window.electronAPI.vaultUnlocked();
+          try {
+            await window.electronAPI.vaultUnlocked();
+          } catch (error) {
+            devError('Failed to notify Electron of vault unlock:', error);
+            // Don't throw - initialization was successful, just notification failed
+          }
         }
         return;
       }
@@ -550,7 +559,12 @@ function App() {
       if (isValid) {
         setIsLocked(false);
         if (isElectron && window.electronAPI?.vaultUnlocked) {
-          await window.electronAPI.vaultUnlocked();
+          try {
+            await window.electronAPI.vaultUnlocked();
+          } catch (error) {
+            devError('Failed to notify Electron of vault unlock:', error);
+            // Don't throw - unlock was successful, just notification failed
+          }
         }
       } else {
         throw new Error("Invalid password");
@@ -686,9 +700,13 @@ function App() {
 
       // Update shared storage for Electron
       if (isElectron && saveSharedEntries) {
-        await saveSharedEntries(newEntries);
-        if (window.electronAPI?.broadcastEntriesChanged) {
-          await window.electronAPI.broadcastEntriesChanged();
+        try {
+          await saveSharedEntries(newEntries);
+          if (window.electronAPI?.broadcastEntriesChanged) {
+            await window.electronAPI.broadcastEntriesChanged();
+          }
+        } catch (error) {
+          devError("Failed to update shared storage after encrypted import:", error);
         }
       }
 
@@ -703,11 +721,24 @@ function App() {
     if (isElectron) {
       if (window.electronAPI) {
         if (showMainVault) {
-          window.electronAPI.showFloatingPanel();
-          void (window.electronAPI.hideMainWindow?.() ?? window.electronAPI.minimizeMainWindow?.());
+          try {
+            window.electronAPI.showFloatingPanel();
+            const hidePromise = window.electronAPI.hideMainWindow?.() ?? window.electronAPI.minimizeMainWindow?.();
+            if (hidePromise) {
+              hidePromise.catch((error: unknown) => {
+                devError('Failed to hide/minimize main window:', error);
+              });
+            }
+          } catch (error) {
+            devError('Failed to show floating panel:', error);
+          }
         } else {
-          window.electronAPI.restoreMainWindow();
-          window.electronAPI.hideFloatingPanel();
+          try {
+            window.electronAPI.restoreMainWindow();
+            window.electronAPI.hideFloatingPanel();
+          } catch (error) {
+            devError('Failed to restore main window:', error);
+          }
         }
       }
     } else {
@@ -805,7 +836,13 @@ function App() {
             </div>
             <p className="text-slate-400 text-sm mb-4">Vault is locked</p>
             <button
-              onClick={() => window.electronAPI?.restoreMainWindow()}
+              onClick={async () => {
+                try {
+                  await window.electronAPI?.restoreMainWindow();
+                } catch (error) {
+                  devError('Failed to restore main window:', error);
+                }
+              }}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
             >
               Unlock in Main Window
@@ -821,10 +858,13 @@ function App() {
           <ElectronFloatingPanel
             key={`floating-panel-${entries.length}`}
             {...floatingPanelProps}
-            onMaximize={() => {
-              window.electronAPI?.restoreMainWindow()?.then(() => {
+            onMaximize={async () => {
+              try {
+                await window.electronAPI?.restoreMainWindow();
                 window.electronAPI?.hideFloatingPanel();
-              });
+              } catch (error) {
+                devError('Failed to restore main window:', error);
+              }
             }}
           />
         </div>
