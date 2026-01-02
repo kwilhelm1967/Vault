@@ -524,34 +524,16 @@
       }, { threshold: 0.1 });
       document.querySelectorAll('.animate').forEach(el => observer.observe(el));
       
-      // Get trial key from URL params
+      // Get trial key from URL params - ALWAYS show it if provided
       const urlParams = new URLSearchParams(window.location.search);
       const email = urlParams.get('email');
       const keyFromUrl = urlParams.get('key');
       
-      if (keyFromUrl && keyFromUrl.trim() !== '') {
-        // Use key from URL if provided
+      // ALWAYS display the key from URL if it exists
+      if (keyFromUrl) {
         document.getElementById('trialKey').textContent = keyFromUrl;
-      } else if (email) {
-        // If key not in URL but email provided, try to fetch from backend
-        // This handles cases where user navigates directly or key wasn't passed
-        fetch(`${API_BASE_URL}/api/trial/status/${encodeURIComponent(email)}`)
-          .then(res => res.json())
-          .then(data => {
-            if (data.hasTrial && !data.isExpired) {
-              // Key should have been in URL, but show helpful message
-              document.getElementById('trialKey').textContent = 'Check your email for your trial key';
-              document.querySelector('.key-note').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Your trial key has been sent to your email address.';
-            } else {
-              document.getElementById('trialKey').textContent = 'Trial not found';
-            }
-          })
-          .catch(err => {
-            console.error('Error fetching trial status:', err);
-            document.getElementById('trialKey').textContent = 'Check your email for your trial key';
-          });
       } else {
-        // No email or key provided, show generic message
+        // If no key in URL, show message to check email
         document.getElementById('trialKey').textContent = 'Check your email for your trial key';
       }
     });

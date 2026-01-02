@@ -324,13 +324,15 @@
         </div>
         
         <div class="trial-form-section">
-          <form class="trial-form" action="trial-success.html" method="GET" id="trialForm">
+          <form class="trial-form" id="trialForm">
             <div class="form-group">
               <label for="email">Email Address</label>
               <input type="email" id="email" name="email" placeholder="you@example.com" required>
             </div>
             
-            <button type="submit" class="btn-trial">Get My Trial Key →</button>
+            <button type="submit" class="btn-trial" id="submitBtn">Get My Trial Key →</button>
+            <div id="errorMessage" style="display: none; color: #ef4444; font-size: 0.875rem; margin-top: 8px; text-align: left;"></div>
+            <div id="successMessage" style="display: none; color: #10b981; font-size: 0.875rem; margin-top: 8px; text-align: left;"></div>
           </form>
         </div>
 
@@ -367,6 +369,78 @@
   <script>
     // Simple animation on load
     document.querySelectorAll('.animate').forEach(el => el.classList.add('visible'));
+
+    // API base URL - Production uses api.localpasswordvault.com
+    const API_BASE_URL = (() => {
+      const hostname = window.location.hostname;
+      // Production domains
+      if (hostname === 'localpasswordvault.com' || hostname === 'www.localpasswordvault.com') {
+        return 'https://api.localpasswordvault.com';
+      }
+      // Fallback: if domain not configured, use IP (for testing)
+      // In production, api.localpasswordvault.com should point to the server
+      return 'https://api.localpasswordvault.com';
+    })();
+
+    // Handle form submission
+    document.getElementById('trialForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value.trim();
+      const submitBtn = document.getElementById('submitBtn');
+      const errorMsg = document.getElementById('errorMessage');
+      const successMsg = document.getElementById('successMessage');
+      
+      // Hide previous messages
+      errorMsg.style.display = 'none';
+      successMsg.style.display = 'none';
+      
+      // Validate email
+      if (!email) {
+        errorMsg.textContent = 'Please enter your email address';
+        errorMsg.style.display = 'block';
+        return;
+      }
+      
+      // Disable button and show loading
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Processing...';
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/trial/signup`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email }),
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to create trial');
+        }
+        
+        if (data.success) {
+          // Show success message
+          successMsg.textContent = data.message || 'Trial key sent! Check your email.';
+          successMsg.style.display = 'block';
+          
+          // Redirect to success page with email and key - ALWAYS pass the key
+          const trialKey = data.trialKey || '';
+          setTimeout(() => {
+            window.location.href = `trial-success.html?email=${encodeURIComponent(email)}&key=${encodeURIComponent(trialKey)}`;
+          }, 1500);
+        } else {
+          throw new Error(data.error || 'Failed to create trial');
+        }
+      } catch (error) {
+        errorMsg.textContent = error.message || 'Something went wrong. Please try again.';
+        errorMsg.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Get My Trial Key →';
+      }
+    });
   </script>
 </body>
 </html>
