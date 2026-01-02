@@ -87,33 +87,6 @@ The error occurs in the license activation flow when the application cannot succ
 
 ---
 
-## 💳 Stripe Configuration - Complete Live Key Setup
-
-### Task: Get and Configure Stripe Live Secret Key
-
-**What Needs to be Done**:
-
-1. **Get Stripe Live Secret Key**:
-   - Go to Stripe Dashboard → Developers → API keys
-   - Switch to "Live mode" (toggle in top right)
-   - Create or copy secret key (starts with `sk_live_`)
-   - Add to backend `.env` file: `STRIPE_SECRET_KEY=sk_live_xxxxx`
-
-2. **Verify Stripe Webhook is Configured**:
-   - Check webhook endpoint exists: `https://api.localpasswordvault.com/api/webhooks/stripe`
-   - Verify event: `checkout.session.completed` is selected
-   - Verify webhook signing secret is in backend `.env`: `STRIPE_WEBHOOK_SECRET=whsec_xxxxx`
-
-3. **Test Webhook** (if not already tested):
-   - Send test event from Stripe dashboard
-   - Verify webhook is received and processed
-   - Check backend logs for webhook processing
-   - Verify license key is generated in database
-
-**Note**: Stripe price IDs are already configured. This task is specifically for getting the live secret key.
-
----
-
 ## 🧪 Testing & Verification - End-to-End Testing
 
 ### Task: Complete End-to-End Testing
@@ -305,9 +278,8 @@ The error occurs in the license activation flow when the application cannot succ
 3. **Verify Backend Server** - Ensure backend is accessible (required for connection error fix)
 
 ### High Priority:
-4. **Complete Stripe Setup** - Get live secret key (required for payments)
-5. **End-to-End Testing** - Test complete purchase and activation flow (verify everything works)
-6. **Build Verification** - Test Windows installer on clean machine (verify users can install)
+4. **End-to-End Testing** - Test complete purchase and activation flow (verify everything works)
+5. **Build Verification** - Test Windows installer on clean machine (verify users can install)
 
 ### Medium Priority:
 7. **Email Service Testing** - Verify emails are sent and received correctly
