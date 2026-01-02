@@ -28,10 +28,14 @@ const db = require('./database/db');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Sentry request handler must be first
-app.use(Sentry.Handlers.requestHandler());
-// Tracing handler
-app.use(Sentry.Handlers.tracingHandler());
+// Sentry request handler must be first (only if Sentry is available)
+if (Sentry && Sentry.Handlers && Sentry.Handlers.requestHandler) {
+  app.use(Sentry.Handlers.requestHandler());
+  // Tracing handler
+  if (Sentry.Handlers.tracingHandler) {
+    app.use(Sentry.Handlers.tracingHandler());
+  }
+}
 
 app.use(helmet());
 
@@ -175,7 +179,10 @@ app.use((req, res) => {
 });
 
 // Sentry error handler must be before other error handlers
-app.use(Sentry.Handlers.errorHandler());
+// Sentry error handler (only if Sentry is available)
+if (Sentry && Sentry.Handlers && Sentry.Handlers.errorHandler) {
+  app.use(Sentry.Handlers.errorHandler());
+}
 
 app.use((err, req, res, next) => {
   // Log error
