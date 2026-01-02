@@ -191,34 +191,50 @@ class ApiClient {
         let response;
         if (window.electronAPI && window.electronAPI.httpRequest) {
           try {
-            devLog('Using Electron native HTTP request');
+            devLog('[API Client] Using Electron native HTTP request');
+            devLog('[API Client] Request URL:', fullUrl);
+            devLog('[API Client] Request method:', processedConfig.method);
             const electronResponse = await window.electronAPI.httpRequest(fullUrl, {
               method: processedConfig.method,
               headers: processedConfig.headers,
               body: requestBody,
             });
-            // Convert Electron response to fetch-like response
-            response = {
-              ok: electronResponse.ok,
+            // Electron response already has the data
+            devLog(`[API Client] Electron response status:`, electronResponse.status, electronResponse.statusText);
+            devLog(`[API Client] Electron response ok:`, electronResponse.ok);
+            
+            if (!electronResponse.ok) {
+              const errorData = electronResponse.data || {};
+              throw {
+                code: 'HTTP_ERROR',
+                message: errorData.error || `HTTP ${electronResponse.status}: ${electronResponse.statusText}`,
+                status: electronResponse.status,
+                details: errorData,
+              };
+            }
+            
+            // Use Electron response directly - it already has the data
+            const data = electronResponse.data || await electronResponse.json();
+            return {
+              data: data as T,
               status: electronResponse.status,
               statusText: electronResponse.statusText,
-              json: electronResponse.json,
               headers: new Headers(),
             };
-            devLog(`Electron response status:`, response.status, response.statusText);
-          } catch (electronError) {
-            devError('Electron HTTP request failed, falling back to fetch:', electronError);
-            // Fall back to fetch
-            response = await fetch(fullUrl, {
-              method: processedConfig.method,
-              headers: processedConfig.headers,
-              body: requestBody,
-              signal: combinedSignal,
-              mode: 'cors',
-              credentials: 'omit',
-            });
+          } catch (electronError: any) {
+            devError('[API Client] Electron HTTP request failed:', electronError);
+            devError('[API Client] Error code:', electronError.code);
+            devError('[API Client] Error message:', electronError.message);
+            // Don't fall back to fetch - throw the error so it's handled properly
+            throw {
+              code: electronError.code || 'NETWORK_ERROR',
+              message: electronError.message || 'Unable to connect to license server. Please check your internet connection and try again.',
+              status: electronError.status,
+              details: electronError,
+            };
           }
         } else {
+          devLog('[API Client] Electron API not available, using fetch');
           // Use regular fetch if Electron API not available
           response = await fetch(fullUrl, {
             method: processedConfig.method,
@@ -228,9 +244,8 @@ class ApiClient {
             mode: 'cors',
             credentials: 'omit',
           });
+          devLog(`[API Client] Fetch response status:`, response.status, response.statusText);
         }
-        
-        devLog(`Response status:`, response.status, response.statusText);
 
         // Check if response is ok
         if (!response.ok) {
