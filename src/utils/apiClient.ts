@@ -62,6 +62,8 @@ class ApiClient {
 
   constructor(baseUrl?: string) {
     this.baseUrl = baseUrl || (environment?.environment?.licenseServerUrl ?? "https://server.localpasswordvault.com");
+    // Log the base URL for debugging
+    devLog('API Client initialized with baseUrl:', this.baseUrl);
     this.defaultHeaders = {
       "Content-Type": "application/json",
     };
@@ -174,18 +176,26 @@ class ApiClient {
     let lastError: ApiError | null = null;
 
     // Retry loop
+    const fullUrl = `${this.baseUrl}${endpoint}`;
+    devLog(`Making ${processedConfig.method} request to:`, fullUrl);
+    
     for (let attempt = 0; attempt <= (processedConfig.retries || 0); attempt++) {
       try {
         const requestBody = processedConfig.body
           ? JSON.stringify(processedConfig.body)
           : undefined;
 
-        const response = await fetch(`${this.baseUrl}${endpoint}`, {
+        devLog(`Attempt ${attempt + 1}: Fetching`, fullUrl);
+        const response = await fetch(fullUrl, {
           method: processedConfig.method,
           headers: processedConfig.headers,
           body: requestBody,
           signal: combinedSignal,
+          mode: 'cors', // Explicitly allow CORS
+          credentials: 'omit', // Don't send credentials
         });
+        
+        devLog(`Response status:`, response.status, response.statusText);
 
         // Check if response is ok
         if (!response.ok) {

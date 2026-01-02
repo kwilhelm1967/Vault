@@ -143,6 +143,7 @@ const createWindow = () => {
       enableRemoteModule: false,
       preload: path.join(__dirname, "preload.js"),
       webSecurity: false, // Disable to allow HTTP connections to license server
+      allowRunningInsecureContent: true, // Allow HTTP content
     },
     icon: path.join(__dirname, "../public/vault-icon.png"),
     titleBarStyle: "default",
@@ -925,36 +926,52 @@ const createMenu = () => {
 // App event handlers
 // Configure session to allow HTTP connections for license server
 app.whenReady().then(() => {
+  // COMPLETELY DISABLE ALL SECURITY RESTRICTIONS FOR LICENSE SERVER
   // Allow all HTTP/HTTPS connections (needed for license server)
   session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
     // Allow all permissions for license server connections
     callback(true);
   });
   
-  // Initialize secure storage
-  secureStorage = new SecureFileStorage(userDataPath);
-
-  // SECURITY: Set Content Security Policy headers and allow license server connections
+  // Allow all web requests without restrictions
+  session.defaultSession.webRequest.onBeforeRequest((details, callback) => {
+    // Allow ALL requests - no blocking
+    callback({});
+  });
+  
+  // Remove ALL CSP restrictions for external connections
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     const responseHeaders = { ...details.responseHeaders };
     
-    // Only apply CSP to local files, not to external API requests
+    // Only apply minimal CSP to local files, completely open for external
     if (details.url.startsWith('file://')) {
+      // Minimal CSP that allows everything external
       responseHeaders['Content-Security-Policy'] = [
-        "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-        "font-src 'self' https://fonts.gstatic.com; " +
-        "img-src 'self' data: blob:; " +
-        "connect-src 'self' ws://localhost:* http://localhost:* http://172.236.111.48:* https://api.keygen.sh https://localpasswordvault.com https://server.localpasswordvault.com http://* https://*; " +
-        "frame-ancestors 'none'; " +
-        "form-action 'self'; " +
-        "base-uri 'self';"
+        "default-src 'self' *; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' *; " +
+        "style-src 'self' 'unsafe-inline' *; " +
+        "font-src 'self' *; " +
+        "img-src 'self' data: blob: *; " +
+        "connect-src 'self' * http://* https://* ws://* wss://*; " +
+        "frame-ancestors *; " +
+        "form-action *; " +
+        "base-uri *;"
       ];
+    } else {
+      // For external URLs, remove CSP completely
+      delete responseHeaders['Content-Security-Policy'];
     }
+    
+    // Add CORS headers to allow all origins
+    responseHeaders['Access-Control-Allow-Origin'] = ['*'];
+    responseHeaders['Access-Control-Allow-Methods'] = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'];
+    responseHeaders['Access-Control-Allow-Headers'] = ['*'];
     
     callback({ responseHeaders });
   });
+  
+  // Initialize secure storage
+  secureStorage = new SecureFileStorage(userDataPath);
 
   createWindow();
   createMenu();
