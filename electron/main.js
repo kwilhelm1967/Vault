@@ -1944,32 +1944,50 @@ ipcMain.handle("get-update-state", async () => {
 ipcMain.handle("http-request", async (event, url, options = {}) => {
   return new Promise((resolve, reject) => {
     try {
+      console.log('[HTTP Request] Starting request to:', url);
+      console.log('[HTTP Request] Options:', JSON.stringify(options, null, 2));
+      
       const urlObj = new URL(url);
-      const request = net.request({
+      const requestOptions = {
         method: options.method || 'GET',
         url: url,
-      });
+      };
+      
+      console.log('[HTTP Request] Request options:', JSON.stringify(requestOptions, null, 2));
+      
+      const request = net.request(requestOptions);
 
       // Set headers
       if (options.headers) {
         Object.keys(options.headers).forEach(key => {
           request.setHeader(key, options.headers[key]);
+          console.log(`[HTTP Request] Set header: ${key} = ${options.headers[key]}`);
         });
       }
 
       let responseData = '';
       let statusCode = 0;
       let statusMessage = '';
+      let responseHeaders = {};
 
       request.on('response', (response) => {
         statusCode = response.statusCode;
         statusMessage = response.statusMessage;
+        console.log(`[HTTP Request] Response: ${statusCode} ${statusMessage}`);
+        
+        // Collect response headers
+        response.headers = response.headers || {};
+        Object.keys(response.headers).forEach(key => {
+          responseHeaders[key] = response.headers[key];
+        });
 
         response.on('data', (chunk) => {
           responseData += chunk.toString();
         });
 
         response.on('end', () => {
+          console.log(`[HTTP Request] Response body length: ${responseData.length}`);
+          console.log(`[HTTP Request] Response data: ${responseData.substring(0, 200)}...`);
           try {
             const data = responseData ? JSON.parse(responseData) : {};
             resolve({
@@ -1979,7 +1997,8 @@ ipcMain.handle("http-request", async (event, url, options = {}) => {
               data: data,
               json: () => Promise.resolve(data),
             });
-          } catch (error) {
+          } catch (parseError) {
+            console.error('[HTTP Request] JSON parse error:', parseError);
             resolve({
               status: statusCode,
               statusText: statusMessage,
@@ -1992,6 +2011,7 @@ ipcMain.handle("http-request", async (event, url, options = {}) => {
       });
 
       request.on('error', (error) => {
+        console.error('[HTTP Request] Request error:', error);
         reject({
           code: 'NETWORK_ERROR',
           message: error.message || 'Network request failed',
@@ -2001,11 +2021,14 @@ ipcMain.handle("http-request", async (event, url, options = {}) => {
 
       // Send body if provided
       if (options.body) {
+        console.log('[HTTP Request] Writing body:', options.body.substring ? options.body.substring(0, 100) : options.body);
         request.write(options.body);
       }
 
       request.end();
+      console.log('[HTTP Request] Request sent');
     } catch (error) {
+      console.error('[HTTP Request] Setup error:', error);
       reject({
         code: 'INVALID_URL',
         message: error.message || 'Invalid URL',

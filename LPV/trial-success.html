@@ -432,7 +432,7 @@
         <div class="download-section animate delay-3">
           <h2>Step 1: Download the App</h2>
           <div class="download-grid">
-            <a href="https://github.com/kwilhelm1967/Vault/releases/download/V1.2.0/Local.Password.Vault.Setup.1.2.0.exe" class="download-btn">
+            <a href="https://github.com/kwilhelm1967/Vault/releases/download/V1.2.0/Local.Password.Vault.Setup.1.2.0.zip" class="download-btn">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
                 <line x1="8" y1="21" x2="16" y2="21"/>
@@ -503,6 +503,18 @@
   </section>
 
   <script>
+    // API base URL - Production uses api.localpasswordvault.com
+    const API_BASE_URL = (() => {
+      const hostname = window.location.hostname;
+      // Production domains
+      if (hostname === 'localpasswordvault.com' || hostname === 'www.localpasswordvault.com') {
+        return 'https://api.localpasswordvault.com';
+      }
+      // Fallback: if domain not configured, use IP (for testing)
+      // In production, api.localpasswordvault.com should point to the server
+      return 'https://api.localpasswordvault.com';
+    })();
+
     // Animation observer
     document.addEventListener('DOMContentLoaded', function() {
       const observer = new IntersectionObserver((entries) => {
@@ -511,24 +523,37 @@
         });
       }, { threshold: 0.1 });
       document.querySelectorAll('.animate').forEach(el => observer.observe(el));
-    });
-    
-    // Generate a demo trial key (in production, this would come from backend)
-    function generateTrialKey() {
-      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-      const segments = [];
-      for (let i = 0; i < 3; i++) {
-        let segment = '';
-        for (let j = 0; j < 4; j++) {
-          segment += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        segments.push(segment);
+      
+      // Get trial key from URL params or fetch from backend
+      const urlParams = new URLSearchParams(window.location.search);
+      const email = urlParams.get('email');
+      const keyFromUrl = urlParams.get('key');
+      
+      if (keyFromUrl) {
+        // Use key from URL if provided
+        document.getElementById('trialKey').textContent = keyFromUrl;
+      } else if (email) {
+        // Fetch trial status from backend
+        fetch(`${API_BASE_URL}/api/trial/status/${encodeURIComponent(email)}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.hasTrial && !data.isExpired) {
+              // We don't return the key for security, but we can show a message
+              document.getElementById('trialKey').textContent = 'Check your email for your trial key';
+              document.querySelector('.key-note').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Your trial key has been sent to your email address.';
+            } else {
+              document.getElementById('trialKey').textContent = 'Trial not found';
+            }
+          })
+          .catch(err => {
+            console.error('Error fetching trial status:', err);
+            document.getElementById('trialKey').textContent = 'Check your email for your trial key';
+          });
+      } else {
+        // No email provided, show generic message
+        document.getElementById('trialKey').textContent = 'Check your email for your trial key';
       }
-      return 'TRIAL-' + segments.join('-');
-    }
-
-    // Set the trial key on page load
-    document.getElementById('trialKey').textContent = generateTrialKey();
+    });
 
     // Copy key to clipboard
     function copyKey() {
