@@ -67,7 +67,7 @@ router.post('/signup', async (req, res) => {
           success: true,
           message: 'Trial key resent to your email',
           expiresAt: expiresAt.toISOString(),
-          ...(process.env.NODE_ENV === 'development' && { trialKey: existingTrial.trial_key }),
+          trialKey: existingTrial.trial_key,
         });
       } else {
         return res.status(400).json({ 
@@ -130,7 +130,7 @@ router.post('/signup', async (req, res) => {
       success: true,
       message: 'Trial key sent to your email',
       expiresAt: expiresAt.toISOString(),
-      ...(process.env.NODE_ENV === 'development' && { trialKey }),
+      trialKey: trialKey,
     });
     
   } catch (error) {
