@@ -48,42 +48,40 @@ The error occurs in the license activation flow when the application cannot succ
 
 ---
 
-## 📋 Backend Server Deployment - Update Templates
+## 📋 Backend Server Deployment - Deploy Updated Code
 
-### Task: Deploy Updated Backend Templates to Production Server
+### What Are "Backend Templates"?
+The **backend templates** are the email HTML files that the backend server uses to send emails to users:
+- `backend/templates/trial-welcome-email.html` - Email sent when user signs up for trial
+- `backend/templates/purchase-confirmation-email.html` - Email sent after purchase
+- `backend/templates/bundle-email.html` - Email sent for bundle purchases
 
-**Problem**: The local code repository has been updated with corrected email templates that point to `.exe` installer files instead of `.zip` files, but the production server is still running the old templates.
+### What Was Already Fixed (in Code)
+✅ These files have already been updated in the code repository to use `.exe` download links instead of `.zip` links.
 
-**What Needs to be Done**:
+### What You Need to Do
+**Deploy the updated code to your production server** so the server uses the fixed templates:
+
 1. **SSH into Production Server**:
-   - Access the server where the backend is deployed (likely at `/var/www/lpv-api` or similar)
-   - Use SSH: `ssh root@YOUR-SERVER-IP`
-   - Or use Linode web console if available
-
-2. **Update Backend Code**:
    ```bash
-   cd /var/www/lpv-api  # or your deployment path
-   git pull  # if using git
-   # OR manually upload updated template files
+   ssh root@YOUR-SERVER-IP
    ```
 
-3. **Files That Need Updating on Server**:
-   - `backend/templates/trial-welcome-email.html` - Line 214 (Windows download link)
-   - `backend/templates/purchase-confirmation-email.html` - Line 124 (Windows download link)
-   - `backend/templates/bundle-email.html` - Line 120 (Windows download link)
+2. **Update Code on Server**:
+   ```bash
+   cd /var/www/lpv-api  # or wherever your backend is deployed
+   git pull  # This will get the updated templates
+   ```
 
-4. **Restart Backend Server**:
+3. **Restart Backend Server**:
    ```bash
    pm2 restart lpv-api
    pm2 status  # Verify it's running
    ```
 
-5. **Verify Update**:
-   - Send a test trial email
-   - Verify the email contains the correct `.exe` download link
-   - Link should be: `https://github.com/kwilhelm1967/Vault/releases/download/V1.2.0/Local.Password.Vault.Setup.1.2.0.exe`
+**That's it!** Once you pull the latest code and restart, the server will use the updated templates with `.exe` links.
 
-**Reference**: See `docs/DEPLOY_TO_LINODE.md` for detailed deployment instructions
+**Note**: If you're not using git on the server, you'll need to manually upload the 3 template files from `backend/templates/` to your server.
 
 ---
 
@@ -183,15 +181,13 @@ The error occurs in the license activation flow when the application cannot succ
    - Send test purchase confirmation email
    - Verify email content is correct
    - Verify download links in emails work (click them)
-   - **Critical**: Verify links point to `.exe` files (not `.zip`) - this is why templates need to be deployed to server
+   - **Critical**: Verify links point to `.exe` files (not `.zip`) - this confirms templates were deployed correctly
 
 3. **Email Deliverability**:
    - Test emails reach inbox (not spam folder)
    - Test from multiple email providers (Gmail, Outlook, etc.)
    - Verify email formatting renders correctly
    - Check that all images/assets load correctly
-
-**Note**: After deploying updated templates to server, verify emails contain correct download links.
 
 ---
 
@@ -266,7 +262,7 @@ The error occurs in the license activation flow when the application cannot succ
    - Ensure critical paths are covered by tests
    - Add tests for any recent changes if needed
 
-**Note**: Unit tests were recently fixed to properly mock `apiClient`. Verify they pass in CI environment.
+**Note**: Unit tests were recently fixed to properly mock `apiClient`. They should pass, but verify in CI environment.
 
 ---
 
@@ -274,7 +270,7 @@ The error occurs in the license activation flow when the application cannot succ
 
 ### Critical (Must Complete):
 1. **Fix Connection Error** - Red box error when activating licenses (blocks user activation)
-2. **Deploy Backend Templates** - Update server with corrected email templates (affects user experience)
+2. **Deploy Backend Code** - Pull latest code to server so updated email templates are used
 3. **Verify Backend Server** - Ensure backend is accessible (required for connection error fix)
 
 ### High Priority:
@@ -282,13 +278,25 @@ The error occurs in the license activation flow when the application cannot succ
 5. **Build Verification** - Test Windows installer on clean machine (verify users can install)
 
 ### Medium Priority:
-7. **Email Service Testing** - Verify emails are sent and received correctly
-8. **DNS & Domain Verification** - Ensure domains are properly configured
-9. **CI/CD Verification** - Ensure automated tests pass
+6. **Email Service Testing** - Verify emails are sent and received correctly
+7. **DNS & Domain Verification** - Ensure domains are properly configured
+8. **CI/CD Verification** - Ensure automated tests pass
 
 ### Low Priority (Can Complete After Launch):
-10. **Monitoring Setup** - Sentry configuration (optional but recommended)
-11. **Cross-Platform Builds** - macOS/Linux builds (if needed)
+9. **Monitoring Setup** - Sentry configuration (optional but recommended)
+10. **Cross-Platform Builds** - macOS/Linux builds (if needed)
+
+---
+
+## ✅ What Has Already Been Completed (in Code)
+
+- ✅ Email templates fixed (use `.exe` instead of `.zip`)
+- ✅ Unit tests fixed (properly mock `apiClient`)
+- ✅ Code cleanup completed (removed debug logs, unused code)
+- ✅ Download links fixed in `LPV/trial-success.html`
+- ✅ Stripe configuration complete (keys and .env setup)
+
+**Note**: The code fixes are complete. What remains is deployment, testing, and verification tasks that require your action.
 
 ---
 
