@@ -21,6 +21,8 @@ const trialRouter = require('./routes/trial');
 const webhooksRouter = require('./routes/webhooks');
 const checkoutRouter = require('./routes/checkout');
 const ticketsRouter = require('./routes/tickets');
+const adminRouter = require('./routes/admin');
+const testRouter = require('./routes/test');
 const db = require('./database/db');
 
 const app = express();
@@ -36,6 +38,8 @@ app.use(helmet());
 const allowedOrigins = [
   'https://localpasswordvault.com',
   'https://www.localpasswordvault.com',
+  'https://locallegacyvault.com',
+  'https://www.locallegacyvault.com',
 ];
 
 if (process.env.NODE_ENV === 'development') {
@@ -48,6 +52,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
+// General API rate limit (less strict)
 app.use('/api/', rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -55,6 +60,23 @@ app.use('/api/', rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 }));
+
+// Stricter rate limits for sensitive endpoints
+const strictRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { error: 'Too many requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const activationRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too many activation attempts, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Request ID middleware - generates unique ID for each request
 app.use((req, res, next) => {
@@ -91,12 +113,39 @@ app.use((req, res, next) => {
   }
 });
 
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+app.get('/health', async (req, res) => {
+  const health = {
+    status: 'ok',
     timestamp: new Date().toISOString(),
-    version: '1.0.0'
-  });
+    version: '1.0.0',
+    checks: {
+      database: 'unknown',
+      stripe: 'unknown',
+    },
+  };
+  
+  // Check database connectivity
+  try {
+    await db.customers.findByEmail('health-check@test.local');
+    health.checks.database = 'ok';
+  } catch (error) {
+    health.checks.database = 'error';
+    health.status = 'degraded';
+    health.databaseError = error.message;
+  }
+  
+  // Check Stripe connectivity
+  try {
+    await stripe.products.list({ limit: 1 });
+    health.checks.stripe = 'ok';
+  } catch (error) {
+    health.checks.stripe = 'error';
+    health.status = 'degraded';
+    health.stripeError = error.message;
+  }
+  
+  const statusCode = health.status === 'ok' ? 200 : 503;
+  res.status(statusCode).json(health);
 });
 
 // Performance metrics endpoint (NO customer data)
@@ -109,12 +158,17 @@ app.get('/metrics', (req, res) => {
   });
 });
 
+// Apply rate limiting to specific routes
 app.use('/api/licenses', licensesRouter);
+app.use('/api/lpv/license/activate', activationRateLimit);
+app.use('/api/lpv/license/transfer', strictRateLimit);
 app.use('/api/lpv/license', lpvLicensesRouter);
-app.use('/api/trial', trialRouter);
+app.use('/api/trial', strictRateLimit, trialRouter);
 app.use('/api/webhooks', webhooksRouter);
-app.use('/api/checkout', checkoutRouter);
+app.use('/api/checkout', strictRateLimit, checkoutRouter);
 app.use('/api/tickets', ticketsRouter);
+app.use('/api/admin', adminRouter);
+app.use('/api/test', testRouter);
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Endpoint not found' });

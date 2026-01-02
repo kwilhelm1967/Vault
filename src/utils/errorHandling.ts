@@ -36,7 +36,7 @@ export interface ErrorLogEntry {
 /**
  * Error logging service with structured logging
  */
-class ErrorLogger {
+export class ErrorLogger {
   private static instance: ErrorLogger;
   private errorHistory: ErrorLogEntry[] = [];
   private readonly MAX_HISTORY = 100;

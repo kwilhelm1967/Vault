@@ -98,6 +98,31 @@ Object.defineProperty(window, 'electronAPI', {
   writable: true,
 });
 
+// Mock WebGL for device fingerprint tests
+const mockWebGLRenderingContext = {
+  getParameter: jest.fn((param: number) => {
+    if (param === 0x1F00) return 'OpenGL ES 2.0'; // VERSION
+    if (param === 0x8B8C) return 'WebGL GLSL ES 1.0'; // SHADING_LANGUAGE_VERSION
+    return null;
+  }),
+  getExtension: jest.fn((name: string) => {
+    if (name === 'WEBGL_debug_renderer_info') {
+      return {
+        UNMASKED_VENDOR_WEBGL: 0x9245,
+        UNMASKED_RENDERER_WEBGL: 0x9246,
+      };
+    }
+    return null;
+  }),
+};
+
+HTMLCanvasElement.prototype.getContext = jest.fn((contextType: string) => {
+  if (contextType === 'webgl' || contextType === 'experimental-webgl') {
+    return mockWebGLRenderingContext as any;
+  }
+  return null;
+});
+
 // Mock fetch
 global.fetch = jest.fn().mockResolvedValue({
   ok: true,

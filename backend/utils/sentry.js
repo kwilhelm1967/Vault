@@ -5,13 +5,42 @@
  * Only enabled in production mode.
  */
 
-const Sentry = require('@sentry/node');
-const { nodeProfilingIntegration } = require('@sentry/profiling-node');
+let Sentry;
+let nodeProfilingIntegration;
+
+try {
+  Sentry = require('@sentry/node');
+  nodeProfilingIntegration = require('@sentry/profiling-node').nodeProfilingIntegration;
+} catch (err) {
+  console.warn('[Sentry] Sentry modules not available, error tracking disabled:', err.message);
+  // Create mock Sentry object
+  Sentry = {
+    init: () => {},
+    Handlers: {
+      requestHandler: () => (req, res, next) => next(),
+      tracingHandler: () => (req, res, next) => next(),
+      errorHandler: () => (err, req, res, next) => next(err),
+    },
+    setUser: () => {},
+    captureException: () => {},
+    captureMessage: () => {},
+    addBreadcrumb: () => {},
+    httpIntegration: () => ({}),
+    expressIntegration: () => ({}),
+  };
+  nodeProfilingIntegration = () => ({});
+}
 
 /**
  * Initialize Sentry for error tracking
  */
 function initSentry() {
+  // If Sentry modules failed to load, skip initialization
+  if (!Sentry || typeof Sentry.init !== 'function') {
+    console.log('[Sentry] Sentry not available, error tracking disabled');
+    return;
+  }
+
   // Only initialize in production
   if (process.env.NODE_ENV !== 'production') {
     console.log('[Sentry] Error tracking disabled in non-production mode');

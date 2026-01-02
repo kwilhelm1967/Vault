@@ -46,16 +46,16 @@
     .nav-links a:hover, .nav-links a.active { color: var(--cyan); }
     .nav-cta { padding: 10px 24px; background: var(--gradient-cyan); color: var(--bg-darker) !important; border-radius: 8px; font-weight: 600; }
 
-    .hero { padding: 140px 2rem 60px; text-align: center; background: linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-darker) 100%); }
+    .hero { padding: 80px 2rem 20px; text-align: center; background: linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-darker) 100%); }
     .hero h1 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 700; margin-bottom: 1rem; }
     .hero p { font-size: 1.2rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto; }
 
-    .pricing-section { padding: 60px 2rem; max-width: 1200px; margin: 0 auto; }
+    .pricing-section { padding: 20px 2rem 60px; max-width: 1200px; margin: 0 auto; }
     .pricing-grid { 
       display: grid; 
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
       gap: 2rem; 
-      margin-bottom: 4rem;
+      margin-bottom: 6rem;
       align-items: stretch;
     }
     
@@ -204,7 +204,7 @@
     }
 
     .bundle-section {
-      padding: 60px 2rem;
+      padding: 40px 2rem;
       max-width: 1200px;
       margin: 0 auto 2rem;
     }
@@ -213,25 +213,25 @@
       font-size: 2.5rem;
       font-weight: 700;
       text-align: center;
-      margin-bottom: 1rem;
+      margin-bottom: 0.75rem;
     }
     .bundle-section .subtitle {
       text-align: center;
       color: var(--text-secondary);
       font-size: 1.1rem;
-      margin-bottom: 3rem;
+      margin-bottom: 2.5rem;
     }
     .bundle-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 2rem;
+      gap: 1.5rem;
       margin-bottom: 2rem;
       align-items: stretch;
     }
     .bundle-card {
       background: var(--bg-card);
       border-radius: 20px;
-      padding: 2.5rem;
+      padding: 1.75rem;
       border: 2px solid var(--cyan);
       position: relative;
       transition: all 0.3s ease;
@@ -268,13 +268,13 @@
     .bundle-card h3 {
       font-size: 1.5rem;
       font-weight: 700;
-      margin-bottom: 0.75rem;
+      margin-bottom: 0.625rem;
       line-height: 1.2;
     }
     .bundle-card .bundle-desc {
       color: var(--text-secondary);
       font-size: 0.95rem;
-      margin-bottom: 1.75rem;
+      margin-bottom: 1.25rem;
       line-height: 1.6;
       min-height: 3.2em;
     }
@@ -282,9 +282,9 @@
       display: flex;
       align-items: baseline;
       flex-wrap: wrap;
-      gap: 0.75rem;
-      margin-bottom: 1.75rem;
-      padding-bottom: 1.5rem;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+      padding-bottom: 1rem;
       border-bottom: 1px solid var(--border-subtle);
       align-items: center;
     }
@@ -316,8 +316,8 @@
     .bundle-features li {
       display: flex;
       align-items: flex-start;
-      gap: 0.75rem;
-      margin-bottom: 0.875rem;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
       color: var(--text-secondary);
       font-size: 0.95rem;
       line-height: 1.5;
@@ -337,8 +337,8 @@
     .bundle-actions {
       display: flex;
       flex-direction: column;
-      gap: 0.875rem;
-      margin-top: 2rem;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
     }
     .bundle-cta {
       display: block;
@@ -370,7 +370,7 @@
     }
     .bundle-info {
       text-align: center;
-      padding: 2.5rem;
+      padding: 1.75rem;
       background: rgba(6, 182, 212, 0.05);
       border-radius: 16px;
       border: 1px solid var(--cyan-dark);
@@ -384,7 +384,7 @@
       color: var(--text-secondary);
       font-size: 1rem;
       line-height: 1.7;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1rem;
     }
     .bundle-info p:last-child {
       margin-bottom: 0;
@@ -399,7 +399,7 @@
       font-weight: 600;
       transition: color 0.2s;
       display: inline-block;
-      margin-top: 0.5rem;
+      margin-top: 0.25rem;
     }
     .bundle-info a:hover {
       color: var(--cyan-light);
@@ -453,10 +453,10 @@
       .pricing-grid { grid-template-columns: 1fr; }
       .bundle-grid { grid-template-columns: 1fr; }
       .bundle-section h2 { font-size: 2rem; }
-      .bundle-card { padding: 2rem; }
-      .bundle-price { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
-      .bundle-price .savings { margin-top: 0.25rem; }
-      .bundle-info { padding: 1.5rem; }
+      .bundle-card { padding: 1rem; }
+      .bundle-price { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+      .bundle-price .savings { margin-top: 0.125rem; }
+      .bundle-info { padding: 0.75rem; }
       .footer-grid { grid-template-columns: 1fr 1fr; }
     }
   </style>
@@ -573,7 +573,7 @@
           </ul>
           <div class="bundle-actions">
             <a href="#" class="bundle-cta">Get Personal Bundle</a>
-            <a href="https://locallegacyvault.com" target="_blank" class="bundle-cta secondary">Learn About Local Legacy Vault →</a>
+            <a href="https://locallegacyvault.com" target="_blank" class="bundle-cta secondary">Learn About Local Legacy Vault &rarr;</a>
           </div>
         </div>
 
@@ -595,7 +595,7 @@
           </ul>
           <div class="bundle-actions">
             <a href="#" class="bundle-cta">Get Family Bundle</a>
-            <a href="https://locallegacyvault.com" target="_blank" class="bundle-cta secondary">Learn About Local Legacy Vault →</a>
+            <a href="https://locallegacyvault.com" target="_blank" class="bundle-cta secondary">Learn About Local Legacy Vault &rarr;</a>
           </div>
         </div>
       </div>
@@ -606,7 +606,7 @@
           Store wills, insurance documents, medical records, and more with the same military-grade encryption.
         </p>
         <p>
-          <a href="https://locallegacyvault.com" target="_blank">Visit Local Legacy Vault →</a> to learn more about features, security, and pricing options.
+          <a href="https://locallegacyvault.com" target="_blank">Visit Local Legacy Vault &rarr;</a> to learn more about features, security, and pricing options.
         </p>
       </div>
     </div>

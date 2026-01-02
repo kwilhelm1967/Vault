@@ -1,0 +1,56 @@
+﻿# Upload Documentation to GitHub Releases
+## Local Password Vault - Version 1.2.0
+
+## Files Ready for Upload
+Location: github-releases-docs\
+
+Files to upload:
+1. Local-Password-Vault-Windows-Documentation-1.2.0.zip
+2. Local-Password-Vault-macOS-Documentation-1.2.0.zip
+3. Local-Password-Vault-Linux-Documentation-1.2.0.zip
+
+## Upload Steps
+
+### Option 1: Upload to Existing Release
+1. Go to: https://github.com/kwilhelm1967/Vault/releases
+2. Find the release for version 1.2.0 (or create a new one)
+3. Click "Edit" on the release
+4. Scroll to "Attach binaries by dropping them here or selecting them"
+5. Drag and drop all 3 zip files from: github-releases-docs\
+6. Click "Update release"
+
+### Option 2: Create New Release
+1. Go to: https://github.com/kwilhelm1967/Vault/releases
+2. Click "Draft a new release"
+3. Tag version: v1.2.0 (or your version tag)
+4. Release title: "Local Password Vault 1.2.0"
+5. Description: (add release notes)
+6. Scroll to "Attach binaries by dropping them here or selecting them"
+7. Drag and drop all 3 zip files from: github-releases-docs\
+8. Click "Publish release"
+
+## Verify Upload
+After uploading, test these URLs:
+- https://github.com/kwilhelm1967/Vault/releases/latest/download/Local-Password-Vault-Windows-Documentation-1.2.0.zip
+- https://github.com/kwilhelm1967/Vault/releases/latest/download/Local-Password-Vault-macOS-Documentation-1.2.0.zip
+- https://github.com/kwilhelm1967/Vault/releases/latest/download/Local-Password-Vault-Linux-Documentation-1.2.0.zip
+
+Each should download the zip file.
+
+## HTML Links
+The trial-success.html file has been updated with these GitHub Releases URLs:
+- Windows: https://github.com/kwilhelm1967/Vault/releases/latest/download/Local-Password-Vault-Windows-Documentation-1.2.0.zip
+- macOS: https://github.com/kwilhelm1967/Vault/releases/latest/download/Local-Password-Vault-macOS-Documentation-1.2.0.zip
+- Linux: https://github.com/kwilhelm1967/Vault/releases/latest/download/Local-Password-Vault-Linux-Documentation-1.2.0.zip
+
+## Important Notes
+- The /latest/download/ path automatically points to the latest release
+- If you create a new release, the links will automatically point to it
+- Filenames must match exactly (case-sensitive)
+- All 3 files should be uploaded to the same release
+
+## Testing
+After uploading:
+1. Visit: https://localpasswordvault.com/trial-success.html
+2. Click each documentation download button
+3. Verify files download correctly from GitHub

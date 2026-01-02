@@ -1,0 +1,17 @@
+﻿QUICK GITHUB UPLOAD CHECKLIST
+==============================
+
+1. [ ] Go to: https://github.com/kwilhelm1967/Vault/releases
+2. [ ] Find or create release for version 1.2.0
+3. [ ] Click "Edit" or "Draft a new release"
+4. [ ] Drag and drop 3 zip files from: github-releases-docs\
+5. [ ] Click "Update release" or "Publish release"
+6. [ ] Test download URLs in browser
+7. [ ] Test on trial-success.html page
+
+Files to upload:
+- Local-Password-Vault-Windows-Documentation-1.2.0.zip
+- Local-Password-Vault-macOS-Documentation-1.2.0.zip
+- Local-Password-Vault-Linux-Documentation-1.2.0.zip
+
+Location: github-releases-docs\

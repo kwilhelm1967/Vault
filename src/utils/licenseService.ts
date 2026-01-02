@@ -738,6 +738,13 @@ export class LicenseService {
   }
 
   /**
+   * Get app license status (alias for getAppStatus for backward compatibility)
+   */
+  async getAppLicenseStatus(): Promise<AppLicenseStatus> {
+    return this.getAppStatus();
+  }
+
+  /**
    * Reset everything (for testing)
    */
   resetAll(): void {

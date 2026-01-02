@@ -14,16 +14,42 @@ import {
 } from "lucide-react";
 import environment from "../config/environment";
 import { LoadingSpinner } from "./LoadingSpinner";
+import { getDownloadUrl } from "../config/downloadUrls";
 
-// Color palette matching LPV design system
+// CSS for checkmark animation
+const checkmarkStyles = `
+  @keyframes checkmarkAppear {
+    0% {
+      transform: scale(0) rotate(-180deg);
+      opacity: 0;
+    }
+    60% {
+      transform: scale(1.05) rotate(5deg);
+    }
+    100% {
+      transform: scale(1) rotate(0deg);
+      opacity: 1;
+    }
+  }
+`;
+
+// Color palette matching trial success page design
 const colors = {
-  deepNavy: "#0F172A",
-  slateBackground: "#1E293B",
-  steelBlue400: "#5B82B8",
-  steelBlue500: "#4A6FA5",
-  warmIvory: "#F3F4F6",
-  softGold: "#C9AE66",
-  successGreen: "#22C55E",
+  bgDark: "#0a0f1a",
+  bgDarker: "#060912",
+  bgCard: "#111827", // Card background matching trial page
+  bgContainer: "transparent", // Transparent container background
+  cyan: "#06b6d4",
+  cyanLight: "#22d3ee",
+  cyanDark: "#0891b2",
+  cyanGlow: "rgba(6, 182, 212, 0.3)",
+  green: "#10b981",
+  greenDark: "#059669",
+  textPrimary: "#f9fafb",
+  textSecondary: "#9ca3af",
+  textMuted: "#6b7280",
+  borderSubtle: "rgba(255, 255, 255, 0.08)",
+  gradientCyan: "linear-gradient(135deg, #22d3ee 0%, #0891b2 100%)",
 };
 
 interface PlatformDownload {
@@ -36,7 +62,21 @@ interface PlatformDownload {
   downloadUrl: string;
 }
 
-const platforms: PlatformDownload[] = [
+interface ProductLicense {
+  licenseKey: string;
+  planType: string;
+  productType: string;
+  maxDevices: number;
+}
+
+interface ProductGroup {
+  productType: string;
+  productName: string;
+  licenses: ProductLicense[];
+  downloadBaseUrl: string;
+}
+
+const getPlatforms = (baseUrl: string): PlatformDownload[] => [
   {
     id: "windows",
     name: "Windows",
@@ -44,7 +84,7 @@ const platforms: PlatformDownload[] = [
     fileType: ".exe installer",
     fileSize: "~85 MB",
     requirements: "Windows 10 or later (64-bit)",
-    downloadUrl: "https://localpasswordvault.com/download/windows",
+    downloadUrl: getDownloadUrl('windows'),
   },
   {
     id: "macos",
@@ -53,7 +93,7 @@ const platforms: PlatformDownload[] = [
     fileType: ".dmg installer",
     fileSize: "~95 MB",
     requirements: "macOS 10.15 (Catalina) or later",
-    downloadUrl: "https://localpasswordvault.com/download/macos",
+    downloadUrl: getDownloadUrl('macos'),
   },
   {
     id: "linux",
@@ -62,7 +102,7 @@ const platforms: PlatformDownload[] = [
     fileType: ".AppImage",
     fileSize: "~90 MB",
     requirements: "Ubuntu 18.04+ or equivalent",
-    downloadUrl: "https://localpasswordvault.com/download/linux",
+    downloadUrl: getDownloadUrl('linux'),
   },
 ];
 
@@ -77,12 +117,23 @@ const getOS = (): string => {
 
 export const PurchaseSuccessPage: React.FC = () => {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null); // Track by key string for bundles
   const [licenseKeys, setLicenseKeys] = useState<string[]>([]);
+  const [productGroups, setProductGroups] = useState<ProductGroup[]>([]);
+  const [isBundle, setIsBundle] = useState<boolean>(false);
   const [customerEmail, setCustomerEmail] = useState<string>("");
   const [planName, setPlanName] = useState<string>("Lifetime License");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const detectedOS = getOS();
+
+  // Hide textured background pattern on purchase success page
+  useEffect(() => {
+    document.body.classList.add('purchase-success-page');
+    return () => {
+      document.body.classList.remove('purchase-success-page');
+    };
+  }, []);
 
   // Fetch session data or extract keys from URL
   useEffect(() => {
@@ -94,17 +145,99 @@ export const PurchaseSuccessPage: React.FC = () => {
         const urlParams = new URLSearchParams(window.location.search);
         const sessionId = urlParams.get("session_id");
         
-        // If session_id is present, fetch license keys from backend
+        // If session_id is present, try to fetch license keys from backend
         if (sessionId && sessionId.startsWith("cs_")) {
-          await fetchSessionData(sessionId);
-          return;
+          try {
+            await fetchSessionData(sessionId);
+            return;
+          } catch (fetchError) {
+            // If backend fetch fails (e.g., backend not running), fall back to test data
+            // This allows testing the page without a backend
+            if (sessionId.includes("test") || sessionId.includes("demo")) {
+              // Use test/demo data for development
+              const isBundle = urlParams.get("bundle") === "true" || sessionId.includes("bundle");
+              const isFamily = urlParams.get("family") === "true" || sessionId.includes("family");
+              
+              if (isBundle) {
+                // Mock bundle data
+                setProductGroups([
+                  {
+                    productType: 'lpv',
+                    productName: 'Local Password Vault',
+                    licenses: [
+                      { licenseKey: 'PERS-TEST-1234-5678', planType: 'personal', productType: 'lpv', maxDevices: 1 },
+                      { licenseKey: 'FAMI-TEST-ABCD-EFGH', planType: 'family', productType: 'lpv', maxDevices: 1 },
+                    ],
+                    downloadBaseUrl: 'https://localpasswordvault.com',
+                  },
+                  {
+                    productType: 'llv',
+                    productName: 'Local Legacy Vault',
+                    licenses: [
+                      { licenseKey: 'LLVP-TEST-WXYZ-1234', planType: 'llv_personal', productType: 'llv', maxDevices: 1 },
+                    ],
+                    downloadBaseUrl: 'https://locallegacyvault.com',
+                  },
+                ]);
+                setLicenseKeys(['PERS-TEST-1234-5678', 'FAMI-TEST-ABCD-EFGH', 'LLVP-TEST-WXYZ-1234']);
+                setIsBundle(true);
+                setPlanName("Bundle Purchase");
+                setCustomerEmail("test@example.com");
+              } else if (isFamily) {
+                // Mock family plan (5 keys)
+                const familyKeys = [
+                  'FAMI-TEST-KEY1-ABCD-EFGH',
+                  'FAMI-TEST-KEY2-IJKL-MNOP',
+                  'FAMI-TEST-KEY3-QRST-UVWX',
+                  'FAMI-TEST-KEY4-YZ12-3456',
+                  'FAMI-TEST-KEY5-7890-ABCD',
+                ];
+                setLicenseKeys(familyKeys);
+                setProductGroups([{
+                  productType: 'lpv',
+                  productName: 'Local Password Vault',
+                  licenses: familyKeys.map(key => ({
+                    licenseKey: key,
+                    planType: 'family',
+                    productType: 'lpv',
+                    maxDevices: 1,
+                  })),
+                  downloadBaseUrl: 'https://localpasswordvault.com',
+                }]);
+                setIsBundle(false);
+                setPlanName("Family Vault");
+                setCustomerEmail("test@example.com");
+              } else {
+                // Mock single purchase
+                setLicenseKeys(['PERS-TEST-1234-5678-9012']);
+                setProductGroups([{
+                  productType: 'lpv',
+                  productName: 'Local Password Vault',
+                  licenses: [{
+                    licenseKey: 'PERS-TEST-1234-5678-9012',
+                    planType: 'personal',
+                    productType: 'lpv',
+                    maxDevices: 1,
+                  }],
+                  downloadBaseUrl: 'https://localpasswordvault.com',
+                }]);
+                setIsBundle(false);
+                setPlanName("Personal Vault");
+                setCustomerEmail("test@example.com");
+              }
+              return;
+            }
+            // Re-throw if not a test session
+            throw fetchError;
+          }
         }
         
         // Otherwise, extract keys from URL params (legacy support)
         extractKeysFromURL(urlParams);
-      } catch (err) {
+      } catch (err: any) {
         // Error handled via setError - no console output needed
-        setError("Failed to load license keys. Please check your email or contact support@localpasswordvault.com");
+        const errorMessage = err?.message || "Failed to load license keys. Please check your email or contact support@localpasswordvault.com";
+        setError(errorMessage);
       } finally {
         setIsLoading(false);
       }
@@ -113,33 +246,122 @@ export const PurchaseSuccessPage: React.FC = () => {
     loadLicenseKeys();
   }, []);
 
-  const fetchSessionData = async (sessionId: string) => {
-    try {
-      const apiBaseUrl = environment.environment.licenseServerUrl;
-      const response = await fetch(`${apiBaseUrl}/api/checkout/session/${sessionId}`);
-      
-      if (!response.ok) {
-        if (response.status === 404) {
-          // License not ready yet (webhook still processing)
-          setError("Your purchase is being processed. Please wait a moment and refresh the page, or check your email for your license keys.");
-          return;
-        }
-        throw new Error(`Failed to fetch session: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      
-      if (!data.success) {
-        throw new Error(data.error || "Failed to retrieve license keys");
-      }
-      
-      // Handle bundle purchase (multiple licenses)
-      if (data.isBundle && data.data?.licenses) {
-        const allKeys: string[] = [];
-        data.data.licenses.forEach((license: { licenseKey: string }) => {
-          allKeys.push(license.licenseKey);
+  const fetchSessionData = async (sessionId: string, retryCount = 0, maxRetries = 5) => {
+    const MAX_RETRIES = maxRetries;
+    const INITIAL_DELAY = 2000; // 2 seconds
+    const MAX_DELAY = 30000; // 30 seconds
+    const TIMEOUT = 60000; // 60 seconds total timeout
+    
+    const startTime = Date.now();
+    
+    const fetchWithRetry = async (attempt: number): Promise<any> => {
+      try {
+        const apiBaseUrl = environment.environment.licenseServerUrl;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout per request
+        
+        const response = await fetch(`${apiBaseUrl}/api/checkout/session/${sessionId}`, {
+          signal: controller.signal,
         });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            // License not ready yet (webhook still processing)
+            if (attempt < MAX_RETRIES && (Date.now() - startTime) < TIMEOUT) {
+              // Calculate exponential backoff delay
+              const delay = Math.min(INITIAL_DELAY * Math.pow(2, attempt), MAX_DELAY);
+              await new Promise(resolve => setTimeout(resolve, delay));
+              return fetchWithRetry(attempt + 1);
+            }
+            // Timeout or max retries reached
+            setError("Your purchase is being processed. This may take a few moments. Please check your email for your license keys, or refresh this page in a minute.");
+            return null;
+          }
+          throw new Error(`Failed to fetch session: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+          if (data.pending && attempt < MAX_RETRIES && (Date.now() - startTime) < TIMEOUT) {
+            // Still processing, retry
+            const delay = Math.min(INITIAL_DELAY * Math.pow(2, attempt), MAX_DELAY);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return fetchWithRetry(attempt + 1);
+          }
+          throw new Error(data.error || "Failed to retrieve license keys");
+        }
+        
+        return data;
+      } catch (error: any) {
+        if (error.name === 'AbortError') {
+          // Request timeout
+          if (attempt < MAX_RETRIES && (Date.now() - startTime) < TIMEOUT) {
+            const delay = Math.min(INITIAL_DELAY * Math.pow(2, attempt), MAX_DELAY);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return fetchWithRetry(attempt + 1);
+          }
+          throw new Error("Request timed out. Please check your email for your license keys or refresh the page.");
+        }
+        
+        // Network or other error
+        if (attempt < MAX_RETRIES && (Date.now() - startTime) < TIMEOUT) {
+          const delay = Math.min(INITIAL_DELAY * Math.pow(2, attempt), MAX_DELAY);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          return fetchWithRetry(attempt + 1);
+        }
+        
+        throw error;
+      }
+    };
+    
+    try {
+      const data = await fetchWithRetry(0);
+      
+      if (!data) {
+        return; // Error already set
+      }
+      
+      // Handle bundle purchase (multiple licenses from different products)
+      if (data.isBundle && data.data?.licenses) {
+        setIsBundle(true);
+        const allKeys: string[] = [];
+        const groups: { [key: string]: ProductLicense[] } = {};
+        
+        // Group licenses by product type
+        data.data.licenses.forEach((license: ProductLicense) => {
+          allKeys.push(license.licenseKey);
+          const productType = license.productType || 'lpv';
+          if (!groups[productType]) {
+            groups[productType] = [];
+          }
+          groups[productType].push(license);
+        });
+        
         setLicenseKeys(allKeys);
+        
+        // Create product groups with download URLs
+        const productGroupsList: ProductGroup[] = [];
+        if (groups['lpv']) {
+          productGroupsList.push({
+            productType: 'lpv',
+            productName: 'Local Password Vault',
+            licenses: groups['lpv'],
+            downloadBaseUrl: 'https://localpasswordvault.com',
+          });
+        }
+        if (groups['llv']) {
+          productGroupsList.push({
+            productType: 'llv',
+            productName: 'Local Legacy Vault',
+            licenses: groups['llv'],
+            downloadBaseUrl: 'https://locallegacyvault.com',
+          });
+        }
+        
+        setProductGroups(productGroupsList);
         
         // Set plan name for bundle
         if (allKeys.length >= 5) {
@@ -148,10 +370,49 @@ export const PurchaseSuccessPage: React.FC = () => {
           setPlanName("Bundle Purchase");
         }
       } 
+      // Handle family plan (multiple licenses for same product - 5 keys)
+      else if (data.data?.licenses && Array.isArray(data.data.licenses) && data.data.licenses.length > 1) {
+        setIsBundle(false);
+        const allKeys = data.data.licenses.map((license: any) => license.licenseKey || license.license_key);
+        setLicenseKeys(allKeys);
+        
+        // Determine product type (all licenses should be same product type)
+        const productType = data.data.licenses[0]?.productType || 'lpv';
+        const planType = data.data.licenses[0]?.planType || 'family';
+        
+        setPlanName(planType === "family" ? "Family Vault" : "Multi-Device License");
+        
+        setProductGroups([{
+          productType: productType,
+          productName: productType === 'llv' ? 'Local Legacy Vault' : 'Local Password Vault',
+          licenses: data.data.licenses.map((license: any) => ({
+            licenseKey: license.licenseKey || license.license_key,
+            planType: license.planType || planType,
+            productType: license.productType || productType,
+            maxDevices: license.maxDevices || license.max_devices || 1,
+          })),
+          downloadBaseUrl: productType === 'llv' ? 'https://locallegacyvault.com' : 'https://localpasswordvault.com',
+        }]);
+      }
       // Handle single purchase
       else if (data.data?.licenseKey) {
+        setIsBundle(false);
         setLicenseKeys([data.data.licenseKey]);
         setPlanName(data.data.planType === "family" ? "Family Vault" : "Personal Vault");
+        
+        // Determine product type for single purchase (default to LPV)
+        const productType = data.data.productType || 'lpv';
+        setProductGroups([{
+          productType: productType,
+          productName: productType === 'llv' ? 'Local Legacy Vault' : 'Local Password Vault',
+          licenses: [{
+            licenseKey: data.data.licenseKey,
+            planType: data.data.planType,
+            productType: productType,
+            maxDevices: data.data.maxDevices || 1,
+          }],
+          downloadBaseUrl: productType === 'llv' ? 'https://locallegacyvault.com' : 'https://localpasswordvault.com',
+        }]);
       }
       
       // Set email if available
@@ -212,7 +473,11 @@ export const PurchaseSuccessPage: React.FC = () => {
     try {
       await navigator.clipboard.writeText(key);
       setCopiedIndex(index);
-      setTimeout(() => setCopiedIndex(null), 2000);
+      setCopiedKey(key);
+      setTimeout(() => {
+        setCopiedIndex(null);
+        setCopiedKey(null);
+      }, 2000);
     } catch {
       // Fallback for older browsers
       const textArea = document.createElement("textarea");
@@ -222,7 +487,11 @@ export const PurchaseSuccessPage: React.FC = () => {
       document.execCommand("copy");
       document.body.removeChild(textArea);
       setCopiedIndex(index);
-      setTimeout(() => setCopiedIndex(null), 2000);
+      setCopiedKey(key);
+      setTimeout(() => {
+        setCopiedIndex(null);
+        setCopiedKey(null);
+      }, 2000);
     }
   };
 
@@ -250,33 +519,81 @@ export const PurchaseSuccessPage: React.FC = () => {
     window.open(platform.downloadUrl, "_blank");
   };
 
+  const handleCopyProductKeys = async (keys: string[]) => {
+    const allKeys = keys.join("\n");
+    try {
+      await navigator.clipboard.writeText(allKeys);
+      setCopiedIndex(-1);
+      setTimeout(() => setCopiedIndex(null), 2000);
+    } catch {
+      const textArea = document.createElement("textarea");
+      textArea.value = allKeys;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      setCopiedIndex(-1);
+      setTimeout(() => setCopiedIndex(null), 2000);
+    }
+  };
+
   // Sort platforms to show detected OS first
-  const sortedPlatforms = [...platforms].sort((a, b) => {
-    if (a.id === detectedOS) return -1;
-    if (b.id === detectedOS) return 1;
-    return 0;
-  });
+  const getSortedPlatforms = (baseUrl: string) => {
+    const platforms = getPlatforms(baseUrl);
+    return [...platforms].sort((a, b) => {
+      if (a.id === detectedOS) return -1;
+      if (b.id === detectedOS) return 1;
+      return 0;
+    });
+  };
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-    >
+    <>
+      <style>{`
+        ${checkmarkStyles}
+        /* Hide textured background pattern on purchase success page */
+        body.purchase-success-page::before {
+          display: none !important;
+        }
+      `}</style>
+      <div
+        className="min-h-screen flex flex-col purchase-success-page"
+        style={{ 
+          background: colors.bgDarker,
+          fontFamily: "'Inter', sans-serif"
+        }}
+      >
       {/* Header */}
-      <header className="border-b border-slate-700/50 py-4 px-6">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
+      <header 
+        className="fixed top-0 left-0 right-0 z-50 py-4 px-6"
+        style={{ 
+          background: "rgba(6, 9, 18, 0.95)", 
+          backdropFilter: "blur(20px)",
+          borderBottom: `1px solid ${colors.borderSubtle}`
+        }}
+      >
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div
-              className="w-10 h-10 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: `${colors.steelBlue500}20`, border: `1px solid ${colors.steelBlue400}40` }}
+              className="w-11 h-11 rounded-[10px] flex items-center justify-center"
+              style={{ 
+                backgroundColor: colors.bgDark, 
+                boxShadow: `0 4px 12px ${colors.cyanGlow}, inset 0 0 0 1px ${colors.cyanDark}` 
+              }}
             >
-              <Shield className="w-5 h-5" style={{ color: colors.steelBlue400 }} />
+              <Shield className="w-6 h-6" style={{ color: colors.cyan }} />
             </div>
-            <span className="text-lg font-semibold text-white">Local Password Vault</span>
+            <span className="text-lg font-semibold" style={{ color: colors.textPrimary, fontFamily: "'Space Grotesk', sans-serif" }}>
+              Local Password Vault
+            </span>
           </div>
           <a
             href="https://localpasswordvault.com"
-            className="text-sm flex items-center space-x-1 transition-colors"
-            style={{ color: colors.steelBlue400 }}
+            className="text-sm flex items-center space-x-1 transition-colors px-3 py-2 rounded-lg font-semibold"
+            style={{ 
+              background: colors.gradientCyan,
+              color: colors.bgDarker
+            }}
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -287,31 +604,69 @@ export const PurchaseSuccessPage: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 py-12 px-6">
-        <div className="max-w-4xl mx-auto">
-          {/* Success Banner */}
-          <div className="text-center mb-10">
+      <main 
+        className="flex-1 flex items-center justify-center pt-[120px] pb-10 px-6"
+        style={{
+          background: `linear-gradient(180deg, ${colors.bgDark} 0%, ${colors.bgDarker} 100%)`,
+        }}
+      >
+        <div className="max-w-[650px] w-full">
+          {/* Success Card Container */}
+          <div
+            className="rounded-[20px] p-6 md:p-7 text-center"
+            style={{
+              backgroundColor: colors.bgCard,
+              border: `1px solid ${colors.borderSubtle}`,
+            }}
+          >
+            {/* Success Icon */}
             <div
-              className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
-              style={{ backgroundColor: `${colors.steelBlue500}20`, border: `2px solid ${colors.steelBlue400}40` }}
+              className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3"
+              style={{ 
+                background: colors.gradientCyan,
+                boxShadow: `0 8px 32px ${colors.cyanGlow}, 0 0 0 1px rgba(6, 182, 212, 0.2)`,
+              }}
             >
-              <CheckCircle className="w-10 h-10" style={{ color: colors.steelBlue400 }} />
+              <svg 
+                className="w-7 h-7" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="white"
+                strokeWidth={3}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
             </div>
-            <h1 className="text-3xl font-bold text-white mb-3">
-              Thank You for Your Purchase!
+
+            {/* Title */}
+            <h1 
+              className="text-2xl md:text-[1.75rem] font-bold mb-1.5 md:mb-2"
+              style={{ 
+                color: colors.textPrimary,
+                fontFamily: "'Space Grotesk', sans-serif"
+              }}
+            >
+              {isBundle ? "You're All Set!" : "Thank You for Your Purchase!"}
             </h1>
-            <p className="text-lg" style={{ color: colors.warmIvory, opacity: 0.7 }}>
-              Your {planName} is ready. Download Local Password Vault below.
+            <p 
+              className="text-[0.95rem] mb-5"
+              style={{ color: colors.textSecondary }}
+            >
+              {isBundle 
+                ? `Your ${planName} is ready. Download your applications below.`
+                : `Your ${planName} is ready. Download the application below.`}
             </p>
-          </div>
 
           {/* Loading State */}
           {isLoading && (
             <div
-              className="rounded-xl p-8 mb-8"
+              className="rounded-[20px] p-8 mb-8"
               style={{
-                backgroundColor: `${colors.slateBackground}`,
-                border: `1px solid ${colors.steelBlue400}40`,
+                backgroundColor: 'transparent',
+                border: `1px solid ${colors.borderSubtle}`,
+                backdropFilter: 'blur(10px)',
               }}
             >
               <LoadingSpinner size="lg" text="Loading your license keys..." />
@@ -321,20 +676,21 @@ export const PurchaseSuccessPage: React.FC = () => {
           {/* Error State */}
           {error && !isLoading && (
             <div
-              className="rounded-xl p-6 mb-8"
+              className="rounded-[20px] p-6 mb-8"
               style={{
-                backgroundColor: `${colors.slateBackground}`,
+                backgroundColor: colors.bgCard,
                 border: `1px solid #EF444440`,
+                backdropFilter: 'blur(10px)',
               }}
             >
               <p style={{ color: "#EF4444", marginBottom: "8px", fontWeight: 600 }}>Error</p>
-              <p style={{ color: colors.warmIvory, opacity: 0.8, fontSize: "14px" }}>{error}</p>
+              <p style={{ color: colors.textSecondary, fontSize: "14px" }}>{error}</p>
               <button
                 onClick={() => window.location.reload()}
-                className="mt-4 px-4 py-2 rounded-lg text-sm font-medium"
+                className="mt-4 px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:scale-105"
                 style={{
-                  backgroundColor: colors.steelBlue500,
-                  color: "white",
+                  background: colors.gradientCyan,
+                  color: colors.bgDarker,
                 }}
               >
                 Refresh Page
@@ -342,284 +698,689 @@ export const PurchaseSuccessPage: React.FC = () => {
             </div>
           )}
 
-          {/* License Keys Card */}
-          {!isLoading && !error && licenseKeys.length > 0 && (
-            <div
-              className="rounded-xl p-6 mb-8"
-              style={{
-                backgroundColor: `${colors.slateBackground}`,
-                border: `1px solid ${colors.steelBlue400}40`,
-              }}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center space-x-3">
-                  <div
-                    className="w-9 h-9 rounded-lg flex items-center justify-center"
-                    style={{ backgroundColor: `${colors.softGold}20` }}
+            {/* Bundle: Product Groups */}
+            {!isLoading && !error && isBundle && productGroups.length > 0 && (
+              <div className="mb-5">
+                <div 
+                  className="mb-5 p-4 rounded-[12px]" 
+                  style={{ 
+                    background: `linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(8, 145, 178, 0.1) 100%)`,
+                    border: `1px solid ${colors.cyanDark}`
+                  }}
+                >
+                  <h2 
+                    className="text-xl font-bold mb-2"
+                    style={{ 
+                      color: colors.textPrimary,
+                      fontFamily: "'Space Grotesk', sans-serif"
+                    }}
                   >
-                    <Key className="w-4 h-4" style={{ color: colors.softGold }} />
+                    {planName}
+                  </h2>
+                  <p className="text-sm" style={{ color: colors.textSecondary }}>
+                    You've purchased {productGroups.length} {productGroups.length === 1 ? 'product' : 'products'} with {licenseKeys.length} total license {licenseKeys.length === 1 ? 'key' : 'keys'}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {!isLoading && !error && isBundle && productGroups.length > 0 && productGroups.map((group, groupIndex) => {
+            const groupKeys = group.licenses.map(l => l.licenseKey);
+            const sortedPlatforms = getSortedPlatforms(group.downloadBaseUrl);
+            const isFamilyPlan = groupKeys.length >= 5;
+            
+            return (
+              <div 
+                key={group.productType} 
+                className={`mb-5 ${groupIndex > 0 ? 'pt-5' : ''}`}
+                style={groupIndex > 0 ? { borderTop: `1px solid ${colors.borderSubtle}`, paddingTop: '20px' } : {}}
+              >
+                {/* Product Header */}
+                <div className="mb-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div 
+                      className="w-10 h-10 rounded-lg flex items-center justify-center"
+                      style={{ 
+                        backgroundColor: colors.bgDark, 
+                        boxShadow: `0 4px 12px ${colors.cyanGlow}, inset 0 0 0 1px ${colors.cyanDark}` 
+                      }}
+                    >
+                      <Shield className="w-5 h-5" style={{ color: colors.cyan }} />
+                    </div>
+                    <div>
+                      <h2 
+                        className="text-xl font-semibold"
+                        style={{ 
+                          color: colors.textPrimary,
+                          fontFamily: "'Space Grotesk', sans-serif"
+                        }}
+                      >
+                        {group.productName}
+                      </h2>
+                      <p className="text-sm" style={{ color: colors.textMuted }}>
+                        {group.licenses.length === 1 
+                          ? "1 license key" 
+                          : `${group.licenses.length} license keys`}
+                        {isFamilyPlan && " • Family Plan"}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-base font-semibold text-white">
-                      {licenseKeys.length === 1 ? "Your License Key" : `Your ${licenseKeys.length} License Keys`}
-                    </h2>
-                    <p className="text-xs" style={{ color: colors.warmIvory, opacity: 0.6 }}>
-                      {licenseKeys.length === 1 
-                        ? "Save this key — you'll need it to activate the app"
-                        : "Click any key to copy • One key per device"}
+                </div>
+
+                {/* License Keys for this Product */}
+                <div
+                  className="rounded-[12px] p-4 mb-5"
+                  style={{
+                    backgroundColor: colors.bgDarker,
+                    border: `1px solid ${colors.cyanDark}`,
+                  }}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-3">
+                      <div
+                        className="w-9 h-9 rounded-lg flex items-center justify-center"
+                        style={{ 
+                          background: colors.gradientCyan,
+                          boxShadow: `0 4px 12px ${colors.cyanGlow}`
+                        }}
+                      >
+                        <Key className="w-4 h-4" style={{ color: colors.bgDarker }} />
+                      </div>
+                      <div>
+                        <h3 
+                          className="text-base font-semibold"
+                          style={{ 
+                            color: colors.textPrimary,
+                            fontFamily: "'Space Grotesk', sans-serif"
+                          }}
+                        >
+                          {groupKeys.length === 1 ? "Your License Key" : `Your ${groupKeys.length} License Keys`}
+                        </h3>
+                        <p className="text-xs" style={{ color: colors.textMuted }}>
+                          {groupKeys.length === 1 
+                            ? "Save this key — you'll need it to activate the app"
+                            : isFamilyPlan
+                            ? "5 license keys for your family • Click any key to copy • One key per device"
+                            : "Click any key to copy • One key per device"}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {groupKeys.length > 1 && (
+                      <button
+                        onClick={() => handleCopyProductKeys(groupKeys)}
+                        className="px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition-all text-xs font-semibold hover:scale-105"
+                        style={{
+                          background: copiedIndex === -1 ? colors.green : colors.gradientCyan,
+                          color: colors.bgDarker,
+                          boxShadow: copiedIndex === -1 ? `0 4px 12px rgba(16, 185, 129, 0.3)` : `0 4px 12px ${colors.cyanGlow}`,
+                        }}
+                      >
+                        {copiedIndex === -1 ? (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            <span className="font-medium">Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5" />
+                            <span className="font-medium">Copy All</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Keys Display */}
+                  {groupKeys.length === 1 ? (
+                    <>
+                      <p 
+                        className="text-[0.8rem] uppercase tracking-wider mb-2"
+                        style={{ color: colors.textMuted }}
+                      >
+                        Your License Key
+                      </p>
+                      <div className="flex items-center gap-3 justify-center">
+                        <code
+                          className="text-xl md:text-[1.35rem] font-mono tracking-[2px] select-all px-4 py-2.5 rounded-lg"
+                          style={{ 
+                            color: colors.cyan,
+                            fontFamily: "'Space Grotesk', monospace",
+                            fontWeight: 700,
+                            background: 'rgba(6, 182, 212, 0.1)',
+                            border: `1px dashed ${colors.cyanDark}`,
+                          }}
+                        >
+                          {groupKeys[0]}
+                        </code>
+                        <button
+                          onClick={() => handleCopyKey(groupKeys[0], 0)}
+                          className="px-3.5 py-2.5 rounded-lg flex items-center gap-1.5 transition-all hover:scale-105 font-semibold text-sm"
+                          style={{
+                            background: copiedIndex === 0 ? colors.green : colors.gradientCyan,
+                            color: colors.bgDarker,
+                            boxShadow: copiedIndex === 0 ? `0 4px 12px rgba(16, 185, 129, 0.3)` : `0 8px 24px ${colors.cyanGlow}`,
+                          }}
+                        >
+                          {copiedIndex === 0 ? (
+                            <>
+                              <Check className="w-4.5 h-4.5" />
+                              <span>Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-4.5 h-4.5" />
+                              <span>Copy</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      {customerEmail && (
+                        <p className="text-xs mt-2.5 flex items-center justify-center gap-1" style={{ color: colors.textMuted }}>
+                          <Mail className="w-3.5 h-3.5" style={{ color: colors.cyan }} />
+                          An email has been sent to {customerEmail}
+                        </p>
+                      )}
+                    </>
+                  ) : isFamilyPlan ? (
+                    /* Family plan - grid layout for 5 keys */
+                    <div
+                      className="rounded-[12px] p-4"
+                      style={{ 
+                        backgroundColor: 'transparent', 
+                        border: `1px solid ${colors.cyanDark}`,
+                        backdropFilter: 'blur(10px)',
+                      }}
+                    >
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {groupKeys.map((key, index) => {
+                          const isCopied = copiedKey === key;
+                          return (
+                            <button
+                              key={index}
+                              onClick={() => handleCopyKey(key, index)}
+                              className="rounded-[12px] px-4 py-3 flex items-center justify-between transition-all hover:scale-[1.02] hover:shadow-lg group"
+                          style={{ 
+                            backgroundColor: isCopied ? `rgba(16, 185, 129, 0.15)` : 'transparent', 
+                            border: `1px solid ${isCopied ? colors.green : colors.cyanDark}`,
+                            backdropFilter: 'blur(10px)',
+                          }}
+                          title={`Click to copy Key ${index + 1} for Family Member ${index + 1}`}
+                        >
+                          <div className="flex items-center space-x-3 flex-1 min-w-0">
+                            <span 
+                              className="text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                              style={{ 
+                                background: isCopied ? colors.green : colors.gradientCyan,
+                                color: colors.bgDark
+                              }}
+                            >
+                                  {index + 1}
+                                </span>
+                                <code
+                                  className="text-sm font-mono tracking-wide truncate flex-1"
+                                  style={{ 
+                                    color: isCopied ? colors.green : colors.cyan,
+                                    fontFamily: "'Space Grotesk', monospace",
+                                    fontWeight: 700
+                                  }}
+                                >
+                                  {key}
+                                </code>
+                              </div>
+                              {isCopied ? (
+                                <Check className="w-4 h-4 flex-shrink-0 ml-2" style={{ color: colors.green }} />
+                              ) : (
+                                <Copy className="w-4 h-4 flex-shrink-0 ml-2 opacity-40 group-hover:opacity-100 transition-opacity" style={{ color: colors.cyan }} />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div 
+                        className="mt-4 p-3 rounded-[12px]" 
+                        style={{ 
+                          background: `linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(8, 145, 178, 0.1) 100%)`,
+                          border: `1px solid ${colors.cyanDark}` 
+                        }}
+                      >
+                        <p className="text-xs" style={{ color: colors.textSecondary }}>
+                          <strong>Family Plan:</strong> Each key is for one device. Share one key with each family member. Keys cannot be shared between devices.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Multiple keys (2-4) - compact inline list */
+                    <div
+                      className="rounded-[12px] p-3"
+                      style={{ 
+                        backgroundColor: 'transparent', 
+                        border: `1px solid ${colors.cyanDark}`,
+                        backdropFilter: 'blur(10px)',
+                      }}
+                    >
+                      <div className="flex flex-wrap gap-2">
+                        {groupKeys.map((key, index) => {
+                          const isCopied = copiedKey === key;
+                          return (
+                            <button
+                              key={index}
+                              onClick={() => handleCopyKey(key, index)}
+                              className="rounded-[12px] px-3 py-2 flex items-center space-x-2 transition-all hover:scale-[1.02] hover:shadow-md group"
+                          style={{ 
+                            backgroundColor: isCopied ? `rgba(16, 185, 129, 0.15)` : 'transparent', 
+                            border: `1px solid ${isCopied ? colors.green : colors.cyanDark}`,
+                            backdropFilter: 'blur(10px)',
+                          }}
+                          title={`Click to copy Key ${index + 1}`}
+                        >
+                          <span 
+                            className="text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                            style={{ 
+                              background: isCopied ? colors.green : colors.gradientCyan,
+                              color: colors.bgDark
+                            }}
+                          >
+                                {index + 1}
+                              </span>
+                              <code
+                                className="text-xs font-mono tracking-wide"
+                                style={{ 
+                                  color: isCopied ? colors.green : colors.cyan,
+                                  fontFamily: "'Space Grotesk', monospace",
+                                  fontWeight: 700
+                                }}
+                              >
+                                {key}
+                              </code>
+                              {isCopied ? (
+                                <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: colors.green }} />
+                              ) : (
+                                <Copy className="w-3.5 h-3.5 flex-shrink-0 opacity-30 group-hover:opacity-80" style={{ color: colors.cyan }} />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Download Section for this Product */}
+                <div className="mb-5">
+                  <h3 
+                    className="text-lg md:text-xl font-semibold mb-3 md:mb-3.5"
+                    style={{ 
+                      color: colors.textPrimary,
+                      fontFamily: "'Space Grotesk', sans-serif"
+                    }}
+                  >
+                    Step {groupIndex + 1}: Download {group.productName}
+                  </h3>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    {sortedPlatforms.map((platform) => {
+                      return (
+                        <button
+                          key={platform.id}
+                          onClick={() => handleDownload(platform)}
+                          className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all"
+                          style={{
+                            backgroundColor: colors.bgDarker,
+                            border: `1px solid ${colors.borderSubtle}`,
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.borderColor = colors.cyanDark;
+                            e.currentTarget.style.transform = 'translateY(-3px)';
+                            e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.3)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.borderColor = colors.borderSubtle;
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = 'none';
+                          }}
+                        >
+                          <div style={{ color: colors.cyan, width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {platform.icon}
+                          </div>
+                          <span className="font-semibold text-sm" style={{ color: colors.textPrimary }}>
+                            {platform.name}
+                          </span>
+                          <span className="text-xs" style={{ color: colors.textMuted }}>
+                            {platform.fileType}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+            {/* Single Purchase: License Keys Card */}
+            {!isLoading && !error && !isBundle && licenseKeys.length > 0 && (
+              <div
+                className="rounded-[12px] p-4 mb-5"
+                style={{
+                  backgroundColor: colors.bgDarker,
+                  border: `1px solid ${colors.cyanDark}`,
+                }}
+              >
+                <p 
+                  className="text-[0.8rem] uppercase tracking-wider mb-2"
+                  style={{ color: colors.textMuted }}
+                >
+                  Your License Key
+                </p>
+                {licenseKeys.length === 1 ? (
+                  <div className="flex items-center gap-3 justify-center">
+                    <code
+                      className="text-xl md:text-[1.35rem] font-mono tracking-[2px] select-all px-4 py-2.5 rounded-lg"
+                      style={{ 
+                        color: colors.cyan,
+                        fontFamily: "'Space Grotesk', monospace",
+                        fontWeight: 700,
+                        background: 'rgba(6, 182, 212, 0.1)',
+                        border: `1px dashed ${colors.cyanDark}`,
+                      }}
+                    >
+                      {licenseKeys[0]}
+                    </code>
+                    <button
+                      onClick={() => handleCopyKey(licenseKeys[0], 0)}
+                      className="px-3.5 py-2.5 rounded-lg flex items-center gap-1.5 transition-all hover:scale-105 font-semibold text-sm"
+                      style={{
+                        background: copiedIndex === 0 ? colors.green : colors.gradientCyan,
+                        color: colors.bgDarker,
+                        boxShadow: copiedIndex === 0 ? `0 4px 12px rgba(16, 185, 129, 0.3)` : `0 8px 24px ${colors.cyanGlow}`,
+                      }}
+                    >
+                      {copiedIndex === 0 ? (
+                        <>
+                          <Check className="w-4.5 h-4.5" />
+                          <span>Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4.5 h-4.5" />
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+              ) : licenseKeys.length >= 5 ? (
+                /* Family plan - grid layout for 5 keys */
+                <div
+                  className="rounded-[12px] p-4"
+                  style={{ 
+                    backgroundColor: colors.bgContainer, 
+                    border: `1px solid ${colors.cyanDark}` 
+                  }}
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {licenseKeys.map((key, index) => {
+                      const isCopied = copiedKey === key;
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => handleCopyKey(key, index)}
+                          className="rounded-[12px] px-4 py-3 flex items-center justify-between transition-all hover:scale-[1.02] hover:shadow-lg group"
+                          style={{ 
+                            backgroundColor: isCopied ? `rgba(16, 185, 129, 0.15)` : 'transparent', 
+                            border: `1px solid ${isCopied ? colors.green : colors.cyanDark}`,
+                            backdropFilter: 'blur(10px)',
+                          }}
+                          title={`Click to copy Key ${index + 1} for Family Member ${index + 1}`}
+                        >
+                          <div className="flex items-center space-x-3 flex-1 min-w-0">
+                            <span 
+                              className="text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                              style={{ 
+                                background: isCopied ? colors.green : colors.gradientCyan,
+                                color: colors.bgDark
+                              }}
+                            >
+                              {index + 1}
+                            </span>
+                            <code
+                              className="text-sm font-mono tracking-wide truncate flex-1"
+                              style={{ 
+                                color: isCopied ? colors.green : colors.cyan,
+                                fontFamily: "'Space Grotesk', monospace",
+                                fontWeight: 700
+                              }}
+                            >
+                              {key}
+                            </code>
+                          </div>
+                          {isCopied ? (
+                            <Check className="w-4 h-4 flex-shrink-0 ml-2" style={{ color: colors.green }} />
+                          ) : (
+                            <Copy className="w-4 h-4 flex-shrink-0 ml-2 opacity-40 group-hover:opacity-100 transition-opacity" style={{ color: colors.cyan }} />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div 
+                    className="mt-4 p-3 rounded-[12px]" 
+                    style={{ 
+                      background: `linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(8, 145, 178, 0.1) 100%)`,
+                      border: `1px solid ${colors.cyanDark}` 
+                    }}
+                  >
+                    <p className="text-xs" style={{ color: colors.textSecondary }}>
+                      <strong>Family Plan:</strong> Each key is for one device. Share one key with each family member. Keys cannot be shared between devices.
                     </p>
                   </div>
                 </div>
-                
-                {licenseKeys.length > 1 && (
-                  <button
-                    onClick={handleCopyAllKeys}
-                    className="px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition-all text-xs"
-                    style={{
-                      backgroundColor: copiedIndex === -1 ? `${colors.successGreen}20` : `${colors.steelBlue500}20`,
-                      border: `1px solid ${copiedIndex === -1 ? colors.successGreen : colors.steelBlue400}40`,
-                      color: copiedIndex === -1 ? colors.successGreen : colors.steelBlue400,
-                    }}
-                  >
-                    {copiedIndex === -1 ? (
-                      <>
-                        <Check className="w-3.5 h-3.5" />
-                        <span className="font-medium">Copied!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5" />
-                        <span className="font-medium">Copy All</span>
-                      </>
-                    )}
-                  </button>
-                )}
-              </div>
-
-              {/* Compact display for license keys */}
-              {licenseKeys.length === 1 ? (
-                /* Single key - prominent display */
-                <div
-                  className="rounded-lg p-4 flex items-center justify-between"
-                  style={{ backgroundColor: colors.deepNavy, border: `1px solid ${colors.steelBlue400}30` }}
-                >
-                  <code
-                    className="text-lg font-mono tracking-wider select-all"
-                    style={{ color: colors.steelBlue400 }}
-                  >
-                    {licenseKeys[0]}
-                  </code>
-                  <button
-                    onClick={() => handleCopyKey(licenseKeys[0], 0)}
-                    className="ml-4 px-4 py-2 rounded-lg flex items-center space-x-2 transition-all"
-                    style={{
-                      backgroundColor: copiedIndex === 0 ? `${colors.successGreen}20` : `${colors.steelBlue500}20`,
-                      border: `1px solid ${copiedIndex === 0 ? colors.successGreen : colors.steelBlue400}40`,
-                      color: copiedIndex === 0 ? colors.successGreen : colors.steelBlue400,
-                    }}
-                  >
-                    {copiedIndex === 0 ? (
-                      <>
-                        <Check className="w-4 h-4" />
-                        <span className="text-sm font-medium">Copied!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-4 h-4" />
-                        <span className="text-sm font-medium">Copy</span>
-                      </>
-                    )}
-                  </button>
-                </div>
               ) : (
-                /* Multiple keys - compact inline list */
+                /* Multiple keys (2-4) - compact inline list */
                 <div
-                  className="rounded-lg p-3"
-                  style={{ backgroundColor: colors.deepNavy, border: `1px solid ${colors.steelBlue400}30` }}
+                  className="rounded-[12px] p-3"
+                  style={{ 
+                    backgroundColor: colors.bgContainer, 
+                    border: `1px solid ${colors.cyanDark}` 
+                  }}
                 >
-                  <div className="flex flex-wrap gap-1.5">
-                    {licenseKeys.map((key, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleCopyKey(key, index)}
-                        className="rounded px-2 py-1 flex items-center space-x-1.5 transition-all hover:scale-[1.02] group"
-                        style={{ 
-                          backgroundColor: copiedIndex === index ? `${colors.successGreen}20` : `${colors.slateBackground}`, 
-                          border: `1px solid ${copiedIndex === index ? colors.successGreen : colors.steelBlue400}25` 
-                        }}
-                        title={`Click to copy Key ${index + 1}`}
-                      >
-                        <span 
-                          className="text-[9px] font-bold w-4 h-4 rounded flex items-center justify-center flex-shrink-0"
+                  <div className="flex flex-wrap gap-2">
+                    {licenseKeys.map((key, index) => {
+                      const isCopied = copiedKey === key;
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => handleCopyKey(key, index)}
+                          className="rounded-[12px] px-3 py-2 flex items-center space-x-2 transition-all hover:scale-[1.02] hover:shadow-md group"
                           style={{ 
-                            backgroundColor: copiedIndex === index ? `${colors.successGreen}30` : `${colors.steelBlue500}25`, 
-                            color: copiedIndex === index ? colors.successGreen : colors.steelBlue400 
+                            backgroundColor: isCopied ? `rgba(16, 185, 129, 0.15)` : 'transparent', 
+                            border: `1px solid ${isCopied ? colors.green : colors.cyanDark}`,
+                            backdropFilter: 'blur(10px)',
                           }}
+                          title={`Click to copy Key ${index + 1}`}
                         >
-                          {index + 1}
-                        </span>
-                        <code
-                          className="text-[11px] font-mono tracking-wide"
-                          style={{ color: copiedIndex === index ? colors.successGreen : colors.steelBlue400 }}
-                        >
-                          {key}
-                        </code>
-                        {copiedIndex === index ? (
-                          <Check className="w-3 h-3 flex-shrink-0" style={{ color: colors.successGreen }} />
-                        ) : (
-                          <Copy className="w-3 h-3 flex-shrink-0 opacity-30 group-hover:opacity-80" style={{ color: colors.steelBlue400 }} />
-                        )}
-                      </button>
-                    ))}
+                          <span 
+                            className="text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                            style={{ 
+                              background: isCopied ? colors.green : colors.gradientCyan,
+                              color: colors.bgDark
+                            }}
+                          >
+                            {index + 1}
+                          </span>
+                          <code
+                            className="text-xs font-mono tracking-wide"
+                            style={{ 
+                              color: isCopied ? colors.green : colors.cyan,
+                              fontFamily: "'Space Grotesk', monospace",
+                              fontWeight: 700
+                            }}
+                          >
+                            {key}
+                          </code>
+                          {isCopied ? (
+                            <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: colors.green }} />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5 flex-shrink-0 opacity-30 group-hover:opacity-80" style={{ color: colors.cyan }} />
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
 
-              {customerEmail && (
-                <div className="mt-4 flex items-center space-x-2 text-sm" style={{ color: colors.warmIvory, opacity: 0.6 }}>
-                  <Mail className="w-4 h-4" />
-                  <span>A copy has been sent to {customerEmail}</span>
-                </div>
-              )}
+                {customerEmail && (
+                  <p className="text-xs mt-2.5 flex items-center justify-center gap-1" style={{ color: colors.textMuted }}>
+                    <Mail className="w-3.5 h-3.5" style={{ color: colors.cyan }} />
+                    An email has been sent to {customerEmail}
+                  </p>
+                )}
             </div>
           )}
 
-          {/* Download Section */}
-          <div className="mb-8">
-            <h2 className="text-lg font-semibold text-white mb-4 flex items-center space-x-2">
-              <Download className="w-5 h-5" style={{ color: colors.steelBlue400 }} />
-              <span>Download for Your Platform</span>
-            </h2>
+            {/* Single Purchase: Download Section */}
+            {!isLoading && !error && !isBundle && productGroups.length > 0 && (
+              <div className="mb-5">
+                <h2 
+                  className="text-lg md:text-xl font-semibold mb-3 md:mb-3.5"
+                  style={{ 
+                    color: colors.textPrimary,
+                    fontFamily: "'Space Grotesk', sans-serif"
+                  }}
+                >
+                  Step 1: Download the App
+                </h2>
 
-            <div className="grid grid-cols-3 gap-3">
-              {sortedPlatforms.map((platform) => {
-                const isRecommended = platform.id === detectedOS;
-                return (
-                  <div
-                    key={platform.id}
-                    className="rounded-lg transition-all overflow-hidden text-center flex flex-col"
-                    style={{
-                      backgroundColor: colors.slateBackground,
-                      border: isRecommended
-                        ? `2px solid ${colors.steelBlue400}`
-                        : `1px solid ${colors.steelBlue400}30`,
+                <div className="grid grid-cols-3 gap-3">
+                  {getSortedPlatforms(productGroups[0].downloadBaseUrl).map((platform) => {
+                  return (
+                    <button
+                      key={platform.id}
+                      onClick={() => handleDownload(platform)}
+                      className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all"
+                      style={{
+                        backgroundColor: colors.bgDarker,
+                        border: `1px solid ${colors.borderSubtle}`,
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = colors.cyanDark;
+                        e.currentTarget.style.transform = 'translateY(-3px)';
+                        e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.3)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = colors.borderSubtle;
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    >
+                      <div style={{ color: colors.cyan, width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {platform.icon}
+                      </div>
+                      <span className="font-semibold text-sm" style={{ color: colors.textPrimary }}>
+                        {platform.name}
+                      </span>
+                      <span className="text-xs" style={{ color: colors.textMuted }}>
+                        {platform.fileType}
+                      </span>
+                    </button>
+                  );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Quick Start Guide */}
+            <div
+              className="rounded-[12px] p-4 mb-5 text-left"
+              style={{
+                backgroundColor: colors.bgDarker,
+                border: `1px solid ${colors.borderSubtle}`,
+              }}
+            >
+              <h3 
+                className="text-[0.9rem] font-semibold mb-2.5 uppercase tracking-wider"
+                style={{ 
+                  color: colors.textMuted,
+                  fontFamily: "'Space Grotesk', sans-serif"
+                }}
+              >
+                Quick Start
+              </h3>
+              <ol className="space-y-2.5">
+                <li className="flex items-start gap-3">
+                  <span
+                    className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0"
+                    style={{ 
+                      background: colors.gradientCyan,
+                      color: colors.bgDarker
                     }}
                   >
-                    {/* Badge row - fixed height */}
-                    <div className="h-6 flex items-center justify-center">
-                      {isRecommended && (
-                        <div
-                          className="px-2 py-0.5 text-[10px] font-medium rounded-b"
-                          style={{ backgroundColor: colors.steelBlue500, color: "white" }}
-                        >
-                          Your OS
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Content */}
-                    <div className="p-3 pt-0 flex flex-col flex-1">
-                      <div
-                        className="w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-2"
-                        style={{ backgroundColor: `${colors.steelBlue500}20` }}
-                      >
-                        <span style={{ color: colors.steelBlue400 }}>{platform.icon}</span>
-                      </div>
-                      <h3 className="text-sm font-semibold text-white">{platform.name}</h3>
-                      <p className="text-[11px] mb-3" style={{ color: colors.warmIvory, opacity: 0.5 }}>
-                        {platform.fileType}
-                      </p>
-
-                      {/* Button aligned at bottom */}
-                      <div className="mt-auto">
-                        <button
-                          onClick={() => handleDownload(platform)}
-                          className="w-full px-3 py-2 rounded-md text-sm font-medium flex items-center justify-center space-x-1.5 transition-all hover:scale-[1.02]"
-                          style={{
-                            backgroundColor: colors.steelBlue500,
-                            color: "white",
-                          }}
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          <span>Download</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                    1
+                  </span>
+                  <span className="text-sm" style={{ color: colors.textSecondary }}>
+                    Download and install Local Password Vault for your platform
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span
+                    className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0"
+                    style={{ 
+                      background: colors.gradientCyan,
+                      color: colors.bgDarker
+                    }}
+                  >
+                    2
+                  </span>
+                  <span className="text-sm" style={{ color: colors.textSecondary }}>
+                    Launch the app and enter your license key when prompted
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span
+                    className="w-[26px] h-[26px] rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0"
+                    style={{ 
+                      background: colors.gradientCyan,
+                      color: colors.bgDarker
+                    }}
+                  >
+                    3
+                  </span>
+                  <span className="text-sm" style={{ color: colors.textSecondary }}>
+                    Create your master password and start securing your accounts
+                  </span>
+                </li>
+              </ol>
             </div>
-          </div>
 
-          {/* Quick Start Guide */}
-          <div
-            className="rounded-xl p-6"
-            style={{
-              backgroundColor: `${colors.slateBackground}80`,
-              border: `1px solid ${colors.steelBlue400}20`,
-            }}
-          >
-            <h3 className="text-lg font-semibold text-white mb-4">Quick Start</h3>
-            <ol className="space-y-3">
-              <li className="flex items-start space-x-3">
-                <span
-                  className="w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0"
-                  style={{ backgroundColor: colors.steelBlue500, color: "white" }}
+            {/* Support Link */}
+            <div className="text-center">
+              <p className="text-xs" style={{ color: colors.textMuted }}>
+                Need help? Contact{" "}
+                <a
+                  href="mailto:support@localpasswordvault.com"
+                  style={{ color: colors.cyan }}
+                  className="hover:underline font-semibold"
                 >
-                  1
-                </span>
-                <span style={{ color: colors.warmIvory, opacity: 0.8 }}>
-                  Download and install Local Password Vault for your platform
-                </span>
-              </li>
-              <li className="flex items-start space-x-3">
-                <span
-                  className="w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0"
-                  style={{ backgroundColor: colors.steelBlue500, color: "white" }}
-                >
-                  2
-                </span>
-                <span style={{ color: colors.warmIvory, opacity: 0.8 }}>
-                  Launch the app and enter your license key when prompted
-                </span>
-              </li>
-              <li className="flex items-start space-x-3">
-                <span
-                  className="w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0"
-                  style={{ backgroundColor: colors.steelBlue500, color: "white" }}
-                >
-                  3
-                </span>
-                <span style={{ color: colors.warmIvory, opacity: 0.8 }}>
-                  Create your master password and start securing your accounts
-                </span>
-              </li>
-            </ol>
-          </div>
-
-          {/* Support Link */}
-          <div className="text-center mt-8">
-            <p className="text-sm" style={{ color: colors.warmIvory, opacity: 0.5 }}>
-              Need help? Contact{" "}
-              <a
-                href="mailto:support@localpasswordvault.com"
-                style={{ color: colors.steelBlue400 }}
-                className="hover:underline"
-              >
-                support@localpasswordvault.com
-              </a>
-            </p>
+                  support@localpasswordvault.com
+                </a>
+              </p>
+            </div>
           </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-700/50 py-4 px-6">
-        <div className="max-w-4xl mx-auto text-center text-sm" style={{ color: colors.warmIvory, opacity: 0.4 }}>
+      <footer 
+        className="border-t py-4 px-6"
+        style={{ borderColor: colors.borderSubtle }}
+      >
+        <div className="max-w-4xl mx-auto text-center text-sm" style={{ color: colors.textMuted }}>
           © 2025 Local Password Vault. All rights reserved.
         </div>
       </footer>
     </div>
+    </>
   );
 };
 

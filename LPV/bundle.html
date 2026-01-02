@@ -690,7 +690,7 @@
           </div>
         </div>
         
-        <a href="https://buy.stripe.com/REPLACE_WITH_BUNDLE_LINK" class="bundle-cta">Get the Family Protection Bundle</a>
+        <button onclick="purchaseBundle()" class="bundle-cta" id="bundle-cta-btn" style="border: none; cursor: pointer;">Get the Family Protection Bundle</button>
         <p class="bundle-note">Includes all future updates for both products</p>
       </div>
     </div>
@@ -758,10 +758,20 @@
   <section class="footer-cta">
     <h2>Ready to Protect Your Family?</h2>
     <p>One bundle. Complete protection. Lifetime ownership.</p>
-    <a href="https://buy.stripe.com/REPLACE_WITH_BUNDLE_LINK" class="bundle-cta">Get the Bundle — Save $29</a>
+    <button onclick="purchaseBundle()" class="bundle-cta" id="bundle-cta-footer" style="border: none; cursor: pointer;">Get the Bundle — Save $29</button>
   </section>
 
   <script>
+    // API base URL - detects production or uses default
+    const API_BASE_URL = (() => {
+      const hostname = window.location.hostname;
+      if (hostname === 'localpasswordvault.com' || hostname === 'www.localpasswordvault.com') {
+        return 'https://api.localpasswordvault.com';
+      }
+      // For local development, adjust as needed
+      return 'https://api.localpasswordvault.com';
+    })();
+
     function copyBundleCode() {
       const code = document.querySelector('.bundle-code').textContent;
       navigator.clipboard.writeText(code).then(() => {
@@ -773,6 +783,65 @@
           btn.classList.remove('copied');
         }, 2000);
       });
+    }
+
+    async function purchaseBundle() {
+      const btn1 = document.getElementById('bundle-cta-btn');
+      const btn2 = document.getElementById('bundle-cta-footer');
+      const buttons = [btn1, btn2].filter(btn => btn !== null);
+      
+      // Disable buttons and show loading state
+      buttons.forEach(btn => {
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = 'Processing...';
+          btn.style.opacity = '0.7';
+          btn.style.cursor = 'not-allowed';
+        }
+      });
+
+      try {
+        // Family Protection Bundle: LPV Family + LLV Family
+        const response = await fetch(`${API_BASE_URL}/api/checkout/bundle`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            items: [
+              { productKey: 'family', quantity: 1 },      // LPV Family
+              { productKey: 'llv_family', quantity: 1 }   // LLV Family
+            ]
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: 'Failed to create checkout session' }));
+          throw new Error(errorData.error || 'Failed to create checkout session');
+        }
+
+        const data = await response.json();
+        
+        if (data.success && data.url) {
+          // Redirect to Stripe checkout
+          window.location.href = data.url;
+        } else {
+          throw new Error(data.error || 'Failed to create checkout session');
+        }
+      } catch (error) {
+        console.error('Bundle purchase error:', error);
+        alert('Failed to start checkout. Please try again or contact support@localpasswordvault.com');
+        
+        // Re-enable buttons
+        buttons.forEach(btn => {
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = btn.id === 'bundle-cta-btn' ? 'Get the Family Protection Bundle' : 'Get the Bundle — Save $29';
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+          }
+        });
+      }
     }
   </script>
 </body>

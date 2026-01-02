@@ -1,0 +1,69 @@
+﻿# Documentation Upload Instructions
+## Local Password Vault - Version 1.2.0
+
+## Files Ready for Upload
+Location: deploy-documentation\downloads\documentation\
+
+Files to upload:
+1. Local-Password-Vault-Windows-Documentation-1.2.0.zip
+2. Local-Password-Vault-macOS-Documentation-1.2.0.zip
+3. Local-Password-Vault-Linux-Documentation-1.2.0.zip
+
+## Upload Steps (Host Armada cPanel)
+
+### Step 1: Access File Manager
+1. Log into Host Armada cPanel
+2. Open File Manager
+3. Navigate to: localpasswordvault.com/
+
+### Step 2: Create Folder Structure
+1. If 'downloads' folder doesn't exist, create it
+2. Inside 'downloads', create 'documentation' folder
+3. Final path: localpasswordvault.com/downloads/documentation/
+
+### Step 3: Upload Files
+1. Navigate to: localpasswordvault.com/downloads/documentation/
+2. Click "Upload" button
+3. Upload all 3 zip files from: deploy-documentation\downloads\documentation\
+4. Wait for upload to complete
+
+### Step 4: Verify Upload
+Test these URLs in your browser:
+- https://localpasswordvault.com/downloads/documentation/Local-Password-Vault-Windows-Documentation-1.2.0.zip
+- https://localpasswordvault.com/downloads/documentation/Local-Password-Vault-macOS-Documentation-1.2.0.zip
+- https://localpasswordvault.com/downloads/documentation/Local-Password-Vault-Linux-Documentation-1.2.0.zip
+
+Each should download the zip file.
+
+### Step 5: Test on Trial Success Page
+1. Visit: https://localpasswordvault.com/trial-success.html
+2. Click each documentation download button
+3. Verify files download correctly
+
+## File Permissions
+Ensure files have read permissions (644 or 755):
+- Right-click each file in File Manager
+- Select "Change Permissions"
+- Set to: 644 (or 755)
+
+## Troubleshooting
+- If downloads fail, check file permissions
+- Verify folder path matches exactly: /downloads/documentation/
+- Check that filenames match exactly (case-sensitive)
+- Clear browser cache if links don't work
+
+## Server Path Structure
+`
+localpasswordvault.com/
+â”œâ”€â”€ LPV/                              (HTML files)
+â”‚   â”œâ”€â”€ trial-success.html
+â”‚   â””â”€â”€ (other HTML files)
+â””â”€â”€ downloads/
+    â””â”€â”€ documentation/
+        â”œâ”€â”€ Local-Password-Vault-Windows-Documentation-1.2.0.zip
+        â”œâ”€â”€ Local-Password-Vault-macOS-Documentation-1.2.0.zip
+        â””â”€â”€ Local-Password-Vault-Linux-Documentation-1.2.0.zip
+`
+
+## Next Steps
+After uploading, test the download links on the trial-success.html page.

@@ -563,9 +563,150 @@ export class TrialService {
   }
 
   /**
-   * Check and trigger warning popups
+   * Get warning popup state synchronously (for tests)
    */
-  async checkAndTriggerWarningPopups(): Promise<void> {
+  checkWarningStateSync(): WarningPopupState {
+    const trialFile = this.getTrialFile();
+    if (!trialFile) {
+      return {
+        shouldShowExpiringWarning: false,
+        shouldShowFinalWarning: false,
+        timeRemaining: 'No trial active',
+      };
+    }
+
+    const startDate = new Date(trialFile.start_date);
+    const expiresAt = new Date(trialFile.expires_at);
+    const now = new Date();
+    const isExpired = now >= expiresAt;
+    
+    if (isExpired) {
+      return {
+        shouldShowExpiringWarning: false,
+        shouldShowFinalWarning: true,
+        timeRemaining: 'Trial expired',
+      };
+    }
+
+    const remainingMs = Math.max(0, expiresAt.getTime() - now.getTime());
+    const daysRemaining = Math.floor(remainingMs / (24 * 60 * 60 * 1000));
+    const hoursRemaining = Math.floor((remainingMs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+    const hasShownWarning1 = localStorage.getItem(TrialService.WARNING_POPUP_1_SHOWN_KEY) !== null;
+    const hasShownWarning2 = localStorage.getItem(TrialService.WARNING_POPUP_2_SHOWN_KEY) !== null;
+
+    return {
+      shouldShowExpiringWarning: daysRemaining <= 1 && !hasShownWarning1,
+      shouldShowFinalWarning: hoursRemaining <= 24 && daysRemaining === 0 && !hasShownWarning2,
+      timeRemaining: daysRemaining > 0 ? `${daysRemaining}d ${hoursRemaining}h` : `${hoursRemaining}h`,
+    };
+  }
+
+  /**
+   * Get warning state from trial info
+   */
+  private getWarningStateFromTrialInfo(trialInfo: TrialInfo): WarningPopupState {
+    if (!trialInfo) {
+      return {
+        shouldShowExpiringWarning: false,
+        shouldShowFinalWarning: false,
+        timeRemaining: 'No trial active',
+      };
+    }
+
+    if (!trialInfo.hasTrialBeenUsed || !trialInfo.isTrialActive || trialInfo.isExpired) {
+      return {
+        shouldShowExpiringWarning: false,
+        shouldShowFinalWarning: false,
+        timeRemaining: trialInfo.timeRemaining,
+      };
+    }
+
+    const daysRemaining = trialInfo.daysRemaining;
+    const hoursRemaining = trialInfo.hoursRemaining;
+    const hasShownWarning1 = localStorage.getItem(TrialService.WARNING_POPUP_1_SHOWN_KEY) !== null;
+    const hasShownWarning2 = localStorage.getItem(TrialService.WARNING_POPUP_2_SHOWN_KEY) !== null;
+
+    return {
+      shouldShowExpiringWarning: daysRemaining <= 1 && !hasShownWarning1,
+      shouldShowFinalWarning: hoursRemaining <= 24 && daysRemaining === 0 && !hasShownWarning2,
+      timeRemaining: trialInfo.timeRemaining,
+    };
+  }
+
+  /**
+   * Get trial info synchronously (for testing/warning checks)
+   * Note: This is a simplified version that doesn't verify signatures
+   */
+  private getTrialInfoSync(): TrialInfo | null {
+    const trialFile = this.getTrialFile();
+    if (!trialFile) {
+      const hasTrialBeenUsed = localStorage.getItem(TrialService.TRIAL_USED_KEY) === "true";
+      return {
+        isTrialActive: false,
+        daysRemaining: 0,
+        hoursRemaining: 0,
+        minutesRemaining: 0,
+        secondsRemaining: 0,
+        isExpired: false,
+        startDate: null,
+        endDate: null,
+        hasTrialBeenUsed,
+        timeRemaining: hasTrialBeenUsed ? 'Trial expired or invalid' : 'No trial activated',
+        trialDurationDisplay: 'None',
+        licenseKey: null,
+        securityHash: null,
+        activationTime: null,
+        lastChecked: new Date(),
+      };
+    }
+
+    const startDate = new Date(trialFile.start_date);
+    const expiresAt = new Date(trialFile.expires_at);
+    const now = new Date();
+    const isExpired = now >= expiresAt;
+    const isActive = !isExpired;
+    const remainingMs = Math.max(0, expiresAt.getTime() - now.getTime());
+    const daysRemaining = Math.floor(remainingMs / (24 * 60 * 60 * 1000));
+    const hoursRemaining = Math.floor((remainingMs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+    const minutesRemaining = Math.floor((remainingMs % (60 * 60 * 1000)) / (60 * 1000));
+    const secondsRemaining = Math.floor((remainingMs % (60 * 1000)) / 1000);
+
+    let timeRemaining: string;
+    if (isExpired) {
+      timeRemaining = 'Trial expired';
+    } else if (daysRemaining > 0) {
+      timeRemaining = `${daysRemaining}d ${hoursRemaining}h ${minutesRemaining}m ${secondsRemaining}s`;
+    } else if (hoursRemaining > 0) {
+      timeRemaining = `${hoursRemaining}h ${minutesRemaining}m ${secondsRemaining}s`;
+    } else if (minutesRemaining > 0) {
+      timeRemaining = `${minutesRemaining}m ${secondsRemaining}s`;
+    } else {
+      timeRemaining = `${secondsRemaining}s`;
+    }
+
+    return {
+      isTrialActive: isActive,
+      daysRemaining,
+      hoursRemaining,
+      minutesRemaining,
+      secondsRemaining,
+      isExpired,
+      startDate,
+      endDate: expiresAt,
+      hasTrialBeenUsed: true,
+      timeRemaining,
+      trialDurationDisplay: '7 days',
+      licenseKey: trialFile.trial_key,
+      securityHash: trialFile.device_id,
+      activationTime: startDate,
+      lastChecked: new Date(),
+    };
+  }
+
+  /**
+   * Check and trigger warning popups (async version that triggers callbacks)
+   */
+  async checkWarningPopups(): Promise<void> {
     const trialInfo = await this.getTrialInfo();
 
     if (!trialInfo.hasTrialBeenUsed || !trialInfo.isTrialActive || trialInfo.isExpired) {
@@ -603,10 +744,34 @@ export class TrialService {
   }
 
   /**
-   * Check and trigger warning popups (alias for checkAndTriggerWarningPopups)
+   * Check and trigger warning popups (deprecated - use checkWarningPopups)
    */
-  async checkWarningPopups(): Promise<void> {
-    return this.checkAndTriggerWarningPopups();
+  async checkAndTriggerWarningPopups(): Promise<void> {
+    const trialInfo = await this.getTrialInfo();
+
+    if (!trialInfo.hasTrialBeenUsed || !trialInfo.isTrialActive || trialInfo.isExpired) {
+      return;
+    }
+
+    const state = this.checkWarningPopups();
+
+    if (state.shouldShowExpiringWarning) {
+      localStorage.setItem(TrialService.WARNING_POPUP_1_SHOWN_KEY, new Date().toISOString());
+    }
+
+    if (state.shouldShowFinalWarning) {
+      localStorage.setItem(TrialService.WARNING_POPUP_2_SHOWN_KEY, new Date().toISOString());
+    }
+
+    if (state.shouldShowExpiringWarning || state.shouldShowFinalWarning) {
+      this.warningPopupCallbacks.forEach(callback => {
+        try {
+          callback(state);
+        } catch (error) {
+          devError('Error in warning popup callback:', error);
+        }
+      });
+    }
   }
 }
 

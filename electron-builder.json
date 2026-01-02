@@ -94,7 +94,6 @@
     ],
     "icon": "assets/icons/icon.ico",
     "requestedExecutionLevel": "asInvoker",
-    "artifactName": "${productName}-${version}-win-${arch}.${ext}",
     "publisherName": "Local Password Vault"
   },
   
@@ -105,7 +104,7 @@
     "createStartMenuShortcut": true,
     "perMachine": false,
     "runAfterFinish": true,
-    "artifactName": "${productName}-Setup-${version}.${ext}",
+    "artifactName": "${productName} Setup ${version}-${arch}.${ext}",
     "installerIcon": "assets/icons/icon.ico",
     "uninstallerIcon": "assets/icons/icon.ico",
     "installerHeaderIcon": "assets/icons/icon.ico",
@@ -116,7 +115,7 @@
   },
   
   "portable": {
-    "artifactName": "${productName}-${version}-Portable.exe"
+    "artifactName": "${productName}-${version}-Portable-${arch}.exe"
   },
   
   "linux": {

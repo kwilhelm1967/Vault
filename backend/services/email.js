@@ -11,23 +11,38 @@ function initializeBrevoClient() {
     throw new Error('BREVO_API_KEY is required');
   }
 
-  const defaultClient = brevo.ApiClient.instance;
-  const apiKey = defaultClient.authentications['api-key'];
-  apiKey.apiKey = process.env.BREVO_API_KEY;
-  apiInstance = new brevo.TransactionalEmailsApi();
-  logger.info('Email service initialized', {
-    operation: 'email_init',
-    service: 'brevo',
-  });
+  try {
+    // Brevo v3+ initialization (per official documentation)
+    apiInstance = new brevo.TransactionalEmailsApi();
+    
+    // Set API key in authentications.apiKey.apiKey (Brevo v3 way)
+    apiInstance.authentications.apiKey.apiKey = process.env.BREVO_API_KEY;
+    
+    logger.info('Email service initialized', {
+      operation: 'email_init',
+      service: 'brevo',
+    });
+  } catch (error) {
+    // More detailed error for debugging
+    throw new Error(`Brevo initialization failed: ${error.message}. Make sure @getbrevo/brevo package is installed correctly.`);
+  }
 }
 
+// Initialize Brevo client, but don't fail if logger isn't ready yet
 try {
   initializeBrevoClient();
 } catch (error) {
-  logger.error('Email service initialization failed', error, {
-    operation: 'email_init',
-    service: 'brevo',
-  }, logger.ERROR_CODES.EMAIL_INIT_ERROR);
+  // Only log if logger is fully initialized
+  if (logger && typeof logger.error === 'function') {
+    const errorCode = logger.ERROR_CODES?.EMAIL_INIT_ERROR || 'ERR_EMAIL_001';
+    logger.error('Email service initialization failed', error, {
+      operation: 'email_init',
+      service: 'brevo',
+    }, errorCode);
+  } else {
+    // Fallback for when logger isn't ready (e.g., during test setup)
+    console.error('Email service initialization failed:', error.message);
+  }
 }
 
 function loadTemplate(templateName, variables = {}) {
@@ -59,6 +74,7 @@ async function sendEmailViaBrevo({ to, subject, html, text }) {
   sendSmtpEmail.textContent = text;
 
   try {
+    // Brevo v3: API key is set in authentications, just call the method
     return await apiInstance.sendTransacEmail(sendSmtpEmail);
   } catch (error) {
     const errorMessage = error.response?.body?.message || error.message || 'Unknown error';
@@ -69,7 +85,7 @@ async function sendEmailViaBrevo({ to, subject, html, text }) {
       brevoErrorCode: errorCode,
       recipient: to,
       subject: subject,
-    }, logger.ERROR_CODES.EMAIL_SEND_ERROR);
+    }, logger.ERROR_CODES?.EMAIL_SEND_ERROR || 'ERR_EMAIL_002');
     throw new Error(`Email send failed: ${errorMessage} (Code: ${errorCode})`);
   }
 }
@@ -290,7 +306,7 @@ async function verifyConnection() {
     logger.error('Email service connection failed - API instance not initialized', null, {
       operation: 'email_verify',
       service: 'brevo',
-    }, logger.ERROR_CODES.EMAIL_INIT_ERROR);
+    }, logger.ERROR_CODES?.EMAIL_INIT_ERROR || 'ERR_EMAIL_001');
     return false;
   }
 
@@ -308,7 +324,7 @@ async function verifyConnection() {
       operation: 'email_verify',
       service: 'brevo',
       errorMessage: errorMessage,
-    }, logger.ERROR_CODES.EMAIL_SEND_ERROR);
+    }, logger.ERROR_CODES?.EMAIL_SEND_ERROR || 'ERR_EMAIL_002');
     return false;
   }
 }

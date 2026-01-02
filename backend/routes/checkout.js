@@ -121,6 +121,9 @@ router.post('/bundle', async (req, res) => {
       });
     }
     
+    const seenProductKeys = new Set();
+    const productTypes = new Set();
+    
     for (const item of items) {
       if (!item.productKey || !PRODUCTS[item.productKey]) {
         return res.status(400).json({ 
@@ -128,6 +131,59 @@ router.post('/bundle', async (req, res) => {
           error: `Invalid product key: ${item.productKey}. Valid keys: ${Object.keys(PRODUCTS).join(', ')}` 
         });
       }
+      
+      // Prevent duplicate products in bundle
+      if (seenProductKeys.has(item.productKey)) {
+        return res.status(400).json({ 
+          success: false, 
+          error: `Duplicate product in bundle: ${item.productKey}. Each product can only appear once in a bundle.` 
+        });
+      }
+      seenProductKeys.add(item.productKey);
+      
+      // Track product types for validation
+      const product = PRODUCTS[item.productKey];
+      productTypes.add(product.productType || 'lpv');
+    }
+    
+    // Business rule: Bundle must contain at least 2 different products
+    if (items.length < 2) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Bundle must contain at least 2 products. For single product purchases, use the regular checkout.' 
+      });
+    }
+    
+    // Business rule: Bundle must contain products from both LPV and LLV
+    if (!productTypes.has('lpv') || !productTypes.has('llv')) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Bundle must contain products from both Local Password Vault and Local Legacy Vault.' 
+      });
+    }
+    
+    // Business rule: Validate specific bundle combinations
+    const hasLPVPersonal = seenProductKeys.has('personal');
+    const hasLPVFamily = seenProductKeys.has('family');
+    const hasLLVPersonal = seenProductKeys.has('llv_personal');
+    const hasLLVFamily = seenProductKeys.has('llv_family');
+    
+    // Valid combinations:
+    // 1. LPV Personal + LLV Personal (Personal Bundle)
+    // 2. LPV Family + LLV Family (Family Protection Bundle)
+    // 3. LPV Personal + LLV Family (Mixed Bundle)
+    // 4. LPV Family + LLV Personal (Mixed Bundle)
+    const isValidCombination = 
+      (hasLPVPersonal && hasLLVPersonal) ||
+      (hasLPVFamily && hasLLVFamily) ||
+      (hasLPVPersonal && hasLLVFamily) ||
+      (hasLPVFamily && hasLLVPersonal);
+    
+    if (!isValidCombination) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid bundle combination. Valid bundles: Personal Bundle (LPV Personal + LLV Personal), Family Protection Bundle (LPV Family + LLV Family), or Mixed Bundles (LPV Personal + LLV Family, or LPV Family + LLV Personal).' 
+      });
     }
     
     const baseUrl = process.env.WEBSITE_URL || 'https://localpasswordvault.com';

@@ -283,6 +283,22 @@ const useEntryManagement = (
 };
 
 function App() {
+  // Handle purchase success page FIRST - before any other logic
+  // This ensures it shows immediately when redirected from Stripe
+  const urlParams = new URLSearchParams(window.location.search);
+  const pathname = window.location.pathname;
+  const hasSessionId = urlParams.get('session_id');
+  const hasKey = urlParams.get('key') || urlParams.get('license');
+  const isPurchaseSuccessPath = pathname === '/purchase/success' || pathname.includes('purchase/success');
+  
+  if (hasSessionId || hasKey || isPurchaseSuccessPath) {
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <PurchaseSuccessPage />
+      </Suspense>
+    );
+  }
+
   const { isElectron, isVaultUnlocked, saveSharedEntries, loadSharedEntries, broadcastEntriesChanged } = useElectron();
   const { appStatus, updateAppStatus, checkStatusImmediately } = useAppStatus();
 
@@ -818,16 +834,6 @@ function App() {
       checkStatusImmediately();
     }
   }, [appStatus?.trialInfo.isExpired, appStatus?.canUseApp, appStatus?.isLicensed, checkStatusImmediately]);
-
-  // Handle purchase success page (when redirected from payment)
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('key') || urlParams.get('license')) {
-    return (
-      <Suspense fallback={<LoadingFallback />}>
-        <PurchaseSuccessPage />
-      </Suspense>
-    );
-  }
 
   // Show loading state while app status is being determined
   if (!appStatus) {

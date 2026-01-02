@@ -82,6 +82,20 @@ const customers = {
     if (error) throw error;
     return data;
   },
+  
+  async findAll() {
+    const startTime = Date.now();
+    const { data, error } = await supabase
+      .from('customers')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    const duration = Date.now() - startTime;
+    performanceMonitor.trackDatabaseQuery('select', 'customers', duration);
+    
+    if (error) throw error;
+    return data || [];
+  },
 };
 
 
@@ -239,6 +253,35 @@ const licenses = {
     if (error) throw error;
     return data;
   },
+  
+  async findAll() {
+    const startTime = Date.now();
+    const { data, error } = await supabase
+      .from('licenses')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    const duration = Date.now() - startTime;
+    performanceMonitor.trackDatabaseQuery('select', 'licenses', duration);
+    
+    if (error) throw error;
+    return data || [];
+  },
+  
+  async findAllByEmail(email) {
+    const startTime = Date.now();
+    const { data, error } = await supabase
+      .from('licenses')
+      .select('*')
+      .eq('email', email)
+      .order('created_at', { ascending: false });
+    
+    const duration = Date.now() - startTime;
+    performanceMonitor.trackDatabaseQuery('select', 'licenses', duration);
+    
+    if (error) throw error;
+    return data || [];
+  },
 };
 
 
@@ -324,6 +367,20 @@ const trials = {
     
     if (error) throw error;
     return data;
+  },
+  
+  async findAll() {
+    const startTime = Date.now();
+    const { data, error } = await supabase
+      .from('trials')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    const duration = Date.now() - startTime;
+    performanceMonitor.trackDatabaseQuery('select', 'trials', duration);
+    
+    if (error) throw error;
+    return data || [];
   },
 };
 
@@ -493,6 +550,38 @@ const webhookEvents = {
     performanceMonitor.trackDatabaseQuery('update', 'webhook_events', duration);
     
     if (error) throw error;
+    return data;
+  },
+  
+  async findFailed() {
+    const startTime = Date.now();
+    const { data, error } = await supabase
+      .from('webhook_events')
+      .select('*')
+      .eq('processed', false)
+      .not('error_message', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(100);
+    
+    const duration = Date.now() - startTime;
+    performanceMonitor.trackDatabaseQuery('select', 'webhook_events', duration);
+    
+    if (error) throw error;
+    return data || [];
+  },
+  
+  async findByEventId(stripe_event_id) {
+    const startTime = Date.now();
+    const { data, error } = await supabase
+      .from('webhook_events')
+      .select('*')
+      .eq('stripe_event_id', stripe_event_id)
+      .single();
+    
+    const duration = Date.now() - startTime;
+    performanceMonitor.trackDatabaseQuery('select', 'webhook_events', duration);
+    
+    if (error && error.code !== 'PGRST116') throw error;
     return data;
   },
 };

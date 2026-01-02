@@ -379,4 +379,5 @@ async function handleCheckoutCompleted(session) {
 }
 
 module.exports = router;
+module.exports.handleCheckoutCompleted = handleCheckoutCompleted;
 

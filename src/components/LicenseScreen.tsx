@@ -471,7 +471,7 @@ const LicenseScreenComponent: React.FC<LicenseScreenProps> = ({
         setError(ERROR_MESSAGES.LICENSE.ACTIVATION_CANCELLED);
   };
 
-  const handlePurchase = (plan: "single" | "family") => {
+  const handlePurchase = async (plan: "single" | "family") => {
     setSelectedPlan(plan);
     analyticsService.trackConversion("purchase_started", { plan });
 
@@ -482,6 +482,43 @@ const LicenseScreenComponent: React.FC<LicenseScreenProps> = ({
       } catch (error) {
         devError('Failed to hide floating button:', error);
       }
+    }
+
+    try {
+      // Import environment config dynamically to avoid circular dependencies
+      const environment = (await import("../config/environment")).default;
+      const apiBaseUrl = environment.environment.licenseServerUrl;
+      
+      // Map plan types: "single" -> "personal", "family" -> "family"
+      const planType = plan === "single" ? "personal" : "family";
+      
+      // Create checkout session
+      const response = await fetch(`${apiBaseUrl}/api/checkout/session`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          planType,
+          email: null, // Stripe will collect email during checkout
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create checkout session");
+      }
+
+      const data = await response.json();
+      
+      if (data.success && data.url) {
+        // Redirect to Stripe checkout
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || "Failed to create checkout session");
+      }
+    } catch (error) {
+      devError("Purchase error:", error);
+      setError("Failed to start checkout. Please try again or contact support@localpasswordvault.com");
     }
   };
 

@@ -61,7 +61,7 @@ class ApiClient {
   private errorInterceptors: ErrorInterceptor[] = [];
 
   constructor(baseUrl?: string) {
-    this.baseUrl = baseUrl || environment.environment.licenseServerUrl;
+    this.baseUrl = baseUrl || (environment?.environment?.licenseServerUrl ?? "https://server.localpasswordvault.com");
     this.defaultHeaders = {
       "Content-Type": "application/json",
     };

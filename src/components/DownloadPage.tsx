@@ -20,6 +20,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { devError } from "../utils/devLog";
+import { getDownloadUrl } from "../config/downloadUrls";
 
 // Color palette matching LPV design system
 const colors = {
@@ -91,13 +92,15 @@ const DownloadCard: React.FC<DownloadCardProps> = ({
     <div 
       className={`relative rounded-2xl p-6 transition-all duration-300 ${
         isRecommended 
-          ? 'border-2 ring-2 ring-offset-2 ring-offset-slate-900' 
-          : 'border hover:border-slate-600'
+          ? 'border-2 ring-2 ring-offset-2 ring-offset-slate-900 shadow-lg' 
+          : 'border hover:border-slate-600 hover:shadow-md'
       }`}
       style={{
-        backgroundColor: 'rgba(30, 41, 59, 0.6)',
-        borderColor: isRecommended ? colors.steelBlue500 : 'rgba(71, 85, 105, 0.5)',
+        backgroundColor: 'transparent',
+        borderColor: isRecommended ? colors.steelBlue500 : 'rgba(71, 85, 105, 0.2)',
         ...(isRecommended && { ringColor: `${colors.steelBlue500}40` }),
+        backdropFilter: 'blur(10px)',
+        border: isRecommended ? `2px solid ${colors.steelBlue500}` : '1px solid rgba(71, 85, 105, 0.2)',
       }}
     >
       {isRecommended && (
@@ -110,11 +113,8 @@ const DownloadCard: React.FC<DownloadCardProps> = ({
       )}
 
       <div className="flex items-center gap-4 mb-4">
-        <div 
-          className="w-14 h-14 rounded-xl flex items-center justify-center"
-          style={{ backgroundColor: `${colors.steelBlue500}15` }}
-        >
-          <Icon className="w-7 h-7" strokeWidth={1.5} style={{ color: colors.steelBlue400 }} />
+        <div className="w-14 h-14 flex items-center justify-center">
+          <Icon className="w-8 h-8" strokeWidth={2} style={{ color: colors.steelBlue400 }} />
         </div>
         <div>
           <h3 className="text-xl font-bold" style={{ color: colors.warmIvory }}>{info.name}</h3>
@@ -136,15 +136,21 @@ const DownloadCard: React.FC<DownloadCardProps> = ({
       <button
         onClick={() => onDownload(platform)}
         disabled={isDownloading}
-        className="w-full py-3 px-4 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2"
+        className="w-full py-3 px-4 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
         style={{ 
           backgroundColor: isDownloading ? '#475569' : colors.steelBlue500,
         }}
         onMouseEnter={(e) => {
-          if (!isDownloading) e.currentTarget.style.backgroundColor = colors.steelBlue600;
+          if (!isDownloading) {
+            e.currentTarget.style.backgroundColor = colors.steelBlue600;
+            e.currentTarget.style.transform = 'translateY(-1px)';
+          }
         }}
         onMouseLeave={(e) => {
-          if (!isDownloading) e.currentTarget.style.backgroundColor = colors.steelBlue500;
+          if (!isDownloading) {
+            e.currentTarget.style.backgroundColor = colors.steelBlue500;
+            e.currentTarget.style.transform = 'translateY(0)';
+          }
         }}
       >
         {isDownloading ? (
@@ -177,11 +183,10 @@ export const DownloadPage: React.FC = () => {
     setDownloadComplete(null);
     
     try {
-      // Simulate download initialization
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Get GitHub Releases download URL
+      const downloadUrl = getDownloadUrl(platform as 'windows' | 'macos' | 'linux');
       
-      // Open download URL
-      const downloadUrl = `https://localpasswordvault.com/download/${platform}`;
+      // Open download URL directly
       window.open(downloadUrl, '_blank');
       
       setDownloadComplete(platform);
@@ -262,7 +267,7 @@ export const DownloadPage: React.FC = () => {
           </div>
 
           {/* Download Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {sortedPlatforms.map((platform) => (
               <DownloadCard
                 key={platform}
@@ -289,22 +294,22 @@ export const DownloadPage: React.FC = () => {
 
           {/* Features Row */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            <div className="flex items-center gap-3 p-4 rounded-xl" style={{ backgroundColor: 'rgba(30, 41, 59, 0.4)' }}>
-              <Lock className="w-5 h-5" style={{ color: colors.steelBlue400 }} strokeWidth={1.5} />
+            <div className="flex items-center gap-3 p-4 rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-lg" style={{ backgroundColor: 'transparent', backdropFilter: 'blur(10px)', border: '1px solid rgba(71, 85, 105, 0.2)' }}>
+              <Lock className="w-5 h-5 flex-shrink-0" style={{ color: colors.steelBlue400 }} strokeWidth={1.5} />
               <div>
                 <p className="font-medium" style={{ color: colors.warmIvory }}>AES-256 Encryption</p>
                 <p className="text-xs text-slate-500">Military-grade security</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 p-4 rounded-xl" style={{ backgroundColor: 'rgba(30, 41, 59, 0.4)' }}>
-              <Shield className="w-5 h-5" style={{ color: colors.steelBlue400 }} strokeWidth={1.5} />
+            <div className="flex items-center gap-3 p-4 rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-lg" style={{ backgroundColor: 'transparent', backdropFilter: 'blur(10px)', border: '1px solid rgba(71, 85, 105, 0.2)' }}>
+              <Shield className="w-5 h-5 flex-shrink-0" style={{ color: colors.steelBlue400 }} strokeWidth={1.5} />
               <div>
                 <p className="font-medium" style={{ color: colors.warmIvory }}>100% Offline</p>
                 <p className="text-xs text-slate-500">No cloud, no servers</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 p-4 rounded-xl" style={{ backgroundColor: 'rgba(30, 41, 59, 0.4)' }}>
-              <Zap className="w-5 h-5" style={{ color: colors.steelBlue400 }} strokeWidth={1.5} />
+            <div className="flex items-center gap-3 p-4 rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-lg" style={{ backgroundColor: 'transparent', backdropFilter: 'blur(10px)', border: '1px solid rgba(71, 85, 105, 0.2)' }}>
+              <Zap className="w-5 h-5 flex-shrink-0" style={{ color: colors.steelBlue400 }} strokeWidth={1.5} />
               <div>
                 <p className="font-medium" style={{ color: colors.warmIvory }}>Lifetime License</p>
                 <p className="text-xs text-slate-500">One-time purchase</p>
@@ -315,7 +320,7 @@ export const DownloadPage: React.FC = () => {
           {/* Documentation Section */}
           <div 
             className="rounded-2xl p-6"
-            style={{ backgroundColor: 'rgba(30, 41, 59, 0.4)', border: '1px solid rgba(71, 85, 105, 0.3)' }}
+            style={{ backgroundColor: 'transparent', border: '1px solid rgba(71, 85, 105, 0.3)', backdropFilter: 'blur(10px)' }}
           >
             <div className="flex items-center gap-3 mb-4">
               <FileText className="w-5 h-5" style={{ color: colors.steelBlue400 }} strokeWidth={1.5} />
@@ -326,9 +331,15 @@ export const DownloadPage: React.FC = () => {
               <button
                 onClick={() => handleDocDownload('quickstart')}
                 className="flex items-center justify-between p-3 rounded-xl transition-colors group"
-                style={{ backgroundColor: 'rgba(30, 41, 59, 0.6)' }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(51, 65, 85, 0.6)'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(30, 41, 59, 0.6)'}
+                style={{ backgroundColor: 'transparent', backdropFilter: 'blur(10px)', border: '1px solid rgba(71, 85, 105, 0.2)' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(91, 130, 184, 0.4)';
+                  e.currentTarget.style.backgroundColor = 'rgba(91, 130, 184, 0.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(71, 85, 105, 0.2)';
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
               >
                 <div className="text-left">
                   <p className="font-medium text-sm" style={{ color: colors.warmIvory }}>Quick Start Guide</p>
@@ -340,9 +351,15 @@ export const DownloadPage: React.FC = () => {
               <button
                 onClick={() => handleDocDownload('userguide')}
                 className="flex items-center justify-between p-3 rounded-xl transition-colors group"
-                style={{ backgroundColor: 'rgba(30, 41, 59, 0.6)' }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(51, 65, 85, 0.6)'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(30, 41, 59, 0.6)'}
+                style={{ backgroundColor: 'transparent', backdropFilter: 'blur(10px)', border: '1px solid rgba(71, 85, 105, 0.2)' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(91, 130, 184, 0.4)';
+                  e.currentTarget.style.backgroundColor = 'rgba(91, 130, 184, 0.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(71, 85, 105, 0.2)';
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
               >
                 <div className="text-left">
                   <p className="font-medium text-sm" style={{ color: colors.warmIvory }}>User Manual</p>
@@ -354,9 +371,15 @@ export const DownloadPage: React.FC = () => {
               <button
                 onClick={() => handleDocDownload('security')}
                 className="flex items-center justify-between p-3 rounded-xl transition-colors group"
-                style={{ backgroundColor: 'rgba(30, 41, 59, 0.6)' }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(51, 65, 85, 0.6)'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(30, 41, 59, 0.6)'}
+                style={{ backgroundColor: 'transparent', backdropFilter: 'blur(10px)', border: '1px solid rgba(71, 85, 105, 0.2)' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(91, 130, 184, 0.4)';
+                  e.currentTarget.style.backgroundColor = 'rgba(91, 130, 184, 0.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(71, 85, 105, 0.2)';
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
               >
                 <div className="text-left">
                   <p className="font-medium text-sm" style={{ color: colors.warmIvory }}>Security Overview</p>

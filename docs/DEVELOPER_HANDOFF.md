@@ -1,5 +1,10 @@
 # Deployment Tasks
 
+**📚 READ FIRST:** Before starting work, please read:
+1. `docs/DEVELOPER_ONBOARDING.md` - Essential practical knowledge
+2. `DEVELOPER_SKILLS_REQUIREMENTS.md` - Skills assessment
+3. `docs/ARCHITECTURE.md` - System design overview
+
 **Note:** This system uses HMAC-SHA256 signed license files (not JWT tokens) for offline validation.
 
 **100% Offline Promise:** After license activation, the user's application sends ZERO data to any external service. No APIs, no tracking, no telemetry, no data collection. All validation is local.

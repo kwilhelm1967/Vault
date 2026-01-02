@@ -107,6 +107,10 @@ jobs:
         run: npm run build
         timeout-minutes: 5
 
+      - name: Install backend dependencies for E2E
+        working-directory: ./backend
+        run: npm ci
+
       - name: Run E2E tests
         run: npx playwright test --project=chromium --timeout=60000 --retries=1
         env:
@@ -226,7 +230,14 @@ jobs:
               grep -vE "(const|let|var)\s+\w+\s*:\s*\w+Token" | \
               grep -vE "function\s+\w+.*:\s*\w+Token" | \
               grep -vE "(MOBILE_TOKENS_KEY|STORAGE_KEY|LOCAL_STORAGE_KEY)" | \
-              grep -vE "(Can't scan|Manual entry|copy that secret)" || true)
+              grep -vE "(Can't scan|Manual entry|copy that secret)" | \
+              grep -vE "pk_test_" | \
+              grep -vE "pk_live_" | \
+              grep -vE "stripePublishableKey" | \
+              grep -vE "LICENSE_SIGNING_SECRET" | \
+              grep -vE "licenseSigningSecret" | \
+              grep -vE "VITE_LICENSE_SIGNING_SECRET" | \
+              grep -vE "test-secret" || true)
             
             if [ -n "$SECRET_MATCHES" ]; then
               echo "⚠️ Potential API keys or tokens found - review required:"

@@ -1,0 +1,17 @@
+﻿QUICK UPLOAD CHECKLIST
+=======================
+
+1. [ ] Open Host Armada cPanel File Manager
+2. [ ] Navigate to: localpasswordvault.com/
+3. [ ] Create folder: downloads/documentation/
+4. [ ] Upload 3 zip files from: deploy-documentation\downloads\documentation\
+5. [ ] Verify file permissions (644 or 755)
+6. [ ] Test download URLs in browser
+7. [ ] Test on trial-success.html page
+
+Files to upload:
+- Local-Password-Vault-Windows-Documentation-1.2.0.zip
+- Local-Password-Vault-macOS-Documentation-1.2.0.zip
+- Local-Password-Vault-Linux-Documentation-1.2.0.zip
+
+Location: deploy-documentation\downloads\documentation\
