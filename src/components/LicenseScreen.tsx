@@ -522,6 +522,64 @@ const LicenseScreenComponent: React.FC<LicenseScreenProps> = ({
     }
   };
 
+  const handleBundlePurchase = async (bundleType: "personal" | "family") => {
+    analyticsService.trackConversion("bundle_purchase_started", { bundleType });
+
+    // Hide floating button during purchase flow
+    if (window.electronAPI?.hideFloatingButton) {
+      try {
+        window.electronAPI.hideFloatingButton();
+      } catch (error) {
+        devError('Failed to hide floating button:', error);
+      }
+    }
+
+    try {
+      const environment = (await import("../config/environment")).default;
+      const apiBaseUrl = environment.environment.licenseServerUrl;
+      
+      // Determine product keys based on bundle type
+      const items = bundleType === "personal"
+        ? [
+            { productKey: 'personal', quantity: 1 },      // LPV Personal
+            { productKey: 'llv_personal', quantity: 1 }   // LLV Personal
+          ]
+        : [
+            { productKey: 'family', quantity: 1 },      // LPV Family
+            { productKey: 'llv_family', quantity: 1 }   // LLV Family
+          ];
+      
+      // Create bundle checkout session
+      const response = await fetch(`${apiBaseUrl}/api/checkout/bundle`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          items,
+          email: null, // Stripe will collect email during checkout
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Failed to create checkout session' }));
+        throw new Error(errorData.error || "Failed to create checkout session");
+      }
+
+      const data = await response.json();
+      
+      if (data.success && data.url) {
+        // Redirect to Stripe checkout
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || "Failed to create checkout session");
+      }
+    } catch (error) {
+      devError("Bundle purchase error:", error);
+      setError("Failed to start checkout. Please try again or contact support@localpasswordvault.com");
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       handleActivateLicense();
@@ -1148,6 +1206,80 @@ const LicenseScreenComponent: React.FC<LicenseScreenProps> = ({
                     <CreditCard className="w-4 h-4" />
                     <span>Buy the Family Vault - $79</span>
                   </button>
+                </div>
+              </div>
+
+              {/* Bundle Options */}
+              <div className="mt-8 pt-8 border-t border-slate-700/50">
+                <div className="text-center mb-6">
+                  <h3 className="text-lg font-semibold text-white mb-2">
+                    Complete Security Bundle
+                  </h3>
+                  <p className="text-slate-400 text-sm">
+                    Get both Local Password Vault and Local Legacy Vault together
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Personal Bundle */}
+                  <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 border-2 border-blue-500/50 rounded-xl p-6">
+                    <div className="text-center mb-4">
+                      <h4 className="text-lg font-semibold text-white mb-2">
+                        Personal Bundle
+                      </h4>
+                      <div className="text-2xl font-bold text-white mb-1">
+                        $89
+                      </div>
+                      <p className="text-slate-400 text-xs line-through">$98</p>
+                      <p className="text-green-400 text-xs font-medium mt-1">Save $9</p>
+                    </div>
+                    <ul className="space-y-2 mb-4 text-sm text-slate-300">
+                      <li className="flex items-center space-x-2">
+                        <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
+                        <span>LPV Personal + LLV Personal</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
+                        <span>2 lifetime licenses</span>
+                      </li>
+                    </ul>
+                    <button
+                      onClick={() => handleBundlePurchase("personal")}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-all text-center"
+                    >
+                      Buy Personal Bundle - $89
+                    </button>
+                  </div>
+
+                  {/* Family Bundle */}
+                  <div className="bg-gradient-to-br from-purple-900/30 to-pink-900/30 border-2 border-purple-500/50 rounded-xl p-6">
+                    <div className="text-center mb-4">
+                      <h4 className="text-lg font-semibold text-white mb-2">
+                        Family Bundle
+                      </h4>
+                      <div className="text-2xl font-bold text-white mb-1">
+                        $179
+                      </div>
+                      <p className="text-slate-400 text-xs line-through">$208</p>
+                      <p className="text-green-400 text-xs font-medium mt-1">Save $29</p>
+                    </div>
+                    <ul className="space-y-2 mb-4 text-sm text-slate-300">
+                      <li className="flex items-center space-x-2">
+                        <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
+                        <span>LPV Family + LLV Family</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
+                        <span>10 total device licenses</span>
+                      </li>
+                    </ul>
+                    <button
+                      onClick={() => handleBundlePurchase("family")}
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 px-4 rounded-lg font-medium transition-all text-center"
+                    >
+                      Buy Family Bundle - $179
+                    </button>
+                  </div>
                 </div>
               </div>
 

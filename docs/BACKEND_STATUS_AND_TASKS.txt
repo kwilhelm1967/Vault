@@ -1,0 +1,426 @@
+================================================================================
+BACKEND STATUS AND REMAINING TASKS
+Local Password Vault - Developer Documentation
+================================================================================
+
+IMPORTANT: BACKEND CODE IS FULLY IMPLEMENTED
+================================================================================
+
+All backend functionality is complete and implemented:
+- Stripe payment processing (fully implemented)
+- Webhook handling (fully implemented)
+- License generation (fully implemented)
+- Email system (fully implemented)
+- Email templates (already updated with .exe links in code)
+- All API routes (fully implemented)
+- Database integration (fully implemented)
+
+What remains are:
+- Configuration tasks (setting environment variables)
+- Deployment tasks (pushing code to production server)
+- Bug fixes (connection error issue)
+- Testing and verification
+
+================================================================================
+CRITICAL ERROR MESSAGE FOR USERS
+================================================================================
+
+When users download and execute the app, they encounter a red error box with:
+
+"Activation Error: Unable to connect to license server"
+
+This error appears when attempting to activate license keys or trial keys, even 
+when the user has internet connectivity. This is the primary issue that needs to 
+be resolved.
+
+================================================================================
+WHAT HAS BEEN DONE ON THE BACKEND
+================================================================================
+
+SERVER INFRASTRUCTURE
+---------------------
+- Express.js server configured and running
+- CORS configured to allow Electron app requests (file:// and electron:// protocols)
+- Rate limiting implemented for API endpoints
+- Helmet security middleware configured
+- Environment variable validation system
+- Structured logging system
+- Performance monitoring utilities
+- Sentry error tracking integration (optional, configured but not required)
+
+DATABASE INTEGRATION
+--------------------
+- Supabase database connection configured
+- Database schema implemented
+- License storage and retrieval functions
+- Trial key storage and retrieval functions
+- Device transfer tracking
+- License activation tracking
+- Database backup scripts and verification
+
+API ROUTES IMPLEMENTED (VERIFIED IN CODE)
+------------------------------------------
+- POST /api/licenses/validate - Legacy license validation (JWT-based, deprecated) (VERIFIED: routes/licenses.js)
+- POST /api/lpv/license/activate - Main license activation (HMAC-SHA256 signed files) (VERIFIED: routes/lpv-licenses.js)
+- POST /api/lpv/license/transfer - License device transfer (VERIFIED: routes/lpv-licenses.js)
+- POST /api/lpv/license/trial/activate - Trial key activation (VERIFIED: routes/lpv-licenses.js)
+- POST /api/trial/signup - Trial signup endpoint (VERIFIED: routes/trial.js)
+- POST /api/checkout/session - Stripe checkout session creation (single product) (VERIFIED: routes/checkout.js)
+- POST /api/checkout/bundle - Stripe checkout session creation (bundle with discount) (VERIFIED: routes/checkout.js)
+- GET /api/checkout/products - List available products (VERIFIED: routes/checkout.js)
+- POST /api/webhooks/stripe - Stripe webhook handler for payment processing (VERIFIED: routes/webhooks.js - fully implemented)
+- GET /api/admin/* - Admin dashboard endpoints (VERIFIED: routes/admin.js exists)
+- GET /health - Server health check endpoint (VERIFIED: server.js)
+- POST /api/tickets/* - Support ticket endpoints (VERIFIED: routes/tickets.js exists)
+
+LICENSE SYSTEM
+--------------
+- License key generation (Personal, Family, LLV Personal, LLV Family)
+- Trial key generation (7-day trials)
+- HMAC-SHA256 license file signing for offline validation
+- License validation logic
+- Device transfer system with transfer limits
+- Hardware hash binding for device-specific activation
+- License expiration tracking
+- Trial expiration tracking
+
+PAYMENT PROCESSING (FULLY IMPLEMENTED - VERIFIED IN CODE)
+---------------------------------------------------------
+- Stripe integration fully implemented (VERIFIED: services/stripe.js complete)
+- Checkout session creation for single products (VERIFIED: routes/checkout.js complete)
+- Checkout session creation for bundle purchases with 13.94% discount (VERIFIED: complete)
+- Webhook handler for checkout.session.completed events (VERIFIED: routes/webhooks.js complete with full error handling)
+- Automatic license generation after successful payment (VERIFIED: webhook handler creates licenses)
+- Automatic email sending after purchase (VERIFIED: webhook handler sends emails)
+- Product price configuration (Personal, Family, LLV Personal, LLV Family) (VERIFIED: complete)
+- Bundle discount calculation (VERIFIED: 13.94% discount implemented)
+- Webhook signature verification (VERIFIED: verifyWebhookSignature function complete)
+- Webhook failure tracking and alerting (VERIFIED: failure counter and alert emails implemented)
+- Idempotency handling for duplicate webhook events (VERIFIED: db.webhookEvents.exists check implemented)
+- Customer creation/retrieval (VERIFIED: implemented in webhook handler)
+- Trial conversion tracking (VERIFIED: marks trials as converted on purchase)
+
+EMAIL SYSTEM (FULLY IMPLEMENTED)
+---------------------------------
+- Brevo (formerly Sendinblue) email service integration (complete)
+- Email template system with HTML templates (complete):
+  * Trial welcome email (VERIFIED: has .exe download link)
+  * Purchase confirmation email (VERIFIED: has .exe download link)
+  * Bundle purchase email (VERIFIED: has .exe download link)
+  * Trial expiration reminder emails
+- Email sending service with error handling (complete)
+- Webhook failure alert emails (complete)
+- Email templates already updated to use .exe download links in code repository (VERIFIED)
+
+SECURITY FEATURES
+-----------------
+- License signing secret for HMAC-SHA256 signatures
+- Admin API key authentication
+- Rate limiting on sensitive endpoints
+- CORS protection
+- Helmet security headers
+- Environment variable validation
+- Webhook signature verification for Stripe
+
+UTILITIES AND SERVICES
+----------------------
+- License generator service
+- License signer service (HMAC-SHA256)
+- Email service (Brevo integration)
+- Stripe service (payment processing)
+- Ticket service (support tickets)
+- Logger utility (structured logging)
+- Performance monitor utility
+- Environment validator utility
+- Sentry utility (optional error tracking)
+
+TESTING
+-------
+- Jest test framework configured
+- Unit tests for license validation
+- Unit tests for trial signup
+- Unit tests for webhook processing
+- Test setup and configuration files
+
+BACKGROUND JOBS
+--------------
+- Trial email reminder job (trial-expires-tomorrow-email.html)
+- Trial expiration email job (trial-expired-email.html)
+
+SCRIPTS AND TOOLS
+-----------------
+- Database backup verification script
+- Email testing script
+- Email diagnosis script
+- Backup cron setup script
+
+================================================================================
+WHAT NEEDS TO BE DONE
+================================================================================
+
+NOTE: All backend code is fully implemented. The tasks below are for:
+- Configuration (setting environment variables)
+- Deployment (pushing code to production server)
+- Bug fixes (connection error issue)
+- Testing and verification
+
+CRITICAL: FIX CONNECTION ERROR ISSUE
+-------------------------------------
+
+Problem: Users see "Activation Error: Unable to connect to license server" when 
+attempting to activate licenses or trial keys, even with internet connectivity.
+
+Root Cause Investigation Needed:
+1. Verify backend server is accessible
+   - Check if https://server.localpasswordvault.com (or configured license server 
+     URL) is accessible and responding to health checks
+   - Test from multiple network locations, not just development environment
+   - Verify DNS resolution is working correctly
+
+2. Check SSL Certificate
+   - Verify backend SSL certificate is valid and not expired
+   - Verify certificate is trusted by Electron
+   - Electron's net module may be rejecting certificates from certain CAs
+   - May need to configure certificate validation in electron/main.js
+
+3. Test Network Connection from Electron App
+   - Verify Electron app can actually reach backend server from user's machine
+   - Test connection from clean Windows installation (not development environment)
+   - Check for firewall or network restrictions blocking HTTPS connections
+
+4. Review Timeout Settings
+   - Current timeout is 30 seconds in apiClient.ts
+   - Current timeout is 30 seconds in electron/main.js HTTP handler
+   - May need adjustment based on network conditions
+
+5. Improve Error Logging
+   - Add detailed logging in electron/main.js HTTP handler
+   - Currently uses devError which may not be visible in production
+   - Need production-visible error logging to capture actual failure reasons
+
+6. Certificate Validation Configuration
+   - Electron's net module may be rejecting self-signed certificates or certain CAs
+   - May need to configure session.defaultSession.setCertificateVerifyProc() in 
+     electron/main.js to handle certificate validation
+   - Only bypass certificate validation if absolutely necessary and document why
+
+Potential Solutions to Implement:
+1. Add certificate validation override in electron/main.js if certificate issues 
+   are identified
+2. Improve error reporting with detailed logging that works in production
+3. Add network diagnostic feature to test connectivity before attempting activation
+4. Provide more actionable error messages (e.g., "Check your firewall settings" 
+   or "Your network may be blocking HTTPS connections")
+5. Implement exponential backoff retry logic for network failures
+6. Add offline detection to show different message when user is actually offline
+
+Files to Review and Modify:
+- electron/main.js (lines ~1869-2083) - HTTP request handler
+- src/utils/apiClient.ts - API client with Electron API detection
+- src/utils/licenseService.ts - License activation logic
+- src/utils/trialService.ts - Trial activation logic
+- src/config/environment.ts - License server URL configuration
+
+DEPLOY UPDATED BACKEND CODE TO PRODUCTION
+-----------------------------------------
+
+Status: Email templates have been updated in code repository to use .exe download 
+links instead of .zip links. These changes need to be deployed to production server 
+if not already done.
+
+Required Actions:
+1. SSH into production server
+2. Navigate to backend directory (e.g., /var/www/lpv-api/backend or /var/www/lpv-api/Vault/backend)
+3. Pull latest code from repository: git pull
+4. Restart backend server: pm2 restart lpv-api
+5. Verify server is running: pm2 status
+
+If not using git on server:
+- Manually upload the 3 template files from backend/templates/ to server:
+  * bundle-email.html
+  * purchase-confirmation-email.html
+  * trial-welcome-email.html
+
+Note: All backend code is complete. This is just a deployment step.
+
+VERIFY BACKEND SERVER CONFIGURATION
+-----------------------------------
+
+Note: All Stripe code is fully implemented. This section is about verifying 
+configuration (environment variables) and server accessibility.
+
+Required Environment Variables Check:
+1. Verify STRIPE_SECRET_KEY is set in production .env file (code is done, just needs 
+   the key value)
+2. Verify STRIPE_WEBHOOK_SECRET is set in production .env file (code is done, just 
+   needs the secret value)
+3. Verify FROM_EMAIL is set (code is done, just needs the email address)
+4. Verify SUPPORT_EMAIL is set (code is done, just needs the email address)
+5. Verify WEBSITE_URL is set (code is done, just needs the URL value)
+
+Backend Server Accessibility:
+1. Verify API domain (api.localpasswordvault.com or configured domain) points to 
+   backend server
+2. Test health endpoint: curl https://api.localpasswordvault.com/health
+   - Should return: {"status":"ok"}
+3. Verify SSL certificate is valid and not expired
+4. Test from multiple network locations to verify DNS propagation
+
+STRIPE WEBHOOK CONFIGURATION
+-----------------------------
+
+Note: Stripe webhook handler code is fully implemented. This is just configuration 
+in Stripe Dashboard and environment variables.
+
+Required Setup:
+1. Create Stripe webhook endpoint in Stripe Dashboard (if not already created)
+   - Endpoint URL: https://api.localpasswordvault.com/api/webhooks/stripe
+   - Event to listen for: checkout.session.completed
+2. Copy webhook signing secret from Stripe Dashboard
+3. Add STRIPE_WEBHOOK_SECRET to backend .env file on production server
+4. Test webhook by processing a test payment
+5. Verify webhook creates license in database (code already does this)
+6. Verify email is sent with license key (code already does this)
+
+EMAIL SERVICE VERIFICATION
+--------------------------
+
+Note: Email service code is fully implemented. This is verification and testing.
+
+Required Actions:
+1. Verify Brevo API key is correct in backend .env file on production server
+2. Verify sender email address is verified in Brevo dashboard
+3. Test email sending from backend (check backend logs)
+4. Send test trial welcome email
+5. Send test purchase confirmation email
+6. Verify email content is correct
+7. Verify download links in emails work (click them)
+8. CRITICAL: Verify links point to .exe files (not .zip) - confirms templates 
+   were deployed correctly (templates in code already have .exe links)
+9. Test email deliverability (check inbox, not spam folder)
+10. Test from multiple email providers (Gmail, Outlook, etc.)
+11. Verify email formatting renders correctly
+12. Check that all images/assets load correctly
+
+END-TO-END TESTING
+------------------
+
+Required Test Scenarios:
+
+1. Complete Purchase Flow:
+   - Test purchase from website
+   - Verify payment processes through Stripe
+   - Verify webhook creates license key in database
+   - Verify email is sent with license key and download links
+   - Verify download links in email work (point to .exe files, not .zip)
+   - Download and install application from email link
+   - Activate license key in app
+   - Verify activation succeeds
+   - Disconnect internet and verify app works completely offline
+
+2. Trial Flow:
+   - Request trial on website
+   - Verify trial key is received in email
+   - Activate trial key in app
+   - Verify trial works
+   - Verify trial expiration detection works offline
+
+3. Error Scenarios:
+   - Test with invalid license key format
+   - Test with non-existent license key
+   - Test network failure scenarios (should show appropriate error message)
+   - Test device transfer flow
+   - Test transfer limit enforcement
+
+4. Offline Operation Verification (Critical):
+   - After activation, disconnect internet completely
+   - Use app for extended period
+   - Open browser DevTools → Network tab
+   - Verify ZERO network requests (check for any Fetch/XHR/WS requests)
+   - Restart app while offline
+   - Verify app loads and works completely offline
+
+APPLICATION BUILD AND TESTING
+------------------------------
+
+Required Actions:
+1. Build Windows installer: npm run dist:win
+2. Test installer on clean Windows machine (not development machine)
+3. Verify installer creates proper shortcuts
+4. Verify app launches correctly after installation
+5. Test activation flow with the built installer
+6. Optional: Code sign installer if certificate is available
+7. Upload installer to GitHub Releases
+8. Test download from different network locations
+
+MONITORING AND ERROR TRACKING (OPTIONAL BUT RECOMMENDED)
+----------------------------------------------------------
+
+Optional Setup:
+1. Sentry Configuration (already integrated, just needs DSN):
+   - Create Sentry account at https://sentry.io
+   - Create new Node.js project
+   - Get DSN from Sentry project settings
+   - Add SENTRY_DSN to backend .env file
+   - Verify Sentry integration (test by triggering an error)
+
+2. Backend Log Monitoring:
+   - Set up log aggregation service (optional)
+   - Verify structured logging is working
+   - Monitor for errors in production
+
+3. Webhook Monitoring:
+   - Monitor Stripe webhook processing in production
+   - Set up alerts for webhook failures (if using monitoring service)
+   - Verify webhook failure emails are sent to support email
+
+Note: Sentry is optional and does not affect the app's offline operation. Backend 
+Sentry only tracks server-side errors.
+
+================================================================================
+TECHNICAL STACK (NO EXTERNAL DEPENDENCIES REQUIRED)
+================================================================================
+
+Backend Stack:
+- Node.js (>=18.0.0)
+- Express.js (web framework)
+- Supabase (database)
+- Brevo (email service)
+- Stripe (payment processing)
+- Electron (desktop app framework)
+
+All dependencies are standard npm packages. No custom or proprietary services 
+required beyond the configured services (Supabase, Brevo, Stripe).
+
+================================================================================
+PRIORITY SUMMARY
+================================================================================
+
+CRITICAL (Must Complete):
+1. Fix Connection Error - Red box error when activating licenses (blocks user 
+   activation)
+2. Deploy Backend Code - Pull latest code to server so updated email templates 
+   are used
+3. Verify Backend Server - Ensure backend is accessible (required for connection 
+   error fix)
+
+HIGH PRIORITY:
+4. End-to-End Testing - Test complete purchase and activation flow (verify 
+   everything works)
+5. Build Verification - Test Windows installer on clean machine (verify users 
+   can install)
+
+MEDIUM PRIORITY:
+6. Email Service Testing - Verify emails are sent and received correctly (code is 
+   done, just needs testing)
+7. DNS & Domain Verification - Ensure domains are properly configured
+8. Stripe Webhook Configuration - Ensure webhook endpoint is created in Stripe 
+   Dashboard and secret is in .env (code is done)
+
+LOW PRIORITY (Can Complete After Launch):
+9. Monitoring Setup - Sentry configuration (optional but recommended)
+10. Cross-Platform Builds - macOS/Linux builds (if needed)
+
+================================================================================
+END OF DOCUMENT
+================================================================================

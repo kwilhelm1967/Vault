@@ -572,7 +572,7 @@
             <li>Complete offline security suite</li>
           </ul>
           <div class="bundle-actions">
-            <a href="#" class="bundle-cta">Get Personal Bundle</a>
+            <a href="#" class="bundle-cta" onclick="purchasePersonalBundle(event)">Get Personal Bundle</a>
             <a href="https://locallegacyvault.com" target="_blank" class="bundle-cta secondary">Learn About Local Legacy Vault &rarr;</a>
           </div>
         </div>
@@ -594,7 +594,7 @@
             <li>Perfect for families</li>
           </ul>
           <div class="bundle-actions">
-            <a href="#" class="bundle-cta">Get Family Bundle</a>
+            <a href="#" class="bundle-cta" onclick="purchaseFamilyBundle(event)">Get Family Bundle</a>
             <a href="https://locallegacyvault.com" target="_blank" class="bundle-cta secondary">Learn About Local Legacy Vault &rarr;</a>
           </div>
         </div>
@@ -718,6 +718,111 @@
       </div>
     </div>
   </footer>
+
+  <script>
+    // API base URL
+    const API_BASE_URL = (() => {
+      const hostname = window.location.hostname;
+      if (hostname === 'localpasswordvault.com' || hostname === 'www.localpasswordvault.com') {
+        return 'https://api.localpasswordvault.com';
+      }
+      return 'https://api.localpasswordvault.com';
+    })();
+
+    async function purchasePersonalBundle(event) {
+      event.preventDefault();
+      const button = event.target;
+      const originalText = button.textContent;
+      
+      button.disabled = true;
+      button.textContent = 'Processing...';
+      button.style.opacity = '0.7';
+      button.style.cursor = 'not-allowed';
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/checkout/bundle`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            items: [
+              { productKey: 'personal', quantity: 1 },      // LPV Personal
+              { productKey: 'llv_personal', quantity: 1 }   // LLV Personal
+            ]
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: 'Failed to create checkout session' }));
+          throw new Error(errorData.error || 'Failed to create checkout session');
+        }
+
+        const data = await response.json();
+        
+        if (data.success && data.url) {
+          window.location.href = data.url;
+        } else {
+          throw new Error(data.error || 'Failed to create checkout session');
+        }
+      } catch (error) {
+        console.error('Bundle purchase error:', error);
+        alert('Failed to start checkout. Please try again or contact support@localpasswordvault.com');
+        
+        button.disabled = false;
+        button.textContent = originalText;
+        button.style.opacity = '1';
+        button.style.cursor = 'pointer';
+      }
+    }
+
+    async function purchaseFamilyBundle(event) {
+      event.preventDefault();
+      const button = event.target;
+      const originalText = button.textContent;
+      
+      button.disabled = true;
+      button.textContent = 'Processing...';
+      button.style.opacity = '0.7';
+      button.style.cursor = 'not-allowed';
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/checkout/bundle`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            items: [
+              { productKey: 'family', quantity: 1 },      // LPV Family
+              { productKey: 'llv_family', quantity: 1 }   // LLV Family
+            ]
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: 'Failed to create checkout session' }));
+          throw new Error(errorData.error || 'Failed to create checkout session');
+        }
+
+        const data = await response.json();
+        
+        if (data.success && data.url) {
+          window.location.href = data.url;
+        } else {
+          throw new Error(data.error || 'Failed to create checkout session');
+        }
+      } catch (error) {
+        console.error('Bundle purchase error:', error);
+        alert('Failed to start checkout. Please try again or contact support@localpasswordvault.com');
+        
+        button.disabled = false;
+        button.textContent = originalText;
+        button.style.opacity = '1';
+        button.style.cursor = 'pointer';
+      }
+    }
+  </script>
 </body>
 </html>
 

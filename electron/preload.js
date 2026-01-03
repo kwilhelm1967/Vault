@@ -146,6 +146,14 @@ contextBridge.exposeInMainWorld("electronAPI", {
     return Promise.reject(new Error('Invalid URL'));
   },
 
+  // Network diagnostics for troubleshooting connection issues
+  testNetworkConnectivity: (serverUrl) => {
+    if (typeof serverUrl === 'string' && (serverUrl.match(/^https?:\/\//) || serverUrl === '')) {
+      return ipcRenderer.invoke("test-network-connectivity", serverUrl || undefined);
+    }
+    return Promise.reject(new Error('Invalid server URL'));
+  },
+
   // SECURITY: Remove old insecure methods
   // saveSharedEntries and loadSharedEntries are REMOVED
   // All data must remain encrypted and in renderer process only

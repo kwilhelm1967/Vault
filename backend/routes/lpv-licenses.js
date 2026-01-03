@@ -464,7 +464,7 @@ router.post('/transfer', async (req, res) => {
 
 router.post('/trial/activate', async (req, res) => {
   try {
-    const { trial_key, device_id } = req.body;
+    const { trial_key, device_id, product_type } = req.body;
     
     if (!trial_key) {
       return res.status(400).json({ 
@@ -495,6 +495,10 @@ router.post('/trial/activate', async (req, res) => {
         error: 'Invalid trial key format' 
       });
     }
+    
+    // Determine product type: 'llv' for LLV, 'lpv' for LPV (default for backward compatibility)
+    // LLV requests should include product_type: 'llv' in the request body
+    const detectedProductType = product_type === 'llv' ? 'llv' : 'lpv';
     
     // Check if trial exists
     const trial = await db.trials.findByKey(normalizedKey);
@@ -535,7 +539,7 @@ router.post('/trial/activate', async (req, res) => {
         plan_type: 'trial',
         start_date: startDate,
         expires_at: trial.expires_at,
-        product_type: 'lpv',
+        product_type: detectedProductType,
       });
     } catch (signError) {
       logger.error('Failed to sign trial file', signError, {
@@ -549,7 +553,7 @@ router.post('/trial/activate', async (req, res) => {
         plan_type: 'trial',
         start_date: startDate,
         expires_at: trial.expires_at,
-        product_type: 'lpv',
+        product_type: detectedProductType,
         signature: '',
         signed_at: new Date().toISOString(),
       };

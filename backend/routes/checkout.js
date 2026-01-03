@@ -16,7 +16,11 @@ router.post('/session', async (req, res) => {
       });
     }
     
-    const baseUrl = process.env.WEBSITE_URL || 'https://localpasswordvault.com';
+    // Determine website URL based on product type
+    const isLLV = planType.startsWith('llv_');
+    const baseUrl = isLLV 
+      ? (process.env.LLV_WEBSITE_URL || 'https://locallegacyvault.com')
+      : (process.env.WEBSITE_URL || 'https://localpasswordvault.com');
     const successUrl = `${baseUrl}/purchase/success?session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl = `${baseUrl}/pricing?cancelled=true`;
     
@@ -186,7 +190,15 @@ router.post('/bundle', async (req, res) => {
       });
     }
     
-    const baseUrl = process.env.WEBSITE_URL || 'https://localpasswordvault.com';
+    // Determine website URL based on products in bundle
+    // If bundle contains LLV products, use LLV website; otherwise use LPV website
+    const hasLLV = items.some(item => {
+      const product = PRODUCTS[item.productKey];
+      return product && product.productType === 'llv';
+    });
+    const baseUrl = hasLLV
+      ? (process.env.LLV_WEBSITE_URL || 'https://locallegacyvault.com')
+      : (process.env.WEBSITE_URL || 'https://localpasswordvault.com');
     const successUrl = `${baseUrl}/purchase/success?session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl = `${baseUrl}/pricing?cancelled=true`;
     

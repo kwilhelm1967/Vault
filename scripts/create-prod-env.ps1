@@ -7,7 +7,7 @@ $envContent = @"
 
 # Backend API URL (production server)
 # Use IP address for testing, or domain if configured
-VITE_LICENSE_SERVER_URL=http://172.236.111.48:3001
+VITE_LICENSE_SERVER_URL=https://api.localpasswordvault.com
 
 # App Mode
 VITE_APP_MODE=production

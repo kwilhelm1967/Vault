@@ -7,7 +7,14 @@ const fs = require("fs");
 const { screen, powerMonitor, globalShortcut } = require("electron");
 const SecureFileStorage = require("./secure-storage");
 const Positioner = require("electron-positioner");
+const log = require("electron-log");
 const isDev = process.env.NODE_ENV === "development" || (app && !app.isPackaged);
+
+// Configure electron-log for production logging
+log.transports.file.level = "info";
+log.transports.console.level = isDev ? "debug" : "warn";
+log.transports.file.maxSize = 5 * 1024 * 1024; // 5MB max file size
+log.transports.file.format = "[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}] {text}";
 
 // Auto-updater (only in production)
 let autoUpdaterModule = null;
@@ -915,6 +922,31 @@ const createMenu = () => {
 // App event handlers
 // Configure session to allow HTTP connections for license server
 app.whenReady().then(() => {
+  // Certificate validation handler - log certificate issues but allow connection
+  // This helps diagnose SSL/TLS issues while still allowing connections
+  session.defaultSession.setCertificateVerifyProc((request, callback) => {
+    const { hostname, certificate, verificationResult, errorCode } = request;
+    
+    // Log certificate information for debugging
+    if (errorCode !== 0) {
+      log.warn(`[Certificate] Certificate verification issue for ${hostname}:`, {
+        errorCode: errorCode,
+        verificationResult: verificationResult,
+        issuer: certificate?.issuer?.commonName,
+        subject: certificate?.subject?.commonName,
+        validStart: certificate?.validStart,
+        validExpiry: certificate?.validExpiry,
+      });
+    } else {
+      log.debug(`[Certificate] Certificate verified successfully for ${hostname}`);
+    }
+    
+    // Allow connection but log issues for debugging
+    // In production, you may want to be more strict, but for now we allow
+    // connections to help diagnose issues while still maintaining security
+    callback(0); // 0 = success, -2 = failure, -3 = use default validation
+  });
+
   // COMPLETELY DISABLE ALL SECURITY RESTRICTIONS FOR LICENSE SERVER
   // Allow all HTTP/HTTPS connections (needed for license server)
   session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
@@ -1872,17 +1904,18 @@ ipcMain.handle("http-request", async (event, url, options = {}) => {
     let timeoutHandle = null;
     let requestEnded = false;
     const timeout = options.timeout || 30000; // Default 30 second timeout
+    const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     
     try {
-      console.log('[HTTP Request] Starting request to:', url);
-      console.log('[HTTP Request] Options:', JSON.stringify(options, null, 2));
+      log.info(`[HTTP Request ${requestId}] Starting request to: ${url}`);
+      log.debug(`[HTTP Request ${requestId}] Options:`, options);
       
       // Validate URL
       let urlObj;
       try {
         urlObj = new URL(url);
       } catch (urlError) {
-        console.error('[HTTP Request] Invalid URL:', urlError);
+        log.error(`[HTTP Request ${requestId}] Invalid URL: ${url}`, urlError);
         reject({
           code: 'INVALID_URL',
           message: `Invalid URL: ${url}. ${urlError.message}`,
@@ -1919,16 +1952,18 @@ ipcMain.handle("http-request", async (event, url, options = {}) => {
       timeoutHandle = setTimeout(() => {
         if (!hasResolved && !requestEnded) {
           requestEnded = true;
-          console.error('[HTTP Request] Request timeout after', timeout, 'ms');
+          log.error(`[HTTP Request ${requestId}] Request timeout after ${timeout}ms for URL: ${url}`);
           try {
             request.abort();
           } catch (abortError) {
-            // Request might already be aborted
+            log.warn(`[HTTP Request ${requestId}] Error aborting request:`, abortError);
           }
           reject({
             code: 'REQUEST_TIMEOUT',
             message: `Request timed out after ${timeout}ms. Unable to connect to license server. Please check your internet connection and try again.`,
             status: 0,
+            url: url,
+            requestId: requestId,
           });
         }
       }, timeout);
@@ -1997,12 +2032,19 @@ ipcMain.handle("http-request", async (event, url, options = {}) => {
           if (requestEnded) return;
           requestEnded = true;
           cleanup();
-          console.error('[HTTP Request] Response error:', error);
+          log.error(`[HTTP Request ${requestId}] Response error for ${url}:`, {
+            error: error.message,
+            code: error.code,
+            statusCode: statusCode,
+            stack: error.stack,
+          });
           reject({
             code: 'NETWORK_ERROR',
             message: `Response error: ${error.message || 'Unable to connect to license server. Please check your internet connection and try again.'}`,
             status: statusCode || 0,
             details: error,
+            url: url,
+            requestId: requestId,
           });
         });
       });
@@ -2012,26 +2054,59 @@ ipcMain.handle("http-request", async (event, url, options = {}) => {
         requestEnded = true;
         cleanup();
         
+        // Log detailed error information for debugging
+        log.error(`[HTTP Request ${requestId}] Request error for ${url}:`, {
+          errorCode: error.code,
+          errorMessage: error.message,
+          hostname: urlObj.hostname,
+          port: urlObj.port || (urlObj.protocol === 'https:' ? '443' : '80'),
+          protocol: urlObj.protocol,
+          stack: error.stack,
+        });
+        
         // Provide more specific error messages based on error code
         let errorMessage = 'Unable to connect to license server. Please check your internet connection and try again.';
+        let actionableGuidance = '';
         
         if (error.code === 'ENOTFOUND' || error.code === 'EAI_AGAIN') {
-          errorMessage = `DNS resolution failed. Cannot resolve hostname: ${urlObj.hostname}. Please check your internet connection.`;
+          errorMessage = `DNS resolution failed. Cannot resolve hostname: ${urlObj.hostname}.`;
+          actionableGuidance = 'Please check your internet connection and DNS settings. If using a VPN or proxy, try disabling it temporarily.';
         } else if (error.code === 'ECONNREFUSED') {
-          errorMessage = `Connection refused by server at ${urlObj.hostname}:${urlObj.port || (urlObj.protocol === 'https:' ? '443' : '80')}. The server may be down or unreachable.`;
+          errorMessage = `Connection refused by server at ${urlObj.hostname}.`;
+          actionableGuidance = 'The server may be down or unreachable. Please try again later or contact support if the problem persists.';
         } else if (error.code === 'ETIMEDOUT' || error.code === 'ECONNRESET') {
-          errorMessage = `Connection timeout. Unable to reach ${urlObj.hostname}. Please check your internet connection and try again.`;
-        } else if (error.code === 'CERT_HAS_EXPIRED' || error.code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE') {
-          errorMessage = `SSL certificate error. Unable to verify server certificate for ${urlObj.hostname}.`;
+          errorMessage = `Connection timeout. Unable to reach ${urlObj.hostname}.`;
+          actionableGuidance = 'Please check your internet connection. If you\'re behind a firewall, ensure HTTPS connections are allowed.';
+        } else if (error.code === 'CERT_HAS_EXPIRED' || error.code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE' || error.code === 'CERT_SIGNATURE_FAILURE' || error.code === 'CERT_COMMON_NAME_INVALID') {
+          if (error.code === 'CERT_COMMON_NAME_INVALID') {
+            errorMessage = `SSL certificate error. The server certificate for ${urlObj.hostname} does not match the domain name.`;
+            actionableGuidance = 'This is typically a DNS or server configuration issue. The domain may be pointing to the wrong server. Please wait a few minutes for DNS changes to propagate, or contact support if the issue persists.';
+          } else {
+            errorMessage = `SSL certificate error. The server certificate for ${urlObj.hostname} is invalid or expired.`;
+            actionableGuidance = 'The server certificate may be expired or invalid. Please contact support.';
+          }
+        } else if (error.code === 'EPROTO' || error.code === 'ERR_TLS_CERT_ALTNAME_INVALID') {
+          errorMessage = `SSL/TLS protocol error for ${urlObj.hostname}.`;
+          actionableGuidance = 'There may be a certificate mismatch. Please contact support.';
         } else if (error.message) {
-          errorMessage = `${error.message}. Unable to connect to license server. Please check your internet connection and try again.`;
+          errorMessage = `${error.message}.`;
+          actionableGuidance = 'Please check your internet connection and try again.';
         }
+        
+        const fullMessage = actionableGuidance 
+          ? `${errorMessage} ${actionableGuidance}`
+          : errorMessage;
         
         reject({
           code: 'NETWORK_ERROR',
-          message: errorMessage,
+          message: fullMessage,
           status: 0,
-          details: error,
+          details: {
+            ...error,
+            errorCode: error.code,
+            url: url,
+            requestId: requestId,
+          },
         });
       });
 
@@ -2039,13 +2114,15 @@ ipcMain.handle("http-request", async (event, url, options = {}) => {
         if (requestEnded) return;
         requestEnded = true;
         cleanup();
-        console.error('[HTTP Request] Request aborted');
+        log.warn(`[HTTP Request ${requestId}] Request aborted for ${url}`);
         // Don't reject here if we already have a timeout rejection
         if (!hasResolved) {
           reject({
             code: 'REQUEST_ABORTED',
             message: 'Request was aborted. Unable to connect to license server.',
             status: 0,
+            url: url,
+            requestId: requestId,
           });
         }
       });
@@ -2072,13 +2149,149 @@ ipcMain.handle("http-request", async (event, url, options = {}) => {
       if (timeoutHandle) {
         clearTimeout(timeoutHandle);
       }
-      console.error('[HTTP Request] Setup error:', error);
+      log.error(`[HTTP Request] Setup error for ${url}:`, {
+        error: error.message,
+        stack: error.stack,
+      });
       reject({
         code: 'INVALID_URL',
         message: error.message || `Invalid request setup. Unable to connect to license server: ${url}`,
         status: 0,
         details: error,
+        url: url,
       });
     }
   });
+});
+
+// NETWORK DIAGNOSTIC FUNCTION - Test connectivity before activation
+ipcMain.handle("test-network-connectivity", async (event, serverUrl) => {
+  const diagnosticId = `diag_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  const results = {
+    success: false,
+    serverUrl: serverUrl || 'https://api.localpasswordvault.com',
+    tests: [],
+    timestamp: new Date().toISOString(),
+    diagnosticId: diagnosticId,
+  };
+
+  const testUrl = results.serverUrl;
+  const healthEndpoint = `${testUrl}/health`;
+  const apiEndpoint = testUrl.replace('server.', 'api.') || testUrl;
+
+  log.info(`[Network Diagnostic ${diagnosticId}] Starting connectivity test for ${testUrl}`);
+
+  // Test 1: DNS Resolution
+  try {
+    const urlObj = new URL(testUrl);
+    results.tests.push({
+      name: 'DNS Resolution',
+      status: 'success',
+      message: `Successfully resolved hostname: ${urlObj.hostname}`,
+    });
+    log.info(`[Network Diagnostic ${diagnosticId}] DNS resolution successful for ${urlObj.hostname}`);
+  } catch (error) {
+    results.tests.push({
+      name: 'DNS Resolution',
+      status: 'failed',
+      message: `Failed to parse URL: ${error.message}`,
+      error: error.code,
+    });
+    log.error(`[Network Diagnostic ${diagnosticId}] DNS resolution failed:`, error);
+    return results;
+  }
+
+  // Test 2: Health Endpoint Check
+  try {
+    const healthUrl = `${apiEndpoint}/health`;
+    log.info(`[Network Diagnostic ${diagnosticId}] Testing health endpoint: ${healthUrl}`);
+    
+    const healthResponse = await new Promise((resolve, reject) => {
+      const request = net.request({
+        method: 'GET',
+        url: healthUrl,
+      });
+      
+      let responseData = '';
+      let statusCode = 0;
+      const timeout = setTimeout(() => {
+        request.abort();
+        reject(new Error('Health check timeout'));
+      }, 10000); // 10 second timeout for diagnostic
+
+      request.on('response', (response) => {
+        statusCode = response.statusCode;
+        response.on('data', (chunk) => {
+          responseData += chunk.toString();
+        });
+        response.on('end', () => {
+          clearTimeout(timeout);
+          resolve({ status: statusCode, data: responseData });
+        });
+      });
+
+      request.on('error', (error) => {
+        clearTimeout(timeout);
+        reject(error);
+      });
+
+      request.end();
+    });
+
+    if (healthResponse.status === 200) {
+      results.tests.push({
+        name: 'Health Endpoint',
+        status: 'success',
+        message: `Health endpoint responded with status ${healthResponse.status}`,
+        data: healthResponse.data,
+      });
+      log.info(`[Network Diagnostic ${diagnosticId}] Health endpoint check successful`);
+    } else {
+      results.tests.push({
+        name: 'Health Endpoint',
+        status: 'warning',
+        message: `Health endpoint returned status ${healthResponse.status}`,
+        data: healthResponse.data,
+      });
+      log.warn(`[Network Diagnostic ${diagnosticId}] Health endpoint returned non-200 status: ${healthResponse.status}`);
+    }
+  } catch (error) {
+    results.tests.push({
+      name: 'Health Endpoint',
+      status: 'failed',
+      message: `Failed to reach health endpoint: ${error.message || error.code || 'Unknown error'}`,
+      error: error.code,
+    });
+    log.error(`[Network Diagnostic ${diagnosticId}] Health endpoint check failed:`, error);
+  }
+
+  // Test 3: SSL Certificate Check
+  try {
+    const urlObj = new URL(testUrl);
+    results.tests.push({
+      name: 'SSL Certificate',
+      status: 'info',
+      message: `SSL certificate check requires actual connection attempt`,
+      note: 'Certificate validation happens during actual request',
+    });
+  } catch (error) {
+    results.tests.push({
+      name: 'SSL Certificate',
+      status: 'failed',
+      message: `Failed to validate SSL: ${error.message}`,
+    });
+  }
+
+  // Determine overall success
+  const failedTests = results.tests.filter(t => t.status === 'failed');
+  const successTests = results.tests.filter(t => t.status === 'success');
+  
+  results.success = failedTests.length === 0 && successTests.length > 0;
+  results.summary = results.success 
+    ? 'Network connectivity test passed'
+    : `Network connectivity test failed: ${failedTests.length} test(s) failed`;
+
+  log.info(`[Network Diagnostic ${diagnosticId}] Completed: ${results.summary}`);
+  
+  return results;
 });

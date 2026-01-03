@@ -84,7 +84,7 @@ function sanitizeConfig(): Environment {
   const appMode = getEnvVar("VITE_APP_MODE", "development");
   const licenseServerUrl = getEnvVar(
     "VITE_LICENSE_SERVER_URL",
-    "https://server.localpasswordvault.com"
+    "https://api.localpasswordvault.com"
   );
 
   // Validate URL - only warn in development
@@ -107,7 +107,7 @@ function sanitizeConfig(): Environment {
     ),
     licenseServerUrl: isValidUrl(licenseServerUrl)
       ? licenseServerUrl
-      : "https://server.localpasswordvault.com",
+      : "https://api.localpasswordvault.com",
     analyticsEnabled: getEnvVar("VITE_ANALYTICS_ENABLED", "false") === "true",
     licenseSigningSecret: getEnvVar("VITE_LICENSE_SIGNING_SECRET", ""),
   };

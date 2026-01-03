@@ -1,0 +1,340 @@
+================================================================================
+SERVER MANAGEMENT - COMMAND BOX ONLY (NO POWERSHELL)
+Local Password Vault - Simple Instructions
+================================================================================
+
+This guide uses ONLY the command box (cmd). No PowerShell needed!
+
+================================================================================
+YOU'RE READY IF YOU SEE THIS:
+================================================================================
+
+C:\Users\kelly\OneDrive\Desktop\Vault-Main\LocalPasswordVault>
+
+You're in the right place! Just type the commands below.
+
+================================================================================
+TASK 1: CHECK IF SERVER IS WORKING
+================================================================================
+
+From: C:\Users\kelly\OneDrive\Desktop\Vault-Main\LocalPasswordVault>
+
+Type this:
+curl https://api.localpasswordvault.com/health
+
+Press Enter
+
+What you'll see:
+- If server is working: {"status":"ok"}
+- If server is down: Error message or nothing
+
+OR check in your web browser:
+- Go to: https://api.localpasswordvault.com/health
+- If you see {"status":"ok"} = Server is working
+- If page won't load = Server is down
+
+================================================================================
+TASK 2: CONNECT TO YOUR SERVER
+================================================================================
+
+From: C:\Users\kelly\OneDrive\Desktop\Vault-Main\LocalPasswordVault>
+
+Type this:
+ssh root@45.79.40.42
+
+Press Enter
+
+Enter your password when asked (you won't see it as you type - that's normal)
+
+Once connected, you'll see something like: root@server:~#
+
+NOW you're on the server!
+
+Go to server folder:
+Type: cd /var/www/lpv-api/backend
+Press Enter
+
+You should see: root@server:/var/www/lpv-api/backend#
+
+================================================================================
+TASK 3: CHECK SERVER STATUS (ONCE CONNECTED TO SERVER)
+================================================================================
+
+After connecting to server (see Task 2), type:
+pm2 status
+
+Press Enter
+
+What you'll see:
+- "online" = Server is running
+- "stopped" = Server is down
+- "errored" = Server has an error
+
+================================================================================
+TASK 4: RESTART SERVER (ONCE CONNECTED TO SERVER)
+================================================================================
+
+After connecting to server (see Task 2), type:
+pm2 restart lpv-api
+
+Press Enter
+
+Wait a few seconds, then check status:
+pm2 status
+
+Press Enter
+
+Should show "online"
+
+================================================================================
+TASK 5: START SERVER (IF IT'S STOPPED)
+================================================================================
+
+After connecting to server (see Task 2), go to server folder:
+cd /var/www/lpv-api/backend
+
+Press Enter
+
+Then start the server:
+pm2 start server.js --name lpv-api
+
+Press Enter
+
+Check if it started:
+pm2 status
+
+Press Enter
+
+Should show "online"
+
+================================================================================
+TASK 6: VIEW SERVER MESSAGES (ONCE CONNECTED TO SERVER)
+================================================================================
+
+After connecting to server (see Task 2), type:
+pm2 logs lpv-api --lines 50
+
+Press Enter
+
+This shows the last 50 messages from the server.
+
+Look for error messages.
+
+Press Ctrl+C to stop viewing.
+
+================================================================================
+TASK 7: UPDATE SERVER CODE (ONCE CONNECTED TO SERVER)
+================================================================================
+
+After connecting to server (see Task 2), go to server folder:
+cd /var/www/lpv-api/backend
+
+Press Enter
+
+Check what changed:
+git status
+
+Press Enter
+
+Download new code:
+git pull
+
+Press Enter
+
+Restart server:
+pm2 restart lpv-api
+
+Press Enter
+
+Check if it's running:
+pm2 status
+
+Press Enter
+
+Should show "online"
+
+================================================================================
+TASK 8: SET UP AUTO-START (ONCE CONNECTED TO SERVER)
+================================================================================
+
+After connecting to server (see Task 2), go to server folder:
+cd /var/www/lpv-api/backend
+
+Press Enter
+
+Make sure server is running:
+pm2 start server.js --name lpv-api
+
+Press Enter
+
+Save the setup:
+pm2 save
+
+Press Enter
+
+Set up auto-start:
+pm2 startup
+
+Press Enter
+
+You'll see a command that starts with "sudo env PATH=..."
+
+Copy that ENTIRE command and type it exactly as shown.
+
+Press Enter
+
+Done! Server will now start automatically.
+
+================================================================================
+TASK 9: EXIT THE SERVER
+================================================================================
+
+When you're done on the server, type:
+exit
+
+Press Enter
+
+You'll be back at: C:\Users\kelly\OneDrive\Desktop\Vault-Main\LocalPasswordVault>
+
+================================================================================
+QUICK REFERENCE - ALL COMMANDS
+================================================================================
+
+FROM YOUR COMPUTER (cmd):
+--------------------------
+Check if server is working:
+curl https://api.localpasswordvault.com/health
+
+Connect to server:
+ssh root@45.79.40.42
+
+ONCE ON SERVER:
+---------------
+Go to server folder:
+cd /var/www/lpv-api/backend
+
+Check server status:
+pm2 status
+
+Restart server:
+pm2 restart lpv-api
+
+Start server:
+pm2 start server.js --name lpv-api
+
+Stop server:
+pm2 stop lpv-api
+
+View server messages:
+pm2 logs lpv-api --lines 50
+
+Update server code:
+git pull
+pm2 restart lpv-api
+
+Set up auto-start:
+pm2 save
+pm2 startup
+(Then run the command it shows you)
+
+Exit server:
+exit
+
+================================================================================
+COMPLETE EXAMPLE - CHECK AND RESTART SERVER
+================================================================================
+
+Step 1: Check if server is working (from your computer)
+--------------------------------------------------------
+C:\Users\kelly\OneDrive\Desktop\Vault-Main\LocalPasswordVault> curl https://api.localpasswordvault.com/health
+(If you see an error, server might be down)
+
+Step 2: Connect to server
+--------------------------
+C:\Users\kelly\OneDrive\Desktop\Vault-Main\LocalPasswordVault> ssh root@45.79.40.42
+root@45.79.40.42's password: [type password, you won't see it]
+[password accepted]
+
+Step 3: Go to server folder
+----------------------------
+root@server:~# cd /var/www/lpv-api/backend
+root@server:/var/www/lpv-api/backend#
+
+Step 4: Check server status
+----------------------------
+root@server:/var/www/lpv-api/backend# pm2 status
+[shows if server is online or stopped]
+
+Step 5: Restart server (if needed)
+-----------------------------------
+root@server:/var/www/lpv-api/backend# pm2 restart lpv-api
+[server restarts]
+
+Step 6: Check status again
+---------------------------
+root@server:/var/www/lpv-api/backend# pm2 status
+[should show "online"]
+
+Step 7: Exit
+------------
+root@server:/var/www/lpv-api/backend# exit
+exit
+
+Step 8: Back on your computer
+------------------------------
+C:\Users\kelly\OneDrive\Desktop\Vault-Main\LocalPasswordVault>
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Problem: "ssh: command not found"
+Solution:
+- Windows 10/11 should have SSH built-in
+- If not, you may need to install OpenSSH
+- Or use PuTTY instead (download from putty.org)
+
+Problem: "curl: command not found"
+Solution:
+- Windows 10 has curl built-in
+- If not, just use your web browser instead
+- Go to: https://api.localpasswordvault.com/health
+
+Problem: "Connection refused" or "Connection timed out"
+Solution:
+- Check if you typed the server IP correctly: 45.79.40.42
+- Check if you can access the internet
+- Check if the server is turned on
+
+Problem: "Permission denied"
+Solution:
+- Check if you typed the password correctly
+- Make sure you're using "root" as the username
+- Try typing the password again (you won't see it as you type)
+
+Problem: "pm2: command not found" (on server)
+Solution:
+- PM2 might not be installed on the server
+- Contact your developer or hosting company
+
+Problem: Server keeps stopping
+Solution:
+- Set up auto-start (see Task 8)
+- Check server messages: pm2 logs lpv-api
+- Look for error messages
+
+================================================================================
+YOUR SERVER INFORMATION
+================================================================================
+
+SERVER IP: 45.79.40.42
+USERNAME: root
+BACKEND FOLDER: /var/www/lpv-api/backend
+PM2 APP NAME: lpv-api
+API DOMAIN: api.localpasswordvault.com
+
+================================================================================
+END OF GUIDE
+================================================================================
+
+All commands work in cmd (command box). No PowerShell needed!

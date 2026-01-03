@@ -8,13 +8,72 @@ import { test, expect, Page } from '@playwright/test';
 
 // Helper to set up a test trial in localStorage (required before vault access)
 async function setupTestTrial(page: Page) {
-  // Create a valid trial file in localStorage
-  // This simulates an active trial so the app allows vault access
-  const deviceId = 'a'.repeat(64); // 64-char hex device ID
+  // First, navigate to get the actual device fingerprint
+  await page.goto('/');
+  
+  // Get the actual device fingerprint from the browser using the same algorithm as the app
+  const deviceId = await page.evaluate(async () => {
+    const components: string[] = [];
+    components.push(navigator.platform || 'unknown-platform');
+    components.push(String(navigator.hardwareConcurrency || 0));
+    components.push(`${screen.width}x${screen.height}`);
+    components.push(String(screen.colorDepth || 0));
+    components.push(String(screen.pixelDepth || 0));
+    
+    try {
+      components.push(Intl.DateTimeFormat().resolvedOptions().timeZone || 'unknown-tz');
+    } catch {
+      components.push('unknown-tz');
+    }
+    
+    components.push(navigator.language || 'unknown-lang');
+    
+    // Get WebGL info (matching app's algorithm)
+    try {
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      if (gl && gl instanceof WebGLRenderingContext) {
+        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+        if (debugInfo) {
+          components.push(gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) || 'unknown-vendor');
+          components.push(gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || 'unknown-renderer');
+        }
+        components.push(gl.getParameter(gl.VERSION) || 'unknown-gl-version');
+        components.push(gl.getParameter(gl.SHADING_LANGUAGE_VERSION) || 'unknown-glsl');
+      }
+    } catch {
+      components.push('webgl-unavailable');
+    }
+    
+    // User agent OS info
+    const ua = navigator.userAgent;
+    const osMatch = ua.match(/\(([^)]+)\)/);
+    if (osMatch) {
+      components.push(osMatch[1].split(';')[0].trim());
+    }
+    
+    // Device memory (if available)
+    if ('deviceMemory' in navigator) {
+      components.push(String((navigator.deviceMemory || 0)));
+    }
+    
+    // Max touch points
+    components.push(String(navigator.maxTouchPoints || 0));
+    
+    // Use SHA-256 hash like the app does
+    const fingerprint = components.join('|');
+    const encoder = new TextEncoder();
+    const data = encoder.encode(fingerprint);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  });
+  
   const startDate = new Date().toISOString();
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 7); // 7 days from now
   
+  // Create trial file with empty signature (works in dev mode, or we can bypass signature check)
   const trialFile = {
     trial_key: 'TRIA-TEST-1234-5678',
     device_id: deviceId,
@@ -22,20 +81,20 @@ async function setupTestTrial(page: Page) {
     start_date: startDate,
     expires_at: expiresAt.toISOString(),
     product_type: 'lpv',
-    signature: 'test-signature',
+    signature: '', // Empty signature works in dev mode
     signed_at: new Date().toISOString(),
   };
   
-  // Set up trial in localStorage before navigating
+  // Set up trial in localStorage with correct keys
   await page.evaluate((file) => {
     localStorage.setItem('lpv_trial_file', JSON.stringify(file));
-    localStorage.setItem('lpv_trial_used', 'true');
-    // Also set trial activated date to make it valid
-    localStorage.setItem('lpv_license_activated', new Date().toISOString());
+    localStorage.setItem('trial_used', 'true'); // Correct key: 'trial_used' not 'lpv_trial_used'
+    // Also set license keys to mark as trial
+    localStorage.setItem('app_license_key', file.trial_key);
+    localStorage.setItem('app_license_type', 'trial');
+    localStorage.setItem('app_license_activated', new Date().toISOString());
   }, trialFile);
   
-  // Navigate to ensure app picks up the trial
-  await page.goto('/');
   // Wait a bit for app to initialize
   await page.waitForTimeout(500);
 }

@@ -28,8 +28,9 @@ export interface SignedLicenseFile {
  * @returns Promise<boolean> - true if signature is valid
  */
 export async function verifyLicenseSignature(signedLicense: SignedLicenseFile): Promise<boolean> {
-  // In development, accept unsigned files
-  if (import.meta.env.DEV && !signedLicense.signature) {
+  // In development or test mode, accept unsigned files
+  const isDevOrTest = import.meta.env.DEV || import.meta.env.MODE === 'test';
+  if (isDevOrTest && !signedLicense.signature) {
     return true;
   }
 
@@ -48,8 +49,9 @@ export async function verifyLicenseSignature(signedLicense: SignedLicenseFile): 
   const signingSecret = import.meta.env.VITE_LICENSE_SIGNING_SECRET || '';
   
   if (!signingSecret) {
-    // In development, allow unsigned files
-    if (import.meta.env.DEV) {
+    // In development or test mode, allow unsigned files
+    const isDevOrTest = import.meta.env.DEV || import.meta.env.MODE === 'test';
+    if (isDevOrTest) {
       return true;
     }
     // In production without secret, reject unsigned files

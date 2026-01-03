@@ -1,0 +1,566 @@
+================================================================================
+TASK BREAKDOWN: AUTOMATED vs MANUAL TASKS
+Local Password Vault - Detailed Action Plan
+================================================================================
+
+This document breaks down each task into:
+- Automated tasks (code changes, automation, scripts)
+- Manual tasks (with step-by-step instructions)
+
+================================================================================
+CRITICAL: FIX CONNECTION ERROR ISSUE
+================================================================================
+
+WHAT THE AI CAN DO:
+-------------------
+1. Review and analyze the connection error code
+   - Examine electron/main.js HTTP request handler
+   - Review apiClient.ts error handling
+   - Identify potential issues in the code
+
+2. Implement code fixes:
+   - Add better error logging (production-visible)
+   - Improve error messages to be more specific
+   - Add network diagnostic features
+   - Implement retry logic with exponential backoff
+   - Add certificate validation handling if needed
+   - Fix any code bugs causing the connection failure
+
+3. Add debugging tools:
+   - Create network connectivity test function
+   - Add detailed error logging that works in production
+   - Create diagnostic endpoint for testing
+
+4. Test the fixes:
+   - Review code changes for correctness
+   - Suggest testing scenarios
+
+WHAT YOU NEED TO DO (Step-by-Step):
+------------------------------------
+1. Check if Server is Working:
+   - Open your web browser (Chrome, Firefox, etc.)
+   - Type in the address bar: https://api.localpasswordvault.com/health
+   - Press Enter
+   - You should see: {"status":"ok"}
+   - If you see an error or page won't load, the server might be down
+
+2. Test from Your Computer (Optional - Use Script Instead):
+   - Use the health check script: .\scripts\verify-backend-health.ps1
+   - Or open the black window
+   - Type: curl https://api.localpasswordvault.com/health
+   - Press Enter
+   - Should show: {"status":"ok"}
+   - If it fails, server might be down (see SERVER_UP_AND_RUNNING.txt)
+
+3. Check Website Security:
+   - In your browser, look for the lock icon next to the website address
+   - Click on it
+   - Check if it says the certificate is valid
+   - If it says expired or invalid, contact your server company
+
+4. Test the App After Code Changes:
+   - Download the updated app (after code fixes)
+   - Try to activate a license key
+   - See if the error still appears
+   - Report back what happens
+
+5. Document the Issue:
+   - Note what error message you see (exact text)
+   - Note if the health endpoint works in browser
+   - Note if you can access the server URL
+
+================================================================================
+DEPLOY UPDATED BACKEND CODE TO PRODUCTION
+================================================================================
+
+WHAT THE AI CAN DO:
+-------------------
+1. Create deployment scripts:
+   - Write a script that automates git pull and server restart
+   - Create a script to verify files were updated correctly
+   - Write instructions for manual file upload if needed
+
+2. Verify what needs to be deployed:
+   - Check which files changed
+   - Confirm email templates have .exe links
+   - List exact files that need updating
+
+WHAT YOU NEED TO DO (Step-by-Step):
+------------------------------------
+Option A: Using the Update Script (Easiest):
+1. Open the black window:
+   - Press Windows key
+   - Type: cmd
+   - Press Enter
+   - You'll see: C:\Users\kelly> (or similar)
+
+2. Go to your project folder:
+   - Type: cd C:\Users\kelly\OneDrive\Desktop\Vault-Main\LocalPasswordVault
+   - Press Enter
+   - You should now see: C:\Users\kelly\OneDrive\Desktop\Vault-Main\LocalPasswordVault>
+   - If you see an error, check where your project folder actually is
+
+3. Run the update script:
+   - Make sure you see the project folder path (from step 2)
+   - Type: .\scripts\deploy-backend.ps1 -ServerIP "YOUR_SERVER_IP"
+   - Replace YOUR_SERVER_IP with your actual server address (the numbers)
+   - Press Enter
+
+4. Enter your server password when asked (you won't see it as you type - that's normal)
+5. Wait for it to finish (may take a minute)
+6. Read the messages to see if it worked
+7. Done!
+
+Option B: Manual Update (If script doesn't work):
+1. Open the black window:
+   - Press Windows key
+   - Type: cmd
+   - Press Enter
+   - You'll see: C:\Users\kelly>
+
+2. Connect to your server:
+   - Type: ssh root@YOUR-SERVER-IP
+   - Replace YOUR-SERVER-IP with your actual server IP address (the numbers)
+   - Press Enter
+   - Enter your password when asked (you won't see it as you type)
+
+3. Go to server folder:
+   - Type: cd /var/www/lpv-api/backend
+   - Press Enter
+
+4. Download new code:
+   - Type: git pull
+   - Press Enter
+
+5. Restart server:
+   - Type: pm2 restart lpv-api
+   - Press Enter
+
+6. Check if server is running:
+   - Type: pm2 status
+   - Press Enter
+   - Look for "lpv-api" and make sure it says "online"
+
+7. Exit:
+   - Type: exit
+   - Press Enter
+
+Option B: Manual File Upload (If you don't have SSH):
+1. On your computer, locate these 3 files:
+   - backend/templates/bundle-email.html
+   - backend/templates/purchase-confirmation-email.html
+   - backend/templates/trial-welcome-email.html
+2. Download FileZilla (free FTP client) from: https://filezilla-project.org
+3. Install FileZilla
+4. Open FileZilla
+5. Enter your server details:
+   - Host: Your server IP address
+   - Username: root (or your username)
+   - Password: Your server password
+   - Port: 22
+6. Click "Quickconnect"
+7. Navigate to: /var/www/lpv-api/backend/templates (or your templates folder)
+8. Drag the 3 files from your computer to the server
+9. Replace the old files when prompted
+10. Done!
+
+================================================================================
+VERIFY BACKEND SERVER CONFIGURATION
+================================================================================
+
+WHAT THE AI CAN DO:
+-------------------
+1. Create a configuration checker script:
+   - Script that verifies all environment variables are set
+   - Script that tests database connection
+   - Script that verifies Stripe keys are valid format
+
+2. Create a verification checklist:
+   - List of all required environment variables
+   - Instructions for checking each one
+
+WHAT YOU NEED TO DO (Step-by-Step):
+------------------------------------
+1. Check Server Settings (If you can connect to server):
+   - Connect to your server (see instructions above)
+   - Type: cd /var/www/lpv-api/backend
+   - Press Enter
+   - Type: cat .env
+   - Press Enter
+   - Look for these lines (they should have values after the = sign):
+     * STRIPE_SECRET_KEY=sk_live_xxxxx (or sk_test_xxxxx)
+     * STRIPE_WEBHOOK_SECRET=whsec_xxxxx
+     * FROM_EMAIL=noreply@localpasswordvault.com
+     * SUPPORT_EMAIL=support@localpasswordvault.com
+     * WEBSITE_URL=https://localpasswordvault.com
+   - If any line is empty or missing, you need to add the value
+
+2. Test if Server is Working:
+   - Open your web browser
+   - Go to: https://api.localpasswordvault.com/health
+   - You should see: {"status":"ok"}
+   - If you see an error, write down what it says
+
+3. Check Website Security:
+   - In your browser, click the lock icon next to the website address
+   - It should say "Certificate is valid"
+   - If it says expired, contact your server company
+
+================================================================================
+STRIPE WEBHOOK CONFIGURATION
+================================================================================
+
+WHAT THE AI CAN DO:
+-------------------
+1. Provide exact instructions:
+   - Step-by-step guide for Stripe Dashboard
+   - Exact URL to use for webhook endpoint
+   - Exact event to select
+
+2. Create verification script:
+   - Script to test if webhook is receiving events
+   - Script to verify webhook secret is correct
+
+WHAT YOU NEED TO DO (Step-by-Step):
+------------------------------------
+1. Log into Stripe Dashboard:
+   - Go to: https://dashboard.stripe.com
+   - Log in with your Stripe account
+
+2. Create Webhook Endpoint:
+   - Click "Developers" in left menu
+   - Click "Webhooks"
+   - Click "Add endpoint" button
+   - In "Endpoint URL" field, type:
+     https://api.localpasswordvault.com/api/webhooks/stripe
+   - Under "Events to send", click "Select events"
+   - Check the box for: "checkout.session.completed"
+   - Click "Add endpoint"
+
+3. Copy Webhook Secret:
+   - After creating endpoint, click on it
+   - Find "Signing secret" section
+   - Click "Reveal" or "Click to reveal"
+   - Copy the secret (starts with "whsec_")
+   - Save it somewhere safe
+
+4. Add Secret to Server:
+   - Connect to your server (see instructions above)
+   - Type: cd /var/www/lpv-api/backend
+   - Press Enter
+   - Type: nano .env
+   - Press Enter
+   - Find the line that says: STRIPE_WEBHOOK_SECRET=
+   - Add your secret after the = sign (no spaces)
+   - Press Ctrl+X to exit
+   - Press Y to save
+   - Press Enter to confirm
+   - Type: pm2 restart lpv-api
+   - Press Enter
+
+5. Test Webhook:
+   - In Stripe Dashboard, go to Webhooks
+   - Click on your webhook endpoint
+   - Click "Send test webhook"
+   - Select "checkout.session.completed"
+   - Click "Send test webhook"
+   - Should see "Succeeded" status
+   - If failed, check the error message
+
+================================================================================
+EMAIL SERVICE VERIFICATION
+================================================================================
+
+WHAT THE AI CAN DO:
+-------------------
+1. Create email testing script:
+   - Script to send test emails
+   - Script to verify email configuration
+
+2. Verify email template code:
+   - Confirm templates have correct .exe links
+   - Check email formatting
+
+WHAT YOU NEED TO DO (Step-by-Step):
+------------------------------------
+1. Verify Brevo API Key:
+   - Log into Brevo: https://app.brevo.com
+   - Go to Settings → SMTP & API → API Keys
+   - Verify your API key is there
+   - If not, create a new one with "Send emails" permission
+
+2. Verify Sender Email in Brevo:
+   - In Brevo, go to Settings → Senders & IP
+   - Make sure noreply@localpasswordvault.com is verified
+   - If not verified, click "Verify" and follow instructions
+
+3. Test Email Sending (Easiest way - use the script):
+   - Open the black window (Command Prompt)
+   - Go to your project folder:
+     Type: cd C:\Users\kelly\OneDrive\Desktop\Vault-Main\LocalPasswordVault
+   - Run the email test script:
+     Type: .\scripts\test-email-config.ps1 -ServerIP "YOUR_SERVER_IP" -TestEmail "your-email@example.com"
+   - Replace YOUR_SERVER_IP with your server address
+   - Replace your-email@example.com with your email address
+   - Press Enter
+   - Enter your server password when asked
+   - Check your email inbox
+   - If email arrives, it's working!
+
+   OR Manual way (if script doesn't work):
+   - Connect to your server (see instructions above)
+   - Type: cd /var/www/lpv-api/backend
+   - Press Enter
+   - Type: node scripts/test-email.js your-email@example.com
+   - Press Enter
+   - Check your email inbox
+   - If email arrives, it's working!
+
+4. Check Email Links:
+   - Open the test email you received
+   - Click on the Windows download link
+   - Verify it downloads a .exe file (not .zip)
+   - If it's .zip, templates weren't deployed correctly
+
+5. Test from Different Email Providers:
+   - Send test email to Gmail account
+   - Send test email to Outlook account
+   - Check both inboxes (and spam folders)
+   - Verify emails arrive and look correct
+
+================================================================================
+END-TO-END TESTING
+================================================================================
+
+WHAT THE AI CAN DO:
+-------------------
+1. Create test scripts:
+   - Automated test for purchase flow
+   - Automated test for trial flow
+   - Test data generation
+
+2. Provide testing checklist:
+   - Step-by-step testing instructions
+   - What to look for at each step
+
+WHAT YOU NEED TO DO (Step-by-Step):
+------------------------------------
+1. Test Purchase Flow:
+   a. Go to your website pricing page
+   b. Click "Buy Now" on any product
+   c. Complete Stripe checkout (use test card: 4242 4242 4242 4242)
+   d. Check your email for license key
+   e. Download app from email link
+   f. Install app
+   g. Enter license key when prompted
+   h. Verify activation succeeds
+   i. Disconnect internet
+   j. Verify app still works offline
+
+2. Test Trial Flow:
+   a. Go to your website trial page
+   b. Enter your email address
+   c. Click "Get Free Trial"
+   d. Check your email for trial key
+   e. Download app from email link
+   f. Install app
+   g. Enter trial key when prompted
+   h. Verify trial activates
+   i. Disconnect internet
+   j. Verify app works offline
+
+3. Test Error Scenarios:
+   a. Try activating with invalid key format (like "TEST123")
+   b. Verify you see appropriate error message
+   c. Try activating with non-existent key
+   d. Verify you see appropriate error message
+   e. Try activating while offline (after initial activation)
+   f. Verify app works offline
+
+4. Test Offline Operation:
+   a. After successful activation, disconnect internet completely
+   b. Use app for 30+ minutes
+   c. Open app DevTools (if possible) → Network tab
+   d. Verify NO network requests are made
+   e. Restart app while offline
+   f. Verify app loads and works
+
+================================================================================
+APPLICATION BUILD AND TESTING
+================================================================================
+
+WHAT THE AI CAN DO:
+-------------------
+1. Create build scripts:
+   - Automated build process
+   - Build verification scripts
+
+2. Provide build instructions:
+   - Exact commands to run
+   - What to check after build
+
+WHAT YOU NEED TO DO (Step-by-Step):
+------------------------------------
+1. Build Windows Installer:
+   - Open the black window:
+     Press Windows key
+     Type: cmd
+     Press Enter
+     You'll see: C:\Users\kelly>
+
+   - Go to your project folder:
+     Type: cd C:\Users\kelly\OneDrive\Desktop\Vault-Main\LocalPasswordVault
+     Press Enter
+     You should see: C:\Users\kelly\OneDrive\Desktop\Vault-Main\LocalPasswordVault>
+
+   - Build the installer:
+     Make sure you see the project folder path above
+     Type: npm run dist:win
+     Press Enter
+     Wait for it to finish (this takes several minutes - be patient!)
+
+   - When done, find the installer file:
+     Open File Explorer
+     Go to: C:\Users\kelly\OneDrive\Desktop\Vault-Main\LocalPasswordVault\dist
+     Look for: Local.Password.Vault.Setup.1.2.0.exe
+
+2. Test Installer on Clean Machine:
+   - Copy installer to a different Windows computer (or VM)
+   - Run the installer
+   - Verify it installs correctly
+   - Verify shortcuts are created
+   - Launch app from shortcut
+   - Verify app opens correctly
+
+3. Test Activation with Built Installer:
+   - Use a real license key (or trial key)
+   - Try to activate in the installed app
+   - Verify activation works
+   - If connection error appears, note the exact error message
+
+4. Upload to GitHub Releases:
+   - Go to: https://github.com/kwilhelm1967/Vault/releases
+   - Click "Draft a new release"
+   - Tag: v1.2.0
+   - Title: Release 1.2.0
+   - Upload the .exe file from dist folder
+   - Click "Publish release"
+
+5. Test Download:
+   - Download installer from GitHub Releases page
+   - Verify download works
+   - Install on clean machine
+   - Test activation
+
+================================================================================
+MONITORING AND ERROR TRACKING (OPTIONAL)
+================================================================================
+
+WHAT THE AI CAN DO:
+-------------------
+1. Set up Sentry integration:
+   - Code is already there, just needs DSN
+   - Provide instructions for getting DSN
+
+WHAT YOU NEED TO DO (Step-by-Step):
+------------------------------------
+1. Create Sentry Account (Optional):
+   - Go to: https://sentry.io
+   - Sign up for free account
+   - Create new project
+   - Select "Node.js"
+   - Copy the DSN (looks like: https://xxxxx@sentry.io/xxxxx)
+
+2. Add DSN to Server:
+   - Connect to your server (see instructions above)
+   - Type: cd /var/www/lpv-api/backend
+   - Press Enter
+   - Type: nano .env
+   - Press Enter
+   - Add a new line at the end: SENTRY_DSN=https://xxxxx@sentry.io/xxxxx
+   - (Replace the xxxxx parts with your actual DSN from Sentry)
+   - Press Ctrl+X to exit
+   - Press Y to save
+   - Press Enter to confirm
+   - Type: pm2 restart lpv-api
+   - Press Enter
+
+3. Test Sentry:
+   - Trigger a test error (see testing documentation)
+   - Check Sentry dashboard
+   - Verify error appears
+
+================================================================================
+SUMMARY: QUICK REFERENCE
+================================================================================
+
+AUTOMATED TASKS:
+--------------
+✓ Fix code bugs (connection error, etc.)
+✓ Add features (better error messages, retry logic)
+✓ Create scripts for automation
+✓ Review and verify code
+✓ Provide detailed step-by-step instructions
+✓ Create testing checklists
+
+MANUAL TASKS:
+--------------------
+✓ Test things (purchase flow, trial flow, etc.)
+✓ Configure services (Stripe webhook, Brevo email)
+✓ Deploy code to server (SSH + git pull, or file upload)
+✓ Set environment variables (edit .env file)
+✓ Verify things work (test endpoints, check emails)
+✓ Build and upload installers (npm commands, GitHub upload)
+
+SKILLS YOU'LL NEED:
+-------------------
+- Finding files on your computer
+- Using a web browser (Chrome, Firefox, etc.)
+- Copy and paste (copying commands, secrets, etc.)
+- Following step-by-step instructions
+- Basic typing (typing commands in the black window)
+
+TOOLS YOU'LL NEED:
+------------------
+- Web browser (Chrome, Firefox, etc.)
+- Way to connect to server (built into Windows, or use PuTTY if needed)
+- File transfer program (FileZilla - for copying files to server)
+- Text editor (Notepad works fine, or use VS Code if you have it)
+- Black window (Command Prompt on Windows - just search for "cmd")
+
+================================================================================
+PRIORITY ORDER FOR YOU:
+================================================================================
+
+1. FIRST: Test if server is working
+   - Open your web browser
+   - Go to: https://api.localpasswordvault.com/health
+   - Tell me what you see
+
+2. SECOND: Check server settings
+   - Connect to your server, check the .env file
+   - Tell me what's missing
+
+3. THIRD: Set up Stripe webhook
+   - Follow the step-by-step instructions above
+   - Tell me when you're done
+
+4. FOURTH: Test email sending
+   - Use the email test script (see HOW_TO_USE_SCRIPTS.txt)
+   - Check your email inbox
+   - Tell me if email arrived
+
+5. FIFTH: Test the whole purchase process
+   - Make a test purchase on your website
+   - Check if license key arrives in email
+   - Try activating it in the app
+   - Tell me what happens
+
+6. SIXTH: Test the connection error fix
+   - Code changes have been made
+   - Build the app and test it
+   - Document if the error still appears
+
+================================================================================
+END OF DOCUMENT
+================================================================================

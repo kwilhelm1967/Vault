@@ -1,0 +1,640 @@
+DEVELOPER HANDOFF - LOCAL PASSWORD VAULT AND LOCAL LEGACY VAULT
+
+Purpose: Complete technical overview for next developer to understand current state and execute remaining work.
+
+Last Updated: January 2025 - All bundle purchase functionality complete across websites and Electron apps
+
+
+================================================================================
+1. CURRENT STATE - WHAT IS LIVE TODAY
+================================================================================
+
+Backend Server (Shared)
+Server IP: 45.79.40.42
+API Domain: https://api.localpasswordvault.com
+Status: Running (PM2 managed)
+Database: Supabase PostgreSQL
+Email Service: Brevo (configured)
+Stripe: Live account configured
+
+Local Password Vault (LPV)
+Website: https://localpasswordvault.com (A record: 45.79.40.42)
+Status: Website live, SSL certificate valid
+Desktop App: Built and available on GitHub Releases
+License Keys: PERS-XXXX (Personal), FMLY-XXXX (Family)
+Trial: 7-day trials via TRIA-XXXX keys
+
+Local Legacy Vault (LLV)
+Website: https://locallegacyvault.com (separate domain)
+Status: Website live
+Desktop App: Built and available
+License Keys: LLVP-XXXX (Personal), LLVF-XXXX (Family)
+Trial: 14-day trials via TRIA-XXXX keys
+
+
+================================================================================
+2. WHAT IS WIRED UP AND WORKING
+================================================================================
+
+Backend API (api.localpasswordvault.com)
+
+Fully Implemented:
+- Express.js server with all routes
+- Stripe checkout session creation (/api/checkout/session)
+- Bundle checkout (/api/checkout/bundle)
+- Stripe webhook handler (/api/webhooks/stripe)
+- License activation (/api/lpv/license/activate)
+- License transfer (/api/lpv/license/transfer)
+- Trial activation (/api/lpv/license/trial/activate)
+- Trial signup (/api/trial/signup)
+- Health check (/health)
+- Admin dashboard routes
+
+Database:
+- Supabase connection configured
+- Tables: licenses, trials, customers, device_activations, webhook_events
+- Product type separation (product_type: lpv vs llv)
+
+Stripe Integration:
+- All 4 Price IDs configured:
+  STRIPE_PRICE_PERSONAL (LPV Personal $49)
+  STRIPE_PRICE_FAMILY (LPV Family $79)
+  STRIPE_PRICE_LLV_PERSONAL (LLV Personal $49)
+  STRIPE_PRICE_LLV_FAMILY (LLV Family $129)
+- Webhook endpoint configured
+- Bundle discount logic (13.94% automatic)
+
+Email System:
+- Brevo API integration
+- Email templates (trial, purchase, bundle)
+- Download links point to .exe files (GitHub Releases)
+- Support emails configured per product
+
+License System:
+- License key generation (4 formats: PERS, FMLY, LLVP, LLVF)
+- Signed license files (HMAC-SHA256)
+- Offline validation
+- Device binding
+- Transfer system (3 transfers/year limit)
+
+Frontend Applications
+
+Local Password Vault (LPV):
+- Electron app with HTTP request handler
+- Network diagnostics
+- Production logging (electron-log)
+- License activation flow
+- Trial activation flow
+- Purchase flow (opens Stripe checkout)
+- Bundle purchase flow (Personal and Family bundles)
+- Offline operation after activation
+- Error handling with retry logic
+
+Local Legacy Vault (LLV):
+- Electron app with HTTP request handler
+- Network diagnostics
+- Production logging (electron-log)
+- License activation flow (LLVP/LLVF keys)
+- Trial activation flow (14-day, sends product_type: llv)
+- Purchase flow with plan selection (Personal/Family)
+- Bundle purchase flow (Personal and Family bundles)
+- Offline operation after activation
+- Error handling with retry logic
+
+
+================================================================================
+3. WHAT IS PARTIALLY BUILT
+================================================================================
+
+Bundle Purchase Flow
+Status: Backend complete, websites complete, apps complete
+
+Backend (Complete):
+- /api/checkout/bundle endpoint
+- Validates bundle combinations (must include both LPV and LLV)
+- Applies 13.94% discount automatically
+- Generates separate license keys for each product
+- Sends single email with both keys
+
+LPV Website (Complete):
+- bundle.html page exists and works (full bundle purchase functionality)
+- pricing.html bundle buttons now wired up (calls API directly)
+- Both Personal and Family bundle purchases work
+
+LLV Website (Complete):
+- bundle.html page exists
+- pricing.html bundle buttons now wired up (calls API directly)
+- Both Personal and Family bundle purchases work
+
+Electron Apps (Complete):
+- LPV app has bundle purchase UI in LicenseScreen component
+- LLV app has bundle purchase UI in ActivationScreen component
+- Both apps support Personal and Family bundle purchases
+- Bundle purchase buttons match regular purchase button style (text only, no icons)
+- Bundle purchases open Stripe checkout in external browser using same flow as regular purchases
+
+Download Links by OS
+Status: Only Windows .exe links in emails
+
+Current:
+- Windows: .exe links to GitHub Releases
+- macOS: No download links
+- Linux: No download links
+
+Action Required: Add macOS and Linux download links to email templates when builds are available
+
+
+================================================================================
+4. WHAT IS PLACEHOLDER ONLY
+================================================================================
+
+Sentry Error Tracking
+- Code integrated but SENTRY_DSN not configured
+- Optional - can be set up later
+
+Auto-Updater
+- Code exists in electron/autoUpdater.js
+- Not actively used
+- Optional feature
+
+
+================================================================================
+5. CRITICAL CONNECTION ERROR ISSUE (LPV)
+================================================================================
+
+Problem Description
+Users see red error box: "Activation Error: Unable to connect to license server" when activating license or trial keys, even with internet connectivity.
+
+What Is Failing
+Location: Electron app to Backend API connection
+Endpoint: https://api.localpasswordvault.com/api/lpv/license/activate
+When: During license/trial activation attempts
+User Impact: Cannot activate licenses or trials
+
+What Has Been Tried
+1. Added Electron net module HTTP handler (bypasses CORS)
+2. Implemented retry logic with exponential backoff
+3. Added specific error messages (DNS, connection refused, timeout, SSL)
+4. Added production logging (electron-log)
+5. Added network diagnostics function
+6. Improved error propagation from Electron main to renderer
+
+Root Cause Analysis
+Most Likely Causes:
+1. SSL Certificate Validation: Electron's net module may reject the backend SSL certificate
+2. DNS Resolution: App may not resolve api.localpasswordvault.com correctly
+3. Firewall/Network: User's network may block HTTPS connections
+4. Timeout Too Aggressive: 30-second timeout may be too short for slow connections
+
+Evidence:
+- Backend health endpoint works in browser: https://api.localpasswordvault.com/health
+- Error appears even with internet connectivity
+- Error handling code is in place but underlying connection fails
+
+What Needs to Be Done
+1. Test from Production Build:
+   - Build Windows installer
+   - Install on clean machine
+   - Attempt activation
+   - Check Electron logs: %APPDATA%\Local Password Vault\logs\main.log
+   - Identify exact error code/message
+
+2. Certificate Validation:
+   - Check if session.defaultSession.setCertificateVerifyProc is working
+   - May need to log certificate details
+   - Consider certificate pinning if needed
+
+3. Network Diagnostics:
+   - Use testNetworkConnectivity function in app
+   - Verify it can reach backend
+   - Check if DNS resolution works
+
+4. Fallback Testing:
+   - Test if fetch API fallback works when Electron net fails
+   - Verify CORS headers on backend allow Electron origins
+
+Files to Review:
+- electron/main.js (lines ~1869-2083) - HTTP request handler
+- src/utils/apiClient.ts - API client with Electron detection
+- electron/preload.js - IPC bridge
+
+
+================================================================================
+6. WHAT REMAINS TO FINISH BOTH APPLICATIONS
+================================================================================
+
+Fix Connection Error (LPV)
+Status: Partially fixed, needs testing
+Action: Test production build, identify exact failure point, fix root cause
+
+End-to-End Testing
+Actions:
+1. Test LPV purchase flow:
+   - Purchase on website ? Receive email ? Download ? Install ? Activate
+2. Test LLV purchase flow:
+   - Purchase in app ? Complete Stripe ? Receive email ? Activate
+3. Test trial flows:
+   - LPV: 7-day trial signup ? Activation
+   - LLV: 14-day trial signup ? Activation
+4. Test offline operation:
+   - Activate ? Disconnect internet ? Use app ? Verify no network requests
+
+Bundle Purchase Integration
+Status: Backend complete, websites complete, apps missing
+Actions:
+1. Test bundle purchase from LPV website (pricing.html buttons work)
+2. Test bundle purchase from LLV website (pricing.html buttons work)
+3. Test bundle purchase ? Email with 2 keys ? Both activations work
+4. Optional: Add bundle purchase to Electron apps if needed
+
+Email Template Verification
+Actions:
+1. Send test purchase email
+2. Verify download links work
+3. Verify links point to .exe (not .zip)
+4. Verify license keys are correct format
+
+Build Verification
+Actions:
+1. Build Windows installer for both apps
+2. Test on clean Windows machine
+3. Verify activation works
+4. Upload to GitHub Releases
+5. Verify download links in emails work
+
+macOS/Linux Builds
+Status: Code supports it, builds not created
+Action: Create builds when needed, update email templates with download links
+
+Sentry Error Tracking
+Status: Code integrated, needs DSN
+Action: Configure SENTRY_DSN in backend .env
+
+Auto-Updater
+Status: Code exists, not configured
+Action: Configure if automatic updates desired
+
+
+================================================================================
+7. TECHNICAL ARCHITECTURE
+================================================================================
+
+Services Used
+
+Backend:
+- Server: Node.js 18+ with Express.js
+- Process Manager: PM2
+- Database: Supabase (PostgreSQL)
+- Email: Brevo (formerly Sendinblue)
+- Payments: Stripe
+- Hosting: Server at 45.79.40.42
+
+Frontend:
+- Framework: Electron + React + TypeScript
+- Build: Vite
+- Storage: IndexedDB + localStorage
+- Encryption: Web Crypto API (AES-256-GCM)
+
+How Services Connect
+
+Purchase Flow:
+1. User clicks "Purchase" in app or website
+2. Frontend calls POST /api/checkout/session with planType
+3. Backend creates Stripe checkout session
+4. User completes payment on Stripe
+5. Stripe sends webhook to POST /api/webhooks/stripe
+6. Backend generates license key(s) and stores in database
+7. Backend sends email via Brevo with license key and download link
+8. User activates key in app
+
+Activation Flow:
+1. User enters license key in app
+2. App calls POST /api/lpv/license/activate with key + device fingerprint
+3. Backend validates key, checks device binding
+4. Backend returns signed license file (HMAC-SHA256)
+5. App stores license file locally
+6. App validates signature offline
+7. App works completely offline after activation
+
+Trial Flow:
+1. User requests trial on website
+2. Backend generates TRIA-XXXX key
+3. Backend sends email with trial key
+4. User enters trial key in app
+5. App calls POST /api/lpv/license/trial/activate with product_type: llv or lpv
+6. Backend returns signed trial file
+7. App stores trial file locally
+8. App validates expiration offline
+
+What Must Not Be Changed
+
+Critical:
+- License Signing Secret: Must match between backend and both frontends
+- Product Type Separation: product_type: lpv vs llv must be preserved
+- License Key Formats: PERS/FMLY vs LLVP/LLVF formats must not change
+- Storage Key Prefixes: lpv_ vs llv_ prefixes must remain separate
+- Backend API URL: https://api.localpasswordvault.com is shared - do not change
+- Offline Operation: App must work offline after activation - no network calls
+
+Important:
+- Device Binding: Single-device activation model (family = 5 separate keys)
+- Transfer Limit: 3 transfers per year enforced
+- Trial Duration: LPV = 7 days, LLV = 14 days
+- Support Emails: Separate per product
+
+Sensitive Areas
+
+Security-Critical:
+1. License Signing Secret:
+   Location: Backend .env ? LICENSE_SIGNING_SECRET
+   Frontend: LPV .env ? VITE_LICENSE_SIGNING_SECRET
+   Frontend: LLV .env ? VITE_LICENSE_SIGNING_SECRET
+   Must match exactly - changing breaks all existing licenses
+
+2. Stripe Webhook Secret:
+   Location: Backend .env ? STRIPE_WEBHOOK_SECRET
+   Changing invalidates webhook verification
+
+3. Database Service Key:
+   Location: Backend .env ? SUPABASE_SERVICE_KEY
+   Full database access - keep secure
+
+4. Encryption:
+   Master password hashing (PBKDF2)
+   Vault encryption (AES-256-GCM)
+   Do not change algorithms - breaks existing vaults
+
+Data Integrity:
+- License Key Generation: Uses specific prefixes - changing breaks validation
+- Product Type Field: Must be lpv or llv - changing breaks separation
+- Storage Keys: Prefixes (lpv_ vs llv_) must remain separate
+
+
+================================================================================
+8. EXACT TASKS FOR NEXT DEVELOPER
+================================================================================
+
+Task 1: Fix Connection Error (LPV)
+What: Users cannot activate licenses due to connection error
+Files:
+- electron/main.js (HTTP request handler)
+- src/utils/apiClient.ts
+- electron/preload.js
+
+Steps:
+1. Build production Windows installer
+2. Install on clean machine
+3. Attempt license activation
+4. Check logs: %APPDATA%\Local Password Vault\logs\main.log
+5. Identify exact error (DNS, SSL, timeout, etc.)
+6. Fix root cause
+7. Test again on clean machine
+
+Success Criteria: Users can activate licenses without connection errors
+
+Task 2: End-to-End Purchase Flow Testing
+What: Verify complete purchase to activation flow works
+
+LPV Testing:
+1. Make test purchase on localpasswordvault.com
+2. Verify email received with license key
+3. Download installer from email link
+4. Install on clean machine
+5. Activate with license key
+6. Verify activation succeeds
+7. Disconnect internet
+8. Verify app works offline
+
+LLV Testing:
+1. Open LLV app
+2. Click "Purchase License"
+3. Select Personal or Family
+4. Complete Stripe checkout
+5. Verify email received with license key
+6. Activate with license key in app
+7. Verify activation succeeds
+8. Disconnect internet
+9. Verify app works offline
+
+Success Criteria: Both products can be purchased and activated end-to-end
+
+Task 3: Trial Flow Testing
+What: Verify trial signup and activation works
+
+LPV:
+1. Request trial on website
+2. Verify email with TRIA-XXXX key
+3. Activate in app
+4. Verify 7-day trial starts
+5. Verify trial expiration detection works offline
+
+LLV:
+1. Request trial (method TBD - may redirect to website)
+2. Verify email with TRIA-XXXX key
+3. Activate in app (sends product_type: llv)
+4. Verify 14-day trial starts
+5. Verify trial expiration detection works offline
+
+Success Criteria: Both trial flows work correctly with correct durations
+
+Task 4: Build and Deploy Installers
+What: Create production installers and verify downloads
+
+Steps:
+1. Build LPV Windows installer: npm run dist:win (in LPV folder)
+2. Build LLV Windows installer: npm run dist:win (in LLV folder)
+3. Test installers on clean Windows machine
+4. Upload to GitHub Releases
+5. Test download links in email templates
+6. Verify links point to correct .exe files
+
+Success Criteria: Users can download and install both apps from email links
+
+Task 5: Bundle Purchase Testing
+What: Test bundle purchase flows across all platforms
+
+Backend: Complete
+LPV Website: Complete (bundle.html and pricing.html both work)
+LLV Website: Complete (bundle.html and pricing.html both work)
+LPV App: Complete (bundle purchase UI in LicenseScreen, buttons match regular purchase style)
+LLV App: Complete (bundle purchase UI in ActivationScreen, buttons match regular purchase style)
+
+Steps:
+1. Test bundle purchase from LPV website:
+   - User clicks bundle button on pricing.html
+   - Completes Stripe checkout
+   - Receives email with 2 license keys (PERS-XXXX and LLVP-XXXX for Personal, FMLY-XXXX and LLVF-XXXX for Family)
+   - Activates LPV with first key
+   - Activates LLV with second key
+   - Both work independently
+2. Test bundle purchase from LLV website:
+   - User clicks bundle button on pricing.html
+   - Completes Stripe checkout
+   - Receives email with 2 license keys
+   - Activates both products
+3. Test bundle purchase from LPV app:
+   - User opens app and goes to purchase screen
+   - Clicks "Buy Personal Bundle - $89" or "Buy Family Bundle - $179" button (no icons, matches regular purchase button style)
+   - Completes Stripe checkout in external browser
+   - Receives email with 2 license keys
+   - Activates both products
+4. Test bundle purchase from LLV app:
+   - User opens app and goes to activation screen
+   - Clicks "Buy Personal Bundle - $89" or "Buy Family Bundle - $179" button (matches regular purchase button style)
+   - Completes Stripe checkout in external browser
+   - Receives email with 2 license keys
+   - Activates both products
+
+Success Criteria: Users can purchase bundles from websites and apps, and activate both products successfully. All bundle buttons have consistent styling with regular purchase buttons (text only, no icons).
+
+Task 6: Email Template Verification
+What: Verify all email templates work correctly
+
+Steps:
+1. Trigger test purchase (LPV Personal)
+2. Check email received
+3. Verify license key format (PERS-XXXX-XXXX-XXXX)
+4. Click Windows download link
+5. Verify downloads .exe file (not .zip)
+6. Repeat for LLV purchase
+7. Repeat for bundle purchase (should have 2 keys)
+8. Repeat for trial emails
+
+Success Criteria: All emails deliver correct keys and working download links
+
+Task 7: Error Message Improvements
+What: Ensure all error messages are user-friendly
+
+Review:
+- Network errors
+- License validation errors
+- Trial expiration messages
+- Transfer limit messages
+
+Success Criteria: All errors provide actionable guidance
+
+Task 8: Offline Operation Verification
+What: Verify apps make zero network requests after activation
+
+Steps:
+1. Activate license
+2. Open browser DevTools ? Network tab
+3. Use app for 30+ minutes
+4. Verify NO Fetch/XHR/WebSocket requests
+5. Restart app while offline
+6. Verify app loads and works
+
+Success Criteria: Apps are truly offline after activation
+
+Task 9: macOS/Linux Builds
+What: Create builds for other platforms
+
+Steps:
+1. Build macOS: npm run dist:mac (requires macOS)
+2. Build Linux: npm run dist:linux (requires Linux)
+3. Update email templates with download links
+4. Test installers
+
+Task 10: Sentry Configuration
+What: Set up error tracking
+
+Steps:
+1. Create Sentry account
+2. Get DSN
+3. Add to backend .env: SENTRY_DSN=https://...
+4. Restart backend
+5. Verify errors appear in Sentry dashboard
+
+
+================================================================================
+9. KEY CONFIGURATION VALUES
+================================================================================
+
+Backend .env (Required)
+SUPABASE_URL=https://kzsbotkuhoigmoqinkiz.supabase.co
+SUPABASE_SERVICE_KEY=[service key]
+LICENSE_SIGNING_SECRET=[64-char hex - must match frontends]
+STRIPE_SECRET_KEY=sk_live_[key]
+STRIPE_WEBHOOK_SECRET=whsec_[key]
+STRIPE_PRICE_PERSONAL=price_1STRWdI1GYJUOJOHtK889VkU
+STRIPE_PRICE_FAMILY=price_1STRUEI1GYJUOJOHhe3o55tv
+STRIPE_PRICE_LLV_PERSONAL=price_1SjRBuI1GYJUOJOHXpFt4OwD
+STRIPE_PRICE_LLV_FAMILY=price_1SjRCVI1GYJUOJOHvpbaoM9U
+BREVO_API_KEY=[brevo key]
+FROM_EMAIL=noreply@localpasswordvault.com
+SUPPORT_EMAIL=support@localpasswordvault.com
+WEBSITE_URL=https://localpasswordvault.com
+LLV_WEBSITE_URL=https://locallegacyvault.com
+
+LPV Frontend .env
+VITE_STRIPE_PUBLISHABLE_KEY=pk_live_[key]
+VITE_LICENSE_SERVER_URL=https://api.localpasswordvault.com
+VITE_LICENSE_SIGNING_SECRET=[must match backend]
+
+LLV Frontend .env
+VITE_STRIPE_PUBLISHABLE_KEY=pk_live_[key]
+VITE_LICENSE_SERVER_URL=https://api.localpasswordvault.com
+VITE_LICENSE_SIGNING_SECRET=[must match backend]
+
+
+================================================================================
+10. QUICK REFERENCE
+================================================================================
+
+Server Access
+IP: 45.79.40.42
+SSH: ssh root@45.79.40.42
+Backend Path: /var/www/lpv-api/backend (or find with: find / -name server.js)
+PM2 App: lpv-api
+Restart: pm2 restart lpv-api
+
+Key Endpoints
+Health: https://api.localpasswordvault.com/health
+Checkout: POST /api/checkout/session
+Bundle: POST /api/checkout/bundle
+Activate: POST /api/lpv/license/activate
+Transfer: POST /api/lpv/license/transfer
+Trial Activate: POST /api/lpv/license/trial/activate
+Trial Signup: POST /api/trial/signup
+
+License Key Formats
+LPV Personal: PERS-XXXX-XXXX-XXXX
+LPV Family: FMLY-XXXX-XXXX-XXXX
+LLV Personal: LLVP-XXXX-XXXX-XXXX
+LLV Family: LLVF-XXXX-XXXX-XXXX
+Trial: TRIA-XXXX-XXXX-XXXX
+
+Storage Keys
+LPV: lpv_license_key, lpv_license_file, lpv_trial_file
+LLV: llv_license_key, llv_license_file, llv_trial_file
+
+
+================================================================================
+11. TESTING CHECKLIST
+================================================================================
+
+Before Launch - Must Test
+
+Purchase Flow:
+- LPV Personal purchase ? Email ? Download ? Install ? Activate
+- LPV Family purchase ? Email ? Download ? Install ? Activate
+- LLV Personal purchase ? Email ? Activate
+- LLV Family purchase ? Email ? Activate
+- Bundle purchase ? Email with 2 keys ? Both activate
+
+Trial Flow:
+- LPV trial signup ? Email ? Activate ? 7-day trial works
+- LLV trial signup ? Email ? Activate ? 14-day trial works
+
+Offline Operation:
+- Activate license ? Disconnect internet ? Use app ? No network requests
+- Restart app offline ? App loads and works
+
+Error Scenarios:
+- Invalid license key format ? Appropriate error
+- Non-existent license key ? Appropriate error
+- Network failure ? User-friendly error message
+- Transfer limit reached ? Appropriate error
+
+
+END OF DOCUMENT

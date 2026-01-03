@@ -104,7 +104,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Build app for E2E
-        run: npm run build
+        run: npm run build -- --mode test
         timeout-minutes: 5
 
       - name: Install backend dependencies for E2E

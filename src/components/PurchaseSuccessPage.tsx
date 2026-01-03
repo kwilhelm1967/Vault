@@ -148,8 +148,11 @@ export const PurchaseSuccessPage: React.FC = () => {
         // If session_id is present, try to fetch license keys from backend
         if (sessionId && sessionId.startsWith("cs_")) {
           try {
-            await fetchSessionData(sessionId);
-            return;
+            const data = await fetchSessionData(sessionId);
+            if (data) {
+              // Data processing happens inside fetchSessionData
+              return;
+            }
           } catch (fetchError) {
             // If backend fetch fails (e.g., backend not running), fall back to test data
             // This allows testing the page without a backend
@@ -246,82 +249,33 @@ export const PurchaseSuccessPage: React.FC = () => {
     loadLicenseKeys();
   }, []);
 
-  const fetchSessionData = async (sessionId: string, retryCount = 0, maxRetries = 5) => {
-    const MAX_RETRIES = maxRetries;
-    const INITIAL_DELAY = 2000; // 2 seconds
-    const MAX_DELAY = 30000; // 30 seconds
-    const TIMEOUT = 60000; // 60 seconds total timeout
-    
-    const startTime = Date.now();
-    
-    const fetchWithRetry = async (attempt: number): Promise<any> => {
-      try {
-        const apiBaseUrl = environment.environment.licenseServerUrl;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout per request
-        
-        const response = await fetch(`${apiBaseUrl}/api/checkout/session/${sessionId}`, {
-          signal: controller.signal,
-        });
-        
-        clearTimeout(timeoutId);
-        
-        if (!response.ok) {
-          if (response.status === 404) {
-            // License not ready yet (webhook still processing)
-            if (attempt < MAX_RETRIES && (Date.now() - startTime) < TIMEOUT) {
-              // Calculate exponential backoff delay
-              const delay = Math.min(INITIAL_DELAY * Math.pow(2, attempt), MAX_DELAY);
-              await new Promise(resolve => setTimeout(resolve, delay));
-              return fetchWithRetry(attempt + 1);
-            }
-            // Timeout or max retries reached
-            setError("Your purchase is being processed. This may take a few moments. Please check your email for your license keys, or refresh this page in a minute.");
-            return null;
-          }
-          throw new Error(`Failed to fetch session: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        
-        if (!data.success) {
-          if (data.pending && attempt < MAX_RETRIES && (Date.now() - startTime) < TIMEOUT) {
-            // Still processing, retry
-            const delay = Math.min(INITIAL_DELAY * Math.pow(2, attempt), MAX_DELAY);
-            await new Promise(resolve => setTimeout(resolve, delay));
-            return fetchWithRetry(attempt + 1);
-          }
-          throw new Error(data.error || "Failed to retrieve license keys");
-        }
-        
-        return data;
-      } catch (error: any) {
-        if (error.name === 'AbortError') {
-          // Request timeout
-          if (attempt < MAX_RETRIES && (Date.now() - startTime) < TIMEOUT) {
-            const delay = Math.min(INITIAL_DELAY * Math.pow(2, attempt), MAX_DELAY);
-            await new Promise(resolve => setTimeout(resolve, delay));
-            return fetchWithRetry(attempt + 1);
-          }
-          throw new Error("Request timed out. Please check your email for your license keys or refresh the page.");
-        }
-        
-        // Network or other error
-        if (attempt < MAX_RETRIES && (Date.now() - startTime) < TIMEOUT) {
-          const delay = Math.min(INITIAL_DELAY * Math.pow(2, attempt), MAX_DELAY);
-          await new Promise(resolve => setTimeout(resolve, delay));
-          return fetchWithRetry(attempt + 1);
-        }
-        
-        throw error;
-      }
-    };
-    
+  const fetchSessionData = async (sessionId: string) => {
     try {
-      const data = await fetchWithRetry(0);
+      // Use apiClient for better error handling and retry logic
+      const { apiClient } = await import("../utils/apiClient");
       
-      if (!data) {
-        return; // Error already set
+      const response = await apiClient.get<{
+        success: boolean;
+        pending?: boolean;
+        isBundle?: boolean;
+        data?: any;
+        error?: string;
+      }>(
+        `/api/checkout/session/${sessionId}`,
+        {
+          retries: 5,
+          timeout: 60000, // 60 seconds total
+        }
+      );
+      
+      const data = response.data;
+      
+      if (!data.success) {
+        if (data.pending) {
+          setError("Your purchase is being processed. This may take a few moments. Please check your email for your license keys, or refresh this page in a minute.");
+          return null;
+        }
+        throw new Error(data.error || "Failed to retrieve license keys");
       }
       
       // Handle bundle purchase (multiple licenses from different products)
@@ -419,8 +373,17 @@ export const PurchaseSuccessPage: React.FC = () => {
       if (data.data?.email) {
         setCustomerEmail(data.data.email);
       }
-    } catch (err) {
-      // Re-throw error to be handled by caller
+      
+      return data;
+    } catch (err: any) {
+      // Handle API errors with better messages
+      if (err && typeof err === 'object' && 'code' in err) {
+        const apiError = err as { code: string; message: string };
+        if (apiError.code === 'NETWORK_ERROR' || apiError.code === 'REQUEST_TIMEOUT') {
+          setError("Unable to connect to the server. Please check your internet connection and try again, or check your email for your license keys.");
+          return null;
+        }
+      }
       throw err;
     }
   };

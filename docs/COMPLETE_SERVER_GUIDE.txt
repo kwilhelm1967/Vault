@@ -1,0 +1,519 @@
+================================================================================
+COMPLETE SERVER MANAGEMENT GUIDE
+Local Password Vault - Everything You Need to Know
+================================================================================
+
+This is your ONE comprehensive guide for everything related to your server.
+Keep this document handy - it has all the information you need.
+
+================================================================================
+YOUR SERVER INFORMATION
+================================================================================
+
+SERVER IP ADDRESS: 45.79.40.42
+SERVER USERNAME: root
+API DOMAIN: api.localpasswordvault.com
+WEBSITE DOMAIN: localpasswordvault.com
+
+================================================================================
+START HERE - GET TO THE RIGHT PLACE
+================================================================================
+
+STEP 1: Open the Black Window
+------------------------------
+1. Press Windows key
+2. Type: cmd
+3. Press Enter
+4. Black window opens
+5. You'll see: C:\Users\kelly>
+
+STEP 2: Go to Your Project Folder
+----------------------------------
+1. You're at: C:\Users\kelly>
+2. Type this exactly:
+   cd C:\Users\kelly\OneDrive\Desktop\Vault-Main\LocalPasswordVault
+3. Press Enter
+4. You should now see: C:\Users\kelly\OneDrive\Desktop\Vault-Main\LocalPasswordVault>
+5. If you see an error, the folder might be in a different location
+
+You must be at: C:\Users\kelly\OneDrive\Desktop\Vault-Main\LocalPasswordVault>
+Before you can run any scripts.
+
+================================================================================
+COMMON TASKS - FROM YOUR WINDOWS COMPUTER
+================================================================================
+
+Make sure you're at: C:\Users\kelly\OneDrive\Desktop\Vault-Main\LocalPasswordVault>
+If you see: root@localhost:~# you're on the server - type "exit" to get back.
+
+TASK 1: Check if Server is Working
+------------------------------------
+Type: .\scripts\verify-backend-health.bat
+Press Enter
+Wait for result
+
+TASK 2: Restart Server (if it's down)
+---------------------------------------
+Type: .\scripts\restart-server.bat -ServerIP "45.79.40.42"
+Press Enter
+Enter password when asked
+
+TASK 3: Update Server Code
+---------------------------
+Type: .\scripts\deploy-backend.bat -ServerIP "45.79.40.42"
+Press Enter
+Enter password when asked
+
+TASK 4: Set Up Auto-Start
+--------------------------
+The script method may not work if backend folder path is wrong.
+Do this manually instead (see "SET UP AUTO-START MANUALLY" section below)
+
+TASK 5: Test Email
+------------------
+Type: .\scripts\test-email-config.bat -ServerIP "45.79.40.42" -TestEmail "your-email@example.com"
+Press Enter
+Enter password when asked
+Replace your-email@example.com with your actual email
+
+================================================================================
+CONNECTING TO YOUR SERVER
+================================================================================
+
+WHEN TO CONNECT:
+- When you need to run commands on the server
+- When setting up auto-start
+- When checking server status directly
+
+HOW TO CONNECT:
+---------------
+1. Make sure you're at: C:\Users\kelly\OneDrive\Desktop\Vault-Main\LocalPasswordVault>
+2. Type: ssh root@45.79.40.42
+3. Press Enter
+4. Enter password when asked (you won't see it as you type)
+5. You'll see: root@localhost:~#
+6. Now you're on the server
+
+FIND YOUR BACKEND FOLDER:
+-------------------------
+1. You're at: root@localhost:~#
+2. Type: find / -name "server.js" -type f 2>/dev/null
+3. Press Enter
+4. Wait 10-30 seconds
+5. It will show a path like: /home/user/lpv-api/backend/server.js
+6. The folder before /server.js is your backend folder
+7. Type: cd /home/user/lpv-api/backend
+   (Use the actual path from step 5, but remove /server.js)
+8. Press Enter
+9. Type: ls
+10. Press Enter
+11. If you see server.js in the list, you're in the right place
+
+COMMON LOCATIONS TO TRY:
+-------------------------
+If find doesn't work, try these one by one:
+- cd ~/lpv-api/backend
+- cd /root/lpv-api/backend
+- cd /home/root/lpv-api/backend
+- cd /opt/lpv-api/backend
+
+After each, type: ls
+If you see server.js, you're in the right place.
+
+TO EXIT THE SERVER:
+-------------------
+1. Type: exit
+2. Press Enter
+3. You'll be back at: C:\Users\kelly\OneDrive\Desktop\Vault-Main\LocalPasswordVault>
+
+================================================================================
+COMMON COMMANDS ON THE SERVER
+================================================================================
+
+Once you're in your backend folder on the server, you can use these:
+
+Check server status:
+pm2 status
+
+Restart server:
+pm2 restart lpv-api
+
+Start server:
+pm2 start server.js --name lpv-api
+
+Stop server:
+pm2 stop lpv-api
+
+View server messages:
+pm2 logs lpv-api
+(Press Ctrl+C to stop viewing)
+
+View last 50 messages:
+pm2 logs lpv-api --lines 50
+
+Check current folder:
+pwd
+
+List files:
+ls
+
+================================================================================
+WHY SERVERS GO DOWN
+================================================================================
+
+1. Server computer restarted - program stops unless auto-start is set up
+2. Server program crashed - bug, out of memory, too many requests
+3. Auto-start not set up - most common reason
+4. Server company issues - maintenance, network problems
+5. Code problems - bad code, missing files, wrong settings
+
+HOW TO CHECK IF SERVER IS DOWN:
+--------------------------------
+Method 1: From Windows computer
+Type: .\scripts\verify-backend-health.bat
+Press Enter
+
+Method 2: In your browser
+Go to: https://api.localpasswordvault.com/health
+Should show: {"status":"ok"}
+
+Method 3: On the server
+Connect to server
+Type: pm2 status
+Look for "lpv-api" - should say "online"
+
+HOW TO GET SERVER BACK UP:
+---------------------------
+Option 1: Use the restart script (easiest)
+From Windows: .\scripts\restart-server.bat -ServerIP "45.79.40.42"
+
+Option 2: Manual restart
+Connect to server
+Go to backend folder
+Type: pm2 restart lpv-api
+Or: pm2 start server.js --name lpv-api
+
+HOW TO KEEP SERVER RUNNING:
+---------------------------
+Set up auto-start so server starts automatically when server computer restarts.
+
+SET UP AUTO-START MANUALLY (Complete Step by Step):
+----------------------------------------------------
+
+STEP 1: Connect to Server
+--------------------------
+1. Make sure you're at: C:\Users\kelly\OneDrive\Desktop\Vault-Main\LocalPasswordVault>
+2. Type: ssh root@45.79.40.42
+3. Press Enter
+4. Enter password when asked (you won't see it as you type)
+5. You'll see: root@localhost:~#
+6. Now you're on the server
+
+STEP 2: Find Your Backend Folder
+----------------------------------
+1. You're at: root@localhost:~#
+2. Type: find / -name "server.js" -type f 2>/dev/null
+3. Press Enter
+4. Wait 10-30 seconds (it's searching the whole server, be patient)
+5. It will show one or more paths, like:
+   /home/user/lpv-api/backend/server.js
+   OR
+   /root/lpv-api/backend/server.js
+   OR
+   /opt/lpv-api/backend/server.js
+   OR
+   /var/www/lpv-api/backend/server.js
+6. Look at the FIRST path shown
+7. The folder BEFORE /server.js is your backend folder
+   Example: If it shows /home/user/lpv-api/backend/server.js
+   Then your backend folder is: /home/user/lpv-api/backend
+8. Write down this path exactly as shown (but without /server.js at the end)
+
+STEP 3: Go to Your Backend Folder
+-----------------------------------
+1. Type: cd /home/user/lpv-api/backend
+   (Replace /home/user/lpv-api/backend with the ACTUAL path from step 2)
+   (Use everything before /server.js from the path you found)
+   Example: If step 2 showed /root/lpv-api/backend/server.js
+   Then type: cd /root/lpv-api/backend
+2. Press Enter
+3. Your prompt should change to show the path, like: root@localhost:/root/lpv-api/backend#
+4. Type: ls
+5. Press Enter
+6. You should see a list of files including: server.js, package.json, etc.
+7. If you see server.js in the list, you're in the right place
+8. If you don't see server.js, try a different path from step 2
+
+STEP 4: Check if PM2 is Installed
+------------------------------------
+1. Type: pm2 --version
+2. Press Enter
+3. Look at what you see:
+   
+   IF YOU SEE A VERSION NUMBER (like 5.3.0 or 2.10.4):
+   - PM2 is installed
+   - Go to STEP 6
+   
+   IF YOU SEE "command not found" OR "pm2: command not found":
+   - PM2 is not installed
+   - Go to STEP 5
+
+STEP 5: Install PM2 (Only if Step 4 said "command not found")
+---------------------------------------------------------------
+1. Type: npm install -g pm2
+2. Press Enter
+3. Wait 1-2 minutes for it to finish
+4. You'll see lots of text scrolling
+5. When it stops and you see root@localhost:/path/to/backend#, it's done
+6. Verify it installed:
+   Type: pm2 --version
+   Press Enter
+   Should now show a version number
+
+STEP 6: Start Server with PM2
+-------------------------------
+1. Make sure you're in your backend folder (from step 3)
+2. Check you're in the right place:
+   Type: pwd
+   Press Enter
+   Should show your backend folder path
+3. Type: pm2 start server.js --name lpv-api
+4. Press Enter
+5. Wait a few seconds
+6. You should see a table that looks like:
+   ┌─────┬─────────────┬─────────────┬─────────┬─────────┬──────────┐
+   │ id  │ name        │ mode        │ ↺       │ status  │ cpu      │
+   ├─────┼─────────────┼─────────────┼─────────┼─────────┼──────────┤
+   │ 0   │ lpv-api     │ fork        │ 0       │ online  │ 0%       │
+   └─────┴─────────────┴─────────────┴─────────┴─────────┴──────────┘
+7. If you see "online" in the status column, the server started
+
+STEP 7: Save PM2 Setup
+-----------------------
+1. Type: pm2 save
+2. Press Enter
+3. You should see: [PM2] Saving current process list...
+4. Then: [PM2] Successfully saved in /root/.pm2/dump.pm2
+
+STEP 8: Set Up Auto-Start
+---------------------------
+1. Type: pm2 startup
+2. Press Enter
+3. It will show some text and then a command
+4. The command will be on a line that looks like this:
+   
+   [PM2] To setup the Startup Script, copy/paste the following command:
+   sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u root --hp /root
+   
+   OR it might look like:
+   
+   [PM2] Init System found: systemd
+   [PM2] To setup the Startup Script, copy/paste the following command:
+   sudo env PATH=/usr/local/bin:/usr/bin:/bin pm2 startup systemd -u root --hp /root
+   
+5. Look for the line that starts with "sudo env PATH="
+6. Copy that ENTIRE line (everything from "sudo" to the end)
+7. The line will be long - make sure you copy all of it
+8. Don't copy the [PM2] lines, only copy the "sudo env PATH=..." line
+
+STEP 9: Run the Command from Step 8
+------------------------------------
+1. Paste the command you copied (or type it exactly as shown)
+   Example: sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u root --hp /root
+2. Press Enter
+3. Wait for it to finish (may take 10-20 seconds)
+4. You should see:
+   [PM2] Writing init configuration in /etc/systemd/system/pm2-root.service
+   [PM2] System startup will load PM2 for root user
+5. If you see errors, read them carefully
+6. Common errors:
+   - "sudo: command not found" - try without "sudo" (just start with "env PATH=...")
+   - "Permission denied" - you might need to be root (you should be if you used ssh root@...)
+
+STEP 10: Verify It Worked
+---------------------------
+1. Type: pm2 status
+2. Press Enter
+3. You should see a table with lpv-api showing as "online"
+4. If it shows "online", everything is working
+5. If it shows "stopped" or "errored", check the logs:
+   Type: pm2 logs lpv-api --lines 20
+   Press Enter
+   Look for error messages
+
+STEP 11: Exit Server
+--------------------
+1. Type: exit
+2. Press Enter
+3. You'll see: Connection to 45.79.40.42 closed
+4. You'll be back at: C:\Users\kelly\OneDrive\Desktop\Vault-Main\LocalPasswordVault>
+
+Done. Server will now start automatically when server computer restarts.
+
+COMPLETE EXAMPLE OF WHAT YOU'LL SEE:
+------------------------------------
+Here's what the whole process looks like:
+
+C:\Users\kelly\OneDrive\Desktop\Vault-Main\LocalPasswordVault> ssh root@45.79.40.42
+root@45.79.40.42's password: [you type password]
+root@localhost:~# find / -name "server.js" -type f 2>/dev/null
+/home/user/lpv-api/backend/server.js
+root@localhost:~# cd /home/user/lpv-api/backend
+root@localhost:/home/user/lpv-api/backend# pm2 --version
+5.3.0
+root@localhost:/home/user/lpv-api/backend# pm2 start server.js --name lpv-api
+[PM2] Starting server.js as lpv-api
+[PM2] Successfully started
+root@localhost:/home/user/lpv-api/backend# pm2 save
+[PM2] Saving current process list...
+[PM2] Successfully saved
+root@localhost:/home/user/lpv-api/backend# pm2 startup
+[PM2] Init System found: systemd
+[PM2] To setup the Startup Script, copy/paste the following command:
+sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u root --hp /root
+root@localhost:/home/user/lpv-api/backend# sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u root --hp /root
+[PM2] Writing init configuration in /etc/systemd/system/pm2-root.service
+[PM2] System startup will load PM2 for root user
+root@localhost:/home/user/lpv-api/backend# pm2 status
+[shows table with lpv-api online]
+root@localhost:/home/user/lpv-api/backend# exit
+exit
+Connection to 45.79.40.42 closed.
+C:\Users\kelly\OneDrive\Desktop\Vault-Main\LocalPasswordVault>
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Problem: Cannot run script or execution policy error
+Solution:
+1. Type: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+2. Press Enter
+3. Type: Y
+4. Press Enter
+5. Try script again
+
+Problem: ssh command not found
+Solution:
+Windows 10/11 should have SSH built-in
+If not, install OpenSSH or use PuTTY
+
+Problem: Connection refused or connection timed out
+Solution:
+- Check if you typed the server IP correctly: 45.79.40.42
+- Check if you can access the internet
+- Check if the server is turned on
+- Check if firewall is blocking the connection
+
+Problem: Permission denied
+Solution:
+- Check if you typed the password correctly
+- Make sure you're using "root" as the username
+- Try typing the password again (you won't see it as you type)
+
+Problem: Host key verification failed
+Solution:
+- Type: yes
+- Press Enter
+- This is normal the first time you connect
+
+Problem: No such file or directory when trying to cd to backend folder
+Solution:
+1. Type: find / -name "server.js" -type f 2>/dev/null
+2. Wait for it to show the path
+3. Use that path (everything before /server.js)
+4. Or try common locations listed above
+
+Problem: Server keeps stopping
+Solution:
+- Set up auto-start (see above)
+- Check server logs: pm2 logs lpv-api
+- Look for error messages
+- Fix the errors
+
+Problem: Server won't start
+Solution:
+1. Connect to server
+2. Find your backend folder
+3. Go to that folder
+4. Check if server.js file exists: ls server.js
+5. Check server messages: pm2 logs lpv-api
+6. Look for error messages
+7. Common errors:
+   - Missing .env file
+   - Wrong settings in .env file
+   - Database connection failed
+   - Port already in use
+
+Problem: Domain doesn't work
+Solution:
+- Check DNS settings at your domain registrar
+- Make sure "api" A record points to: 45.79.40.42
+- Wait 5-30 minutes after changing DNS
+- Use a DNS checker tool to verify
+
+================================================================================
+QUICK REFERENCE
+================================================================================
+
+YOUR INFORMATION:
+-----------------
+SERVER IP: 45.79.40.42
+USERNAME: root
+BACKEND FOLDER: (Find it using: find / -name "server.js" -type f 2>/dev/null)
+PM2 APP NAME: lpv-api
+API DOMAIN: api.localpasswordvault.com
+
+FROM WINDOWS COMPUTER:
+---------------------
+Location: C:\Users\kelly\OneDrive\Desktop\Vault-Main\LocalPasswordVault>
+
+Check server: .\scripts\verify-backend-health.bat
+Restart server: .\scripts\restart-server.bat -ServerIP "45.79.40.42"
+Update server: .\scripts\deploy-backend.bat -ServerIP "45.79.40.42"
+Set auto-start: (Do manually - see "SET UP AUTO-START MANUALLY" section)
+Test email: .\scripts\test-email-config.bat -ServerIP "45.79.40.42" -TestEmail "your-email@example.com"
+
+Connect to server: ssh root@45.79.40.42
+
+FROM SERVER:
+-----------
+Location: root@localhost:~# (or root@server:~#)
+
+Find backend folder: find / -name "server.js" -type f 2>/dev/null
+Go to folder: cd /path/from/find/command
+Check status: pm2 status
+Restart server: pm2 restart lpv-api
+Start server: pm2 start server.js --name lpv-api
+Stop server: pm2 stop lpv-api
+View messages: pm2 logs lpv-api
+Exit server: exit
+
+================================================================================
+IMPORTANT REMINDERS
+================================================================================
+
+1. Always go to your project folder first before running scripts
+   C:\Users\kelly\OneDrive\Desktop\Vault-Main\LocalPasswordVault>
+
+2. You cannot navigate to server folders from your Windows computer
+   You must connect to the server first using ssh
+
+3. Set up auto-start on your server
+   This is the most important thing to keep your server running
+
+4. Keep your server password secure
+   Don't share it with anyone
+
+5. Check server status regularly
+   Run the health check script once a day
+
+6. If server is down, restart it using the restart script
+
+7. How to tell where you are:
+   - C:\Users\kelly\OneDrive\Desktop\Vault-Main\LocalPasswordVault> = Windows computer
+   - root@localhost:~# = On the server (type "exit" to get back)
+
+================================================================================
+END OF GUIDE
+================================================================================

@@ -61,7 +61,7 @@ class ApiClient {
   private errorInterceptors: ErrorInterceptor[] = [];
 
   constructor(baseUrl?: string) {
-    this.baseUrl = baseUrl || (environment?.environment?.licenseServerUrl ?? "https://server.localpasswordvault.com");
+    this.baseUrl = baseUrl || (environment?.environment?.licenseServerUrl ?? "https://api.localpasswordvault.com");
     this.defaultHeaders = {
       "Content-Type": "application/json",
     };
@@ -145,7 +145,7 @@ class ApiClient {
       headers = {},
       body,
       timeout = 30000,
-      retries = 0,
+      retries = 2, // Default to 2 retries for network resilience
       signal: externalSignal,
     } = config;
 
@@ -277,9 +277,10 @@ class ApiClient {
             details: error,
           };
           
-          // Don't retry on last attempt
+          // Retry network errors with exponential backoff
           if (attempt < (processedConfig.retries || 0)) {
-            const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
+            const delay = Math.min(1000 * Math.pow(2, attempt), 10000); // Max 10 seconds
+            devLog(`[API Client] Network error, retrying in ${delay}ms (attempt ${attempt + 1}/${(processedConfig.retries || 0) + 1})`);
             await new Promise((resolve) => setTimeout(resolve, delay));
             continue;
           }
@@ -289,16 +290,32 @@ class ApiClient {
         if (error && typeof error === "object" && "code" in error) {
           lastError = error as ApiError;
           
-          // Don't retry on client errors (4xx)
+          // Don't retry on client errors (4xx) except for timeout/network errors
           if (lastError.status && lastError.status >= 400 && lastError.status < 500) {
-            break;
+            // But retry on timeout errors (408) and rate limiting (429)
+            if (lastError.status === 408 || lastError.status === 429) {
+              if (attempt < (processedConfig.retries || 0)) {
+                const delay = Math.min(1000 * Math.pow(2, attempt), 10000);
+                devLog(`[API Client] ${lastError.status} error, retrying in ${delay}ms (attempt ${attempt + 1}/${(processedConfig.retries || 0) + 1})`);
+                await new Promise((resolve) => setTimeout(resolve, delay));
+                continue;
+              }
+            } else {
+              break; // Don't retry other 4xx errors
+            }
           }
           
-          // Retry on server errors (5xx)
-          if (attempt < (processedConfig.retries || 0)) {
-            const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
-            await new Promise((resolve) => setTimeout(resolve, delay));
-            continue;
+          // Retry on server errors (5xx) and network errors
+          if ((lastError.status && lastError.status >= 500) || 
+              lastError.code === 'NETWORK_ERROR' || 
+              lastError.code === 'REQUEST_TIMEOUT' ||
+              lastError.code === 'REQUEST_ABORTED') {
+            if (attempt < (processedConfig.retries || 0)) {
+              const delay = Math.min(1000 * Math.pow(2, attempt), 10000);
+              devLog(`[API Client] ${lastError.code} error, retrying in ${delay}ms (attempt ${attempt + 1}/${(processedConfig.retries || 0) + 1})`);
+              await new Promise((resolve) => setTimeout(resolve, delay));
+              continue;
+            }
           }
         }
 
