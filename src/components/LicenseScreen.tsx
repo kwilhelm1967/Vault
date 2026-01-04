@@ -376,35 +376,36 @@ const LicenseScreenComponent: React.FC<LicenseScreenProps> = ({
           { status: result.status }
         );
       } else {
-        // Use centralized error messages
-        const enhancedError = getErrorMessage(result.error || ERROR_MESSAGES.LICENSE.ACTIVATION_FAILED);
+        // Show the actual API error message (don't transform it with getErrorMessage)
+        const errorMessage = result.error || ERROR_MESSAGES.LICENSE.ACTIVATION_FAILED;
         let errorType: 'network' | 'invalid' | 'revoked' | 'device' | 'generic' = 'generic';
 
         // Determine error type for analytics
-        if (result.error?.includes("fetch") || result.error?.includes("Unable to connect") || result.error?.includes("network")) {
+        if (errorMessage.includes("fetch") || errorMessage.includes("Unable to connect") || errorMessage.includes("network")) {
           errorType = 'network';
           // Store the license key for retry
           setPendingLicenseKey(cleanKey);
-        } else if (result.error?.includes("409") || result.error?.includes("already activated")) {
+        } else if (errorMessage.includes("409") || errorMessage.includes("already activated")) {
           errorType = 'device';
-        } else if (result.error?.includes("404") || result.error?.includes("not found") || result.error?.includes("not a valid")) {
+        } else if (errorMessage.includes("404") || errorMessage.includes("not found") || errorMessage.includes("not a valid")) {
           errorType = 'invalid';
-        } else if (result.error?.includes("revoked")) {
+        } else if (errorMessage.includes("revoked")) {
           errorType = 'revoked';
         }
 
-        setError(enhancedError);
+        setError(errorMessage);
         analyticsService.trackLicenseEvent(
           "license_activation_failed",
           undefined,
           {
             error: result.error || "Unknown error",
-            enhancedError,
+            errorMessage,
           }
         );
       }
     } catch (error) {
-      // Use centralized error messages
+      // For caught exceptions, use getErrorMessage to transform generic errors
+      // But for API errors from licenseService, we already have the message
       const enhancedError = getErrorMessage(error);
       
       // Store the license key for retry if it's a network error
