@@ -35,6 +35,7 @@ export default defineConfig(({ mode }) => {
       outDir: "dist",
       assetsDir: "assets",
       sourcemap: mode !== "production", // Enable source maps for development and test
+      cssCodeSplit: true,
       rollupOptions: {
         input: {
           main: resolve(__dirname, "index.html"),

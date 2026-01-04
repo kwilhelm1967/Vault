@@ -162,18 +162,35 @@ export class TrialService {
       if (error && typeof error === "object" && "code" in error) {
         const apiError = error as ApiError;
         
+        // HTTP errors (4xx, 5xx) - show actual API error message
+        if (apiError.code === "HTTP_ERROR" || apiError.code?.startsWith("HTTP_")) {
+          // Extract actual error message from API response
+          const apiErrorMessage = apiError.message || (apiError.details as any)?.error || (apiError.details as any)?.message;
+          return {
+            success: false,
+            error: apiErrorMessage || `Trial activation failed (HTTP ${apiError.status || 'error'})`,
+          };
+        }
+        
+        // Network errors - show specific error message if available, otherwise generic
         if (apiError.code === "NETWORK_ERROR" || apiError.code === "REQUEST_TIMEOUT" || apiError.code === "REQUEST_ABORTED") {
           const specificMessage = apiError.message || ERROR_MESSAGES.NETWORK.UNABLE_TO_CONNECT_TRIAL;
           
-          const hasSpecificDetails = specificMessage && (
+          // Use the specific message if it's not the generic fallback message
+          const isGenericMessage = specificMessage === ERROR_MESSAGES.NETWORK.UNABLE_TO_CONNECT_TRIAL;
+          const hasSpecificDetails = !isGenericMessage && specificMessage && (
             specificMessage.includes("DNS") || 
             specificMessage.includes("Connection refused") || 
             specificMessage.includes("timeout") || 
             specificMessage.includes("certificate") ||
-            specificMessage.includes("Cannot resolve hostname")
+            specificMessage.includes("Cannot resolve hostname") ||
+            specificMessage.includes("SSL") ||
+            specificMessage.includes("TLS") ||
+            specificMessage.length > 50  // Longer messages are likely specific errors
           );
           
-          const errorMessage = hasSpecificDetails && specificMessage.includes("Unable to connect to license server")
+          // Use specific message if we have details, otherwise use generic
+          const errorMessage = hasSpecificDetails 
             ? specificMessage
             : ERROR_MESSAGES.NETWORK.UNABLE_TO_CONNECT_TRIAL;
           
@@ -183,6 +200,7 @@ export class TrialService {
           };
         }
         
+        // Other errors - show the actual error message
         return {
           success: false,
           error: apiError.message || "Trial activation failed. Please try again, or contact support@LocalPasswordVault.com if the problem persists.",
