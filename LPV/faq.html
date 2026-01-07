@@ -12,7 +12,7 @@
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
   
   <style>
     :root {
@@ -43,9 +43,9 @@
     nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 1rem 2rem; background: rgba(6, 9, 18, 0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-subtle); }
     .nav-container { max-width: 1600px; width: 92%; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
     .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
-    .logo-icon { width: 44px; height: 44px; background: var(--bg-dark); border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px var(--cyan-glow), inset 0 0 0 1px var(--cyan-dark); }
-    .logo-icon svg { width: 24px; height: 24px; stroke: var(--cyan); fill: none; }
-    .logo-text { font-family: 'Space Grotesk', sans-serif; font-size: 1.15rem; font-weight: 600; color: var(--text-primary); }
+    .logo-icon { display: flex; align-items: center; justify-content: center; }
+    .logo-icon svg { width: 28px; height: 28px; stroke: var(--cyan); fill: none; stroke-width: 2.5; filter: drop-shadow(0 0 2px rgba(6, 182, 212, 0.5)); }
+    .logo-text { font-family: 'Poppins', sans-serif; font-size: 1.2rem; font-weight: 600; color: var(--text-primary); }
     .nav-links { display: flex; align-items: center; gap: 2rem; }
     .nav-links a { color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; font-weight: 500; transition: color 0.2s; }
     .nav-links a:hover, .nav-links a.active { color: var(--cyan); }
@@ -136,6 +136,21 @@
         <div class="faq-answer"><div class="faq-answer-content">
           <p>After purchasing (or signing up for the free trial), you'll receive a download link for Windows, Mac, or Linux. Install the application, create your master password, and you're ready to go.</p>
           <p>The app is straightforward—most people have it set up in under 5 minutes.</p>
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question">Why does Windows Defender or my antivirus say the download has a virus?<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="faq-answer"><div class="faq-answer-content">
+          <p><strong>This is a false positive.</strong> The app is completely safe. Antivirus software sometimes flags unsigned executables from smaller developers as potentially dangerous, even when they're legitimate.</p>
+          <p><strong>Why this happens:</strong> Code signing certificates cost $200-500+ per year. As a small independent developer, I haven't purchased one yet. Windows Defender and other antivirus programs are more cautious with unsigned software.</p>
+          <p><strong>What to do:</strong></p>
+          <ul style="margin-left: 20px; margin-top: 8px; margin-bottom: 12px;">
+            <li>If Windows SmartScreen appears: Click <strong>"More info"</strong> then <strong>"Run anyway"</strong></li>
+            <li>If your antivirus blocks it: Add an exception for the downloaded file</li>
+            <li>You can verify the file is safe by checking it's downloaded directly from GitHub releases</li>
+          </ul>
+          <p>The app is open-source, runs 100% offline, and has been used safely by many users. I'm working on getting a code signing certificate to eliminate these warnings in future releases.</p>
         </div></div>
       </div>
 

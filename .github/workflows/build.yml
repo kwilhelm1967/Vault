@@ -34,9 +34,9 @@ jobs:
         run: npm run dist:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Code signing (optional - uncomment when certificate is available)
-          # CSC_LINK: ${{ secrets.WIN_CERTIFICATE_BASE64 }}
-          # CSC_KEY_PASSWORD: ${{ secrets.WIN_CERTIFICATE_PASSWORD }}
+          # Code signing - automatically signs if certificate is configured
+          CSC_LINK: ${{ secrets.WIN_CERTIFICATE_BASE64 }}
+          CSC_KEY_PASSWORD: ${{ secrets.WIN_CERTIFICATE_PASSWORD }}
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4

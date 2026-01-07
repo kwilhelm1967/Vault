@@ -84,6 +84,10 @@
   "win": {
     "target": [
       {
+        "target": "nsis",
+        "arch": ["x64"]
+      },
+      {
         "target": "portable",
         "arch": ["x64"]
       }
@@ -91,11 +95,9 @@
     "icon": "assets/icons/icon.ico",
     "requestedExecutionLevel": "asInvoker",
     "publisherName": "Local Password Vault",
-    "sign": false,
-    "signingHashAlgorithms": [],
-    "certificateFile": null,
-    "certificatePassword": null,
-    "verifyUpdateCodeSignature": false
+    "sign": "${CSC_LINK}",
+    "signingHashAlgorithms": ["sha256"],
+    "verifyUpdateCodeSignature": true
   },
   
   "nsis": {
