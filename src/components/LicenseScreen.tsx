@@ -279,6 +279,21 @@ const LicenseScreenComponent: React.FC<LicenseScreenProps> = ({
     }
   }, [localStorageTrialInfo.isExpired, showExpiredTrialScreen, showKeyActivationScreen, showRecoveryOptions]);
 
+  // CRITICAL FIX: Show key activation screen for new users without license/trial
+  // This ensures LLV users (and LPV users) land on key entry screen, not landing/pricing page
+  useEffect(() => {
+    if (!appStatus) return; // Wait for appStatus to load
+    
+    // If user has no license and no expired trial, show key activation screen immediately
+    const hasNoLicense = !appStatus.isLicensed && !appStatus.trialInfo.hasTrial;
+    const hasNoExpiredTrial = !localStorageTrialInfo.isExpired;
+    const shouldShowKeyScreen = hasNoLicense && hasNoExpiredTrial && !showExpiredTrialScreen && !showKeyActivationScreen && !showRecoveryOptions;
+    
+    if (shouldShowKeyScreen) {
+      setShowKeyActivationScreen(true);
+    }
+  }, [appStatus, localStorageTrialInfo.isExpired, showExpiredTrialScreen, showKeyActivationScreen, showRecoveryOptions]);
+
   // Hide floating button when expired trial screen is shown
   useEffect(() => {
     if (showExpiredTrialScreen && window.electronAPI?.hideFloatingButton) {
