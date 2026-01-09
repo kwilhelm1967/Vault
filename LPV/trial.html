@@ -363,7 +363,7 @@
         </div>
         
         <div class="trial-form-section">
-          <form class="trial-form" action="trial-success.html" method="GET" id="trialForm">
+          <form class="trial-form" action="trial-success-lpv.html" method="GET" id="trialForm">
             <div class="form-group">
               <label for="email">Email Address</label>
               <input type="email" id="email" name="email" placeholder="you@example.com" required>
@@ -469,7 +469,7 @@
             }
             
             setTimeout(() => {
-              window.location.href = `trial-success.html?email=${encodeURIComponent(email)}&key=${encodeURIComponent(data.trialKey || '')}`;
+              window.location.href = `trial-success-lpv.html?email=${encodeURIComponent(email)}&key=${encodeURIComponent(data.trialKey || '')}`;
             }, 1500);
           } else {
             // Show actual API error message
