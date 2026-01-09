@@ -191,6 +191,56 @@ app.get('/metrics', (req, res) => {
   });
 });
 
+// Deployment endpoint - allows server to update itself
+// SECURITY: Only allow from localhost or specific IPs
+app.post('/api/deploy', async (req, res) => {
+  const { exec } = require('child_process');
+  const { promisify } = require('util');
+  const execAsync = promisify(exec);
+  
+  // Basic security: Check if request is from localhost or trusted IP
+  const clientIp = req.ip || req.connection.remoteAddress;
+  const isLocalhost = clientIp === '127.0.0.1' || clientIp === '::1' || clientIp === '::ffff:127.0.0.1';
+  
+  // Allow localhost or specific secret token
+  const deployToken = req.headers['x-deploy-token'] || req.body?.token;
+  const validToken = process.env.DEPLOY_TOKEN;
+  
+  if (!isLocalhost && (!validToken || deployToken !== validToken)) {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+  
+  try {
+    logger.info('Deployment triggered', { clientIp, requestId: req.requestId });
+    
+    // Change to backend directory
+    const backendPath = __dirname;
+    
+    // Pull latest code
+    const { stdout: pullOutput, stderr: pullError } = await execAsync('git pull origin main', { cwd: backendPath });
+    logger.info('Git pull completed', { output: pullOutput, error: pullError, requestId: req.requestId });
+    
+    // Restart PM2 process
+    const { stdout: restartOutput, stderr: restartError } = await execAsync('pm2 restart lpv-api', { cwd: backendPath });
+    logger.info('PM2 restart completed', { output: restartOutput, error: restartError, requestId: req.requestId });
+    
+    res.json({
+      success: true,
+      message: 'Deployment completed',
+      pull: { output: pullOutput, error: pullError },
+      restart: { output: restartOutput, error: restartError },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    logger.error('Deployment failed', error, { requestId: req.requestId });
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
 // Apply rate limiting to specific routes
 app.use('/api/licenses', licensesRouter);
 app.use('/api/lpv/license/activate', activationRateLimit);
