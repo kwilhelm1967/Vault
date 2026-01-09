@@ -1931,7 +1931,13 @@ ipcMain.handle("http-request", async (event, url, options = {}) => {
       
       const request = net.request(requestOptions);
 
-      // Set headers
+      // Prepare body string if present (needed for Content-Length calculation)
+      let bodyString = null;
+      if (options.body) {
+        bodyString = typeof options.body === 'string' ? options.body : JSON.stringify(options.body);
+      }
+
+      // Set headers (including Content-Length if body is present)
       if (options.headers) {
         Object.keys(options.headers).forEach(key => {
           try {
@@ -1940,6 +1946,18 @@ ipcMain.handle("http-request", async (event, url, options = {}) => {
             console.error(`[HTTP Request] Failed to set header ${key}:`, headerError);
           }
         });
+      }
+
+      // Explicitly set Content-Length header when body is present
+      // This is critical for Electron's net.request() to work correctly
+      if (bodyString && !options.headers?.['Content-Length'] && !options.headers?.['content-length']) {
+        try {
+          const contentLength = Buffer.byteLength(bodyString, 'utf8');
+          request.setHeader('Content-Length', contentLength.toString());
+          log.debug(`[HTTP Request ${requestId}] Set Content-Length: ${contentLength}`);
+        } catch (lengthError) {
+          log.warn(`[HTTP Request ${requestId}] Failed to set Content-Length:`, lengthError);
+        }
       }
 
       let responseData = '';
@@ -2138,11 +2156,11 @@ ipcMain.handle("http-request", async (event, url, options = {}) => {
         }
       });
 
-      // Send body if provided
-      if (options.body) {
+      // Send body if provided (use pre-calculated bodyString)
+      if (bodyString) {
         try {
-          const bodyString = typeof options.body === 'string' ? options.body : JSON.stringify(options.body);
           request.write(bodyString, 'utf8');
+          log.debug(`[HTTP Request ${requestId}] Wrote body (${Buffer.byteLength(bodyString, 'utf8')} bytes)`);
         } catch (writeError) {
           cleanup();
           reject({
