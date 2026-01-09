@@ -316,9 +316,8 @@ export const PurchaseSuccessPage: React.FC = () => {
         setLicenseKeys(allKeys);
         
         // Create product groups with download URLs
-        // NOTE: This is the LPV repository - only handle LPV licenses here
-        // LLV-only purchases redirect to locallegacyvault.com (different repo)
-        // Bundles with LLV redirect to LLV website per backend logic
+        // NOTE: Always show direct download links - never redirect to websites
+        // Both LPV and LLV purchases get direct application download links from GitHub releases
         const productGroupsList: ProductGroup[] = [];
         if (groups['lpv']) {
           productGroupsList.push({
@@ -328,8 +327,7 @@ export const PurchaseSuccessPage: React.FC = () => {
             downloadBaseUrl: 'https://localpasswordvault.com',
           });
         }
-        // LLV licenses in bundles redirect to LLV website, so we shouldn't see them here
-        // But if they do appear (edge case), route to LLV downloads (external to this repo)
+        // LLV purchases get direct download links to LLV application from GitHub releases
         if (groups['llv']) {
           productGroupsList.push({
             productType: 'llv',
@@ -769,7 +767,7 @@ export const PurchaseSuccessPage: React.FC = () => {
 
             {!isLoading && !error && isBundle && productGroups.length > 0 && productGroups.map((group, groupIndex) => {
             const groupKeys = group.licenses.map(l => l.licenseKey);
-            const sortedPlatforms = getSortedPlatforms(group.downloadBaseUrl);
+            const sortedPlatforms = getSortedPlatforms(group.downloadBaseUrl, group.productType);
             const isFamilyPlan = groupKeys.length >= 5;
             
             return (
