@@ -4,13 +4,25 @@
  * Provides a consistent interface for all HTTP requests with:
  * - Request/response interceptors
  * - Automatic error handling
- * - Retry logic
+ * - Retry logic with exponential backoff
  * - Request cancellation
  * - Type-safe responses
+ * - Progress callbacks
+ * - Offline detection
  */
 
 import { devError, devLog } from "./devLog";
 import environment from "../config/environment";
+
+/**
+ * Check if device is online
+ */
+function isOnline(): boolean {
+  if (typeof navigator !== 'undefined' && 'onLine' in navigator) {
+    return navigator.onLine;
+  }
+  return true; // Assume online if can't detect
+}
 
 export interface ApiRequestConfig {
   method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
@@ -19,6 +31,8 @@ export interface ApiRequestConfig {
   timeout?: number;
   retries?: number;
   signal?: AbortSignal;
+  onRetry?: (attempt: number, totalRetries: number, delay: number) => void;
+  onProgress?: (stage: 'connecting' | 'sending' | 'receiving' | 'processing') => void;
 }
 
 export interface ApiResponse<T> {
@@ -147,6 +161,8 @@ class ApiClient {
       timeout = 30000,
       retries = 2, // Default to 2 retries for network resilience
       signal: externalSignal,
+      onRetry,
+      onProgress,
     } = config;
 
     // Apply request interceptors
@@ -175,9 +191,35 @@ class ApiClient {
 
     // Retry loop
     const fullUrl = `${this.baseUrl}${endpoint}`;
+    const totalRetries = (processedConfig.retries || 0);
     
-    for (let attempt = 0; attempt <= (processedConfig.retries || 0); attempt++) {
+    // Check offline status before attempting
+    if (!isOnline()) {
+      throw {
+        code: 'OFFLINE',
+        message: 'Device appears to be offline. Please check your internet connection and try again.',
+        status: 0,
+        details: { offline: true },
+      } as ApiError;
+    }
+    
+    for (let attempt = 0; attempt <= totalRetries; attempt++) {
       try {
+        // Notify progress
+        if (onProgress && attempt === 0) {
+          onProgress('connecting');
+        }
+        
+        // Check offline status before each retry
+        if (attempt > 0 && !isOnline()) {
+          throw {
+            code: 'OFFLINE',
+            message: 'Device appears to be offline. Please check your internet connection and try again.',
+            status: 0,
+            details: { offline: true },
+          } as ApiError;
+        }
+        
         const requestBody = processedConfig.body
           ? JSON.stringify(processedConfig.body)
           : undefined;
@@ -190,14 +232,8 @@ class ApiClient {
                                typeof window.electronAPI.httpRequest === 'function';
         
         if (hasElectronAPI) {
+          if (onProgress) onProgress('sending');
           try {
-            // Log request for debugging
-            console.log('[API Client] Making request:', {
-              url: fullUrl,
-              method: processedConfig.method || 'POST',
-              endpoint: endpoint,
-            });
-            
             const electronResponse = await window.electronAPI.httpRequest(fullUrl, {
               method: processedConfig.method,
               headers: processedConfig.headers,
@@ -207,15 +243,6 @@ class ApiClient {
             if (!electronResponse.ok) {
               const errorData = electronResponse.data || {};
               const errorMessage = errorData.error || errorData.message || `HTTP ${electronResponse.status}: ${electronResponse.statusText}`;
-              
-              // Log HTTP error for debugging
-              console.error('[API Client] HTTP Error Response:', {
-                url: fullUrl,
-                method: processedConfig.method || 'POST',
-                status: electronResponse.status,
-                statusText: electronResponse.statusText,
-                responseBody: errorData,
-              });
               
               throw {
                 code: 'HTTP_ERROR',
@@ -227,7 +254,9 @@ class ApiClient {
             }
             
             // Use Electron response directly - it already has the data
+            if (onProgress) onProgress('processing');
             const data = electronResponse.data || await electronResponse.json();
+            if (onProgress) onProgress('receiving');
             return {
               data: data as T,
               status: electronResponse.status,
@@ -235,39 +264,50 @@ class ApiClient {
               headers: new Headers(),
             };
           } catch (electronError: any) {
-            // Enhanced error logging for diagnosis
+            // Electron IPC may wrap errors, so we need to extract the actual error object
+            // The error might be the object itself, or it might be wrapped
+            const actualError = electronError?.details || electronError?.error || electronError;
+            
             const errorDetails = {
               url: fullUrl,
               method: processedConfig.method || 'GET',
-              errorCode: electronError.code,
-              errorMessage: electronError.message,
-              errorStatus: electronError.status,
-              errorDetails: electronError.details || electronError,
+              errorCode: actualError?.code || electronError?.code || 'UNKNOWN',
+              errorMessage: actualError?.message || electronError?.message || 'Unknown error',
+              errorStatus: actualError?.status || electronError?.status || 0,
+              errorDetails: actualError,
+              rawError: electronError,
             };
             
             devError('[API Client] Electron HTTP request failed:', errorDetails);
             
-            // Log to console for debugging (visible in DevTools)
-            console.error('[API Client] Request Failed:', errorDetails);
+            // Extract error code - check multiple possible locations
+            const errorCode = actualError?.code || 
+                             electronError?.code || 
+                             actualError?.errorCode || 
+                             'NETWORK_ERROR';
             
-            // Log to production logs if available
-            if (typeof window !== 'undefined' && window.electronAPI) {
-              try {
-                // Use console.error which electron-log will capture
-                console.error('[API Client] Activation Request Failed:', errorDetails);
-              } catch (logError) {
-                // Ignore logging errors
-              }
-            }
+            // Extract error message - check multiple possible locations
+            const errorMessage = actualError?.message || 
+                                electronError?.message || 
+                                actualError?.details?.message ||
+                                (typeof actualError === 'string' ? actualError : null) ||
+                                'Unable to connect to license server. Please check your internet connection and try again.';
             
-            // Don't fall back to fetch - throw the error so it's handled properly
-            throw {
-              code: electronError.code || 'NETWORK_ERROR',
-              message: electronError.message || 'Unable to connect to license server. Please check your internet connection and try again.',
-              status: electronError.status,
-              details: electronError,
-              url: fullUrl,
+            // Extract status code
+            const errorStatus = actualError?.status || 
+                               electronError?.status || 
+                               actualError?.details?.statusCode || 
+                               0;
+            
+            // Create a proper ApiError object
+            const apiError: ApiError = {
+              code: errorCode,
+              message: errorMessage,
+              status: errorStatus,
+              details: actualError || electronError,
             };
+            
+            throw apiError;
           }
         } else {
           // Use regular fetch if Electron API not available (e.g., in tests or browser)
@@ -281,19 +321,9 @@ class ApiClient {
           });
         }
 
-        // Check if response is ok
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           const errorMessage = errorData.error || errorData.message || response.statusText;
-          
-          // Log HTTP error for debugging
-          console.error('[API Client] HTTP Error Response:', {
-            url: fullUrl,
-            method: processedConfig.method || 'POST',
-            status: response.status,
-            statusText: response.statusText,
-            responseBody: errorData,
-          });
           
           throw {
             code: `HTTP_${response.status}`,
@@ -332,9 +362,15 @@ class ApiClient {
           };
           
           // Retry network errors with exponential backoff
-          if (attempt < (processedConfig.retries || 0)) {
+          if (attempt < totalRetries) {
             const delay = Math.min(1000 * Math.pow(2, attempt), 10000); // Max 10 seconds
-            devLog(`[API Client] Network error, retrying in ${delay}ms (attempt ${attempt + 1}/${(processedConfig.retries || 0) + 1})`);
+            devLog(`[API Client] Network error, retrying in ${delay}ms (attempt ${attempt + 1}/${totalRetries + 1})`);
+            
+            // Notify about retry
+            if (onRetry) {
+              onRetry(attempt + 1, totalRetries + 1, delay);
+            }
+            
             await new Promise((resolve) => setTimeout(resolve, delay));
             continue;
           }
@@ -348,9 +384,14 @@ class ApiClient {
           if (lastError.status && lastError.status >= 400 && lastError.status < 500) {
             // But retry on timeout errors (408) and rate limiting (429)
             if (lastError.status === 408 || lastError.status === 429) {
-              if (attempt < (processedConfig.retries || 0)) {
+              if (attempt < totalRetries) {
                 const delay = Math.min(1000 * Math.pow(2, attempt), 10000);
-                devLog(`[API Client] ${lastError.status} error, retrying in ${delay}ms (attempt ${attempt + 1}/${(processedConfig.retries || 0) + 1})`);
+                devLog(`[API Client] ${lastError.status} error, retrying in ${delay}ms (attempt ${attempt + 1}/${totalRetries + 1})`);
+                
+                if (onRetry) {
+                  onRetry(attempt + 1, totalRetries + 1, delay);
+                }
+                
                 await new Promise((resolve) => setTimeout(resolve, delay));
                 continue;
               }
@@ -364,9 +405,14 @@ class ApiClient {
               lastError.code === 'NETWORK_ERROR' || 
               lastError.code === 'REQUEST_TIMEOUT' ||
               lastError.code === 'REQUEST_ABORTED') {
-            if (attempt < (processedConfig.retries || 0)) {
+            if (attempt < totalRetries) {
               const delay = Math.min(1000 * Math.pow(2, attempt), 10000);
-              devLog(`[API Client] ${lastError.code} error, retrying in ${delay}ms (attempt ${attempt + 1}/${(processedConfig.retries || 0) + 1})`);
+              devLog(`[API Client] ${lastError.code} error, retrying in ${delay}ms (attempt ${attempt + 1}/${totalRetries + 1})`);
+              
+              if (onRetry) {
+                onRetry(attempt + 1, totalRetries + 1, delay);
+              }
+              
               await new Promise((resolve) => setTimeout(resolve, delay));
               continue;
             }

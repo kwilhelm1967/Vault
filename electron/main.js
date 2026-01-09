@@ -10,6 +10,47 @@ const Positioner = require("electron-positioner");
 const log = require("electron-log");
 const isDev = process.env.NODE_ENV === "development" || (app && !app.isPackaged);
 
+// CRITICAL FIX: Set app name EARLY based on executable path
+// This must happen BEFORE any windows are created
+// The root cause: electron-builder --config.productName doesn't always set app.getName() correctly
+// Solution: Check app name FIRST (set by electron-builder), then check executable path as fallback
+function detectAndSetProductName() {
+  // FIRST: Check if electron-builder already set it correctly
+  const currentName = app.getName();
+  if (currentName === "Local Legacy Vault") {
+    log.info("App name already set to 'Local Legacy Vault' by electron-builder");
+    return; // Already correct, no need to change
+  }
+  
+  // SECOND: Check executable paths as fallback
+  const execPath = (process.execPath || "").toLowerCase();
+  const appPath = (app.getPath("exe") || "").toLowerCase();
+  
+  // Check if this is an LLV build by examining executable paths
+  // Windows paths may have dots: "Local.Legacy.Vault" or spaces: "Local Legacy Vault"
+  const isLLV = 
+    execPath.includes("local legacy vault") || 
+    execPath.includes("local.legacy.vault") ||
+    execPath.includes("legacy vault") ||
+    execPath.includes("legacyvault") ||
+    execPath.includes("-llv") ||
+    appPath.includes("local legacy vault") ||
+    appPath.includes("local.legacy.vault") ||
+    appPath.includes("legacy vault") ||
+    appPath.includes("legacyvault") ||
+    appPath.includes("-llv");
+  
+  if (isLLV) {
+    app.setName("Local Legacy Vault");
+    log.info(`Detected LLV build - execPath: ${execPath.substring(0, 100)}, appPath: ${appPath.substring(0, 100)}, set app name to: Local Legacy Vault`);
+  } else {
+    log.info(`Not LLV - currentName: ${currentName}, execPath: ${execPath.substring(0, 100)}, appPath: ${appPath.substring(0, 100)}`);
+  }
+}
+
+// Set product name IMMEDIATELY when module loads (before app.whenReady)
+detectAndSetProductName();
+
 // Configure electron-log for production logging
 log.transports.file.level = "info";
 log.transports.console.level = isDev ? "debug" : "warn";
@@ -138,11 +179,32 @@ const saveButtonPosition = (x, y) => {
 
 // Security: Disable node integration and enable context isolation
 const createWindow = () => {
+  // Get product name - should already be set by detectAndSetProductName() above
+  // But we'll verify and use it for the window title
+  let productName = app.getName();
+  
+  // Double-check: If it's still "Local Password Vault", force it to LLV if executable path indicates LLV
+  if (productName === "Local Password Vault") {
+    const execPath = (process.execPath || "").toLowerCase();
+    const appPath = (app.getPath("exe") || "").toLowerCase();
+    
+    if (execPath.includes("legacy") || execPath.includes("llv") || 
+        appPath.includes("legacy") || appPath.includes("llv")) {
+      productName = "Local Legacy Vault";
+      app.setName("Local Legacy Vault");
+      log.warn("Forced app name to 'Local Legacy Vault' based on executable path");
+    }
+  }
+  
+  // Log for debugging
+  log.info(`Creating window with title: ${productName}, app.getName(): ${app.getName()}, execPath: ${process.execPath}`);
+  
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     minWidth: 800,
     minHeight: 600,
+    title: productName, // Explicitly set window title to correct product name
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -1900,7 +1962,9 @@ ipcMain.handle("get-update-state", async () => {
 
 // HTTP REQUEST HANDLER - Uses Electron's net module to bypass browser restrictions
 ipcMain.handle("http-request", async (event, url, options = {}) => {
-  return new Promise((resolve, reject) => {
+  // Wrap in try-catch to ensure any unexpected errors are caught
+  try {
+    return new Promise((resolve, reject) => {
     let timeoutHandle = null;
     let requestEnded = false;
     const timeout = options.timeout || 30000; // Default 30 second timeout
@@ -1916,11 +1980,16 @@ ipcMain.handle("http-request", async (event, url, options = {}) => {
         urlObj = new URL(url);
       } catch (urlError) {
         log.error(`[HTTP Request ${requestId}] Invalid URL: ${url}`, urlError);
-        reject({
-          code: 'INVALID_URL',
-          message: `Invalid URL: ${url}. ${urlError.message}`,
-          details: urlError,
-        });
+          // Ensure error is properly serializable for IPC
+          reject({
+            code: 'INVALID_URL',
+            message: `Invalid URL: ${url}. ${urlError.message}`,
+            status: 0,
+            details: {
+              url: url,
+              errorMessage: urlError.message || 'Invalid URL',
+            },
+          });
         return;
       }
       
@@ -1929,6 +1998,8 @@ ipcMain.handle("http-request", async (event, url, options = {}) => {
         url: url,
       };
       
+      // Create the request - net.request automatically uses the default session
+      // which has our certificate verification handler configured
       const request = net.request(requestOptions);
 
       // Set headers
@@ -1958,13 +2029,19 @@ ipcMain.handle("http-request", async (event, url, options = {}) => {
           } catch (abortError) {
             log.warn(`[HTTP Request ${requestId}] Error aborting request:`, abortError);
           }
-          reject({
-            code: 'REQUEST_TIMEOUT',
-            message: `Request timed out after ${timeout}ms. Unable to connect to license server. Please check your internet connection and try again.`,
-            status: 0,
-            url: url,
-            requestId: requestId,
-          });
+      // Ensure error is properly serializable for IPC
+      reject({
+        code: 'REQUEST_TIMEOUT',
+        message: `Request timed out after ${timeout}ms. Unable to connect to license server. Please check your internet connection and try again.`,
+        status: 0,
+        url: url,
+        requestId: requestId,
+        details: {
+          timeout: timeout,
+          url: url,
+          requestId: requestId,
+        },
+      });
         }
       }, timeout);
 
@@ -2004,25 +2081,65 @@ ipcMain.handle("http-request", async (event, url, options = {}) => {
           requestEnded = true;
           cleanup();
           
+          // Handle non-2xx responses as errors
+          if (statusCode < 200 || statusCode >= 300) {
+            hasResolved = true;
+            let errorData = {};
+            try {
+              errorData = responseData ? JSON.parse(responseData) : {};
+            } catch (parseError) {
+              // If JSON parsing fails, use the raw response as error message
+              errorData = { message: responseData || statusMessage || 'Request failed' };
+            }
+            
+            const errorMessage = errorData.error || errorData.message || 
+              `HTTP ${statusCode}: ${statusMessage || 'Request failed'}`;
+            
+            log.error(`[HTTP Request ${requestId}] HTTP error response for ${url}:`, {
+              statusCode,
+              statusMessage,
+              errorData,
+              responseData: responseData.substring(0, 500), // Log first 500 chars
+            });
+            
+            // Ensure error is properly serializable for IPC
+            reject({
+              code: 'HTTP_ERROR',
+              message: errorMessage,
+              status: statusCode,
+              details: {
+                ...(typeof errorData === 'object' && errorData !== null ? errorData : { message: String(errorData) }),
+                url: url,
+                requestId: requestId,
+                statusCode: statusCode,
+                statusMessage: statusMessage,
+              },
+              url: url,
+              requestId: requestId,
+            });
+            return;
+          }
+          
+          // Success response - parse JSON
           try {
             const data = responseData ? JSON.parse(responseData) : {};
             hasResolved = true;
             resolve({
               status: statusCode,
               statusText: statusMessage,
-              ok: statusCode >= 200 && statusCode < 300,
+              ok: true,
               data: data,
               json: () => Promise.resolve(data),
             });
           } catch (parseError) {
-            console.error('[HTTP Request] JSON parse error:', parseError);
-            // Even if JSON parsing fails, return the response
+            log.warn(`[HTTP Request ${requestId}] JSON parse error for ${url}:`, parseError);
+            // Even if JSON parsing fails, return the response as success (might be empty or non-JSON)
             hasResolved = true;
             resolve({
               status: statusCode,
               statusText: statusMessage,
-              ok: statusCode >= 200 && statusCode < 300,
-              data: responseData,
+              ok: true,
+              data: responseData || {},
               json: () => Promise.resolve({}),
             });
           }
@@ -2066,14 +2183,40 @@ ipcMain.handle("http-request", async (event, url, options = {}) => {
           stack: error.stack,
         });
         
-        // Also log to console for immediate visibility
+        // Also log to console for immediate visibility (ALWAYS, even in production)
+        // This is critical for debugging connection issues
         console.error(`[HTTP Request ${requestId}] FAILED:`, {
           url: url,
           errorCode: error.code,
           errorMessage: error.message,
           hostname: urlObj.hostname,
+          port: urlObj.port || (urlObj.protocol === 'https:' ? '443' : '80'),
+          protocol: urlObj.protocol,
           isIPAddress: /^\d+\.\d+\.\d+\.\d+$/.test(urlObj.hostname),
+          stack: error.stack,
+          timestamp: new Date().toISOString(),
         });
+        
+        // Also write to a log file if possible (for production debugging)
+        try {
+          const fs = require('fs');
+          const path = require('path');
+          const logDir = path.join(app.getPath('userData'), 'logs');
+          if (!fs.existsSync(logDir)) {
+            fs.mkdirSync(logDir, { recursive: true });
+          }
+          const logFile = path.join(logDir, `connection-errors-${new Date().toISOString().split('T')[0]}.log`);
+          const logEntry = `[${new Date().toISOString()}] HTTP Request ${requestId} FAILED:\n` +
+            `  URL: ${url}\n` +
+            `  Error Code: ${error.code}\n` +
+            `  Error Message: ${error.message}\n` +
+            `  Hostname: ${urlObj.hostname}\n` +
+            `  Protocol: ${urlObj.protocol}\n` +
+            `  Stack: ${error.stack}\n\n`;
+          fs.appendFileSync(logFile, logEntry, 'utf8');
+        } catch (logError) {
+          // Ignore log file errors - console error is sufficient
+        }
         
         // Provide more specific error messages based on error code
         let errorMessage = 'Unable to connect to license server. Please check your internet connection and try again.';
@@ -2108,17 +2251,25 @@ ipcMain.handle("http-request", async (event, url, options = {}) => {
           ? `${errorMessage} ${actionableGuidance}`
           : errorMessage;
         
-        reject({
+        // Ensure error is properly serializable for IPC
+        const serializableError = {
           code: 'NETWORK_ERROR',
           message: fullMessage,
           status: 0,
           details: {
-            ...error,
-            errorCode: error.code,
+            errorCode: error.code || 'UNKNOWN',
+            errorMessage: error.message || 'Unknown error',
+            errorName: error.name || 'Error',
             url: url,
             requestId: requestId,
+            hostname: urlObj.hostname,
+            port: urlObj.port || (urlObj.protocol === 'https:' ? '443' : '80'),
+            protocol: urlObj.protocol,
           },
-        });
+        };
+        
+        // Ensure this is a plain object that can be serialized through IPC
+        reject(serializableError);
       });
 
       request.on('abort', () => {
@@ -2128,13 +2279,18 @@ ipcMain.handle("http-request", async (event, url, options = {}) => {
         log.warn(`[HTTP Request ${requestId}] Request aborted for ${url}`);
         // Don't reject here if we already have a timeout rejection
         if (!hasResolved) {
-          reject({
-            code: 'REQUEST_ABORTED',
-            message: 'Request was aborted. Unable to connect to license server.',
-            status: 0,
+        // Ensure error is properly serializable for IPC
+        reject({
+          code: 'REQUEST_ABORTED',
+          message: 'Request was aborted. Unable to connect to license server.',
+          status: 0,
+          url: url,
+          requestId: requestId,
+          details: {
             url: url,
             requestId: requestId,
-          });
+          },
+        });
         }
       });
 
@@ -2145,16 +2301,40 @@ ipcMain.handle("http-request", async (event, url, options = {}) => {
           request.write(bodyString, 'utf8');
         } catch (writeError) {
           cleanup();
+          requestEnded = true;
+          // Ensure error is properly serializable for IPC
           reject({
             code: 'REQUEST_ERROR',
             message: `Failed to write request body: ${writeError.message}`,
-            details: writeError,
+            status: 0,
+            details: {
+              errorMessage: writeError.message || 'Failed to write request body',
+              url: url,
+              requestId: requestId,
+            },
+            url: url,
+            requestId: requestId,
           });
           return;
         }
       }
 
-      request.end();
+      // End the request - this actually sends it
+      try {
+        request.end();
+      } catch (endError) {
+        cleanup();
+        requestEnded = true;
+        log.error(`[HTTP Request ${requestId}] Failed to end request for ${url}:`, endError);
+        reject({
+          code: 'REQUEST_ERROR',
+          message: `Failed to send request: ${endError.message}`,
+          details: endError,
+          url: url,
+          requestId: requestId,
+        });
+        return;
+      }
       
     } catch (error) {
       if (timeoutHandle) {
@@ -2164,15 +2344,42 @@ ipcMain.handle("http-request", async (event, url, options = {}) => {
         error: error.message,
         stack: error.stack,
       });
+      // Ensure error is properly serializable for IPC
       reject({
         code: 'INVALID_URL',
         message: error.message || `Invalid request setup. Unable to connect to license server: ${url}`,
         status: 0,
-        details: error,
+        details: {
+          errorMessage: error.message || 'Invalid request setup',
+          errorName: error.name || 'Error',
+          url: url,
+        },
         url: url,
       });
     }
   });
+  } catch (unexpectedError) {
+    // Catch any unexpected errors that occur outside the Promise executor
+    log.error(`[HTTP Request] Unexpected error in http-request handler:`, {
+      error: unexpectedError?.message || 'Unknown error',
+      stack: unexpectedError?.stack,
+      url: url,
+      rawError: unexpectedError,
+    });
+    
+    // Return a properly formatted error that can be serialized through IPC
+    throw {
+      code: 'UNEXPECTED_ERROR',
+      message: unexpectedError?.message || 'An unexpected error occurred while making the request',
+      status: 0,
+      details: {
+        errorMessage: unexpectedError?.message || 'Unknown error',
+        errorName: unexpectedError?.name || 'Error',
+        url: url,
+      },
+      url: url,
+    };
+  }
 });
 
 // NETWORK DIAGNOSTIC FUNCTION - Test connectivity before activation
