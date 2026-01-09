@@ -59,6 +59,10 @@ const corsOptions = {
     if (!origin) {
       return callback(null, true);
     }
+    // Allow localhost origins for local development/testing (regardless of NODE_ENV)
+    if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+      return callback(null, true);
+    }
     // Allow requests from allowed origins
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
