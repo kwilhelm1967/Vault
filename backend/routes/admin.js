@@ -490,5 +490,61 @@ router.get('/stats/customers', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/admin/deploy
+ * Trigger server deployment (pull latest code and restart)
+ */
+router.post('/deploy', async (req, res) => {
+  const { exec } = require('child_process');
+  const { promisify } = require('util');
+  const execAsync = promisify(exec);
+  
+  try {
+    logger.info('Admin deployment triggered', { 
+      ip: req.ip,
+      requestId: req.requestId 
+    });
+    
+    const backendPath = require('path').dirname(require.main.filename);
+    
+    // Pull latest code
+    const { stdout: pullOutput, stderr: pullError } = await execAsync('git pull origin main', { 
+      cwd: backendPath,
+      timeout: 30000 
+    });
+    logger.info('Admin deploy: Git pull completed', { 
+      output: pullOutput, 
+      error: pullError, 
+      requestId: req.requestId 
+    });
+    
+    // Restart PM2 process
+    const { stdout: restartOutput, stderr: restartError } = await execAsync('pm2 restart lpv-api', { 
+      cwd: backendPath,
+      timeout: 10000 
+    });
+    logger.info('Admin deploy: PM2 restart completed', { 
+      output: restartOutput, 
+      error: restartError, 
+      requestId: req.requestId 
+    });
+    
+    res.json({
+      success: true,
+      message: 'Deployment completed',
+      pull: { output: pullOutput, error: pullError },
+      restart: { output: restartOutput, error: restartError },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    logger.error('Admin deployment failed', error, { requestId: req.requestId });
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
 module.exports = router;
 
