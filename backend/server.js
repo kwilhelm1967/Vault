@@ -47,8 +47,16 @@ const allowedOrigins = [
   'https://www.locallegacyvault.com',
 ];
 
-if (process.env.NODE_ENV === 'development') {
-  allowedOrigins.push('http://localhost:5173', 'http://localhost:3000');
+// Allow localhost origins for development/testing
+if (process.env.NODE_ENV === 'development' || process.env.ALLOW_LOCALHOST === 'true') {
+  allowedOrigins.push(
+    'http://localhost:5173', 
+    'http://localhost:3000', 
+    'http://localhost:8080',
+    'http://127.0.0.1:8080',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:3000'
+  );
 }
 
 // Allow Electron app requests (file:// and electron:// protocols)
@@ -57,6 +65,10 @@ const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like Electron apps, mobile apps, or curl)
     if (!origin) {
+      return callback(null, true);
+    }
+    // Allow localhost origins for local development/testing (regardless of NODE_ENV)
+    if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
       return callback(null, true);
     }
     // Allow requests from allowed origins
