@@ -320,7 +320,8 @@ export const PurchaseSuccessPage: React.FC = () => {
             downloadBaseUrl: 'https://localpasswordvault.com',
           });
         }
-        // LLV bundles not supported in Local Password Vault repository
+        // LOCKED: LLV bundles not supported in Local Password Vault repository
+        // Local Legacy Vault downloads must be handled in the LocalLegacyVault repository
         
         setProductGroups(productGroupsList);
         
