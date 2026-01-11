@@ -48,9 +48,17 @@ router.post('/signup', async (req, res) => {
         error: 'Invalid email format' 
       });
     }
-    const existingTrial = await db.trials.findByEmail(normalizedEmail);
+    // Check for existing trial for this email AND product type
+    // Allow separate trials for LPV and LLV products (same email can have both)
+    const allTrials = await db.trials.findAllByEmail(normalizedEmail);
     
-    // Resend trial key if still valid
+    // Find trial matching the requested product type
+    const existingTrial = allTrials?.find(trial => {
+      const trialProductType = trial.product_type || (trial.trial_key?.startsWith('LLVT') ? 'llv' : 'lpv');
+      return trialProductType === detectedProductType;
+    });
+    
+    // If existing trial for this product type exists and is still valid, resend
     if (existingTrial) {
       const expiresAt = new Date(existingTrial.expires_at);
       const now = new Date();
@@ -64,11 +72,13 @@ router.post('/signup', async (req, res) => {
           });
           logger.email('trial_resent', normalizedEmail, {
             trialKey: existingTrial.trial_key,
+            product_type: detectedProductType,
             operation: 'trial_resend',
           });
         } catch (emailError) {
           logger.emailError('trial_resend', normalizedEmail, emailError, {
             trialKey: existingTrial.trial_key,
+            product_type: detectedProductType,
             operation: 'trial_resend',
           });
         }
@@ -79,13 +89,8 @@ router.post('/signup', async (req, res) => {
           expiresAt: expiresAt.toISOString(),
           trialKey: existingTrial.trial_key,
         });
-      } else {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'Trial has expired. Please purchase a license to continue.',
-          expired: true,
-        });
       }
+      // If expired, will create new trial below
     }
     
     // Prevent trial if customer already has a license

@@ -321,6 +321,21 @@ const trials = {
     return data;
   },
   
+  async findAllByEmail(email) {
+    const startTime = Date.now();
+    const { data, error } = await supabase
+      .from('trials')
+      .select('*')
+      .eq('email', email)
+      .order('created_at', { ascending: false });
+    
+    const duration = Date.now() - startTime;
+    performanceMonitor.trackDatabaseQuery('select', 'trials', duration);
+    
+    if (error) throw error;
+    return data || [];
+  },
+  
   async findByKey(trial_key) {
     const startTime = Date.now();
     const { data, error } = await supabase
