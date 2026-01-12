@@ -16,7 +16,8 @@
 const LPV_GITHUB_REPO = "kwilhelm1967/Vault";
 // LOCKED: Local Legacy Vault repository - NEVER CHANGE TO Vault
 const LLV_GITHUB_REPO = "kwilhelm1967/LocalLegacyVault";
-const VERSION = "1.2.0";
+const LPV_VERSION = "1.2.0";
+const LLV_VERSION = "1.2.5"; // Signed release version for Local Legacy Vault
 
 export interface DownloadUrls {
   windows: string;
@@ -26,18 +27,19 @@ export interface DownloadUrls {
 
 // LOCKED: Local Password Vault downloads - ALWAYS uses kwilhelm1967/Vault repository
 const LPV_DOWNLOAD_URLS: DownloadUrls = {
-  windows: `https://github.com/${LPV_GITHUB_REPO}/releases/download/V${VERSION}/Local.Password.Vault.Setup.${VERSION}.exe`,
-  macos: `https://github.com/${LPV_GITHUB_REPO}/releases/latest/download/Local%20Password%20Vault-${VERSION}-mac.dmg`,
-  linux: `https://github.com/${LPV_GITHUB_REPO}/releases/latest/download/Local%20Password%20Vault-${VERSION}.AppImage`,
+  windows: `https://github.com/${LPV_GITHUB_REPO}/releases/download/V${LPV_VERSION}/Local.Password.Vault.Setup.${LPV_VERSION}.exe`,
+  macos: `https://github.com/${LPV_GITHUB_REPO}/releases/latest/download/Local%20Password%20Vault-${LPV_VERSION}-mac.dmg`,
+  linux: `https://github.com/${LPV_GITHUB_REPO}/releases/latest/download/Local%20Password%20Vault-${LPV_VERSION}.AppImage`,
 };
 
 // LOCKED: Local Legacy Vault downloads - ALWAYS uses kwilhelm1967/LocalLegacyVault repository
-// NOTE: GitHub filename uses DOTS: "Local.Legacy.Vault.Setup.1.2.0-x64.exe" (dots, -x64 suffix)
-// URL must use dots (.) to match GitHub filename: Local.Legacy.Vault.Setup.1.2.0-x64.exe
+// NOTE: GitHub filename uses DOTS: "Local.Legacy.Vault.Setup.1.2.5-x64.exe" (dots, -x64 suffix)
+// URL must use dots (.) to match GitHub filename: Local.Legacy.Vault.Setup.1.2.5-x64.exe
+// VERSION: 1.2.5 is the signed release version
 const LLV_DOWNLOAD_URLS: DownloadUrls = {
-  windows: `https://github.com/${LLV_GITHUB_REPO}/releases/download/V${VERSION}/Local.Legacy.Vault.Setup.${VERSION}-x64.exe`,
-  macos: `https://github.com/${LLV_GITHUB_REPO}/releases/latest/download/Local.Legacy.Vault-${VERSION}-mac.dmg`,
-  linux: `https://github.com/${LLV_GITHUB_REPO}/releases/latest/download/Local.Legacy.Vault-${VERSION}.AppImage`,
+  windows: `https://github.com/${LLV_GITHUB_REPO}/releases/download/V${LLV_VERSION}/Local.Legacy.Vault.Setup.${LLV_VERSION}-x64.exe`,
+  macos: `https://github.com/${LLV_GITHUB_REPO}/releases/latest/download/Local.Legacy.Vault-${LLV_VERSION}-mac.dmg`,
+  linux: `https://github.com/${LLV_GITHUB_REPO}/releases/latest/download/Local.Legacy.Vault-${LLV_VERSION}.AppImage`,
 };
 
 export const getDownloadUrl = (
