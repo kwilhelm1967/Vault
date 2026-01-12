@@ -74,7 +74,8 @@ export class TrialService {
     trialInfo?: TrialInfo;
   }> {
     try {
-      const cleanKey = trialKey.replace(/[^A-Z0-9-]/g, "");
+      // Normalize key to match backend: uppercase and remove invalid characters
+      const cleanKey = trialKey.toUpperCase().replace(/[^A-Z0-9-]/g, "");
       const deviceId = await getLPVDeviceFingerprint();
 
       // Detect product type from trial key prefix
@@ -800,36 +801,6 @@ export class TrialService {
     }
   }
 
-  /**
-   * Check and trigger warning popups (deprecated - use checkWarningPopups)
-   */
-  async checkAndTriggerWarningPopups(): Promise<void> {
-    const trialInfo = await this.getTrialInfo();
-
-    if (!trialInfo.hasTrialBeenUsed || !trialInfo.isTrialActive || trialInfo.isExpired) {
-      return;
-    }
-
-    const state = this.checkWarningPopups();
-
-    if (state.shouldShowExpiringWarning) {
-      localStorage.setItem(TrialService.WARNING_POPUP_1_SHOWN_KEY, new Date().toISOString());
-    }
-
-    if (state.shouldShowFinalWarning) {
-      localStorage.setItem(TrialService.WARNING_POPUP_2_SHOWN_KEY, new Date().toISOString());
-    }
-
-    if (state.shouldShowExpiringWarning || state.shouldShowFinalWarning) {
-      this.warningPopupCallbacks.forEach(callback => {
-        try {
-          callback(state);
-        } catch (error) {
-          devError('Error in warning popup callback:', error);
-        }
-      });
-    }
-  }
 }
 
 export const trialService = TrialService.getInstance();

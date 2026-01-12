@@ -108,7 +108,7 @@ import { CategoryIcon } from "./CategoryIcon";
 import { EntryForm } from "./EntryForm";
 import { Dashboard } from "./Dashboard";
 import { SettingsLazy as Settings, FAQLazy as FAQ } from "./LazyComponents";
-import { clearClipboardAfterTimeout, getVaultSettings } from "./Settings";
+import { clearClipboardAfterTimeout, getVaultSettings } from "../utils/settingsUtils";
 import { TrialStatusBanner } from "./TrialStatusBanner";
 import { PerformanceProfiler } from "./PerformanceProfiler";
 

@@ -92,8 +92,6 @@ const colors = {
   goldDark: "#B89B4D",
 };
 
-// Settings storage keys and defaults are now imported from settingsUtils
-
 export interface SettingsProps {
   onExport: () => void;
   onExportEncrypted: (password: string) => Promise<void>;
@@ -1394,6 +1392,3 @@ export const Settings: React.FC<SettingsProps> = ({
   );
 };
 
-// Re-export utilities for backward compatibility (deprecated - use from utils/settingsUtils)
-export { getVaultSettings, clearClipboardAfterTimeout } from "../utils/settingsUtils";
-export type { VaultSettings } from "../utils/settingsUtils";

@@ -441,11 +441,6 @@ function App() {
       trialService.removeWarningPopupCallback(handleWarningPopup);
       if (warningInterval) clearInterval(warningInterval);
     };
-
-    return () => {
-      trialService.removeWarningPopupCallback(handleWarningPopup);
-      if (warningInterval) clearInterval(warningInterval);
-    };
   }, [handleWarningPopup]);
 
   // Popup event handlers
