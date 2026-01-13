@@ -1,13 +1,21 @@
 const Stripe = require('stripe');
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  console.error('[STRIPE] ERROR: STRIPE_SECRET_KEY is not set in environment variables');
-  throw new Error('STRIPE_SECRET_KEY is required but not configured');
-}
+// Initialize Stripe - don't throw error on module load, check in functions instead
+let stripe = null;
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2023-10-16',
-});
+function getStripeInstance() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not set in environment variables');
+  }
+  
+  if (!stripe) {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2023-10-16',
+    });
+  }
+  
+  return stripe;
+}
 
 const PRODUCTS = {
   personal: {
@@ -81,10 +89,11 @@ async function createCheckoutSession(planType, customerEmail, successUrl, cancel
   }
   
   const logger = require('../utils/logger');
+  const stripeInstance = getStripeInstance();
   
   // Always use price_data for reliability - works even if price IDs aren't configured
   // This ensures checkout always works regardless of Stripe product setup
-  const session = await stripe.checkout.sessions.create({
+  const session = await stripeInstance.checkout.sessions.create({
     payment_method_types: ['card'],
     mode: 'payment',
     customer_email: customerEmail,
@@ -123,7 +132,8 @@ async function createCheckoutSession(planType, customerEmail, successUrl, cancel
 }
 
 async function getCheckoutSession(sessionId) {
-  return stripe.checkout.sessions.retrieve(sessionId, {
+  const stripeInstance = getStripeInstance();
+  return stripeInstance.checkout.sessions.retrieve(sessionId, {
     expand: ['customer', 'payment_intent'],
   });
 }
@@ -135,15 +145,18 @@ function verifyWebhookSignature(payload, signature) {
     throw new Error('STRIPE_WEBHOOK_SECRET not configured');
   }
   
-  return stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+  const stripeInstance = getStripeInstance();
+  return stripeInstance.webhooks.constructEvent(payload, signature, webhookSecret);
 }
 
 async function getCustomer(customerId) {
-  return stripe.customers.retrieve(customerId);
+  const stripeInstance = getStripeInstance();
+  return stripeInstance.customers.retrieve(customerId);
 }
 
 async function createOrRetrieveCustomer(email, name = null) {
-  const existingCustomers = await stripe.customers.list({
+  const stripeInstance = getStripeInstance();
+  const existingCustomers = await stripeInstance.customers.list({
     email: email,
     limit: 1,
   });
@@ -152,7 +165,7 @@ async function createOrRetrieveCustomer(email, name = null) {
     return existingCustomers.data[0];
   }
   
-  return stripe.customers.create({
+  return stripeInstance.customers.create({
     email: email,
     name: name,
   });
@@ -223,12 +236,13 @@ async function createBundleCheckoutSession(items, customerEmail, successUrl, can
     });
   }
   
-  const session = await stripe.checkout.sessions.create(sessionConfig);
+  const stripeInstance = getStripeInstance();
+  const session = await stripeInstance.checkout.sessions.create(sessionConfig);
   return session;
 }
 
 module.exports = {
-  stripe,
+  getStripeInstance,
   PRODUCTS,
   getProductByPriceId,
   createCheckoutSession,

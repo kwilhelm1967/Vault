@@ -1,0 +1,48 @@
+================================================================================
+DEPLOY CHECKOUT FIX TO LINODE - 172.236.111.48
+================================================================================
+
+STEP 1: Connect to Linode via LISH Console
+- Go to: https://cloud.linode.com
+- Find your Linode instance
+- Click "Launch LISH Console"
+
+STEP 2: Navigate to backend directory
+cd /var/www/lpv-api/backend
+
+STEP 3: Pull latest code
+git pull origin main
+
+STEP 4: Verify STRIPE_SECRET_KEY is set
+cat .env | grep STRIPE_SECRET_KEY
+
+If it's missing or empty, add it:
+nano .env
+Add this line:
+STRIPE_SECRET_KEY=sk_live_YOUR_ACTUAL_KEY_HERE
+
+Save: Ctrl+X, then Y, then Enter
+
+STEP 5: Restart the server
+pm2 restart lpv-api
+
+STEP 6: Check server status
+pm2 status
+pm2 logs lpv-api --lines 50
+
+STEP 7: Test the endpoint (optional)
+curl -X POST https://api.localpasswordvault.com/api/checkout/session \
+  -H "Content-Type: application/json" \
+  -H "Origin: https://localpasswordvault.com" \
+  -d '{"planType":"personal","email":null}'
+
+================================================================================
+FILES TO UPLOAD TO HOST ARMADA:
+================================================================================
+
+1. LPV/index.html
+2. LPV/pricing.html
+
+Both files are in the repository and ready to upload.
+
+================================================================================
