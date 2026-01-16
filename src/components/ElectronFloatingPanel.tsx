@@ -490,10 +490,10 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
       {/* No filtering, no "More" bucket - all categories are always visible */}
       <div className="p-2 border-b border-slate-700/50 bg-slate-800/20 no-drag relative z-10">
         <div
-          className="flex space-x-1.5 overflow-x-auto pb-1 scrollbar-none"
+          className="category-pills-scroll flex space-x-1.5 overflow-x-auto pb-1"
           style={{
-            scrollbarWidth: "none",
-            msOverflowStyle: "none",
+            scrollbarWidth: "thin",
+            scrollbarColor: "#C9AE66 rgba(71, 85, 105, 0.3)",
           }}
         >
           {categories.map((category) => (
@@ -501,18 +501,24 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
               key={category.id}
               onClick={() => onCategoryChange(category.id)}
               data-category-button
-              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200 no-drag border flex-shrink-0 ${selectedCategory === category.id
+              className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-full font-medium whitespace-nowrap transition-all duration-200 no-drag border flex-shrink-0 ${selectedCategory === category.id
                   ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white border-blue-400/30 shadow-md"
-                  : "bg-slate-800/60 text-slate-300 hover:bg-slate-700/60 border-slate-600/40"
+                  : "bg-slate-800/60 text-white border-slate-600/40 hover:border-[#C9AE66]/50 hover:bg-slate-700/60"
                 }`}
+              style={{
+                fontSize: "15px",
+              }}
             >
               <CategoryIcon
                 name={category.icon}
                 size={12}
+                style={{
+                  color: selectedCategory === category.id ? "#FFFFFF" : "#C9AE66",
+                }}
                 className={
                   selectedCategory === category.id
-                    ? "text-white"
-                    : "text-slate-400"
+                    ? ""
+                    : ""
                 }
               />
               <span className="max-w-[60px] truncate">{category.name}</span>

@@ -548,9 +548,11 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
         </div>
 
         {/* Category Quick Filters */}
+        {/* Source of truth: src/utils/storage.ts FIXED_CATEGORIES (8 total: all, banking, shopping, entertainment, email, work, business, other) */}
+        {/* No filtering, no "More" bucket - all categories are always visible */}
         <div className="p-2 border-b border-slate-700 relative z-10">
           <div className="flex space-x-1 overflow-x-auto">
-            {categories.slice(0, 6).map((category) => (
+            {categories.map((category) => (
               <button
                 key={category.id}
                 onClick={() => onCategoryChange(category.id)}
