@@ -1,0 +1,25 @@
+# Deploy backend to server on push to main
+# Add GitHub secrets: DEPLOY_SSH_KEY (private key), DEPLOY_HOST (e.g. 172.236.111.48)
+# Repo → Settings → Secrets → Actions
+
+name: Deploy Backend
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: root
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cd /var/www/lpv-api/Vault
+            git pull origin main
+            pm2 restart lpv-api
+            pm2 status
