@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Local Password Vault</title>
     <meta name="description" content="Secure offline password manager with local encryption" />
+    <!-- Resource hints for faster loading -->
+    <link rel="dns-prefetch" href="https://api.localpasswordvault.com">
     <style>
       /* Loading spinner styles */
       .loading-spinner {
@@ -56,6 +58,26 @@
     </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Hide loading spinner immediately when app mounts (faster UX)
+      document.addEventListener('DOMContentLoaded', () => {
+        const checkLoaded = () => {
+          const root = document.getElementById('root');
+          if (root && root.classList.contains('loaded')) {
+            const spinner = document.querySelector('.loading-spinner');
+            if (spinner) spinner.remove();
+          } else {
+            setTimeout(checkLoaded, 50);
+          }
+        };
+        checkLoaded();
+        // Fallback: remove after max 2 seconds
+        setTimeout(() => {
+          const spinner = document.querySelector('.loading-spinner');
+          if (spinner) spinner.remove();
+        }, 2000);
+      });
+    </script>
   </body>
 </html>
 

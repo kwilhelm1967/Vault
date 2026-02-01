@@ -1,42 +1,7 @@
 /**
  * Settings Component
  * 
- * Comprehensive settings interface for vault configuration. Handles:
- * - Auto-lock timeout configuration (minutes)
- * - Clipboard auto-clear timeout (seconds)
- * - Default password visibility setting
- * - Sound effects toggle
- * - Master password change
- * - Data export (CSV, encrypted JSON)
- * - Data import (CSV, encrypted JSON)
- * - Complete data deletion
- * - Recovery phrase generation and display
- * - Mobile access token management
- * - App version and information display
- * 
- * @component
- * 
- * @example
- * ```tsx
- * <Settings
- *   onExport={handleExport}
- *   onExportEncrypted={handleExportEncrypted}
- *   onImport={handleImport}
- *   onImportEncrypted={handleImportEncrypted}
- *   onChangePassword={handleChangePassword}
- *   onClearAllData={handleClearAllData}
- *   totalEntries={entries.length}
- * />
- * ```
- * 
- * @remarks
- * Settings are persisted to localStorage using keys:
- * - vault_auto_lock_timeout
- * - vault_clipboard_clear_timeout
- * - vault_show_passwords_default
- * - vault_sound_effects_enabled
- * 
- * Uses bouncy card animations for visual feedback on interactions.
+ * Vault configuration interface for security settings, data management, and app preferences.
  */
 
 import React, { useState, useEffect, Suspense, lazy } from "react";
@@ -94,6 +59,7 @@ const colors = {
 
 export interface SettingsProps {
   onExport: () => void;
+  onExportPDF?: () => void;
   onExportEncrypted: (password: string) => Promise<void>;
   onImport: () => void;
   onImportEncrypted: (data: string, password: string) => Promise<void>;
@@ -322,6 +288,7 @@ const SectionTitle: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
 export const Settings: React.FC<SettingsProps> = ({
   onExport,
+  onExportPDF,
   onExportEncrypted,
   onImport,
   onImportEncrypted,
@@ -380,7 +347,6 @@ export const Settings: React.FC<SettingsProps> = ({
     };
     setSettings(loadedSettings);
     
-    // Load current password hint
     const loadPasswordHint = async () => {
       try {
         const hint = await storageService.getPasswordHint();
@@ -393,7 +359,6 @@ export const Settings: React.FC<SettingsProps> = ({
     loadPasswordHint();
   }, []);
   
-  // Handle regenerating recovery phrase
   const handleStartRegenerate = () => {
     const phrase = generateRecoveryPhrase();
     setNewRecoveryPhrase(phrase);
@@ -515,8 +480,7 @@ export const Settings: React.FC<SettingsProps> = ({
 
   const handleSoundEffectsChange = (value: boolean) => {
     setSettings(prev => ({ ...prev, soundEffectsEnabled: value }));
-    // Save to vault_settings JSON for the soundEffects utility to read
-    try {
+      try {
       const existing = localStorage.getItem('vault_settings');
       const parsed = existing ? JSON.parse(existing) : {};
       parsed.soundEffectsEnabled = value;
@@ -705,7 +669,7 @@ export const Settings: React.FC<SettingsProps> = ({
                 <Download className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2} style={{ color: colors.brandGold }} />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-0.5 sm:mb-1 text-sm sm:text-base">Export to Excel</h3>
+                <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-0.5 sm:mb-1 text-sm sm:text-base">Export to CSV</h3>
                 <p className="text-slate-500 text-xs">Opens in Excel or Google Sheets</p>
               </div>
               <span 
@@ -726,6 +690,37 @@ export const Settings: React.FC<SettingsProps> = ({
             </div>
           </div>
         </BouncyCard>
+
+        {onExportPDF && (
+          <BouncyCard onClick={onExportPDF} variant="accent">
+            <div className="flex flex-col gap-2 sm:gap-3">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="flex items-center justify-center flex-shrink-0">
+                  <FileEdit className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2} style={{ color: colors.brandGold }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 style={{ color: colors.warmIvory }} className="font-semibold mb-0.5 sm:mb-1 text-sm sm:text-base">Export to PDF</h3>
+                  <p className="text-slate-500 text-xs">Polished, shareable document</p>
+                </div>
+                <span 
+                  className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-bold flex-shrink-0"
+                  style={{ backgroundColor: `${colors.steelBlue500}20`, color: colors.steelBlue400 }}
+                >
+                  {totalEntries}
+                </span>
+              </div>
+              <div 
+                className="flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg"
+                style={{ backgroundColor: 'rgba(201, 174, 102, 0.1)', border: '1px solid rgba(201, 174, 102, 0.2)' }}
+              >
+                <AlertTriangle className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" strokeWidth={1.5} style={{ color: colors.brandGold }} />
+                <span className="text-[10px] sm:text-[11px]" style={{ color: '#9CA3AF' }}>
+                  Contains sensitive data. Store securely.
+                </span>
+              </div>
+            </div>
+          </BouncyCard>
+        )}
 
         <BouncyCard onClick={onImport} variant="accent">
           <div className="flex items-center gap-3 sm:gap-4">

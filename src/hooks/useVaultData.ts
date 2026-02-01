@@ -49,8 +49,24 @@ export const useVaultData = (
   }, [isLocked, isElectron, ipcRenderer, loadSharedEntries]);
 
   useEffect(() => {
-    loadEntries();
-  }, [loadEntries]);
+    // Load entries immediately if vault is unlocked (critical)
+    // Otherwise defer loading to avoid blocking render
+    if (!isLocked) {
+      loadEntries();
+    } else {
+      // Defer loading when locked to avoid blocking initial render
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(() => {
+          loadEntries();
+        }, { timeout: 100 });
+      } else {
+        setTimeout(() => {
+          loadEntries();
+        }, 0);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLocked, isElectron]);
 
   const updateEntries = useCallback(async (newEntries: PasswordEntry[]) => {
     setEntries(newEntries);

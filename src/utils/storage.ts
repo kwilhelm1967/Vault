@@ -1,37 +1,8 @@
 /**
- * @fileoverview Storage Service - Encrypted Storage for Password Vault
+ * Storage Service - Encrypted Storage for Password Vault
  * 
- * This module provides secure, encrypted storage for password entries using
- * military-grade AES-256-GCM encryption with PBKDF2 key derivation.
- * 
- * Storage Strategy:
- * - Electron: Secure file storage (unlimited capacity, OS-level permissions)
- * - Web: localStorage with encryption (5-10MB limit, browser storage)
- * 
- * @module storage
- * @version 2.0.0
- * 
- * Security Features:
- * - AES-256-GCM encryption (256-bit keys)
- * - PBKDF2 key derivation with 100,000 iterations
- * - Unique IV for each encryption operation
- * - Secure memory handling for sensitive data
- * - Input sanitization for all stored data
- * - Master password never leaves renderer process (Electron)
- * - OS-level file permissions (Electron)
- * 
- * @example
- * // Initialize and use the storage service
- * import { storageService } from './storage';
- * 
- * // Create a new vault
- * await storageService.createVault('MySecurePassword123!');
- * 
- * // Save entries (automatically uses file storage in Electron)
- * await storageService.saveEntries(entries);
- * 
- * // Load entries (automatically uses file storage in Electron)
- * const entries = await storageService.loadEntries();
+ * Provides secure encrypted storage using AES-256-GCM encryption with PBKDF2 key derivation.
+ * Uses Electron file storage when available, falls back to localStorage for web.
  */
 
 import { PasswordEntry, Category, RawPasswordEntry } from "../types";
@@ -42,8 +13,6 @@ import { measureOperation } from "./performanceMonitor";
 
 /**
  * Fixed categories available in the vault.
- * Single source of truth for category definitions.
- * @constant {Category[]}
  */
 export const FIXED_CATEGORIES: Category[] = [
   { id: "all", name: "All", color: "#3b82f6", icon: "Grid3X3" },
@@ -247,7 +216,6 @@ class MilitaryEncryption {
     }
   }
 
-  // Check if vault is unlocked
   isUnlocked(): boolean {
     return this.encryptionKey !== null;
   }
@@ -261,7 +229,6 @@ class MilitaryEncryption {
     memorySecurity.onVaultLock();
   }
 
-  // Check if vault exists (has salt)
   vaultExists(): boolean {
     return localStorage.getItem("vault_salt_v2") !== null;
   }
@@ -271,12 +238,14 @@ export class StorageService {
   private static instance: StorageService;
   private encryption = MilitaryEncryption.getInstance();
   
-  // Rate limiting properties
+  // STURDINESS: Progressive rate limiting properties for better brute-force protection
   private loginAttempts = 0;
   private lockoutUntil: number | null = null;
   private readonly MAX_ATTEMPTS = 5;
-  private readonly LOCKOUT_DURATION = 30000; // 30 seconds
+  private readonly LOCKOUT_DURATION_BASE = 30000; // 30 seconds base
   private readonly LOCKOUT_STORAGE_KEY = "vault_lockout";
+  private readonly LOCKOUT_COUNT_KEY = "vault_lockout_count";
+  private readonly MAX_LOCKOUT_DURATION = 300000; // 5 minutes maximum
 
   static getInstance(): StorageService {
     if (!StorageService.instance) {
@@ -285,12 +254,16 @@ export class StorageService {
     return StorageService.instance;
   }
 
-  // Check if account is locked out
+  // STURDINESS: Progressive rate limiting - lockout duration increases with repeated lockouts
   isLockedOut(): { locked: boolean; remainingSeconds: number } {
     // Check persisted lockout (survives page refresh)
     const storedLockout = localStorage.getItem(this.LOCKOUT_STORAGE_KEY);
+    const storedCount = localStorage.getItem(this.LOCKOUT_COUNT_KEY);
+    
     if (storedLockout) {
       const lockoutTime = parseInt(storedLockout);
+      const lockoutCount = storedCount ? parseInt(storedCount) : 0;
+      
       if (Date.now() < lockoutTime) {
         this.lockoutUntil = lockoutTime;
         return { 
@@ -298,8 +271,16 @@ export class StorageService {
           remainingSeconds: Math.ceil((lockoutTime - Date.now()) / 1000) 
         };
       } else {
-        localStorage.removeItem(this.LOCKOUT_STORAGE_KEY);
-        this.lockoutUntil = null;
+        // Lockout expired - reset counter after 1 hour of no lockouts
+        const lockoutExpiry = lockoutTime + 3600000; // 1 hour after lockout
+        if (Date.now() > lockoutExpiry) {
+          localStorage.removeItem(this.LOCKOUT_STORAGE_KEY);
+          localStorage.removeItem(this.LOCKOUT_COUNT_KEY);
+          this.lockoutUntil = null;
+        } else {
+          // Keep count for progressive lockout
+          this.lockoutUntil = null;
+        }
       }
     }
     
@@ -314,7 +295,6 @@ export class StorageService {
     return { locked: false, remainingSeconds: 0 };
   }
 
-  // Get remaining login attempts
   getRemainingAttempts(): number {
     return Math.max(0, this.MAX_ATTEMPTS - this.loginAttempts);
   }
@@ -324,15 +304,34 @@ export class StorageService {
     this.loginAttempts = 0;
     this.lockoutUntil = null;
     localStorage.removeItem(this.LOCKOUT_STORAGE_KEY);
+    // Don't reset lockout count on successful login - only after 1 hour of no lockouts
   }
 
-  // Record failed login attempt
+  // STURDINESS: Progressive rate limiting - duration increases with each lockout
   private recordFailedAttempt(): void {
     this.loginAttempts++;
     if (this.loginAttempts >= this.MAX_ATTEMPTS) {
-      this.lockoutUntil = Date.now() + this.LOCKOUT_DURATION;
+      // Get current lockout count
+      const storedCount = localStorage.getItem(this.LOCKOUT_COUNT_KEY);
+      const lockoutCount = storedCount ? parseInt(storedCount) : 0;
+      
+      // Progressive lockout: 30s, 60s, 120s, 300s (max 5 minutes)
+      const lockoutDuration = Math.min(
+        this.LOCKOUT_DURATION_BASE * Math.pow(2, lockoutCount),
+        this.MAX_LOCKOUT_DURATION
+      );
+      
+      this.lockoutUntil = Date.now() + lockoutDuration;
       localStorage.setItem(this.LOCKOUT_STORAGE_KEY, this.lockoutUntil.toString());
-      this.loginAttempts = 0;
+      localStorage.setItem(this.LOCKOUT_COUNT_KEY, (lockoutCount + 1).toString());
+      
+      this.loginAttempts = 0; // Reset counter after lockout
+    } else {
+      // Store attempt count for tracking (optional - can be used for analytics)
+      localStorage.setItem(`vault_attempts_${Date.now()}`, JSON.stringify({ 
+        count: this.loginAttempts,
+        timestamp: Date.now()
+      }));
     }
   }
 
@@ -357,7 +356,6 @@ export class StorageService {
   // Unlock vault with master password (with rate limiting)
   async unlockVault(masterPassword: string): Promise<boolean> {
     try {
-      // Check rate limiting lockout
       const lockoutStatus = this.isLockedOut();
       if (lockoutStatus.locked) {
         throw new Error(`Too many failed attempts. Try again in ${lockoutStatus.remainingSeconds} seconds.`);
@@ -465,21 +463,17 @@ export class StorageService {
     try {
       const inputCount = entries.length;
       
-      // Validate and sanitize each entry before saving
       const filteredEntries = entries.filter((entry) => {
-        // Basic validation - id and accountName are always required
         if (!entry || typeof entry.id !== "string" || typeof entry.accountName !== "string") {
           devWarn("Entry filtered out - missing id or accountName", entry?.accountName);
           return false;
         }
         
-        // For secure notes, username and password can be empty strings
         const isSecureNote = entry.entryType === "secure_note";
         if (isSecureNote) {
-          return true; // Secure notes just need id and accountName
+          return true;
         }
         
-        // For password entries, require username and password to be strings (can be empty for drafts)
         const valid = typeof entry.username === "string" && typeof entry.password === "string";
         if (!valid) {
           devWarn("Entry filtered out - invalid username/password type", entry?.accountName);
@@ -544,14 +538,11 @@ export class StorageService {
         }
       }
 
-      // Fallback: localStorage with encryption (for web version or if Electron fails)
-      // Create backup before saving new data
       const currentData = localStorage.getItem("password_entries_v2");
       if (currentData) {
         localStorage.setItem("password_entries_v2_backup", currentData);
       }
 
-      // Use safe storage with quota handling
       const { safeSetItem } = await import("./storageQuotaHandler");
       const saveResult = await safeSetItem("password_entries_v2", encryptedData);
       
@@ -811,6 +802,211 @@ export class StorageService {
       .join("\n");
 
     return csvContent;
+  }
+
+  /**
+   * Export vault data as PDF format (polished, shareable document)
+   * 
+   * Creates a professional PDF document with all vault entries, organized by category.
+   * Includes header, table of contents, and formatted entry details.
+   * 
+   * @returns Promise resolving to PDF blob data URL
+   * @throws Error if vault is locked
+   */
+  async exportPDF(ownerName?: string, ownerEmail?: string): Promise<string> {
+    if (!this.encryption.isUnlocked()) {
+      throw new Error("Vault is locked. Please unlock vault first.");
+    }
+
+    const entries = await this.loadEntries();
+    
+    const { jsPDF } = await import('jspdf');
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    });
+
+    const primaryColor = [74, 111, 165];
+    const accentColor = [201, 174, 102];
+    const textColor = [30, 41, 59];
+    const lightGray = [241, 245, 249];
+    const watermarkColor = [200, 200, 200, 0.1];
+
+    let yPosition = 20;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 20;
+    const contentWidth = pageWidth - (margin * 2);
+
+    const addWatermark = () => {
+      doc.setTextColor(200, 200, 200);
+      doc.setFontSize(57);
+      doc.setFont('helvetica', 'bold');
+      doc.text('CONFIDENTIAL', pageWidth / 2, pageHeight / 2, {
+        align: 'center',
+        angle: 45,
+      });
+    };
+
+    const checkPageBreak = (requiredSpace: number) => {
+      if (yPosition + requiredSpace > pageHeight - margin) {
+        doc.addPage();
+        addWatermark();
+        yPosition = margin;
+        return true;
+      }
+      return false;
+    };
+
+    addWatermark();
+
+    doc.setFillColor(...primaryColor);
+    doc.rect(0, 0, pageWidth, 50, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Password Vault Export', margin, 30);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Generated: ${new Date().toLocaleString()}`, margin, 40);
+    doc.text(`Total Entries: ${entries.length}`, pageWidth - margin - 40, 40, { align: 'right' });
+
+    if (ownerName || ownerEmail) {
+      const ownerInfo = [ownerName, ownerEmail].filter(Boolean).join(' • ');
+      doc.setFontSize(9);
+      doc.text(`Owner: ${ownerInfo}`, margin, 48);
+    }
+
+    yPosition = 60;
+
+    // Table of Contents (if multiple categories)
+    const categories = Array.from(new Set(entries.map(e => e.category)));
+    if (categories.length > 1) {
+      checkPageBreak(20);
+      doc.setTextColor(...textColor);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Table of Contents', margin, yPosition);
+      yPosition += 10;
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      categories.forEach((category, index) => {
+        const count = entries.filter(e => e.category === category).length;
+        doc.text(`${index + 1}. ${category.charAt(0).toUpperCase() + category.slice(1)} (${count} entries)`, margin + 5, yPosition);
+        yPosition += 6;
+      });
+      yPosition += 10;
+    }
+
+    // Group entries by category
+    const entriesByCategory = categories.reduce((acc, category) => {
+      acc[category] = entries.filter(e => e.category === category);
+      return acc;
+    }, {} as Record<string, typeof entries>);
+
+    // Generate content for each category
+    categories.forEach((category, categoryIndex) => {
+      const categoryEntries = entriesByCategory[category];
+      
+      // Category header
+      checkPageBreak(30);
+      if (categoryIndex > 0) {
+        yPosition += 10;
+      }
+
+      doc.setFillColor(...lightGray);
+      doc.roundedRect(margin, yPosition - 8, contentWidth, 12, 2, 2, 'F');
+      
+      doc.setTextColor(...primaryColor);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text(category.charAt(0).toUpperCase() + category.slice(1), margin + 5, yPosition);
+
+      yPosition += 15;
+
+      // Entries table
+      categoryEntries.forEach((entry, entryIndex) => {
+        checkPageBreak(35);
+
+        // Entry card background
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(200, 200, 200);
+        doc.roundedRect(margin, yPosition - 5, contentWidth, 30, 2, 2, 'FD');
+
+        // Account name
+        doc.setTextColor(...textColor);
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text(entry.accountName, margin + 5, yPosition + 5);
+
+        // Username
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 100, 100);
+        doc.text('Username:', margin + 5, yPosition + 12);
+        doc.setTextColor(...textColor);
+        doc.text(entry.username || 'N/A', margin + 30, yPosition + 12);
+
+        // Password (masked for security)
+        doc.setTextColor(100, 100, 100);
+        doc.text('Password:', margin + 5, yPosition + 18);
+        doc.setTextColor(...textColor);
+        const maskedPassword = '•'.repeat(Math.min(entry.password.length, 20));
+        doc.text(maskedPassword, margin + 30, yPosition + 18);
+
+        // Category and dates
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text(`Category: ${entry.category}`, margin + 5, yPosition + 24);
+        doc.text(`Updated: ${entry.updatedAt.toLocaleDateString()}`, margin + contentWidth - 60, yPosition + 24);
+
+        // Notes (if present)
+        if (entry.notes && entry.notes.trim()) {
+          checkPageBreak(10);
+          doc.setFontSize(8);
+          doc.setTextColor(100, 100, 100);
+          const notesLines = doc.splitTextToSize(`Notes: ${entry.notes}`, contentWidth - 10);
+          doc.text(notesLines, margin + 5, yPosition + 30);
+          yPosition += notesLines.length * 4;
+        }
+
+        yPosition += 35;
+      });
+    });
+
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      
+      addWatermark();
+      
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      const footerText = ownerName 
+        ? `Page ${i} of ${pageCount} - ${ownerName} - Local Password Vault Export`
+        : `Page ${i} of ${pageCount} - Local Password Vault Export`;
+      doc.text(
+        footerText,
+        pageWidth / 2,
+        pageHeight - 10,
+        { align: 'center' }
+      );
+      
+      doc.setFontSize(7);
+      doc.setTextColor(180, 180, 180);
+      doc.text(
+        'CONFIDENTIAL - For authorized use only',
+        pageWidth / 2,
+        pageHeight - 5,
+        { align: 'center' }
+      );
+    }
+
+    return doc.output('dataurlstring');
   }
 
   /**

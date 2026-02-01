@@ -187,7 +187,7 @@ export const VaultEmptyState: React.FC<EmptyStateProps> = ({
   // Category empty state
   if (type === "category" && categoryName) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center pb-24">
+      <div className="flex flex-col items-center justify-center h-full text-center pb-6">
         <Key 
           className="w-10 h-10 mb-4" 
           strokeWidth={1.5} 
@@ -196,9 +196,6 @@ export const VaultEmptyState: React.FC<EmptyStateProps> = ({
         <h3 style={{ color: colors.warmIvory }} className="font-medium mb-1">
           No {categoryName} accounts yet
         </h3>
-        <p className="text-slate-500 text-sm mb-4">
-          Add your first {categoryName.toLowerCase()} account
-        </p>
         <button
           onClick={onAddAccount}
           className="px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 bouncy-card-clickable"

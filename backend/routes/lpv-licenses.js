@@ -506,7 +506,7 @@ router.post('/trial/activate', async (req, res) => {
       });
     }
     
-    // Detect product type from trial key prefix (LLVT = LLV, TRIA = LPV)
+    // Detect product type from trial key prefix (LLVT = LLV, LPVT = LPV)
     // Also check trial.product_type if available in database, otherwise detect from key
     let detectedProductType = 'lpv';
     if (trial.product_type) {

@@ -7,6 +7,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Smartphone, Clock, Plus, Trash2, Info, Shield, X } from "lucide-react";
 import { mobileService, MobileAccessToken } from "../utils/mobileService";
+import { storageService } from "../utils/storage";
 import { devError, devWarn } from "../utils/devLog";
 
 // QRCode library type (optional dependency)
@@ -92,6 +93,18 @@ export const MobileAccess = ({ onClose }: MobileAccessProps) => {
 
   const handleCreateToken = async () => {
     try {
+      // Check if vault is unlocked
+      if (!storageService.isVaultUnlocked()) {
+        setError("Please unlock your vault first before creating a mobile access token.");
+        return;
+      }
+
+      // Get current entries from storage to share with mobile viewer
+      const entries = await storageService.loadEntries();
+      if (entries && entries.length > 0) {
+        mobileService.shareEntriesForMobile(entries);
+      }
+
       const deviceInfo = mobileService.getDeviceInfo();
       await mobileService.generateAccessToken(
         newTokenDuration,

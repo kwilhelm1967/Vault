@@ -550,7 +550,7 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
         {/* Category Quick Filters */}
         {/* Source of truth: src/utils/storage.ts FIXED_CATEGORIES (8 total: all, banking, shopping, entertainment, email, work, business, other) */}
         {/* No filtering, no "More" bucket - all categories are always visible */}
-        <div className="p-2 border-b border-slate-700 relative z-10">
+        <div className="pb-2 px-2 pt-1 border-b border-slate-700 relative z-10">
           <div className="flex space-x-1 overflow-x-auto">
             {categories.map((category) => (
               <button
@@ -559,11 +559,15 @@ export const FloatingPanel: React.FC<FloatingPanelProps> = ({
                 className={`flex items-center space-x-1 px-2 py-1 rounded text-xs whitespace-nowrap transition-all ${
                   selectedCategory === category.id
                     ? "bg-blue-600 text-white"
-                    : "bg-slate-800/50 text-slate-300 hover:bg-slate-700/50"
+                    : "bg-slate-800/50 text-white hover:bg-[#C9AE66]/20 hover:border-[#C9AE66]/50 border border-transparent"
                 }`}
+                style={{
+                  fontSize: "15px",
+                  color: "#FFFFFF",
+                }}
               >
-                <CategoryIcon name={category.icon} size={12} />
-                <span>{category.name}</span>
+                <CategoryIcon name={category.icon} size={12} style={{ color: "#C9AE66" }} />
+                <span style={{ color: "#FFFFFF" }}>{category.name}</span>
               </button>
             ))}
           </div>

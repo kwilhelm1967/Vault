@@ -1,61 +1,33 @@
-// ==================== React Imports ====================
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
-
-// ==================== Type Imports ====================
 import type { PasswordEntry, Category, RawPasswordEntry } from "./types";
 import type { AppLicenseStatus } from "./utils/licenseService";
 import type { WarningPopupState } from "./utils/trialService";
-
-// ==================== Config Imports ====================
 import { features } from "./config/environment";
-
-// ==================== Utils Imports ====================
 import { storageService, FIXED_CATEGORIES } from "./utils/storage";
 import { importService } from "./utils/importService";
 import { devError, devWarn } from "./utils/devLog";
 import { licenseService } from "./utils/licenseService";
 import { trialService } from "./utils/trialService";
-
-// ==================== Hooks Imports ====================
-import {
-  useElectron,
-  useAppStatus,
-  useVaultData,
-  useDarkTheme,
-  useFloatingMode,
-  useVaultStatusSync,
-} from "./hooks";
-
-// ==================== Component Hooks (Direct Imports) ====================
+import { useElectron, useAppStatus, useVaultData, useDarkTheme, useFloatingMode, useVaultStatusSync } from "./hooks";
 import { useNotification, Notification } from "./components/Notification";
 import { useWhatsNew } from "./components/WhatsNewModal";
 import { useOnboarding } from "./components/OnboardingTutorial";
 import { useKeyboardShortcuts } from "./components/KeyboardShortcutsModal";
 import { useSecurityBriefing } from "./components/SecurityBriefing";
 import { SkipLink } from "./components/accessibility";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
-// ==================== Lazy-Loaded Core Components ====================
 const LoginScreen = lazy(() => import("./components/LoginScreen").then(m => ({ default: m.LoginScreen })));
 const LicenseScreen = lazy(() => import("./components/LicenseScreen").then(m => ({ default: m.LicenseScreen })));
 const MainVault = lazy(() => import("./components/MainVault").then(m => ({ default: m.MainVault })));
 const OfflineIndicator = lazy(() => import("./components/OfflineIndicator").then(m => ({ default: m.OfflineIndicator })));
-
-// ==================== Lazy-Loaded License Components ====================
 const LicenseTransferDialog = lazy(() => import("./components/LicenseTransferDialog").then(m => ({ default: m.LicenseTransferDialog })));
 const LicenseKeyDisplay = lazy(() => import("./components/LicenseKeyDisplay").then(m => ({ default: m.LicenseKeyDisplay })));
-
-// ==================== Lazy-Loaded Floating Panel Components ====================
 const FloatingPanel = lazy(() => import("./components/FloatingPanel").then(m => ({ default: m.FloatingPanel })));
 const ElectronFloatingPanel = lazy(() => import("./components/ElectronFloatingPanel").then(m => ({ default: m.ElectronFloatingPanel })));
-
-// ==================== Lazy-Loaded Trial Components ====================
 const TrialWarningPopup = lazy(() => import("./components/TrialWarningPopup").then(m => ({ default: m.TrialWarningPopup })));
-
-// ==================== Lazy-Loaded Page Components ====================
 const DownloadPage = lazy(() => import("./components/DownloadPage").then(m => ({ default: m.DownloadPage })));
 const PurchaseSuccessPage = lazy(() => import("./components/PurchaseSuccessPage").then(m => ({ default: m.PurchaseSuccessPage })));
-
-// ==================== Lazy-Loaded UI Components ====================
 const UndoToast = lazy(() => import("./components/UndoToast").then(m => ({ default: m.UndoToast })));
 
 // ==================== Lazy-Loaded Modal Components ====================
@@ -63,6 +35,8 @@ const WhatsNewModal = lazy(() => import("./components/WhatsNewModal").then(m => 
 const OnboardingTutorial = lazy(() => import("./components/OnboardingTutorial").then(m => ({ default: m.OnboardingTutorial })));
 const KeyboardShortcutsModal = lazy(() => import("./components/KeyboardShortcutsModal").then(m => ({ default: m.KeyboardShortcutsModal })));
 const SecurityBriefing = lazy(() => import("./components/SecurityBriefing").then(m => ({ default: m.SecurityBriefing })));
+const AdminPortal = lazy(() => import("./components/AdminPortal").then(m => ({ default: m.AdminPortal })));
+const MobileViewer = lazy(() => import("./components/MobileViewer").then(m => ({ default: m.MobileViewer })));
 
 // Simple loading fallback
 const LoadingFallback = () => (
@@ -105,7 +79,9 @@ const useEntryManagement = (
   isElectron: boolean,
   saveSharedEntries?: (entries: PasswordEntry[]) => Promise<boolean>,
   broadcastEntriesChanged?: () => Promise<boolean>,
-  onEntryDeleted?: (entry: PasswordEntry) => void
+  onEntryDeleted?: (entry: PasswordEntry) => void,
+  updateAppStatus?: () => void,
+  notify?: (message: string, type?: 'success' | 'error' | 'info') => void
 ) => {
   const broadcastChange = useCallback(async () => {
     if (isElectron && broadcastEntriesChanged) {
@@ -116,6 +92,13 @@ const useEntryManagement = (
   const handleAddEntry = useCallback(async (
     entryData: Omit<PasswordEntry, "id" | "createdAt" | "updatedAt">
   ) => {
+    // Validate license before allowing entry creation
+    const isValid = await licenseService.validateForCriticalOperation();
+    if (!isValid && updateAppStatus) {
+      updateAppStatus();
+      throw new Error("License validation failed. Please activate a valid license.");
+    }
+
     // Validate required fields based on entry type
     const isSecureNote = entryData.entryType === "secure_note";
     
@@ -176,9 +159,16 @@ const useEntryManagement = (
       // Re-throw so the form knows the save failed
       throw error;
     }
-  }, [entries, setEntries, broadcastChange, isElectron, saveSharedEntries]);
+  }, [entries, setEntries, broadcastChange, isElectron, saveSharedEntries, updateAppStatus]);
 
   const handleUpdateEntry = useCallback(async (updatedEntry: PasswordEntry) => {
+    // Validate license before allowing entry updates
+    const isValid = await licenseService.validateForCriticalOperation();
+    if (!isValid && updateAppStatus) {
+      updateAppStatus();
+      throw new Error("License validation failed. Please activate a valid license.");
+    }
+
     const updatedEntries = entries.map((entry) =>
       entry.id === updatedEntry.id
         ? { ...updatedEntry, updatedAt: new Date() }
@@ -213,9 +203,16 @@ const useEntryManagement = (
       setEntries(entries); // Rollback on error
       throw error;
     }
-  }, [entries, setEntries, broadcastChange, isElectron, saveSharedEntries]);
+  }, [entries, setEntries, broadcastChange, isElectron, saveSharedEntries, updateAppStatus]);
 
   const handleDeleteEntry = useCallback(async (id: string) => {
+    // Validate license before allowing entry deletion
+    const isValid = await licenseService.validateForCriticalOperation();
+    if (!isValid && updateAppStatus) {
+      updateAppStatus();
+      throw new Error("License validation failed. Please activate a valid license.");
+    }
+
     const deletedEntry = entries.find((entry) => entry.id === id);
     const updatedEntries = entries.filter((entry) => entry.id !== id);
     setEntries(updatedEntries);
@@ -249,8 +246,11 @@ const useEntryManagement = (
     } catch (error) {
       devError("Failed to delete entry:", error);
       setEntries(entries); // Rollback on error
+      if (notify) {
+        notify("Failed to delete entry. Please try again.", "error");
+      }
     }
-  }, [entries, setEntries, broadcastChange, isElectron, saveSharedEntries, onEntryDeleted]);
+  }, [entries, setEntries, broadcastChange, isElectron, saveSharedEntries, onEntryDeleted, updateAppStatus, notify]);
 
   // Restore a deleted entry (for undo)
   const handleRestoreEntry = useCallback(async (entry: PasswordEntry) => {
@@ -276,13 +276,39 @@ const useEntryManagement = (
     } catch (error) {
       devError("Failed to restore entry:", error);
       setEntries(entries);
+      if (notify) {
+        notify("Failed to restore entry. Please try again.", "error");
+      }
     }
-  }, [entries, setEntries, broadcastChange, isElectron, saveSharedEntries]);
+  }, [entries, setEntries, broadcastChange, isElectron, saveSharedEntries, notify]);
 
   return { handleAddEntry, handleUpdateEntry, handleDeleteEntry, handleRestoreEntry };
 };
 
 function App() {
+  // Detect app type: Legacy Vault (port 5174) vs Password Vault (port 5173)
+  const getAppType = (): boolean => {
+    if (typeof window !== 'undefined') {
+      const port = window.location.port || '';
+      if (port === '5174') {
+        return true; // Legacy Vault
+      }
+      if (port === '5173') {
+        return false; // Password Vault
+      }
+    }
+    // Fallback: Check Vite environment variables
+    const viteAppType = import.meta.env.VITE_APP_TYPE;
+    const viteMode = import.meta.env.MODE;
+    if (viteAppType === 'llv' || viteMode === 'llv') {
+      return true; // Legacy Vault
+    }
+    // Default: Password Vault
+    return false;
+  };
+  
+  const isLLV = getAppType();
+
   const urlParams = new URLSearchParams(window.location.search);
   const pathname = window.location.pathname;
   const hasSessionId = urlParams.get('session_id');
@@ -297,7 +323,23 @@ function App() {
   if ((hasSessionId || isPurchaseSuccessPath) || (hasKey && !isStaticHtmlFile)) {
     return (
       <Suspense fallback={<LoadingFallback />}>
-        <PurchaseSuccessPage />
+        <ErrorBoundary>
+          <PurchaseSuccessPage />
+        </ErrorBoundary>
+      </Suspense>
+    );
+  }
+
+  // Mobile viewer route - /mobile?token=xxx
+  const isMobilePath = pathname === '/mobile' || pathname.includes('/mobile');
+  const mobileToken = urlParams.get('token');
+  
+  if (isMobilePath && mobileToken) {
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <ErrorBoundary>
+          <MobileViewer token={mobileToken} />
+        </ErrorBoundary>
       </Suspense>
     );
   }
@@ -313,6 +355,8 @@ function App() {
   const [showPricingPlans, setShowPricingPlans] = useState(false);
   const [showDownloadPage, setShowDownloadPage] = useState(false);
   const [showLicenseKeys, setShowLicenseKeys] = useState(features.showTestingTools);
+  const [showAdminPortal, setShowAdminPortal] = useState(false);
+  const adminPortalEnabled = (import.meta.env.VITE_ADMIN_PORTAL_ENABLED ?? "true") === "true";
 
   // Device mismatch check on startup
   const [showStartupTransferDialog, setShowStartupTransferDialog] = useState(false);
@@ -387,22 +431,35 @@ function App() {
       }
     };
 
-    // Defer check to allow initial render
-    const timeoutId = setTimeout(() => {
-      checkDeviceMismatch();
-    }, 200);
-
-    return () => clearTimeout(timeoutId);
+    // Defer check using requestIdleCallback for better performance
+    if ('requestIdleCallback' in window) {
+      const idleId = requestIdleCallback(() => {
+        checkDeviceMismatch();
+      }, { timeout: 500 });
+      return () => cancelIdleCallback(idleId);
+    } else {
+      // Fallback for browsers without requestIdleCallback
+      const timeoutId = setTimeout(() => {
+        checkDeviceMismatch();
+      }, 200);
+      return () => clearTimeout(timeoutId);
+    }
   }, []);
 
-  // Check for security briefing when vault is unlocked
   useEffect(() => {
     if (!isLocked) {
-      // Small delay to let the main UI settle
-      const timer = setTimeout(() => {
-        checkBriefing();
-      }, 300);
-      return () => clearTimeout(timer);
+      // Defer briefing check to avoid blocking render
+      if ('requestIdleCallback' in window) {
+        const idleId = requestIdleCallback(() => {
+          checkBriefing();
+        }, { timeout: 300 });
+        return () => cancelIdleCallback(idleId);
+      } else {
+        const timer = setTimeout(() => {
+          checkBriefing();
+        }, 300);
+        return () => clearTimeout(timer);
+      }
     }
   }, [isLocked, checkBriefing]);
 
@@ -419,7 +476,7 @@ function App() {
     }
   }, []);
 
-  // Setup warning popup monitoring
+  // Setup warning popup monitoring and periodic license validation
   useEffect(() => {
     // Add warning popup callback
     trialService.addWarningPopupCallback(handleWarningPopup);
@@ -427,9 +484,75 @@ function App() {
     // Check warning popups every 10 seconds
     const checkInterval = 10000;
 
-    const warningInterval = setInterval(async () => {
-      await trialService.checkWarningPopups();
-    }, checkInterval);
+    // Use requestIdleCallback for non-critical periodic checks
+    let warningIntervalId: number | null = null;
+    let warningIdleId: number | null = null;
+    
+    const scheduleWarningCheck = () => {
+      if ('requestIdleCallback' in window) {
+        warningIdleId = requestIdleCallback(async () => {
+          await trialService.checkWarningPopups();
+          setTimeout(scheduleWarningCheck, checkInterval);
+        }, { timeout: checkInterval }) as unknown as number;
+      } else {
+        // Fallback to setInterval
+        warningIntervalId = setInterval(async () => {
+          await trialService.checkWarningPopups();
+        }, checkInterval) as unknown as number;
+      }
+    };
+    scheduleWarningCheck();
+
+    // Periodic license validation to prevent unauthorized sharing
+    // Validates license every 5 minutes to catch device mismatches
+    // NOTE: This is 100% OFFLINE - no network calls, only local validation
+    // Use requestIdleCallback to avoid blocking main thread
+    let licenseIntervalId: number | null = null;
+    let licenseIdleId: number | null = null;
+    
+    const scheduleLicenseCheck = () => {
+      const licenseCheckInterval = 300000; // 5 minutes
+      if ('requestIdleCallback' in window) {
+        licenseIdleId = requestIdleCallback(async () => {
+          try {
+            // getAppStatus() is fully offline - only reads from localStorage
+            const status = await licenseService.getAppStatus();
+            if (!status.canUseApp && !isLocked) {
+              // License became invalid - force re-check and show license screen
+              updateAppStatus();
+            } else if (status.isLicensed) {
+              // validateForCriticalOperation() is fully offline - only validates local license file
+              const isValid = await licenseService.validateForCriticalOperation();
+              if (!isValid) {
+                // Device mismatch detected - force license screen
+                updateAppStatus();
+              }
+            }
+          } catch (error) {
+            devError('Periodic license validation failed:', error);
+          }
+          setTimeout(scheduleLicenseCheck, licenseCheckInterval);
+        }, { timeout: licenseCheckInterval }) as unknown as number;
+      } else {
+        // Fallback to setInterval
+        licenseIntervalId = setInterval(async () => {
+          try {
+            const status = await licenseService.getAppStatus();
+            if (!status.canUseApp && !isLocked) {
+              updateAppStatus();
+            } else if (status.isLicensed) {
+              const isValid = await licenseService.validateForCriticalOperation();
+              if (!isValid) {
+                updateAppStatus();
+              }
+            }
+          } catch (error) {
+            devError('Periodic license validation failed:', error);
+          }
+        }, licenseCheckInterval) as unknown as number;
+      }
+    };
+    scheduleLicenseCheck();
 
     // Defer initial check to avoid blocking render
     const initialCheckTimeout = setTimeout(() => {
@@ -439,7 +562,14 @@ function App() {
     return () => {
       clearTimeout(initialCheckTimeout);
       trialService.removeWarningPopupCallback(handleWarningPopup);
-      if (warningInterval) clearInterval(warningInterval);
+      if (warningIntervalId !== null) clearInterval(warningIntervalId);
+      if (warningIdleId !== null && 'cancelIdleCallback' in window) {
+        cancelIdleCallback(warningIdleId);
+      }
+      if (licenseIntervalId !== null) clearInterval(licenseIntervalId);
+      if (licenseIdleId !== null && 'cancelIdleCallback' in window) {
+        cancelIdleCallback(licenseIdleId);
+      }
     };
   }, [handleWarningPopup]);
 
@@ -467,7 +597,9 @@ function App() {
     isElectron,
     saveSharedEntries,
     broadcastEntriesChanged,
-    handleEntryDeleted
+    handleEntryDeleted,
+    updateAppStatus,
+    notify
   );
   
   const handleUndoDelete = useCallback(() => {
@@ -514,9 +646,11 @@ function App() {
       }
       
       const timeout = getAutoLockTimeout();
-      if (timeout > 0) {
+      if (timeout > 0 && isMounted) {
         timeoutId = setTimeout(() => {
-          handleLock();
+          if (isMounted) {
+            handleLock();
+          }
         }, timeout);
       }
     };
@@ -563,6 +697,7 @@ function App() {
     resetTimer();
     
     return () => {
+      isMounted = false; // Mark as unmounted
       if (timeoutId) clearTimeout(timeoutId);
       if (throttleTimer) clearTimeout(throttleTimer);
       activityEvents.forEach(event => {
@@ -582,7 +717,6 @@ function App() {
             await window.electronAPI.vaultUnlocked();
           } catch (error) {
             devError('Failed to notify Electron of vault unlock:', error);
-            // Don't throw - initialization was successful, just notification failed
           }
         }
         return;
@@ -596,7 +730,6 @@ function App() {
             await window.electronAPI.vaultUnlocked();
           } catch (error) {
             devError('Failed to notify Electron of vault unlock:', error);
-            // Don't throw - unlock was successful, just notification failed
           }
         }
       } else {
@@ -625,6 +758,46 @@ function App() {
     } catch (error) {
       devError("Export failed:", error);
       notify.error("Failed to export data. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
+  }, [notify]);
+
+  const handleExportPDF = useCallback(async () => {
+    setIsExporting(true);
+    try {
+      let ownerName: string | undefined;
+      let ownerEmail: string | undefined;
+      
+      try {
+        const licenseInfo = await licenseService.getLicenseInfo();
+        if (licenseInfo?.customerEmail) {
+          ownerEmail = licenseInfo.customerEmail;
+        }
+      } catch {
+        // License info not available, continue without it
+      }
+      
+      const pdfDataUrl = await storageService.exportPDF(ownerName, ownerEmail);
+      
+      const response = await fetch(pdfDataUrl);
+      const blob = await response.blob();
+      
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const filename = ownerName 
+        ? `password-vault-export-${ownerName.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${new Date().toISOString().split("T")[0]}.pdf`
+        : `password-vault-export-${new Date().toISOString().split("T")[0]}.pdf`;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      notify.success("PDF exported successfully!");
+    } catch (error) {
+      devError("PDF export failed:", error);
+      notify.error("Failed to export PDF. Please try again.");
     } finally {
       setIsExporting(false);
     }
@@ -807,11 +980,12 @@ function App() {
     onCategoryChange: setSelectedCategory,
     onLock: handleLock,
     onExport: handleExport,
+    onExportPDF: handleExportPDF,
     onExportEncrypted: handleExportEncrypted,
     onImport: handleImport,
     onImportEncrypted: handleImportEncrypted,
     onEntriesReload: handleEntriesReload,
-  }), [entries, handleAddEntry, handleUpdateEntry, handleDeleteEntry, searchTerm, selectedCategory, handleLock, handleExport, handleExportEncrypted, handleImport, handleImportEncrypted, handleEntriesReload]);
+  }), [entries, handleAddEntry, handleUpdateEntry, handleDeleteEntry, searchTerm, selectedCategory, handleLock, handleExport, handleExportPDF, handleExportEncrypted, handleImport, handleImportEncrypted, handleEntriesReload]);
 
   const mainVaultProps = useMemo(() => ({
     ...floatingPanelProps,
@@ -864,7 +1038,16 @@ function App() {
   
   // If loading timed out or finished without status, show license screen
   if (!appStatus && (loadingTimeout || !isLoading)) {
-    return <LicenseScreen />;
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <LicenseScreen
+          onLicenseValid={updateAppStatus}
+          showPricingPlans={false}
+          onHidePricingPlans={() => {}}
+          appStatus={appStatus || { isLicensed: false, trialInfo: { hasTrial: false } }}
+        />
+      </Suspense>
+    );
   }
   
   // If loading failed or timed out, show license screen
@@ -872,7 +1055,12 @@ function App() {
     // Force show license screen if status check failed
     return (
       <Suspense fallback={<LoadingFallback />}>
-        <LicenseScreen />
+        <LicenseScreen
+          onLicenseValid={updateAppStatus}
+          showPricingPlans={false}
+          onHidePricingPlans={() => {}}
+          appStatus={appStatus || { isLicensed: false, trialInfo: { hasTrial: false } }}
+        />
       </Suspense>
     );
   }
@@ -909,8 +1097,9 @@ function App() {
 
     return (
       <Suspense fallback={<LoadingFallback />}>
-        <div className="bg-slate-900">
-          <ElectronFloatingPanel
+        <ErrorBoundary>
+          <div className="bg-slate-900">
+            <ElectronFloatingPanel
             key={`floating-panel-${entries.length}`}
             {...floatingPanelProps}
             onMaximize={async () => {
@@ -922,7 +1111,8 @@ function App() {
               }
             }}
           />
-        </div>
+          </div>
+        </ErrorBoundary>
       </Suspense>
     );
   }
@@ -950,12 +1140,14 @@ function App() {
   if (requiresLicense) {
     return (
       <Suspense fallback={<LoadingFallback />}>
-        <LicenseScreen
-          onLicenseValid={updateAppStatus}
-          showPricingPlans={showPricingPlans}
-          onHidePricingPlans={() => setShowPricingPlans(false)}
-          appStatus={appStatus}
-        />
+        <ErrorBoundary>
+          <LicenseScreen
+            onLicenseValid={updateAppStatus}
+            showPricingPlans={showPricingPlans}
+            onHidePricingPlans={() => setShowPricingPlans(false)}
+            appStatus={appStatus}
+          />
+        </ErrorBoundary>
       </Suspense>
     );
   }
@@ -963,15 +1155,17 @@ function App() {
   if (showDownloadPage) {
     return (
       <Suspense fallback={<LoadingFallback />}>
-        <div className="relative">
-          <DownloadPage />
+        <ErrorBoundary>
+          <div className="relative">
+            <DownloadPage />
           <button
             onClick={toggleDownloadPage}
             className="fixed top-4 left-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-all flex items-center space-x-2"
           >
             <span>Back to Vault</span>
           </button>
-        </div>
+          </div>
+        </ErrorBoundary>
       </Suspense>
     );
   }
@@ -992,7 +1186,9 @@ function App() {
 
     return (
       <Suspense fallback={<LoadingFallback />}>
-        <LoginScreen onLogin={handleLogin} />
+        <ErrorBoundary>
+          <LoginScreen onLogin={handleLogin} />
+        </ErrorBoundary>
       </Suspense>
     );
   }
@@ -1069,10 +1265,12 @@ function App() {
       {showMainVault && (
         <div id="main-content" tabIndex={-1}>
           <Suspense fallback={<LoadingFallback />}>
-            <MainVault
-              key={`main-vault-${entries.length}`}
-              {...mainVaultProps}
-            />
+            <ErrorBoundary>
+              <MainVault
+                key={`main-vault-${entries.length}`}
+                {...mainVaultProps}
+              />
+            </ErrorBoundary>
           </Suspense>
         </div>
       )}
@@ -1091,7 +1289,8 @@ function App() {
       {/* Device Mismatch Dialog (Startup Check) */}
       {showStartupTransferDialog && (
         <Suspense fallback={null}>
-          <LicenseTransferDialog
+          <ErrorBoundary>
+            <LicenseTransferDialog
             isOpen={showStartupTransferDialog}
             licenseKey={startupTransferKey}
             onConfirmTransfer={async () => {
@@ -1107,14 +1306,24 @@ function App() {
               setShowStartupTransferDialog(false);
               // User cancelled - they'll need to transfer later
             }}
-          />
+            />
+          </ErrorBoundary>
         </Suspense>
       )}
 
       {/* Offline indicator */}
       <Suspense fallback={null}>
-        <OfflineIndicator />
+        <ErrorBoundary>
+          <OfflineIndicator />
+        </ErrorBoundary>
       </Suspense>
+
+      {/* Admin Portal overlay (Ctrl+Shift+A) */}
+      {adminPortalEnabled && showAdminPortal && (
+        <Suspense fallback={null}>
+          <AdminPortal onClose={() => setShowAdminPortal(false)} />
+        </Suspense>
+      )}
 
       {/* Toast notifications */}
       <Notification notification={notification} onDismiss={dismissNotification} />

@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { PasswordEntry, Category, RawPasswordEntry } from "../types";
 import { CategoryIcon } from "./CategoryIcon";
-import { EntryForm } from "./EntryForm";
+import { EntryForm, ENTRY_TEMPLATES } from "./EntryForm";
 import { storageService } from "../utils/storage";
 import { trialService } from "../utils/trialService";
 import { devError } from "../utils/devLog";
@@ -59,6 +59,7 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<PasswordEntry | null>(null);
   const [isTrialExpired, setIsTrialExpired] = useState(false);
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
   // Removed unused positionLoaded state to avoid lint errors
 
   // Function to get trial info from localStorage
@@ -255,10 +256,13 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
       const matchesCategory =
         selectedCategory === "all" || entry.category === selectedCategory;
 
-      // Only category filter is applied
-      return matchesCategory;
+      // Subcategory filter: if a subcategory is selected, filter by template accountName
+      const matchesSubcategory = !selectedSubcategory || 
+        entry.accountName.toLowerCase() === selectedSubcategory.toLowerCase();
+
+      return matchesCategory && matchesSubcategory;
     });
-  }, [entries, selectedCategory]);
+  }, [entries, selectedCategory, selectedSubcategory]);
 
   const favoriteEntries = filteredEntries.filter((entry) =>
     favorites.has(entry.id)
@@ -488,7 +492,7 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
       {/* Compact Category Pills - All categories from FIXED_CATEGORIES displayed in horizontal scrollable row */}
       {/* Source of truth: src/utils/storage.ts FIXED_CATEGORIES (8 total: all, banking, shopping, entertainment, email, work, business, other) */}
       {/* No filtering, no "More" bucket - all categories are always visible */}
-      <div className="p-2 border-b border-slate-700/50 bg-slate-800/20 no-drag relative z-10">
+      <div className="pb-2 px-2 pt-1 border-b border-slate-700/50 bg-slate-800/20 no-drag relative z-10">
         <div
           className="category-pills-scroll flex space-x-1.5 overflow-x-auto pb-1"
           style={{
@@ -499,34 +503,75 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
           {categories.map((category) => (
             <button
               key={category.id}
-              onClick={() => onCategoryChange(category.id)}
+              onClick={() => {
+                onCategoryChange(category.id);
+                // Clear subcategory selection when main category changes
+                setSelectedSubcategory(null);
+              }}
               data-category-button
               className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-full font-medium whitespace-nowrap transition-all duration-200 no-drag border flex-shrink-0 ${selectedCategory === category.id
                   ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white border-blue-400/30 shadow-md"
-                  : "bg-slate-800/60 text-white border-slate-600/40 hover:border-[#C9AE66]/50 hover:bg-slate-700/60"
+                  : "bg-slate-800/60 text-white border-slate-600/40 hover:border-[#C9AE66]/50 hover:bg-[#C9AE66]/20"
                 }`}
               style={{
                 fontSize: "15px",
+                color: "#FFFFFF",
               }}
             >
               <CategoryIcon
                 name={category.icon}
                 size={12}
                 style={{
-                  color: selectedCategory === category.id ? "#FFFFFF" : "#C9AE66",
+                  color: "#C9AE66",
                 }}
-                className={
-                  selectedCategory === category.id
-                    ? ""
-                    : ""
-                }
               />
-              <span className="max-w-[60px] truncate">{category.name}</span>
+              <span className="max-w-[60px] truncate" style={{ color: "#FFFFFF" }}>{category.name}</span>
             </button>
           ))}
         </div>
         {/* Subtle fade gradient on the right edge */}
         <div className="absolute right-2 top-0 bottom-0 w-4 bg-gradient-to-l from-slate-800/20 to-transparent pointer-events-none"></div>
+      </div>
+
+      {/* Subcategory Pills - All templates from ENTRY_TEMPLATES displayed in horizontal scrollable row */}
+      {/* Source of truth: src/components/EntryForm.tsx ENTRY_TEMPLATES (14 total templates as subcategories) */}
+      {/* No filtering, no "More" bucket - all subcategories are always visible with scrolling */}
+      <div className="pb-2 px-2 pt-1 border-b border-slate-700/50 bg-slate-800/10 no-drag relative z-10">
+        <div
+          className="subcategory-pills-scroll flex space-x-1 overflow-x-auto pb-1"
+          style={{
+            scrollbarWidth: "thin",
+            scrollbarColor: "#C9AE66 rgba(71, 85, 105, 0.3)",
+          }}
+        >
+          {ENTRY_TEMPLATES.map((template) => {
+            const isSelected = selectedSubcategory === template.accountName;
+            return (
+              <button
+                key={template.name}
+                onClick={() => {
+                  setSelectedSubcategory(isSelected ? null : template.accountName);
+                  // Also set the category to match the template's category
+                  if (!isSelected && template.category !== selectedCategory) {
+                    onCategoryChange(template.category);
+                  }
+                }}
+                data-subcategory-button
+                className={`flex items-center space-x-1 px-2 py-1 rounded-md font-medium whitespace-nowrap transition-all duration-200 no-drag border flex-shrink-0 text-xs ${
+                  isSelected
+                    ? "bg-gradient-to-r from-amber-600 to-amber-500 text-white border-amber-400/30 shadow-md"
+                    : "bg-slate-800/40 text-slate-300 border-slate-600/30 hover:border-[#C9AE66]/50 hover:bg-slate-700/50"
+                }`}
+                title={template.accountName}
+              >
+                <span className="text-xs">{template.icon}</span>
+                <span className="max-w-[80px] truncate">{template.name}</span>
+              </button>
+            );
+          })}
+        </div>
+        {/* Subtle fade gradient on the right edge */}
+        <div className="absolute right-2 top-0 bottom-0 w-4 bg-gradient-to-l from-slate-800/10 to-transparent pointer-events-none"></div>
       </div>
 
       {/* Enhanced Entries List */}

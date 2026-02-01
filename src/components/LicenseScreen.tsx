@@ -83,113 +83,10 @@ const LicenseScreenComponent: React.FC<LicenseScreenProps> = ({
   onHidePricingPlans,
   appStatus, // Destructure appStatus
 }) => {
-  // Detect app type for LLV mode (for localhost testing)
-  // Initialize immediately based on URL to avoid flash of wrong content
-  const getInitialAppType = (): boolean => {
-    const hostname = window.location.hostname?.toLowerCase() || '';
-    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.') || hostname.startsWith('172.');
-    
-    const urlParams = new URLSearchParams(window.location.search);
-    const appParam = urlParams.get('app');
-    const legacyParam = urlParams.get('legacy');
-    
-    // If explicitly set to LPV, use LPV
-    if (appParam === 'lpv' || appParam === 'password') {
-      return false;
-    }
-    
-    // If explicitly set to LLV, use LLV
-    if (appParam === 'llv' || legacyParam === 'true' || legacyParam === '1') {
-      return true;
-    }
-    
-    // DEFAULT: This is LocalPasswordVault repo, so default to LPV (false)
-    // Only use LLV if explicitly set or detected from Electron app name
-    // DO NOT default to LLV on localhost for this app
-    
-    // Check URL for legacy indicators
-    const pathname = window.location.pathname?.toLowerCase() || '';
-    if (pathname.includes('legacy')) {
-      return true;
-    }
-    
-    return false; // Default to LPV for LocalPasswordVault
-  };
-  
-  const [isLLV, setIsLLV] = useState(getInitialAppType);
-  
+  // Update document title - Password Vault only
   useEffect(() => {
-    const detectAppType = async () => {
-      // Check if we're on localhost - DEFAULT TO LLV FOR LOCALHOST
-      const hostname = window.location.hostname?.toLowerCase() || '';
-      const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.') || hostname.startsWith('172.');
-      
-      // Check URL parameter for LPV mode (override localhost default)
-      const urlParams = new URLSearchParams(window.location.search);
-      const appParam = urlParams.get('app');
-      const legacyParam = urlParams.get('legacy');
-      
-      // If explicitly set to LPV, use LPV
-      if (appParam === 'lpv' || appParam === 'password') {
-        console.log('[LicenseScreen] ✅ DETECTED LPV from URL parameter');
-        setIsLLV(false);
-        document.title = 'Local Password Vault';
-        return;
-      }
-      
-      // If explicitly set to LLV, use LLV
-      if (appParam === 'llv' || legacyParam === 'true' || legacyParam === '1') {
-        console.log('[LicenseScreen] ✅ DETECTED LLV from URL parameter');
-        setIsLLV(true);
-        document.title = 'Local Legacy Vault';
-        return;
-      }
-      
-      // DEFAULT: This is LocalPasswordVault repo, so default to LPV
-      // Only use LLV if explicitly set or detected from Electron app name
-      // DO NOT default to LLV on localhost for this app
-      if (isLocalhost && !appParam && !legacyParam) {
-        console.log('[LicenseScreen] ✅ DETECTED localhost - DEFAULTING TO LPV (LocalPasswordVault)');
-        setIsLLV(false);
-        document.title = 'Local Password Vault';
-        return;
-      }
-      
-      // Check Electron app name
-      if (typeof window !== 'undefined' && window.electronAPI?.getAppName) {
-        try {
-          const appName = await window.electronAPI.getAppName();
-          console.log('[LicenseScreen] Electron app name:', appName);
-          if (appName?.toLowerCase().includes('legacy')) {
-            console.log('[LicenseScreen] ✅ DETECTED LLV from Electron app name');
-            setIsLLV(true);
-            document.title = 'Local Legacy Vault';
-            return;
-          }
-        } catch (error) {
-          console.log('[LicenseScreen] Electron API not available');
-        }
-      }
-      
-      // Check URL for legacy indicators
-      const pathname = window.location.pathname?.toLowerCase() || '';
-      if (pathname.includes('legacy')) {
-        console.log('[LicenseScreen] ✅ DETECTED LLV from URL path');
-        setIsLLV(true);
-        document.title = 'Local Legacy Vault';
-      } else {
-        console.log('[LicenseScreen] ⚠️ No LLV indicators found, defaulting to LPV');
-        setIsLLV(false);
-        document.title = 'Local Password Vault';
-      }
-    };
-    detectAppType();
+    document.title = 'Local Password Vault';
   }, []);
-  
-  // Update document title when isLLV changes
-  useEffect(() => {
-    document.title = isLLV ? 'Local Legacy Vault' : 'Local Password Vault';
-  }, [isLLV]);
   
   const [licenseKey, setLicenseKey] = useState("");
   const [trialKey, setTrialKey] = useState("");
@@ -726,12 +623,14 @@ const LicenseScreenComponent: React.FC<LicenseScreenProps> = ({
     } catch (error) {
       devError("Purchase error:", error);
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("[Purchase] Full error details:", {
-        message: errorMessage,
-        name: error instanceof Error ? error.name : "Unknown",
-        stack: error instanceof Error ? error.stack : undefined,
-        plan,
-      });
+      if (import.meta.env.DEV) {
+        devError("[Purchase] Full error details:", {
+          message: errorMessage,
+          name: error instanceof Error ? error.name : "Unknown",
+          stack: error instanceof Error ? error.stack : undefined,
+          plan,
+        });
+      }
       setError(`Failed to start checkout: ${errorMessage}. Please try again or contact support@localpasswordvault.com`);
     }
   };
@@ -945,7 +844,6 @@ const LicenseScreenComponent: React.FC<LicenseScreenProps> = ({
           isActivating={isActivating}
           error={error}
           onNeedHelp={handleNeedHelp}
-          isLLV={isLLV}
         />
       </>
     );
@@ -1007,16 +905,24 @@ const LicenseScreenComponent: React.FC<LicenseScreenProps> = ({
                 }}
               />
             </div>
+            {/* App Identity Fingerprint Banner - Runtime values only */}
+            <div className="bg-slate-900/80 border border-yellow-500/50 rounded p-2 mb-4 text-xs font-mono text-yellow-400 space-y-0.5">
+              <div>APP_ID: {import.meta.env.VITE_APP_ID || 'UNKNOWN'}</div>
+              <div>MODE: {import.meta.env.MODE || 'UNKNOWN'}</div>
+              <div>PORT: {typeof window !== 'undefined' ? window.location.port || 'UNKNOWN' : 'UNKNOWN'}</div>
+              <div>HOST: {typeof window !== 'undefined' ? window.location.host || 'UNKNOWN' : 'UNKNOWN'}</div>
+            </div>
+            
             <h1 className="text-3xl font-bold text-white mb-2">
-              {isLLV ? "Local Legacy Vault" : "Local Password Vault"}
+              Local Password Vault
             </h1>
-            <p className="text-slate-400">{isLLV ? "Legacy Document & Information Management" : "Local Offline Password Management"}</p>
+            <p className="text-slate-400">Local Offline Password Management</p>
             <p className="text-xs text-slate-500 mt-2">
               by{" "}
               <button
                 onClick={(e) => {
                   e.preventDefault();
-                  const url = isLLV ? "https://locallegacyvault.com" : "https://localpasswordvault.com";
+                  const url = "https://localpasswordvault.com";
                   if (window.electronAPI) {
                     window.electronAPI.openExternal(url);
                   } else {
@@ -1025,7 +931,7 @@ const LicenseScreenComponent: React.FC<LicenseScreenProps> = ({
                 }}
                 className="text-xs text-slate-400 hover:underline cursor-pointer"
               >
-                {isLLV ? "LocalLegacyVault.com" : "LocalPasswordVault.com"}
+                LocalPasswordVault.com
               </button>
             </p>
             
@@ -1234,12 +1140,12 @@ const LicenseScreenComponent: React.FC<LicenseScreenProps> = ({
 
               {/* Right: Trial Key Input */}
               <div className="bg-gradient-to-br from-emerald-900/30 to-teal-900/30 backdrop-blur-sm border border-emerald-500/30 rounded-xl p-6 flex flex-col">
-                <div className="flex items-center space-x-3 mb-6">
-                  <Rocket className="w-6 h-6 text-emerald-400" />
-                  <h2 className="text-xl font-semibold text-white">
-                    7-Day Free Trial
-                  </h2>
-                </div>
+                  <div className="flex items-center space-x-3 mb-6">
+                    <Rocket className="w-6 h-6 text-emerald-400" />
+                    <h2 className="text-xl font-semibold text-white">
+                      7-Day Free Trial
+                    </h2>
+                  </div>
 
                 <div className="space-y-4 flex-1 flex flex-col">
                   <div>
@@ -1321,13 +1227,9 @@ const LicenseScreenComponent: React.FC<LicenseScreenProps> = ({
 
               <div className="grid md:grid-cols-2 gap-4 max-w-4xl mx-auto">
                 {/* Personal Vault */}
-                <div className={`bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6 transition-all ${
-                  isLLV ? "hover:border-amber-500/50" : "hover:border-blue-500/50"
-                }`}>
+                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6 transition-all hover:border-blue-500/50">
                   <div className="text-center mb-6">
-                    <Shield className={`w-12 h-12 mx-auto mb-4 ${
-                      isLLV ? "text-amber-400" : "text-blue-400"
-                    }`} />
+                    <Shield className="w-12 h-12 mx-auto mb-4 text-blue-400" />
                     <h3 className="text-xl font-semibold text-white mb-2">
                       Personal Vault
                     </h3>

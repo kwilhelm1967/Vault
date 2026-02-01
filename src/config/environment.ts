@@ -56,8 +56,9 @@ function validateEnvironment(): void {
   }
 
   if (missing.length > 0 && import.meta.env.DEV) {
-    // eslint-disable-next-line no-console
-    console.warn(`[Config] Missing environment variables: ${missing.join(", ")}. Using defaults.`);
+    import('../utils/devLog').then(({ devWarn }) => {
+      devWarn(`[Config] Missing environment variables: ${missing.join(", ")}. Using defaults.`);
+    }).catch(() => {});
   }
 }
 
@@ -84,8 +85,13 @@ function sanitizeConfig(): Environment {
   );
 
   if (!isValidUrl(licenseServerUrl) && import.meta.env.DEV) {
-    // eslint-disable-next-line no-console
-    console.warn(`[Config] Invalid license server URL: ${licenseServerUrl}. Using default.`);
+    // Use dynamic import to avoid circular dependency
+    import('../utils/devLog').then(({ devWarn }) => {
+      devWarn(`[Config] Invalid license server URL: ${licenseServerUrl}. Using default.`);
+    }).catch(() => {
+      // Fallback if devLog fails
+      console.warn(`[Config] Invalid license server URL: ${licenseServerUrl}. Using default.`);
+    });
   }
 
   return {

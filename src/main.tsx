@@ -7,6 +7,14 @@ import { devLog, devError } from './utils/devLog';
 import './i18n'; // Initialize i18n for localization
 import './index.css';
 
+// Log app identity at startup - runtime values only (dev mode only)
+if (import.meta.env.DEV) {
+  devLog('APP_ID:', import.meta.env.VITE_APP_ID || 'UNKNOWN');
+  devLog('MODE:', import.meta.env.MODE || 'UNKNOWN');
+  devLog('PORT:', location.port || 'UNKNOWN');
+  devLog('HOST:', location.host || 'UNKNOWN');
+}
+
 // NO SENTRY - 100% offline after activation. No data collection from user's app.
 
 // Global unhandled promise rejection handler

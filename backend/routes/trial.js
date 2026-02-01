@@ -54,7 +54,7 @@ router.post('/signup', async (req, res) => {
     
     // Find trial matching the requested product type
     const existingTrial = allTrials?.find(trial => {
-      const trialProductType = trial.product_type || (trial.trial_key?.startsWith('LLVT') ? 'llv' : 'lpv');
+      const trialProductType = trial.product_type || (trial.trial_key?.startsWith('LLVT') ? 'llv' : (trial.trial_key?.startsWith('LPVT') ? 'lpv' : 'lpv'));
       return trialProductType === detectedProductType;
     });
     

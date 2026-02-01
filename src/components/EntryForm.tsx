@@ -68,8 +68,8 @@ const SectionHeader: React.FC<{ title: string }> = ({ title }) => (
   <h3 className="form-section-title">{title}</h3>
 );
 
-// Entry templates for common sites
-interface EntryTemplate {
+// Entry templates for common sites (also serve as subcategories)
+export interface EntryTemplate {
   name: string;
   icon: string;
   accountName: string;
@@ -79,7 +79,8 @@ interface EntryTemplate {
 }
 
 // Categories must match FIXED_CATEGORIES: banking, shopping, entertainment, email, work, business, other
-const ENTRY_TEMPLATES: EntryTemplate[] = [
+// Source of truth for all subcategories - exported for use in other components
+export const ENTRY_TEMPLATES: EntryTemplate[] = [
   { name: "Google", icon: "🔍", accountName: "Google", website: "google.com", category: "email", usernameHint: "your@gmail.com" },
   { name: "Amazon", icon: "📦", accountName: "Amazon", website: "amazon.com", category: "shopping", usernameHint: "your@email.com" },
   { name: "Netflix", icon: "🎬", accountName: "Netflix", website: "netflix.com", category: "entertainment", usernameHint: "your@email.com" },
@@ -459,7 +460,7 @@ export const EntryForm: React.FC<EntryFormProps> = ({
             ].slice(0, 10) // Keep only last 10 passwords
           : entry?.passwordHistory),
         // 2FA secret
-        totpSecret: isSecureNote ? undefined : (formData.totpSecret?.trim() || undefined),
+        totpSecret: isSecureNote ? undefined : formData.totpSecret?.trim(),
         // Custom fields - filter out empty ones
         customFields: customFields.filter(f => f.label.trim() && f.value.trim()).map(f => ({
           ...f,

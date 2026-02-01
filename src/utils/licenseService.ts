@@ -1,16 +1,8 @@
 /**
  * License Service for Local Password Vault
  * 
- * Implements the LPV licensing model:
- * - Single-device activation with transfer capability
- * - Fully offline after initial activation
- * - No user data transmitted, only license key + device hash
- * - Local license file for offline validation
- * 
- * Security Philosophy:
- * - Offline-first, single-device activation
- * - No cloud storage, no telemetry, no shared keys
- * - Zero user data on the internet
+ * Handles license activation, validation, and device management.
+ * Fully offline after initial activation.
  */
 
 import environment from "../config/environment";
@@ -138,6 +130,9 @@ export class LicenseService {
   /**
    * Get the current license and trial status
    * Optimized: Runs license and trial checks in parallel for faster loading
+   * 
+   * IMPORTANT: This function is 100% OFFLINE - no network calls
+   * Only reads from localStorage and validates local license/trial files
    */
   async getAppStatus(): Promise<AppLicenseStatus> {
     // Run license and trial checks in parallel (faster than sequential)
@@ -222,6 +217,9 @@ export class LicenseService {
   /**
    * Validate license locally (offline check)
    * Returns true if local license matches current device and signature is valid
+   * 
+   * IMPORTANT: This function is 100% OFFLINE - no network calls
+   * Only reads from localStorage and verifies cryptographic signature
    */
   async validateLocalLicense(): Promise<{ valid: boolean; requiresTransfer: boolean }> {
     const localLicense = await this.getLocalLicenseFile();
@@ -252,6 +250,9 @@ export class LicenseService {
    * Get current license information
    * Performs offline validation first
    * Optimized: Only validates device binding if needed (defers expensive operations)
+   * 
+   * IMPORTANT: This function is 100% OFFLINE - no network calls
+   * Only reads from localStorage and validates local license file
    */
   async getLicenseInfo(): Promise<LicenseInfo> {
     const key = localStorage.getItem(LicenseService.LICENSE_KEY_STORAGE);
@@ -350,8 +351,8 @@ export class LicenseService {
       
       const cleanKey = validation.cleaned;
 
-      // Check if this is a trial key (starts with TRIA- for LPV or LLVT- for LLV)
-      if (cleanKey.startsWith('TRIA-') || cleanKey.startsWith('LLVT-')) {
+      // Check if this is a trial key (starts with LPVT- for LPV or LLVT- for LLV)
+      if (cleanKey.startsWith('LPVT-') || cleanKey.startsWith('LLVT-')) {
         // Route to trial activation
         const result = await trialService.activateTrial(cleanKey);
         if (result.success && result.trialInfo) {
@@ -803,6 +804,9 @@ export class LicenseService {
 
   /**
    * Validate license for critical operations
+   * 
+   * IMPORTANT: This function is 100% OFFLINE - no network calls
+   * Only validates local license file and device binding
    */
   async validateForCriticalOperation(): Promise<boolean> {
     const key = localStorage.getItem(LicenseService.LICENSE_KEY_STORAGE);
@@ -827,10 +831,23 @@ export class LicenseService {
 
   /**
    * Check if app access should be blocked
+   * 
+   * IMPORTANT: This function is 100% OFFLINE - no network calls
+   * Only validates local license file and device binding
    */
   async shouldBlockAccess(): Promise<boolean> {
     const status = await this.getAppStatus();
-    return !status.canUseApp;
+    if (!status.canUseApp) {
+      return true;
+    }
+    
+    // For licensed users, also verify device binding
+    if (status.isLicensed) {
+      const isValid = await this.validateForCriticalOperation();
+      return !isValid;
+    }
+    
+    return false;
   }
 
   /**

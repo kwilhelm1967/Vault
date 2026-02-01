@@ -125,7 +125,7 @@
       border-radius: 10px;
       display: flex;
       align-items: center;
-      justify-center: center;
+      justify-content: center;
       box-shadow: none;
       position: relative;
     }
@@ -1270,15 +1270,19 @@
     }
 
     .pricing-name {
-      font-size: 1.25rem;
+      font-size: 1.1rem;
       font-weight: 600;
-      margin-bottom: 8px;
+      margin-bottom: 0.25rem;
+      line-height: 1.3;
+      text-align: center;
     }
 
     .pricing-desc {
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      margin-bottom: 20px;
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      margin-bottom: 0.75rem;
+      line-height: 1.4;
+      text-align: center;
     }
 
     .pricing-price {
@@ -1288,10 +1292,11 @@
     }
 
     .pricing-price .currency {
-      font-size: 1.75rem;
+      font-size: 0.5em;
       color: var(--cyan);
-      vertical-align: top;
+      vertical-align: super;
       font-weight: 600;
+      margin-right: 0.5em;
     }
 
     .pricing-price .amount {
@@ -1332,10 +1337,15 @@
     .pricing-features li {
       display: flex;
       align-items: flex-start;
-      gap: 10px;
-      padding: 10px 0;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
       color: var(--text-secondary);
-      font-size: 0.9rem;
+      font-size: 0.8rem;
+      line-height: 1.4;
+    }
+    
+    .pricing-features li:last-child {
+      margin-bottom: 0;
     }
 
     .pricing-features li svg {
@@ -1343,19 +1353,23 @@
       height: 18px;
       stroke: var(--green);
       flex-shrink: 0;
+      text-align: center;
       margin-top: 2px;
     }
 
     .pricing-cta {
       display: block;
       width: 100%;
-      padding: 16px;
+      padding: 10px 16px;
       text-align: center;
-      border-radius: 10px;
+      border-radius: 8px;
       font-weight: 600;
+      font-size: 0.85rem;
       text-decoration: none;
-      transition: all 0.3s ease;
-      margin-top: auto;
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin-top: 1rem;
+      line-height: 1.4;
+      border: none;
     }
 
     .pricing-cta.primary {
@@ -2217,7 +2231,7 @@
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> No credit card required</li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Keep your data when you upgrade</li>
           </ul>
-          <a href="trial.html" class="pricing-cta primary">Start Free Trial</a>
+          <a href="triallpv.html" class="pricing-cta primary">Start Free Trial</a>
         </div>
         <div class="pricing-card featured animate delay-2">
           <span class="pricing-badge">Most Popular</span>
@@ -2298,7 +2312,7 @@
   <section class="resources-teaser" style="padding: 50px 2rem; background: var(--bg-dark); border-top: 1px solid var(--border-subtle);">
     <div style="max-width: 900px; margin: 0 auto;">
       <div class="section-header animate" style="margin-bottom: 32px;">
-        <span class="section-badge">Learn More</span>
+        <a href="articles.html" class="section-badge" style="text-decoration: none; cursor: pointer;">Learn More</a>
         <h2>Security Resources</h2>
         <p>Understand the real threats to your passwords and how to protect yourself.</p>
       </div>

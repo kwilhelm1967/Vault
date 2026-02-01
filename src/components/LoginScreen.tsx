@@ -11,6 +11,7 @@ import { storageService } from "../utils/storage";
 import { generateRecoveryPhrase, storeRecoveryPhrase } from "../utils/recoveryPhrase";
 import { RecoveryPhraseSetup } from "./RecoveryPhraseSetup";
 import { ForgotPassword } from "./ForgotPassword";
+import { devError } from "../utils/devLog";
 
 interface LoginScreenProps {
   onLogin: (password: string) => Promise<void>;

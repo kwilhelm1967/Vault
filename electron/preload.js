@@ -13,8 +13,13 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.on("lock-vault", callback);
     }
   },
+  onOpenAdminPortal: (callback) => {
+    if (typeof callback === 'function') {
+      ipcRenderer.on("open-admin-portal", callback);
+    }
+  },
   removeAllListeners: (channel) => {
-    if (typeof channel === 'string' && channel.match(/^(lock-vault|vault-status-changed|entries-changed)$/)) {
+    if (typeof channel === 'string' && channel.match(/^(lock-vault|open-admin-portal|vault-status-changed|entries-changed)$/)) {
       ipcRenderer.removeAllListeners(channel);
     }
   },

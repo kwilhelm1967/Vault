@@ -80,6 +80,7 @@ export class TrialService {
       const deviceId = await getLPVDeviceFingerprint();
 
       // Detect product type from trial key prefix
+      // LPVT = LPV (Password Vault), LLVT = LLV (Legacy Vault)
       const productType = cleanKey.startsWith('LLVT-') ? 'llv' : 'lpv';
       
       // Development mode: create unsigned trial file
@@ -260,6 +261,9 @@ export class TrialService {
 
   /**
    * Get current trial information from signed trial file
+   * 
+   * IMPORTANT: This function is 100% OFFLINE - no network calls
+   * Only reads from localStorage and validates local trial file signature
    */
   async getTrialInfo(): Promise<TrialInfo> {
     const trialFile = this.getTrialFile();

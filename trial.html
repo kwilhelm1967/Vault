@@ -442,7 +442,7 @@
           const response = await fetch(`${API_BASE_URL}/api/trial/signup`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, product_type: 'llv' }),
+            body: JSON.stringify({ email, productType: 'lpv' }),
           });
           
           const data = await response.json();

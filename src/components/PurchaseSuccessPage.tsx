@@ -17,6 +17,7 @@ import { LoadingSpinner } from "./LoadingSpinner";
 import { getDownloadUrl } from "../config/downloadUrls";
 import { licenseService } from "../utils/licenseService";
 import { useAppStatus } from "../hooks/useAppStatus";
+import { devLog, devError, devWarn } from "../utils/devLog";
 
 // CSS for checkmark animation
 const checkmarkStyles = `
@@ -202,30 +203,27 @@ export const PurchaseSuccessPage: React.FC = () => {
         if (typeof window !== 'undefined' && window.electronAPI?.getAppName) {
           try {
             const appName = await window.electronAPI.getAppName();
-            console.log('[PurchaseSuccessPage] ===== APP TYPE DETECTION =====');
-            console.log('[PurchaseSuccessPage] App name from Electron:', appName);
+            if (import.meta.env.DEV) {
+              devLog('[PurchaseSuccessPage] App type detection - Electron app name:', appName);
+            }
             const appNameLower = (appName || '').toLowerCase();
             
             // AGGRESSIVE: Check for "legacy" in app name (case-insensitive)
             if (appNameLower.includes('legacy')) {
-              console.log('[PurchaseSuccessPage] ✅ DETECTED LLV from app name:', appName);
+              if (import.meta.env.DEV) {
+                devLog('[PurchaseSuccessPage] DETECTED LLV from app name:', appName);
+              }
               detectedType = 'llv';
-            } else {
-              console.log('[PurchaseSuccessPage] ⚠️ App name does not contain "legacy":', appName);
-              console.log('[PurchaseSuccessPage] ⚠️ Defaulting to LPV');
             }
           } catch (e) {
-            console.error('[PurchaseSuccessPage] ❌ Failed to get app name:', e);
+            devError('[PurchaseSuccessPage] Failed to get app name:', e);
           }
-        } else {
-          console.warn('[PurchaseSuccessPage] ⚠️ Electron API not available or getAppName not found');
         }
         
         // Method 2: Check URL parameters for LLV mode (for localhost testing)
         if (detectedType === 'lpv' && typeof window !== 'undefined') {
           const urlParams = new URLSearchParams(window.location.search);
           if (urlParams.get('app') === 'llv' || urlParams.get('legacy') === 'true') {
-            console.log('[PurchaseSuccessPage] ✅ DETECTED LLV from URL parameter');
             detectedType = 'llv';
           }
         }
@@ -235,26 +233,21 @@ export const PurchaseSuccessPage: React.FC = () => {
           const hostname = window.location.hostname?.toLowerCase() || '';
           const pathname = window.location.pathname?.toLowerCase() || '';
           if (hostname.includes('legacy') || pathname.includes('legacy')) {
-            console.log('[PurchaseSuccessPage] ✅ DETECTED LLV from URL:', { hostname, pathname });
             detectedType = 'llv';
           }
         }
-        
-        console.log('[PurchaseSuccessPage] ===== FINAL DETECTED TYPE:', detectedType.toUpperCase(), '=====');
         
         if (detectedType === 'llv') {
           setAppType('llv');
           setDefaultProductName('Local Legacy Vault');
           setDefaultWebsiteUrl('https://locallegacyvault.com');
-          console.log('[PurchaseSuccessPage] ✅ SET TO LLV - All downloads will use LLV URLs');
         } else {
           setAppType('lpv');
           setDefaultProductName('Local Password Vault');
           setDefaultWebsiteUrl('https://localpasswordvault.com');
-          console.log('[PurchaseSuccessPage] ⚠️ SET TO LPV - All downloads will use LPV URLs');
         }
       } catch (error) {
-        console.error('[PurchaseSuccessPage] ❌ App type detection failed:', error);
+        devError('[PurchaseSuccessPage] App type detection failed:', error);
         // CRITICAL: Default to LPV if detection fails (conservative approach)
         setAppType('lpv');
         setDefaultProductName('Local Password Vault');
@@ -754,7 +747,7 @@ export const PurchaseSuccessPage: React.FC = () => {
     // CRITICAL FIX: ALWAYS regenerate URL using detected appType - IGNORE platform.downloadUrl
     // This ensures we NEVER use a stale URL from when appType wasn't detected yet
     if (!appTypeDetected) {
-      console.error('[PurchaseSuccessPage] Download attempted before appType detection!');
+      devError('[PurchaseSuccessPage] Download attempted before appType detection!');
       alert('Please wait for the page to fully load before downloading.');
       return;
     }
@@ -762,13 +755,15 @@ export const PurchaseSuccessPage: React.FC = () => {
     // FORCE use of detected appType - completely ignore platform.downloadUrl
     const correctUrl = getDownloadUrl(platform.id as 'windows' | 'macos' | 'linux', appType);
     
-    console.log('[PurchaseSuccessPage] Download requested:', {
-      platform: platform.id,
-      originalUrl: platform.downloadUrl,
-      appType: appType,
-      appTypeDetected: appTypeDetected,
-      FORCED_URL: correctUrl
-    });
+    if (import.meta.env.DEV) {
+      devLog('[PurchaseSuccessPage] Download requested:', {
+        platform: platform.id,
+        originalUrl: platform.downloadUrl,
+        appType: appType,
+        appTypeDetected: appTypeDetected,
+        FORCED_URL: correctUrl
+      });
+    }
     
     // CRITICAL: Use Electron downloadFile API if available
     if (window.electronAPI?.downloadFile) {
@@ -809,13 +804,15 @@ export const PurchaseSuccessPage: React.FC = () => {
     // This ensures Legacy Vault app ALWAYS shows Legacy Vault downloads
     const actualProductType = appTypeDetected ? appType : (productType === 'llv' ? 'llv' : 'lpv');
     
-    console.log('[PurchaseSuccessPage] getSortedPlatforms called:', {
-      baseUrl,
-      productType,
-      appType,
-      appTypeDetected,
-      actualProductType
-    });
+    if (import.meta.env.DEV) {
+      devLog('[PurchaseSuccessPage] getSortedPlatforms called:', {
+        baseUrl,
+        productType,
+        appType,
+        appTypeDetected,
+        actualProductType
+      });
+    }
     
     const platforms = getPlatforms(baseUrl, actualProductType);
     return [...platforms].sort((a, b) => {

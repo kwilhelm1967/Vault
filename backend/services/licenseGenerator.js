@@ -69,8 +69,8 @@ function generateLicenseKey(prefix = null) {
 
 function generateTrialKey(productType = 'lpv') {
   // Generate trial key with product-specific prefix
-  // LPV trials use 'TRIA', LLV trials use 'LLVT'
-  const prefix = productType === 'llv' ? 'LLVT' : 'TRIA';
+  // LPV trials use 'LPVT', LLV trials use 'LLVT'
+  const prefix = productType === 'llv' ? 'LLVT' : 'LPVT';
   const key = `${prefix}-${generateSegment()}-${generateSegment()}-${generateSegment()}`;
   
   // Final validation: ensure segments (excluding prefix) have both letters and numbers
@@ -147,7 +147,7 @@ function getPlanTypeFromKey(key) {
     case 'AFCS': // Legacy (backward compatibility)
     case 'AFPG': // AfterPassing Guide Standalone
       return 'afterpassing_standalone';
-    case 'TRIA': // LPV trial
+    case 'LPVT': // LPV trial
       return 'trial';
     case 'LLVT': // LLV trial
       return 'llv_trial';

@@ -1,0 +1,16 @@
+TO START BOTH APPS AT THE SAME TIME:
+
+Run this command in your terminal:
+
+  npm run dev:both
+
+This starts:
+  - Password Vault on http://localhost:5173
+  - Legacy Vault on http://localhost:5174
+
+Then open both URLs in your browser to see two different products.
+
+FILE CHANGED: src/components/LicenseScreen.tsx
+- Port 5173 = Password Vault (isLLV = false)
+- Port 5174 = Legacy Vault (isLLV = true)
+- Removed all other detection logic - port is the ONLY factor

@@ -53,6 +53,7 @@ export { WhatsNewModal, useWhatsNew } from './WhatsNewModal';
 export { OnboardingTutorial, useOnboarding } from './OnboardingTutorial';
 export { SecurityBriefing, useSecurityBriefing } from './SecurityBriefing';
 export { MobileAccess } from './MobileAccess';
+export { MobileViewer } from './MobileViewer';
 export * from './modals';
 
 // ==================== Floating Panel Components ====================

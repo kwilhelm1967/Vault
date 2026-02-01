@@ -36,6 +36,7 @@ export interface MobileSession {
 }
 
 const MOBILE_TOKENS_KEY = "lpv_mobile_tokens";
+const MOBILE_SHARED_ENTRIES_KEY = "lpv_mobile_shared_entries";
 
 class MobileService {
   private static instance: MobileService;
@@ -132,6 +133,52 @@ class MobileService {
 
     if (cleaned) {
       await this.saveTokens();
+    }
+  }
+
+  /**
+   * Share entries for mobile access (call when creating a token)
+   * Entries are stored separately from the encrypted vault for mobile view
+   */
+  shareEntriesForMobile(entries: unknown[]): void {
+    try {
+      // Store a sanitized version of entries for mobile view
+      // Only include fields needed for display (no sensitive metadata)
+      const sanitizedEntries = entries.map((entry: unknown) => {
+        const e = entry as Record<string, unknown>;
+        return {
+          id: e.id,
+          accountName: e.accountName,
+          username: e.username,
+          password: e.password,
+          url: e.url,
+          notes: e.notes,
+          category: e.category,
+          entryType: e.entryType,
+        };
+      });
+      localStorage.setItem(MOBILE_SHARED_ENTRIES_KEY, JSON.stringify(sanitizedEntries));
+    } catch (error) {
+      devError("Failed to share entries for mobile:", error);
+    }
+  }
+
+  /**
+   * Clear shared entries (call when all tokens expire or are revoked)
+   */
+  clearSharedEntries(): void {
+    localStorage.removeItem(MOBILE_SHARED_ENTRIES_KEY);
+  }
+
+  /**
+   * Get shared entries for mobile view
+   */
+  getSharedEntries(): unknown[] {
+    try {
+      const stored = localStorage.getItem(MOBILE_SHARED_ENTRIES_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
     }
   }
 

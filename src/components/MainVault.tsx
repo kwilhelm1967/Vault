@@ -1,143 +1,40 @@
 /**
  * MainVault Component
  * 
- * Primary vault interface with sidebar navigation and password grid.
- * Handles:
- * - Password entry display, search, and filtering
- * - CRUD operations (Create, Read, Update, Delete)
- * - Entry detail viewing and editing
- * - Bulk operations (bulk delete, bulk selection)
- * - Sorting and filtering by category, favorites, weak passwords, reused passwords
- * - TOTP code generation and display
- * - Password history tracking
- * - Dashboard view with statistics
- * - Settings integration
- * 
- * @component
- * 
- * @example
- * ```tsx
- * <MainVault
- *   entries={entries}
- *   categories={categories}
- *   onAddEntry={handleAddEntry}
- *   onUpdateEntry={handleUpdateEntry}
- *   onDeleteEntry={handleDeleteEntry}
- *   onLock={handleLock}
- *   searchTerm={searchTerm}
- *   onSearchChange={setSearchTerm}
- *   selectedCategory={selectedCategory}
- *   onCategoryChange={setSelectedCategory}
- * />
- * ```
- * 
- * @remarks
- * This component handles multiple responsibilities and is quite large.
- * Consider extracting sub-components for:
- * - Entry grid/list rendering
- * - Entry detail modal
- * - Search and filter controls
- * - Sort controls
- * - Bulk selection UI
+ * Primary vault interface with sidebar navigation, password grid, and entry management.
  */
 
-// ==================== React Imports ====================
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-
-// ==================== Third-Party Imports ====================
+import React, { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense } from "react";
 import {
-  // Action icons
-  Search,
-  Plus,
-  Trash2,
-  Eye,
-  EyeOff,
-  Copy,
-  Edit3,
-  X,
-  Check,
-  // Security icons
-  Shield,
-  Key,
-  Lock,
-  LockOpen,
-  // Navigation icons
-  Settings as SettingsIcon,
-  LayoutDashboard,
-  Minimize2,
-  // Status icons
-  AlertTriangle,
-  AlertCircle,
-  HelpCircle,
-  // UI icons
-  Star,
-  ArrowUpDown,
-  ChevronDown,
-  Globe,
-  ExternalLink,
-  History,
-  Clock,
-  CheckSquare,
-  Square,
-  FileEdit,
-  // Category icons
-  Grid3X3,
-  CircleDollarSign,
-  ShoppingCart,
-  Ticket,
-  Mail,
-  Briefcase,
-  TrendingUp,
-  // Types
+  Search, Plus, Trash2, Eye, EyeOff, Copy, Edit3, X, Check,
+  Shield, Key, Lock, LockOpen,
+  Settings as SettingsIcon, LayoutDashboard, Minimize2,
+  AlertTriangle, AlertCircle, HelpCircle,
+  Star, ArrowUpDown, ChevronDown, Globe, ExternalLink, History, Clock,
+  CheckSquare, Square, FileEdit,
+  Grid3X3, CircleDollarSign, ShoppingCart, Ticket, Mail, Briefcase, TrendingUp,
   type LucideIcon,
 } from "lucide-react";
-
-// ==================== Type Imports ====================
 import type { PasswordEntry, Category, CustomField } from "../types";
-
-// ==================== Utils Imports ====================
 import { generateTOTP, getTimeRemaining, isValidTOTPSecret } from "../utils/totp";
 import { playLockSound, playCopySound, playDeleteSound } from "../utils/soundEffects";
 import { devError } from "../utils/devLog";
-
-// ==================== Hooks Imports ====================
 import { useRenderTracking } from "../hooks/usePerformance";
-
-// ==================== Component Imports ====================
 import { CategoryIcon } from "./CategoryIcon";
-import { EntryForm } from "./EntryForm";
-import { Dashboard } from "./Dashboard";
 import { SettingsLazy as Settings, FAQLazy as FAQ } from "./LazyComponents";
 import { clearClipboardAfterTimeout, getVaultSettings } from "../utils/settingsUtils";
 import { TrialStatusBanner } from "./TrialStatusBanner";
 import { PerformanceProfiler } from "./PerformanceProfiler";
+import { colors, getPasswordAge, DeleteConfirmModal, BulkDeleteConfirmModal, CustomFieldDisplay } from "./vault";
 
-// ==================== Vault Component Imports ====================
-import {
-  colors,
-  getPasswordAge,
-  DeleteConfirmModal,
-  BulkDeleteConfirmModal,
-  CustomFieldDisplay,
-} from "./vault";
+const EntryForm = lazy(() => import("./EntryForm").then(m => ({ default: m.EntryForm })));
+const Dashboard = lazy(() => import("./Dashboard").then(m => ({ default: m.Dashboard })));
 
-// ==================== Helper Functions ====================
-/**
- * Helper function to find duplicate passwords
- * 
- * @param entries - Array of all password entries
- * @param currentEntry - Entry to check for duplicates
- * @returns Array of entries with the same password as currentEntry
- */
 const findDuplicates = (entries: PasswordEntry[], currentEntry: PasswordEntry): PasswordEntry[] => {
   return entries.filter(
     e => e.id !== currentEntry.id && e.password === currentEntry.password
   );
 };
-
-/**
- * Map category icon names to Lucide icon components
- */
 const categoryIconMap: Record<string, LucideIcon> = {
   Grid3X3,
   CircleDollarSign,
@@ -187,6 +84,7 @@ const MainVaultComponent: React.FC<MainVaultProps> = ({
   onDeleteEntry,
   onLock,
   onExport,
+  onExportPDF,
   onExportEncrypted,
   onImport,
   onImportEncrypted,
@@ -651,7 +549,7 @@ const MainVaultComponent: React.FC<MainVaultProps> = ({
                   setShowWeakOnly(false);
                   setCurrentView("passwords");
                 }}
-                className={`nav-item-hover w-full pl-5 pr-3 py-2 mb-0.5 rounded-r-lg text-left text-sm transition-all flex items-center gap-2.5 ${
+                className={`nav-item-hover w-full pl-5 pr-3 pt-1 pb-2 mb-0.5 rounded-r-lg text-left text-sm transition-all flex items-center gap-2.5 ${
                   isSelected
                     ? "nav-item-selected text-white"
                     : "text-slate-400"
@@ -766,6 +664,7 @@ const MainVaultComponent: React.FC<MainVaultProps> = ({
           <div key="settings" className="page-transition-enter flex-1 overflow-hidden">
             <Settings
               onExport={onExport}
+              onExportPDF={onExportPDF}
               onExportEncrypted={onExportEncrypted}
               onImport={onImport}
               onImportEncrypted={onImportEncrypted}
@@ -1124,7 +1023,7 @@ const MainVaultComponent: React.FC<MainVaultProps> = ({
                 : (selectedCategory === "all" ? Grid3X3 : Key);
               
               return (
-                <div className="flex flex-col items-center justify-center h-full text-center pb-24">
+                <div className="flex flex-col items-center justify-center h-full text-center pb-6">
                   <CategoryIcon 
                     className="w-10 h-10 mb-4" 
                     strokeWidth={1.5} 
@@ -1769,12 +1668,13 @@ const MainVaultComponent: React.FC<MainVaultProps> = ({
       {(showAddForm || editingEntry) && (
         <div className="form-modal-backdrop">
           <div className="form-modal-content">
-            <EntryForm
-              entry={editingEntry}
-              categories={categories}
-              allEntries={entries}
-              defaultCategory={!editingEntry && selectedCategory !== "all" ? selectedCategory : undefined}
-              onSubmit={async (data) => {
+            <Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div></div>}>
+              <EntryForm
+                entry={editingEntry}
+                categories={categories}
+                allEntries={entries}
+                defaultCategory={!editingEntry && selectedCategory !== "all" ? selectedCategory : undefined}
+                onSubmit={async (data) => {
                 setIsSavingEntry(true);
                 try {
                   if (editingEntry) {
@@ -1804,6 +1704,7 @@ const MainVaultComponent: React.FC<MainVaultProps> = ({
               } : undefined}
               isLoading={isSavingEntry || isDeletingEntry}
             />
+            </Suspense>
           </div>
         </div>
       )}
