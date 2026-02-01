@@ -57,6 +57,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "preview:lpv": "vite preview --port 4174 --host",
+    "trial-flow": "powershell -ExecutionPolicy Bypass -File ./scripts/run-trial-flow.ps1",
     "preview:llv": "vite preview --port 4173 --host",
     "test": "jest",
     "test:watch": "jest --watch",

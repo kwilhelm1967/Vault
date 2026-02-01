@@ -9,7 +9,7 @@ param(
     [string]$ServerUser = "root",
     
     [Parameter(Mandatory=$false)]
-    [string]$BackendPath = "/var/www/lpv-api/backend",
+    [string]$ProjectRoot = "/var/www/lpv-api/Vault",
     
     [Parameter(Mandatory=$false)]
     [string]$PM2AppName = "lpv-api"
@@ -27,20 +27,20 @@ if (-not (Get-Command ssh -ErrorAction SilentlyContinue)) {
 }
 
 Write-Host "Connecting to: $ServerUser@$ServerIP" -ForegroundColor Yellow
-Write-Host "Server folder: $BackendPath" -ForegroundColor Yellow
+Write-Host "Project root (backend + LPV): $ProjectRoot" -ForegroundColor Yellow
 Write-Host "App name: $PM2AppName" -ForegroundColor Yellow
 Write-Host ""
 
-# Commands to run on the server
+# Git pull from project root so both backend/ and LPV/ get updated (trial flow needs LPV)
 $sshCommand = @"
-cd $BackendPath
+cd $ProjectRoot
 echo 'Current folder:' 
 pwd
 echo ''
 echo 'Checking what changed...'
 git status
 echo ''
-echo 'Downloading new code...'
+echo 'Downloading new code (backend + LPV)...'
 git pull
 echo ''
 echo 'Restarting server...'

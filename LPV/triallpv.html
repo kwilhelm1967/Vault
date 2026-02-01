@@ -602,40 +602,30 @@
         }
         
         try {
-          // CRITICAL: Must send productType: 'lpv' for Local Password Vault
-          // This ensures backend routes to Password Vault pages, not Legacy Vault
-          console.log('[PASSWORD VAULT] Sending trial signup request with productType: lpv');
-          const requestBody = { 
-            email: email, 
-            productType: 'lpv' // Local Password Vault - routes to trial-success-lpv.html
-          };
-          console.log('[PASSWORD VAULT] Request body:', requestBody);
-          
-          // Call Supabase Edge Function directly
-          const SUPABASE_PROJECT_ID = 'kzsbotkuhoigmoqinkiz';
-          const apiUrl = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/trial-signup`;
-          console.log('[PASSWORD VAULT] API URL:', apiUrl);
+          // Prefer same-origin when on API host; otherwise use full API URL (CORS allows main site origins)
+          const isApiHost = window.location.hostname === 'api.localpasswordvault.com' ||
+            (window.location.hostname === 'localhost' && window.location.port === '3001');
+          const apiUrl = isApiHost
+            ? window.location.origin + '/api/trial/signup'
+            : 'https://api.localpasswordvault.com/api/trial/signup';
+          const requestBody = { email: email, product_type: 'lpv' };
           
           const response = await fetch(apiUrl, {
             method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestBody),
           });
           
-          console.log('[PASSWORD VAULT] Response status:', response.status);
-          
-          // Check if response is JSON before parsing
-          const contentType = response.headers.get('content-type');
-          if (!contentType || !contentType.includes('application/json')) {
-            const text = await response.text();
-            console.error('[PASSWORD VAULT] Non-JSON response:', text);
-            throw new Error(`Server returned non-JSON response (${response.status}): ${text.substring(0, 100)}`);
+          const text = await response.text();
+          if (!text || (typeof text === 'string' && text.trim().startsWith('<'))) {
+            throw new Error('The trial service returned an error page. Please open Local Password Vault, go to Activation, and use "Don\'t have a trial key? Get one free" to request a key from within the app—or contact support@localpasswordvault.com.');
           }
-          
-          const data = await response.json();
+          let data;
+          try {
+            data = JSON.parse(text);
+          } catch (parseErr) {
+            throw new Error('The trial service returned an invalid response. Please try the trial signup from within the Local Password Vault app, or contact support@localpasswordvault.com.');
+          }
           
           if (!response.ok) {
             const errorMessage = data.error || data.message || `Server error (${response.status})`;
@@ -652,13 +642,12 @@
             throw new Error(errorMessage);
           }
         } catch (error) {
-          const errorMessage = error.message || 'Something went wrong. Please try again.';
-          
+          const err = error instanceof Error ? error : new Error(String(error));
+          const errorMessage = err.message || 'Something went wrong. Please try again.';
           if (errorMsg) {
             errorMsg.textContent = errorMessage;
             errorMsg.style.display = 'block';
           }
-          
           if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.textContent = 'Get My Trial Key →';

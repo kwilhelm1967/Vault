@@ -52,6 +52,9 @@ import {
   Download,
   Rocket,
   RefreshCw,
+  Mail,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { analyticsService } from "../utils/analyticsService";
 import { licenseService, AppLicenseStatus } from "../utils/licenseService";
@@ -69,6 +72,7 @@ import { DeviceManagementScreen } from "./DeviceManagementScreen";
 import { LicenseStatusDashboard } from "./LicenseStatusDashboard";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { testNetworkConnectivity } from "../utils/networkDiagnostics";
+import { apiClient } from "../utils/apiClient";
 
 interface LicenseScreenProps {
   onLicenseValid: () => void;
@@ -94,6 +98,12 @@ const LicenseScreenComponent: React.FC<LicenseScreenProps> = ({
   const [isActivatingTrial, setIsActivatingTrial] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [trialKeyError, setTrialKeyError] = useState<string | null>(null);
+  const [showTrialSignupForm, setShowTrialSignupForm] = useState(false);
+  const [trialSignupEmail, setTrialSignupEmail] = useState("");
+  const [trialSignupLoading, setTrialSignupLoading] = useState(false);
+  const [trialSignupError, setTrialSignupError] = useState<string | null>(null);
+  const [trialSignupSuccess, setTrialSignupSuccess] = useState<string | null>(null);
+  const [trialSignupKey, setTrialSignupKey] = useState<string | null>(null);
   const [activationProgress, setActivationProgress] = useState<{
     stage: 'checking' | 'connecting' | 'sending' | 'receiving' | 'processing' | null;
     retryAttempt?: number;
@@ -208,7 +218,7 @@ const LicenseScreenComponent: React.FC<LicenseScreenProps> = ({
 
   // New flow handlers
   const handleBuyLifetimeAccess = () => {
-    const url = "https://localpasswordvault.com/#plans";
+    const url = "https://localpasswordvault.com/pricing.html";
     if (window.electronAPI) {
       window.electronAPI.openExternal(url);
     } else {
@@ -748,6 +758,40 @@ const LicenseScreenComponent: React.FC<LicenseScreenProps> = ({
     }
   };
 
+  const handleRequestTrialByEmail = async () => {
+    const email = trialSignupEmail.trim().toLowerCase();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setTrialSignupError("Please enter a valid email address.");
+      return;
+    }
+    setTrialSignupLoading(true);
+    setTrialSignupError(null);
+    setTrialSignupSuccess(null);
+    setTrialSignupKey(null);
+    try {
+      const res = await apiClient.post<{ success?: boolean; trialKey?: string; error?: string; message?: string }>(
+        "/api/trial/signup",
+        { email, product_type: "lpv" }
+      );
+      const data = res.data;
+      if (data?.success && data.trialKey) {
+        setTrialSignupSuccess("Trial key sent! Check your email, or use it below:");
+        setTrialSignupKey(data.trialKey);
+        setTrialKey(data.trialKey);
+      } else if (data?.success) {
+        setTrialSignupSuccess("Check your email for your trial key.");
+      } else {
+        setTrialSignupError(data?.error || data?.message || "Could not create trial. Please try again.");
+      }
+    } catch (err: unknown) {
+      const msg = err && typeof err === "object" && "message" in err ? String((err as { message: string }).message) : "Could not reach trial service. Please check your connection and try again.";
+      setTrialSignupError(msg);
+      devError("Trial signup failed:", err);
+    } finally {
+      setTrialSignupLoading(false);
+    }
+  };
+
   // Show loading state while app status is being determined
   if (!appStatus) {
     return (
@@ -844,6 +888,7 @@ const LicenseScreenComponent: React.FC<LicenseScreenProps> = ({
           isActivating={isActivating}
           error={error}
           onNeedHelp={handleNeedHelp}
+          onPurchaseClick={handleBuyLifetimeAccess}
         />
       </>
     );
@@ -1198,6 +1243,52 @@ const LicenseScreenComponent: React.FC<LicenseScreenProps> = ({
                   <p className="text-xs text-slate-400 text-center">
                     All features unlocked • Key expires in 7 days
                   </p>
+
+                  <div className="mt-3 pt-3 border-t border-emerald-500/20">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowTrialSignupForm(!showTrialSignupForm);
+                        setTrialSignupError(null);
+                        setTrialSignupSuccess(null);
+                        if (!showTrialSignupForm) setTrialSignupKey(null);
+                      }}
+                      className="w-full flex items-center justify-center gap-2 text-emerald-400 hover:text-emerald-300 text-sm transition-colors"
+                    >
+                      <Mail className="w-4 h-4" />
+                      <span>Don&apos;t have a trial key? Get one free</span>
+                      {showTrialSignupForm ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </button>
+                    {showTrialSignupForm && (
+                      <div className="mt-3 space-y-2">
+                        <input
+                          type="email"
+                          value={trialSignupEmail}
+                          onChange={(e) => {
+                            setTrialSignupEmail(e.target.value);
+                            setTrialSignupError(null);
+                          }}
+                          placeholder="your@email.com"
+                          className="w-full px-3 py-2 bg-emerald-900/30 border border-emerald-500/30 rounded-lg text-white placeholder-slate-500 text-sm focus:outline-none focus:border-emerald-400"
+                          disabled={trialSignupLoading}
+                        />
+                        <button
+                          type="button"
+                          onClick={handleRequestTrialByEmail}
+                          disabled={trialSignupLoading}
+                          className="w-full py-2 bg-emerald-600/80 hover:bg-emerald-600 disabled:opacity-60 text-white text-sm font-medium rounded-lg transition-colors"
+                        >
+                          {trialSignupLoading ? "Sending..." : "Send Trial Key"}
+                        </button>
+                        {trialSignupError && (
+                          <p className="text-xs text-amber-400">{trialSignupError}</p>
+                        )}
+                        {trialSignupSuccess && (
+                          <p className="text-xs text-emerald-400">{trialSignupSuccess}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

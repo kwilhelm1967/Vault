@@ -15,7 +15,7 @@ echo.
 echo Step 1: Connecting to server...
 echo.
 
-ssh root@172.236.111.48 "cd /var/www/lpv-api/backend && echo 'Current directory:' && pwd && echo '' && echo 'Pulling latest code...' && git pull origin main && echo '' && echo 'Restarting server...' && pm2 restart lpv-api && echo '' && echo 'Checking status...' && pm2 status"
+ssh root@172.236.111.48 "cd /var/www/lpv-api/Vault && echo 'Current directory:' && pwd && echo '' && echo 'Pulling latest code (backend + LPV)...' && git pull origin main && echo '' && echo 'Restarting server...' && pm2 restart lpv-api && echo '' && echo 'Checking status...' && pm2 status"
 
 if %ERRORLEVEL% EQU 0 (
     echo.
@@ -43,7 +43,7 @@ if %ERRORLEVEL% EQU 0 (
     echo 1. Go to https://cloud.linode.com
     echo 2. Find server 172.236.111.48
     echo 3. Click "Launch LISH Console"
-    echo 4. Run: cd /var/www/lpv-api/backend
+    echo 4. Run: cd /var/www/lpv-api/Vault
     echo 5. Run: git pull origin main
     echo 6. Run: pm2 restart lpv-api
     echo 7. Run: pm2 status
