@@ -256,6 +256,11 @@ const LicenseScreenComponent: React.FC<LicenseScreenProps> = ({
   };
 
   const handleKeyActivation = async (key: string) => {
+    // File import succeeded in KeyActivationScreen — go straight to vault
+    if (key === "__FILE_IMPORTED__") {
+      onLicenseValid();
+      return;
+    }
     setLicenseKey(key);
     await handleActivateLicense();
   };
