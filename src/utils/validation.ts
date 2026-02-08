@@ -176,7 +176,7 @@ export function validateLicenseKey(key: string): LicenseKeyValidation {
 
   // Check for known prefixes (security: prevents invalid key types)
   const validPrefixes = ['PERS', 'FAMI', 'LPVT'];
-  const prefix = cleaned.substring(0, 4);
+  const _prefix = cleaned.substring(0, 4);
   const hasValidPrefix = validPrefixes.some(p => cleaned.startsWith(p));
 
   if (!hasValidPrefix && !cleaned.startsWith('LPVT-')) {

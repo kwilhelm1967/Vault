@@ -39,7 +39,7 @@ export async function verifyLicenseSignature(signedLicense: SignedLicenseFile): 
   }
 
   // Extract signature and signed_at from data
-  const { signature, signed_at, ...licenseData } = signedLicense;
+  const { signature, signed_at: _signed_at, ...licenseData } = signedLicense;
   
   // Create canonical JSON string (sorted keys)
   const canonicalData = JSON.stringify(licenseData, Object.keys(licenseData).sort());

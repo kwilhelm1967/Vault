@@ -16,7 +16,7 @@ import { PasswordEntry, Category, RawPasswordEntry } from "../types";
 import { CategoryIcon } from "./CategoryIcon";
 import { EntryForm, ENTRY_TEMPLATES } from "./EntryForm";
 import { storageService } from "../utils/storage";
-import { trialService } from "../utils/trialService";
+// trialService reserved for future use
 import { devError } from "../utils/devLog";
 
 interface ElectronFloatingPanelProps {
@@ -65,7 +65,7 @@ export const ElectronFloatingPanel: React.FC<ElectronFloatingPanelProps> = ({
   // Function to get trial info from localStorage
   const getTrialInfoFromLocalStorage = () => {
     const hasTrialBeenUsed = localStorage.getItem('trial_used') === 'true';
-    const licenseToken = localStorage.getItem('license_token');
+    const _licenseToken = localStorage.getItem('license_token');
 
     if (!hasTrialBeenUsed) {
       return {

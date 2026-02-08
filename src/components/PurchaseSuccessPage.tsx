@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   CheckCircle,
-  Download,
   Copy,
   Check,
   Shield,
@@ -9,15 +8,13 @@ import {
   Monitor,
   Apple,
   Terminal,
-  ExternalLink,
   Mail,
 } from "lucide-react";
-import environment from "../config/environment";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { getDownloadUrl } from "../config/downloadUrls";
 import { licenseService } from "../utils/licenseService";
 import { useAppStatus } from "../hooks/useAppStatus";
-import { devLog, devError, devWarn } from "../utils/devLog";
+import { devLog, devError } from "../utils/devLog";
 
 // CSS for checkmark animation
 const checkmarkStyles = `
@@ -134,7 +131,7 @@ export const PurchaseSuccessPage: React.FC = () => {
   const [manualLicenseKey, setManualLicenseKey] = useState<string>("");
   const [isActivatingManualKey, setIsActivatingManualKey] = useState<boolean>(false);
   const [manualKeyError, setManualKeyError] = useState<string | null>(null);
-  const [showManualKeyInput, setShowManualKeyInput] = useState<boolean>(false);
+  const [_showManualKeyInput, _setShowManualKeyInput] = useState<boolean>(false);
   const { updateAppStatus } = useAppStatus();
   const detectedOS = getOS();
 
@@ -188,7 +185,7 @@ export const PurchaseSuccessPage: React.FC = () => {
   const appType = 'lpv';
   const defaultProductName = 'Local Password Vault';
   const defaultWebsiteUrl = 'https://localpasswordvault.com';
-  const [appTypeDetected, setAppTypeDetected] = useState<boolean>(true);
+  const [appTypeDetected, _setAppTypeDetected] = useState<boolean>(true);
 
   // Hide textured background pattern on purchase success page
   useEffect(() => {
@@ -577,7 +574,7 @@ export const PurchaseSuccessPage: React.FC = () => {
     }
   };
 
-  const handleCopyAllKeys = async () => {
+  const _handleCopyAllKeys = async () => {
     if (licenseKeys.length === 0) return;
     
     const allKeys = licenseKeys.join("\n");

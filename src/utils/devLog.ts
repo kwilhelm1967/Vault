@@ -14,8 +14,7 @@ try {
   } else if (typeof window !== 'undefined' && window.__DEV__ !== undefined) {
     isDev = window.__DEV__;
   } else {
-    // @ts-ignore - import.meta may not be available in all environments
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // @ts-expect-error - import.meta may not be available in all environments
     try {
       const meta = (globalThis as any).import?.meta;
       if (meta?.env) {

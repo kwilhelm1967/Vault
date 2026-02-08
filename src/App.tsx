@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
-import type { PasswordEntry, Category, RawPasswordEntry } from "./types";
-import type { AppLicenseStatus } from "./utils/licenseService";
+import type { PasswordEntry } from "./types";
+
 import type { WarningPopupState } from "./utils/trialService";
 import { features } from "./config/environment";
 import { storageService, FIXED_CATEGORIES } from "./utils/storage";
@@ -297,30 +297,14 @@ function App() {
                            pathname.includes('success.html') ||
                            pathname.includes('purchase-success.html'));
   
-  if ((hasSessionId || isPurchaseSuccessPath) || (hasKey && !isStaticHtmlFile)) {
-    return (
-      <Suspense fallback={<LoadingFallback />}>
-        <ErrorBoundary>
-          <PurchaseSuccessPage />
-        </ErrorBoundary>
-      </Suspense>
-    );
-  }
+  const isPurchaseSuccessRoute = (hasSessionId || isPurchaseSuccessPath) || (hasKey && !isStaticHtmlFile);
 
   // Mobile viewer route - /mobile?token=xxx
   const isMobilePath = pathname === '/mobile' || pathname.includes('/mobile');
   const mobileToken = urlParams.get('token');
-  
-  if (isMobilePath && mobileToken) {
-    return (
-      <Suspense fallback={<LoadingFallback />}>
-        <ErrorBoundary>
-          <MobileViewer token={mobileToken} />
-        </ErrorBoundary>
-      </Suspense>
-    );
-  }
+  const isMobileRoute = !!(isMobilePath && mobileToken);
 
+  // ALL hooks must be called unconditionally (before any early returns)
   const { isElectron, isVaultUnlocked, saveSharedEntries, loadSharedEntries, broadcastEntriesChanged } = useElectron();
   const { appStatus, updateAppStatus, checkStatusImmediately, isLoading } = useAppStatus();
 
@@ -612,6 +596,7 @@ function App() {
       return stored ? parseInt(stored) : 300000; // Default 5 minutes
     };
     
+    let isMounted = true;
     let timeoutId: NodeJS.Timeout | null = null;
     let lastActivity = Date.now();
     
@@ -999,6 +984,27 @@ function App() {
       setLoadingTimeout(false);
     }
   }, [isLoading, appStatus]);
+
+  // Route-based early returns (after all hooks are called)
+  if (isPurchaseSuccessRoute) {
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <ErrorBoundary>
+          <PurchaseSuccessPage />
+        </ErrorBoundary>
+      </Suspense>
+    );
+  }
+
+  if (isMobileRoute) {
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <ErrorBoundary>
+          <MobileViewer token={mobileToken!} />
+        </ErrorBoundary>
+      </Suspense>
+    );
+  }
   
   if (!appStatus && isLoading && !loadingTimeout) {
     // Show loading for max 10 seconds, then show license screen

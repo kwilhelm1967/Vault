@@ -9,7 +9,7 @@ import { PasswordEntry } from "../types";
 import { useElectron } from "./useElectron";
 import { devError } from "../utils/devLog";
 
-interface UseVaultDataParams {
+interface _UseVaultDataParams {
   isLocked: boolean;
   isElectron: boolean;
   loadSharedEntries: () => Promise<PasswordEntry[]>;

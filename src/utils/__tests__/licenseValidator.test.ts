@@ -127,7 +127,7 @@ describe('License Validator', () => {
         encode: jest.fn((str: string) => new Uint8Array(str.length)),
       })) as any;
 
-      const result = await verifyLicenseSignature(licenseFile as Parameters<typeof verifyLicenseSignature>[0]);
+      const _result = await verifyLicenseSignature(licenseFile as Parameters<typeof verifyLicenseSignature>[0]);
       
       expect(mockCrypto.subtle.importKey).toHaveBeenCalled();
       expect(mockCrypto.subtle.sign).toHaveBeenCalled();

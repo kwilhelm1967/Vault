@@ -60,18 +60,21 @@ const loadLanguage = async (langCode: string) => {
 
   try {
     switch (langCode) {
-      case 'es':
+      case 'es': {
         const es = await import('./locales/es.json');
         i18n.addResourceBundle('es', 'translation', es.default || es);
         break;
-      case 'de':
+      }
+      case 'de': {
         const de = await import('./locales/de.json');
         i18n.addResourceBundle('de', 'translation', de.default || de);
         break;
-      case 'fr':
+      }
+      case 'fr': {
         const fr = await import('./locales/fr.json');
         i18n.addResourceBundle('fr', 'translation', fr.default || fr);
         break;
+      }
     }
   } catch (error) {
     // Error loading language - use fallback

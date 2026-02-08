@@ -6,7 +6,7 @@
  */
 
 import { storageService } from '../utils/storage';
-import { importService } from '../utils/importService';
+import { importService as _importService } from '../utils/importService';
 
 // Mock localStorage for testing
 const localStorageMock = (() => {

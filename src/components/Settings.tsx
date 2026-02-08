@@ -38,7 +38,7 @@ import {
 import { APP_VERSION } from "../config/changelog";
 import { generateRecoveryPhrase, storeRecoveryPhrase } from "../utils/recoveryPhrase";
 import { storageService } from "../utils/storage";
-import { devError, devWarn } from "../utils/devLog";
+import { devError } from "../utils/devLog";
 import { getErrorLogger } from "../utils/errorHandling";
 import { type VaultSettings, SETTINGS_KEYS, DEFAULT_SETTINGS } from "../utils/settingsUtils";
 

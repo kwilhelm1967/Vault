@@ -102,8 +102,8 @@ function HomeDashboard({
 
   const trialsData = trends.trialsPerDay ?? [];
   const purchasesData = trends.purchasesPerDay ?? [];
-  const maxTrials = Math.max(1, ...trialsData.map((d) => d.count));
-  const maxPurchases = Math.max(1, ...purchasesData.map((d) => d.count));
+  const _maxTrials = Math.max(1, ...trialsData.map((d) => d.count));
+  const _maxPurchases = Math.max(1, ...purchasesData.map((d) => d.count));
 
   const checklistItems: { label: string; tab?: TabId; href?: string; external?: boolean }[] = [
     { label: "Review last 24 hours exceptions", tab: "metrics" },
@@ -403,10 +403,10 @@ export function AdminDashboard({ onClose }: { onClose: () => void }) {
   const [policyVersions, setPolicyVersions] = useState<Record<string, { id?: string; version?: string; published_at?: string; content?: string }[]>>({});
   const [policyForm, setPolicyForm] = useState({ policy_type: "eula", version: "", content: "" });
   const [policyStatus, setPolicyStatus] = useState<string | null>(null);
-  const [statusData, setStatusData] = useState<{ integrations?: Record<string, { healthy?: boolean; probes?: unknown[]; last_delivered_at?: string; last_paid_at?: string }>; all_healthy?: boolean } | null>(null);
-  const [partnerCodes, setPartnerCodes] = useState<{ id?: string; code?: string; name?: string; type?: string; created_at?: string }[]>([]);
+  const [statusData, _setStatusData] = useState<{ integrations?: Record<string, { healthy?: boolean; probes?: unknown[]; last_delivered_at?: string; last_paid_at?: string }>; all_healthy?: boolean } | null>(null);
+  const [partnerCodes, _setPartnerCodes] = useState<{ id?: string; code?: string; name?: string; type?: string; created_at?: string }[]>([]);
   const [partnerForm, setPartnerForm] = useState({ code: "", name: "", type: "referral" });
-  const [partnerStatus, setPartnerStatus] = useState<string | null>(null);
+  const [partnerStatus, _setPartnerStatus] = useState<string | null>(null);
   const [bugDashboard, setBugDashboard] = useState<{ openBugs?: number; byStatus?: Record<string, number>; bySeverity?: Record<string, number>; byAppVersion?: Record<string, number>; topErrorCodes?: { errorId?: string; count?: number }[] } | null>(null);
   const [buildArtifacts, setBuildArtifacts] = useState<{ id?: string; version?: string; platform?: string; url?: string; file_size_bytes?: number; checksum_sha256?: string; is_current?: boolean; created_at?: string }[]>([]);
   const [buildForm, setBuildForm] = useState({ version: "", platform: "windows", url: "", fileSize: "", checksum: "" });
@@ -422,11 +422,11 @@ export function AdminDashboard({ onClose }: { onClose: () => void }) {
   const [featureRequestForm, setFeatureRequestForm] = useState({ title: "", description: "" });
   const [featureRequestStatus, setFeatureRequestStatus] = useState<string | null>(null);
   const [analyticsData, setAnalyticsData] = useState<{ summary?: { total_events?: number; installs?: number; activation_success?: number; activation_fail?: number; activation_success_rate_pct?: number; screen_first_record?: number; time_to_first_value_pct?: number; errors?: number; crashes?: number; crash_free_sessions?: number }; by_event_type?: Record<string, number>; by_app_version?: { version?: string; count?: number }[] } | null>(null);
-  const [errorRatesData, setErrorRatesData] = useState<{ activation_by_day?: { date: string; success: number; fail: number; total: number; fail_rate_pct: number }[]; app_errors_by_day?: { date: string; activation_fail?: number; error?: number; fail_rate_pct?: number }[] } | null>(null);
+  const [_errorRatesData, setErrorRatesData] = useState<{ activation_by_day?: { date: string; success: number; fail: number; total: number; fail_rate_pct: number }[]; app_errors_by_day?: { date: string; activation_fail?: number; error?: number; fail_rate_pct?: number }[] } | null>(null);
   const [rolloutRollouts, setRolloutRollouts] = useState<{ version?: string; rollout_pct?: number }[]>([]);
   const [rolloutForm, setRolloutForm] = useState({ version: "", platform: "", rollout_pct: 100 });
   const [rolloutStatus, setRolloutStatus] = useState<string | null>(null);
-  const [campaignCosts, setCampaignCosts] = useState<{ id?: string; period_start?: string; period_end?: string; cost_cents?: number; cost_type?: string; utm_source?: string; notes?: string }[]>([]);
+  const [_campaignCosts, setCampaignCosts] = useState<{ id?: string; period_start?: string; period_end?: string; cost_cents?: number; cost_type?: string; utm_source?: string; notes?: string }[]>([]);
   const [campaignCostForm, setCampaignCostForm] = useState({ period_start: "", period_end: "", cost_cents: 0, cost_type: "campaign" as string, utm_source: "", notes: "" });
   const [campaignCostStatus, setCampaignCostStatus] = useState<string | null>(null);
   const [automationConfig, setAutomationConfig] = useState<{ id?: string; day_offset?: number; template_id?: string; template_name?: string; active?: boolean }[]>([]);
@@ -1130,7 +1130,7 @@ export function AdminDashboard({ onClose }: { onClose: () => void }) {
   }, [fetchAdmin]);
 
   const addLead = useCallback(async () => {
-    const { organization_name, contact_name, email } = leadForm;
+    const { organization_name: _organization_name, contact_name, email } = leadForm;
     if (!contact_name.trim() || !email.trim() || !email.includes("@")) {
       setLeadStatus("Contact name and valid email required");
       return;
@@ -1371,7 +1371,7 @@ export function AdminDashboard({ onClose }: { onClose: () => void }) {
     }
   }, [fetchAdmin]);
 
-  const loadErrorRates = useCallback(async () => {
+  const _loadErrorRates = useCallback(async () => {
     try {
       const res = await fetchAdmin("/admin-error-rates?days=30");
       const data = res ? await res.json() : null;
@@ -2154,7 +2154,7 @@ export function AdminDashboard({ onClose }: { onClose: () => void }) {
     fontSize: 13,
     color: theme.textPrimary,
   };
-  const tableCellAlt: React.CSSProperties = {
+  const _tableCellAlt: React.CSSProperties = {
     ...tableCell,
     background: "rgba(0,0,0,0.08)",
   };

@@ -9,7 +9,7 @@ import { verifyLicenseSignature } from '../licenseValidator';
 import { trialService } from '../trialService';
 import { getLPVDeviceFingerprint } from '../deviceFingerprint';
 import { apiClient } from '../apiClient';
-import environment from '../../config/environment';
+import _environment from '../../config/environment';
 
 // Mock dependencies
 jest.mock('../licenseValidator');

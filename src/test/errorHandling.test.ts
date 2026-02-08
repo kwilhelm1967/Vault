@@ -100,7 +100,7 @@ describe('ErrorHandler', () => {
       expect(result.logError).toBe(true);
 
       // In test environment, always log
-      if (true) {
+      {
         expect(consoleSpy).toHaveBeenCalledWith(
           '[VALIDATION_ERROR] Email validation: Invalid email format',
           validationError.details

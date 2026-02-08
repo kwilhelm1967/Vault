@@ -5,7 +5,7 @@
  * for Electron HTTP requests.
  */
 
-import { apiClient, ApiClient } from '../apiClient';
+import { apiClient, ApiClient as _ApiClient } from '../apiClient';
 
 // Mock environment
 jest.mock('../../config/environment', () => ({

@@ -45,7 +45,7 @@ export function AdminGate() {
     }
   }, [email, password, supabaseUrl, supabaseAnonKey, setToken]);
 
-  const bgPage = (theme as { backgroundPage?: string }).backgroundPage ?? "#1E293B";
+  const _bgPage = (theme as { backgroundPage?: string }).backgroundPage ?? "#1E293B";
   return (
     <div style={{ maxWidth: 380, margin: "100px auto", padding: 32, background: theme.backgroundCard, borderRadius: 14, boxShadow: "0 8px 32px rgba(0,0,0,0.4)", border: "1px solid rgba(71, 85, 105, 0.5)" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>

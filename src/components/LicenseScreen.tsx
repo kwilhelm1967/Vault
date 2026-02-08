@@ -42,7 +42,6 @@ import {
   Lock,
   Key,
   Shield,
-  Users,
   Users2,
   CheckCircle,
   XCircle,
@@ -103,7 +102,7 @@ const LicenseScreenComponent: React.FC<LicenseScreenProps> = ({
   const [trialSignupLoading, setTrialSignupLoading] = useState(false);
   const [trialSignupError, setTrialSignupError] = useState<string | null>(null);
   const [trialSignupSuccess, setTrialSignupSuccess] = useState<string | null>(null);
-  const [trialSignupKey, setTrialSignupKey] = useState<string | null>(null);
+  const [_trialSignupKey, setTrialSignupKey] = useState<string | null>(null);
   const [activationProgress, setActivationProgress] = useState<{
     stage: 'checking' | 'connecting' | 'sending' | 'receiving' | 'processing' | null;
     retryAttempt?: number;
@@ -458,19 +457,19 @@ const LicenseScreenComponent: React.FC<LicenseScreenProps> = ({
       } else {
         // Show the actual API error message (don't transform it with getErrorMessage)
         const errorMessage = result.error || ERROR_MESSAGES.LICENSE.ACTIVATION_FAILED;
-        let errorType: 'network' | 'invalid' | 'revoked' | 'device' | 'generic' = 'generic';
+        let _errorType: 'network' | 'invalid' | 'revoked' | 'device' | 'generic' = 'generic';
 
         // Determine error type for analytics
         if (errorMessage.includes("fetch") || errorMessage.includes("Unable to connect") || errorMessage.includes("network")) {
-          errorType = 'network';
+          _errorType = 'network';
           // Store the license key for retry
           setPendingLicenseKey(cleanKey);
         } else if (errorMessage.includes("409") || errorMessage.includes("already activated")) {
-          errorType = 'device';
+          _errorType = 'device';
         } else if (errorMessage.includes("404") || errorMessage.includes("not found") || errorMessage.includes("not a valid")) {
-          errorType = 'invalid';
+          _errorType = 'invalid';
         } else if (errorMessage.includes("revoked")) {
-          errorType = 'revoked';
+          _errorType = 'revoked';
         }
 
         setError(errorMessage);
@@ -645,7 +644,7 @@ const LicenseScreenComponent: React.FC<LicenseScreenProps> = ({
     }
   };
 
-  const handleBundlePurchase = async (bundleType: "personal" | "family") => {
+  const _handleBundlePurchase = async (bundleType: "personal" | "family") => {
     analyticsService.trackConversion("bundle_purchase_started", { bundleType });
 
     // Hide floating button during purchase flow

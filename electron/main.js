@@ -1321,7 +1321,7 @@ app.whenReady().then(() => {
         "style-src 'self' 'unsafe-inline'; " +  // CSS needs inline for React styling
         "font-src 'self' data:; " +
         "img-src 'self' data: blob:; " +
-        "connect-src 'self' https://api.localpasswordvault.com https://server.localpasswordvault.com https://localpasswordvault.com https://www.localpasswordvault.com; "
+        "connect-src 'self' https://api.localpasswordvault.com https://server.localpasswordvault.com https://localpasswordvault.com https://www.localpasswordvault.com; " +
         "frame-ancestors 'none'; " +
         "form-action 'self'; " +
         "base-uri 'self';"

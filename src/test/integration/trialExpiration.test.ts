@@ -10,7 +10,7 @@
 
 import { trialService } from '../../utils/trialService';
 import { licenseService } from '../../utils/licenseService';
-import { getLPVDeviceFingerprint } from '../../utils/deviceFingerprint';
+import { getLPVDeviceFingerprint as _getLPVDeviceFingerprint } from '../../utils/deviceFingerprint';
 
 // Mock device fingerprint
 jest.mock('../../utils/deviceFingerprint', () => ({

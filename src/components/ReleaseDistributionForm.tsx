@@ -28,7 +28,7 @@ function loadDraft(): AdminRelease {
       if (d.releaseName != null && d.version != null && d.source && d.releaseNotes && d.distribution && d.status)
         return d;
     }
-  } catch (_) {}
+  } catch { /* ignore */ }
   return emptyAdminRelease();
 }
 
@@ -36,7 +36,7 @@ function saveDraft(r: AdminRelease) {
   try {
     const next = { ...r, updatedAt: new Date().toISOString() };
     localStorage.setItem(STORAGE_DRAFT, JSON.stringify(next));
-  } catch (_) {}
+  } catch { /* ignore */ }
 }
 
 function loadReleases(): AdminRelease[] {
@@ -46,14 +46,14 @@ function loadReleases(): AdminRelease[] {
       const arr = JSON.parse(raw) as AdminRelease[];
       return Array.isArray(arr) ? arr : [];
     }
-  } catch (_) {}
+  } catch { /* ignore */ }
   return [];
 }
 
 function saveReleases(releases: AdminRelease[]) {
   try {
     localStorage.setItem(STORAGE_RELEASES, JSON.stringify(releases));
-  } catch (_) {}
+  } catch { /* ignore */ }
 }
 
 export function ReleaseDistributionForm() {
@@ -64,7 +64,7 @@ export function ReleaseDistributionForm() {
   const [chipInput, setChipInput] = useState("");
   const [gitLoading, setGitLoading] = useState(false);
   const [gitError, setGitError] = useState<string | null>(null);
-  const [gitDirty, setGitDirty] = useState<boolean | null>(null);
+  const [gitDirty, _setGitDirty] = useState<boolean | null>(null);
 
   const isLive = isReleaseLive(form);
   const lock = isLive;

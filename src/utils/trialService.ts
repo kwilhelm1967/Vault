@@ -1,4 +1,3 @@
-import { generateHardwareFingerprint } from "./hardwareFingerprint";
 import { verifyLicenseSignature } from "./licenseValidator";
 import { devError, devLog } from "./devLog";
 import { ERROR_MESSAGES } from "../constants/errorMessages";
@@ -233,7 +232,7 @@ export class TrialService {
   /**
    * Start the trial period (legacy method - now calls activateTrial)
    */
-  async startTrial(licenseKey: string, hardwareHash: string): Promise<TrialInfo> {
+  async startTrial(licenseKey: string, _hardwareHash: string): Promise<TrialInfo> {
     const result = await this.activateTrial(licenseKey);
     if (result.success && result.trialInfo) {
       return result.trialInfo;
@@ -644,7 +643,7 @@ export class TrialService {
       };
     }
 
-    const startDate = new Date(trialFile.start_date);
+    const _startDate = new Date(trialFile.start_date);
     const expiresAt = new Date(trialFile.expires_at);
     const now = new Date();
     const isExpired = now >= expiresAt;

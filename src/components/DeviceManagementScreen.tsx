@@ -5,9 +5,7 @@ import {
   Tablet,
   Laptop,
   X,
-  CheckCircle,
   AlertCircle,
-  RefreshCw,
   ArrowLeft,
 } from "lucide-react";
 import { licenseService } from "../utils/licenseService";
@@ -42,7 +40,7 @@ interface DeviceManagementScreenProps {
 export const DeviceManagementScreen: React.FC<DeviceManagementScreenProps> = ({
   onBack,
   licenseKey,
-  maxDevices,
+  maxDevices: _maxDevices,
 }) => {
   const [devices, setDevices] = useState<Device[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -104,7 +102,7 @@ export const DeviceManagementScreen: React.FC<DeviceManagementScreenProps> = ({
     };
   }, []);
 
-  const getDeviceName = (): string => {
+  const _getDeviceName = (): string => {
     const ua = navigator.userAgent;
     if (ua.includes('Windows')) return 'Windows Device';
     if (ua.includes('Mac')) return 'Mac Device';

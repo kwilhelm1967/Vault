@@ -8,12 +8,8 @@ import {
   Mail,
   ChartNoAxesCombined,
   Folder,
-  FolderOpen,
-  FileEdit,
   FilePenLine,
-  Users,
   Users2,
-  Clipboard,
   ClipboardList,
 } from "lucide-react";
 

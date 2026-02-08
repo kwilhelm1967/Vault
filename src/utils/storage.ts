@@ -262,7 +262,7 @@ export class StorageService {
     
     if (storedLockout) {
       const lockoutTime = parseInt(storedLockout);
-      const lockoutCount = storedCount ? parseInt(storedCount) : 0;
+      const _lockoutCount = storedCount ? parseInt(storedCount) : 0;
       
       if (Date.now() < lockoutTime) {
         this.lockoutUntil = lockoutTime;
@@ -828,10 +828,10 @@ export class StorageService {
     });
 
     const primaryColor = [74, 111, 165];
-    const accentColor = [201, 174, 102];
+    const _accentColor = [201, 174, 102];
     const textColor = [30, 41, 59];
     const lightGray = [241, 245, 249];
-    const watermarkColor = [200, 200, 200, 0.1];
+    const _watermarkColor = [200, 200, 200, 0.1];
 
     let yPosition = 20;
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -929,7 +929,7 @@ export class StorageService {
       yPosition += 15;
 
       // Entries table
-      categoryEntries.forEach((entry, entryIndex) => {
+      categoryEntries.forEach((entry, _entryIndex) => {
         checkPageBreak(35);
 
         // Entry card background

@@ -7,7 +7,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense } from "react";
 import {
   Search, Plus, Trash2, Eye, EyeOff, Copy, Edit3, X, Check,
-  Shield, Key, Lock, LockOpen,
+  Key, Lock, LockOpen,
   Settings as SettingsIcon, LayoutDashboard, Minimize2,
   AlertTriangle, AlertCircle, HelpCircle,
   Star, ArrowUpDown, ChevronDown, Globe, ExternalLink, History, Clock,
