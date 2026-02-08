@@ -157,42 +157,53 @@ async function createOrRetrieveCustomer(email, name = null) {
 }
 
 async function createBundleCheckoutSession(items, customerEmail, successUrl, cancelUrl) {
-  const lineItems = items.map(({ productKey, quantity = 1 }) => {
+  const BUNDLE_DISCOUNT_RATE = 0.1394; // 13.94% bundle discount
+  
+  // Calculate total price to determine per-item discount allocation
+  const totalPrice = items.reduce((sum, item) => {
+    const product = PRODUCTS[item.productKey];
+    return sum + (product.price * (item.quantity || 1));
+  }, 0);
+  
+  const discountAmount = items.length > 1 ? Math.round(totalPrice * BUNDLE_DISCOUNT_RATE) : 0;
+  
+  // Distribute discount proportionally across line items using price_data
+  // (Stripe does not allow negative unit_amount line items)
+  let remainingDiscount = discountAmount;
+  
+  const lineItems = items.map(({ productKey, quantity = 1 }, index) => {
     const product = PRODUCTS[productKey];
     if (!product) {
       throw new Error(`Invalid product key: ${productKey}`);
     }
     
-    // Fallback to price_data if Stripe price ID not configured
-    if (!product.priceId) {
-      return {
-        price_data: {
-          currency: 'usd',
-          product_data: {
-            name: product.name,
-            description: product.description,
-          },
-          unit_amount: product.price,
-        },
-        quantity: quantity,
-      };
+    let adjustedPrice = product.price;
+    
+    if (discountAmount > 0) {
+      // Proportional discount for this item
+      const itemTotal = product.price * quantity;
+      const itemDiscount = index === items.length - 1
+        ? remainingDiscount // Last item gets any rounding remainder
+        : Math.round((itemTotal / totalPrice) * discountAmount);
+      remainingDiscount -= itemDiscount;
+      adjustedPrice = Math.max(1, product.price - Math.round(itemDiscount / quantity)); // Stripe requires min 1 cent
     }
     
+    // Always use price_data for bundles to apply discount
     return {
-      price: product.priceId,
+      price_data: {
+        currency: 'usd',
+        product_data: {
+          name: product.name,
+          description: discountAmount > 0
+            ? `${product.description} (Bundle Price)`
+            : product.description,
+        },
+        unit_amount: adjustedPrice,
+      },
       quantity: quantity,
     };
   });
-  
-  // Apply 13.94% bundle discount
-  let discountAmount = 0;
-  if (items.length > 1) {
-    const totalPrice = items.reduce((sum, item) => {
-      const product = PRODUCTS[item.productKey];
-      return sum + (product.price * (item.quantity || 1));
-    }, 0);
-    discountAmount = Math.round(totalPrice * 0.1394);
-  }
   
   const sessionConfig = {
     payment_method_types: ['card'],
@@ -201,6 +212,7 @@ async function createBundleCheckoutSession(items, customerEmail, successUrl, can
     metadata: {
       is_bundle: 'true',
       bundle_discount: discountAmount.toString(),
+      original_total: totalPrice.toString(),
     },
     success_url: successUrl,
     cancel_url: cancelUrl,
@@ -208,20 +220,6 @@ async function createBundleCheckoutSession(items, customerEmail, successUrl, can
   
   if (customerEmail && customerEmail.trim() && customerEmail.includes('@')) {
     sessionConfig.customer_email = customerEmail.trim();
-  }
-  
-  if (discountAmount > 0) {
-    sessionConfig.line_items.push({
-      price_data: {
-        currency: 'usd',
-        product_data: {
-          name: 'Bundle Discount',
-          description: 'Bundle Savings',
-        },
-        unit_amount: -discountAmount,
-      },
-      quantity: 1,
-    });
   }
   
   const stripeInstance = getStripeInstance();
