@@ -107,6 +107,11 @@ function sanitizeConfig(): Environment {
       ? licenseServerUrl
       : "https://api.localpasswordvault.com",
     analyticsEnabled: getEnvVar("VITE_ANALYTICS_ENABLED", "false") === "true",
+    // SECURITY WARNING: The license signing secret should NOT be set in production builds.
+    // Exposing the HMAC secret in the client bundle would allow anyone to forge license files.
+    // The secret is used only on the server (LICENSE_SIGNING_SECRET). If set here, it provides
+    // an optional extra layer of signature verification, but is NOT required.
+    // Device-bound encryption in localStorage provides integrity protection client-side.
     licenseSigningSecret: getEnvVar("VITE_LICENSE_SIGNING_SECRET", ""),
   };
 }

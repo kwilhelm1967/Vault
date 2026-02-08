@@ -9,7 +9,7 @@ import environment from "../config/environment";
 import { trialService, TrialInfo } from "./trialService";
 import { getLPVDeviceFingerprint, isValidDeviceId } from "./deviceFingerprint";
 import { verifyLicenseSignature } from "./licenseValidator";
-import { devError, devWarn } from "./devLog";
+import { devError, devLog, devWarn } from "./devLog";
 import { apiClient, ApiError } from "./apiClient";
 import { validateLicenseKey } from "./validation";
 import { measureOperation } from "./performanceMonitor";
