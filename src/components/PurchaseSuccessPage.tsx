@@ -168,10 +168,10 @@ export const PurchaseSuccessPage: React.FC = () => {
         // Reload page to show main app
         window.location.href = '/';
       } else {
-        setManualKeyError(result.error || "Invalid license key. Please check and try again.");
+        setManualKeyError(result.error || "Invalid license. Please check and try again.");
       }
     } catch (err: any) {
-      setManualKeyError(err?.message || "Failed to activate license key. Please try again.");
+      setManualKeyError(err?.message || "Failed to activate license. Please try again.");
     } finally {
       setIsActivatingManualKey(false);
     }
@@ -225,7 +225,7 @@ export const PurchaseSuccessPage: React.FC = () => {
         const urlParams = new URLSearchParams(window.location.search);
         const sessionId = urlParams.get("session_id");
         
-        // If session_id is present, try to fetch license keys from backend
+        // If session_id is present, try to fetch license codes from backend
         if (sessionId && sessionId.startsWith("cs_")) {
           try {
             const data = await fetchSessionData(sessionId);
@@ -320,7 +320,7 @@ export const PurchaseSuccessPage: React.FC = () => {
       } catch (err: any) {
         // Error handled via setError - no console output needed
         const supportEmail = 'support@localpasswordvault.com';
-        const errorMessage = err?.message || `Failed to load license keys. Please check your email or contact ${supportEmail}`;
+        const errorMessage = err?.message || `Failed to load your license. Please check your email or contact ${supportEmail}`;
         setError(errorMessage);
       } finally {
         // CRITICAL FIX: Always set loading to false, even on error
@@ -361,10 +361,10 @@ export const PurchaseSuccessPage: React.FC = () => {
       
       if (!data.success) {
         if (data.pending) {
-          setError("Your purchase is being processed. This may take a few moments. Please check your email for your license keys, or refresh this page in a minute.");
+          setError("Your purchase is being processed. This may take a few moments. Please check your email for your license file, or refresh this page in a minute.");
           return null;
         }
-        throw new Error(data.error || "Failed to retrieve license keys");
+        throw new Error(data.error || "Failed to retrieve license");
       }
       
       // Handle bundle purchase (multiple licenses from different products)
@@ -471,7 +471,7 @@ export const PurchaseSuccessPage: React.FC = () => {
       if (err && typeof err === 'object' && 'code' in err) {
         const apiError = err as { code: string; message: string };
         if (apiError.code === 'NETWORK_ERROR' || apiError.code === 'REQUEST_TIMEOUT') {
-          setError("Unable to connect to the server. Please check your internet connection and try again, or check your email for your license keys.");
+          setError("Unable to connect to the server. Please check your internet connection and try again, or check your email for your license file.");
           return null;
         }
       }
@@ -761,10 +761,10 @@ export const PurchaseSuccessPage: React.FC = () => {
           {/* Trial Success UI */}
           {!isLoading && !error && isTrial && licenseKeys.length > 0 && (
             <div className="text-left space-y-6">
-              {/* Trial Key Section */}
+              {/* Trial License Code Section */}
               <div className="space-y-3">
                 <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: colors.textMuted }}>
-                  Your Trial License Key
+                  Your Trial License Code
                 </p>
                 <div className="flex items-center gap-3">
                   <code
@@ -803,7 +803,7 @@ export const PurchaseSuccessPage: React.FC = () => {
                 </div>
                 <p className="text-xs flex items-center gap-1.5" style={{ color: colors.green }}>
                   <CheckCircle className="w-4 h-4" />
-                  An email has been sent with your trial key.
+                  A license file has been sent to your email.
                 </p>
               </div>
 
@@ -857,8 +857,8 @@ export const PurchaseSuccessPage: React.FC = () => {
                 <div className="space-y-3">
                   {[
                     { num: 1, title: "Download and Install", desc: "Choose your operating system above and install the app." },
-                    { num: 2, title: "Enter Your Trial Key", desc: "When prompted, paste the license key shown above." },
-                    { num: 3, title: "Create Your Master Password", desc: "Choose a strong, memorable password. This is the only key to your vault." },
+                    { num: 2, title: "Import Your License", desc: "Drag the .license file from your email into the app, or paste the code above." },
+                    { num: 3, title: "Create Your Master Password", desc: "Choose a strong, memorable password. This is the only password you need to remember." },
                     { num: 4, title: "Start Adding Passwords", desc: "You're ready! Begin storing your passwords securely." },
                   ].map((step) => (
                     <div key={step.num} className="flex gap-3">
@@ -911,7 +911,7 @@ export const PurchaseSuccessPage: React.FC = () => {
                 backdropFilter: 'blur(10px)',
               }}
             >
-              <LoadingSpinner size="lg" text="Loading your license keys..." />
+              <LoadingSpinner size="lg" text="Loading your license..." />
             </div>
           )}
 
@@ -940,7 +940,7 @@ export const PurchaseSuccessPage: React.FC = () => {
             </div>
           )}
 
-          {/* Manual License Key Entry - Show when no keys loaded */}
+          {/* Manual License Entry - Show when no licenses loaded */}
           {!isLoading && !error && licenseKeys.length === 0 && productGroups.length === 0 && (
             <div className="mb-5">
               <h2 
@@ -950,7 +950,7 @@ export const PurchaseSuccessPage: React.FC = () => {
                   fontFamily: "'Space Grotesk', sans-serif"
                 }}
               >
-                Enter Your License Key
+                Enter Your License Code
               </h2>
               <div
                 className="rounded-[12px] p-4 md:p-5"
@@ -960,7 +960,7 @@ export const PurchaseSuccessPage: React.FC = () => {
                 }}
               >
                 <p className="text-sm mb-4" style={{ color: colors.textSecondary }}>
-                  Enter your license key below to activate {defaultProductName} and get started.
+                  Enter your license code below to activate {defaultProductName}, or import the .license file from your email.
                 </p>
                 
                 <div className="space-y-3">
@@ -970,7 +970,7 @@ export const PurchaseSuccessPage: React.FC = () => {
                       className="block text-sm font-medium mb-2"
                       style={{ color: colors.textPrimary }}
                     >
-                      License Key
+                      License Code
                     </label>
                     <input
                       id="manual-license-key"
@@ -1014,7 +1014,7 @@ export const PurchaseSuccessPage: React.FC = () => {
                       e.currentTarget.style.boxShadow = 'none';
                     }}
                   >
-                    {isActivatingManualKey ? "Activating..." : "Activate License Key"}
+                    {isActivatingManualKey ? "Activating..." : "Activate License Code"}
                   </button>
                 </div>
               </div>
@@ -1084,15 +1084,15 @@ export const PurchaseSuccessPage: React.FC = () => {
                       </h2>
                       <p className="text-sm" style={{ color: colors.textMuted }}>
                         {group.licenses.length === 1 
-                          ? "1 license key" 
-                          : `${group.licenses.length} license keys`}
+                          ? "1 license" 
+                          : `${group.licenses.length} license codes`}
                         {isFamilyPlan && " • Family Plan"}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                {/* License Keys for this Product */}
+                {/* License Codes for this Product */}
                 <div
                   className="rounded-[12px] p-4 mb-5"
                   style={{
@@ -1119,13 +1119,13 @@ export const PurchaseSuccessPage: React.FC = () => {
                             fontFamily: "'Space Grotesk', sans-serif"
                           }}
                         >
-                          {groupKeys.length === 1 ? "Your License Key" : `Your ${groupKeys.length} License Keys`}
+                          {groupKeys.length === 1 ? "Your License Code" : `Your ${groupKeys.length} License Codes`}
                         </h3>
                         <p className="text-xs" style={{ color: colors.textMuted }}>
                           {groupKeys.length === 1 
                             ? "Save this key — you'll need it to activate the app"
                             : isFamilyPlan
-                            ? "5 license keys for your family • Click any key to copy • One key per device"
+                            ? "5 license codes for your family • Click any key to copy • One key per device"
                             : "Click any key to copy • One key per device"}
                         </p>
                       </div>
@@ -1163,7 +1163,7 @@ export const PurchaseSuccessPage: React.FC = () => {
                         className="text-[0.8rem] uppercase tracking-wider mb-2"
                         style={{ color: colors.textMuted }}
                       >
-                        Your License Key
+                        Your License Code
                       </p>
                       <div className="flex items-center gap-3 justify-center">
                         <code
@@ -1383,7 +1383,7 @@ export const PurchaseSuccessPage: React.FC = () => {
             );
           })}
 
-            {/* Single Purchase: License Keys Card */}
+            {/* Single Purchase: License Codes Card */}
             {!isLoading && !error && !isBundle && licenseKeys.length > 0 && (
               <div
                 className="rounded-[12px] p-4 mb-5"
@@ -1396,7 +1396,7 @@ export const PurchaseSuccessPage: React.FC = () => {
                   className="text-[0.8rem] uppercase tracking-wider mb-2"
                   style={{ color: colors.textMuted }}
                 >
-                  Your License Key
+                  Your License Code
                 </p>
                 {licenseKeys.length === 1 ? (
                   <div className="flex items-center gap-3 justify-center">
@@ -1661,7 +1661,7 @@ export const PurchaseSuccessPage: React.FC = () => {
                     2
                   </span>
                   <span className="text-sm" style={{ color: colors.textSecondary }}>
-                    Launch the app and enter your license key when prompted
+                    Launch the app and import your license file when prompted
                   </span>
                 </li>
                 <li className="flex items-start gap-3">

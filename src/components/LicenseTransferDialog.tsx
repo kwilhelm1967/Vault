@@ -273,7 +273,7 @@ export const LicenseTransferDialog: React.FC<LicenseTransferDialogProps> = ({
 
         {/* Privacy Note */}
         <p className="text-xs text-slate-500 text-center mt-4">
-          Only your license key and device identifier are sent. No vault data is transmitted.
+          Only your license code and device identifier are sent. No vault data is transmitted.
         </p>
       </div>
     </div>

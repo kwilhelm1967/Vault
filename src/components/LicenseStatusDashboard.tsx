@@ -119,7 +119,7 @@ export const LicenseStatusDashboard: React.FC<LicenseStatusDashboardProps> = ({
   };
 
   const maskLicenseKey = (key: string | null): string => {
-    if (!key) return 'No license key';
+    if (!key) return 'No license';
     if (key.length < 8) return key;
     return `${key.substring(0, 4)}-****-****-${key.substring(key.length - 4)}`;
   };
@@ -195,7 +195,7 @@ export const LicenseStatusDashboard: React.FC<LicenseStatusDashboardProps> = ({
               No Active License
             </h2>
             <p className="text-slate-400 mb-6">
-              You don't have an active license. Activate a license key to continue.
+              You don't have an active license. Import a license file to continue.
             </p>
             {onUpgrade && (
               <button
@@ -274,7 +274,7 @@ export const LicenseStatusDashboard: React.FC<LicenseStatusDashboardProps> = ({
 
             <div className="space-y-3">
               <div className="flex items-center justify-between py-2 border-b border-slate-700/50">
-                <span className="text-sm text-slate-400">License Key</span>
+                <span className="text-sm text-slate-400">License Code</span>
                 <code className="text-sm font-mono" style={{ color: colors.steelBlue400 }}>
                   {maskLicenseKey(licenseInfo.key)}
                 </code>

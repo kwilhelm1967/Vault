@@ -116,12 +116,12 @@ function HomeDashboard({
     { label: "Check trial funnel", tab: "funnel" },
     { label: "Check top support issues", tab: "playbooks" },
     { label: "Confirm download links healthy", tab: "status" },
-    { label: "Check license key inventory", tab: "licenses" },
+    { label: "Check license inventory", tab: "licenses" },
   ];
 
   const keyActions: { label: string; tab: TabId; desc: string }[] = [
-    { label: "Create trial key", tab: "trials", desc: "Generate 14-day trial" },
-    { label: "Create license key", tab: "trials", desc: "Comp / lifetime key" },
+    { label: "Create trial license", tab: "trials", desc: "Generate 14-day trial" },
+    { label: "Create paid license", tab: "trials", desc: "Comp / lifetime license" },
     { label: "Reset binding", tab: "trials", desc: "Allow activate on new device" },
     { label: "Extend trial", tab: "trials", desc: "Reactivate expired trial" },
     { label: "Re-issue / replace key", tab: "licenses", desc: "New key, mark old replaced" },
@@ -717,7 +717,7 @@ export function AdminDashboard({ onClose }: { onClose: () => void }) {
     const key = reissueLicenseKey.trim();
     const reason = reissueReason.trim();
     if (!key) {
-      setReissueStatus("Enter the full license key.");
+      setReissueStatus("Enter the full license code.");
       return;
     }
     if (!reason) {
@@ -761,7 +761,7 @@ export function AdminDashboard({ onClose }: { onClose: () => void }) {
     const key = revokeLicenseKey.trim();
     const reason = revokeReason.trim();
     if (!key) {
-      setRevokeStatus("Enter the full license key.");
+      setRevokeStatus("Enter the full license code.");
       return;
     }
     if (!reason) {
@@ -802,7 +802,7 @@ export function AdminDashboard({ onClose }: { onClose: () => void }) {
     const key = resetBindingKey.trim();
     const reason = resetBindingReason.trim();
     if (!key) {
-      setResetBindingStatus("Enter the full license key.");
+      setResetBindingStatus("Enter the full license code.");
       return;
     }
     if (!reason) {
@@ -843,7 +843,7 @@ export function AdminDashboard({ onClose }: { onClose: () => void }) {
     const key = rebindExceptionKey.trim();
     const reason = rebindExceptionReason.trim();
     if (!key || !reason) {
-      setRebindExceptionStatus("Enter license key and reason");
+      setRebindExceptionStatus("Enter license code and reason");
       return;
     }
     setRebindExceptionLoading(true);
@@ -1941,7 +1941,7 @@ export function AdminDashboard({ onClose }: { onClose: () => void }) {
     const key = reactivateLicenseKey.trim();
     const reason = reactivateLicenseReason.trim();
     if (!key) {
-      setReactivateLicenseError("Enter the license key.");
+      setReactivateLicenseError("Enter the license code.");
       return;
     }
     if (!reason) {
@@ -1983,7 +1983,7 @@ export function AdminDashboard({ onClose }: { onClose: () => void }) {
     const key = reactivateTrialKey.trim();
     const reason = reactivateTrialReason.trim();
     if (!key) {
-      setReactivateTrialError("Enter the trial key.");
+      setReactivateTrialError("Enter the trial license code.");
       return;
     }
     if (!reason) {
@@ -2343,7 +2343,7 @@ export function AdminDashboard({ onClose }: { onClose: () => void }) {
             {!searchResults && !loading && (
               <div style={{ padding: 24, textAlign: "center", color: theme.textMuted }}>
                 <p style={{ marginBottom: 8 }}>Search across licenses, trials, tickets, and purchases.</p>
-                <p style={{ fontSize: 12 }}>Try: email address, name, ticket subject, or license key (min 2 chars). Press Enter to search.</p>
+                <p style={{ fontSize: 12 }}>Try: email address, name, ticket subject, or license code (min 2 chars). Press Enter to search.</p>
               </div>
             )}
           </div>
@@ -2417,9 +2417,9 @@ export function AdminDashboard({ onClose }: { onClose: () => void }) {
                 ) : <p style={{ color: theme.textMuted, fontSize: 13 }}>No activation attempts</p>}
                 <div style={{ paddingTop: 12, borderTop: `1px solid ${theme.borderSubtle}` }}>
                   <h4 style={{ color: theme.accentGold, fontSize: 13, marginBottom: 8 }}>Re-issue license</h4>
-                  <p style={{ color: theme.textSecondary, fontSize: 12, marginBottom: 8 }}>Generates a new key and marks the old one replaced. Give the new key to the user. Requires full license key (from customer).</p>
+                  <p style={{ color: theme.textSecondary, fontSize: 12, marginBottom: 8 }}>Generates a new key and marks the old one replaced. Give the new key to the user. Requires full license code (from customer).</p>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 400 }}>
-                    <input type="text" placeholder="Full license key (XXXX-XXXX-XXXX-XXXX)" value={reissueLicenseKey} onChange={(e) => { setReissueLicenseKey(e.target.value); setReissueStatus(null); setReissueNewKey(null); }} style={{ padding: "8px 12px", background: theme.inputBackground, border: `1px solid ${theme.inputBorder}`, borderRadius: theme.radiusInput, color: theme.inputText }} />
+                    <input type="text" placeholder="License code (XXXX-XXXX-XXXX-XXXX)" value={reissueLicenseKey} onChange={(e) => { setReissueLicenseKey(e.target.value); setReissueStatus(null); setReissueNewKey(null); }} style={{ padding: "8px 12px", background: theme.inputBackground, border: `1px solid ${theme.inputBorder}`, borderRadius: theme.radiusInput, color: theme.inputText }} />
                     <input type="text" placeholder="Reason for re-issue" value={reissueReason} onChange={(e) => { setReissueReason(e.target.value); setReissueStatus(null); }} style={{ padding: "8px 12px", background: theme.inputBackground, border: `1px solid ${theme.inputBorder}`, borderRadius: theme.radiusInput, color: theme.inputText }} />
                     <input type="text" placeholder='Type REISSUE to confirm' value={reissueConfirm} onChange={(e) => { setReissueConfirm(e.target.value); setReissueStatus(null); }} style={{ padding: "8px 12px", width: 180, background: theme.inputBackground, border: `1px solid ${theme.inputBorder}`, borderRadius: theme.radiusInput, color: theme.inputText }} />
                     <button type="button" onClick={reissueLicenseAction} disabled={reissueLoading} style={{ alignSelf: "flex-start", padding: "8px 16px", background: theme.buttonPrimaryBg, color: theme.buttonPrimaryText, border: "none", borderRadius: theme.radiusButton, fontWeight: 600, cursor: "pointer" }}>{reissueLoading ? "Re-issuing…" : "Re-issue"}</button>
@@ -2429,7 +2429,7 @@ export function AdminDashboard({ onClose }: { onClose: () => void }) {
                   <h4 style={{ color: theme.accentGold, fontSize: 13, marginTop: 20, marginBottom: 8 }}>Time-boxed rebind exception</h4>
                   <p style={{ color: theme.textSecondary, fontSize: 12, marginBottom: 8 }}>Grants a temporary window (e.g. 48h) during which the user can rebind to a new device. Use for hardware replacement. No confirmation required.</p>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 400, marginBottom: 16 }}>
-                    <input type="text" placeholder="Full license key" value={rebindExceptionKey} onChange={(e) => { setRebindExceptionKey(e.target.value); setRebindExceptionStatus(null); }} style={{ padding: "8px 12px", background: theme.inputBackground, border: `1px solid ${theme.inputBorder}`, borderRadius: theme.radiusInput, color: theme.inputText }} />
+                    <input type="text" placeholder="License code" value={rebindExceptionKey} onChange={(e) => { setRebindExceptionKey(e.target.value); setRebindExceptionStatus(null); }} style={{ padding: "8px 12px", background: theme.inputBackground, border: `1px solid ${theme.inputBorder}`, borderRadius: theme.radiusInput, color: theme.inputText }} />
                     <input type="number" placeholder="Hours (default 48)" value={rebindExceptionHours} onChange={(e) => setRebindExceptionHours(Math.max(1, Math.min(168, parseInt(e.target.value, 10) || 48)))} style={{ padding: "8px 12px", width: 120, background: theme.inputBackground, border: `1px solid ${theme.inputBorder}`, borderRadius: theme.radiusInput, color: theme.inputText }} />
                     <input type="text" placeholder="Reason" value={rebindExceptionReason} onChange={(e) => { setRebindExceptionReason(e.target.value); setRebindExceptionStatus(null); }} style={{ padding: "8px 12px", background: theme.inputBackground, border: `1px solid ${theme.inputBorder}`, borderRadius: theme.radiusInput, color: theme.inputText }} />
                     <button type="button" onClick={rebindExceptionAction} disabled={rebindExceptionLoading} style={{ alignSelf: "flex-start", padding: "8px 16px", background: theme.buttonPrimaryBg, color: theme.buttonPrimaryText, border: "none", borderRadius: theme.radiusButton, fontWeight: 600, cursor: "pointer" }}>{rebindExceptionLoading ? "Granting…" : "Grant rebind exception"}</button>
@@ -2438,7 +2438,7 @@ export function AdminDashboard({ onClose }: { onClose: () => void }) {
                   <h4 style={{ color: theme.accentGold, fontSize: 13, marginTop: 20, marginBottom: 8 }}>Reset device binding (full reset)</h4>
                   <p style={{ color: theme.textSecondary, fontSize: 12, marginBottom: 8 }}>Clears device binding immediately so the user can activate on a new device. Use when rebind exception is not appropriate.</p>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 400, marginBottom: 16 }}>
-                    <input type="text" placeholder="Full license key" value={resetBindingKey} onChange={(e) => { setResetBindingKey(e.target.value); setResetBindingStatus(null); }} style={{ padding: "8px 12px", background: theme.inputBackground, border: `1px solid ${theme.inputBorder}`, borderRadius: theme.radiusInput, color: theme.inputText }} />
+                    <input type="text" placeholder="License code" value={resetBindingKey} onChange={(e) => { setResetBindingKey(e.target.value); setResetBindingStatus(null); }} style={{ padding: "8px 12px", background: theme.inputBackground, border: `1px solid ${theme.inputBorder}`, borderRadius: theme.radiusInput, color: theme.inputText }} />
                     <input type="text" placeholder="Reason" value={resetBindingReason} onChange={(e) => { setResetBindingReason(e.target.value); setResetBindingStatus(null); }} style={{ padding: "8px 12px", background: theme.inputBackground, border: `1px solid ${theme.inputBorder}`, borderRadius: theme.radiusInput, color: theme.inputText }} />
                     <input type="text" placeholder='Type RESET to confirm' value={resetBindingConfirm} onChange={(e) => { setResetBindingConfirm(e.target.value); setResetBindingStatus(null); }} style={{ padding: "8px 12px", width: 180, background: theme.inputBackground, border: `1px solid ${theme.inputBorder}`, borderRadius: theme.radiusInput, color: theme.inputText }} />
                     <button type="button" onClick={resetBindingLicenseAction} disabled={resetBindingLoading} style={{ alignSelf: "flex-start", padding: "8px 16px", background: theme.buttonPrimaryBg, color: theme.buttonPrimaryText, border: "none", borderRadius: theme.radiusButton, fontWeight: 600, cursor: "pointer" }}>{resetBindingLoading ? "Resetting…" : "Reset binding"}</button>
@@ -2447,7 +2447,7 @@ export function AdminDashboard({ onClose }: { onClose: () => void }) {
                   <h4 style={{ color: theme.statusError, fontSize: 13, marginTop: 8, marginBottom: 8 }}>Revoke license</h4>
                   <p style={{ color: theme.textSecondary, fontSize: 12, marginBottom: 8 }}>Permanently revokes the license. Use for fraud or chargeback.</p>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 400 }}>
-                    <input type="text" placeholder="Full license key" value={revokeLicenseKey} onChange={(e) => { setRevokeLicenseKey(e.target.value); setRevokeStatus(null); }} style={{ padding: "8px 12px", background: theme.inputBackground, border: `1px solid ${theme.inputBorder}`, borderRadius: theme.radiusInput, color: theme.inputText }} />
+                    <input type="text" placeholder="License code" value={revokeLicenseKey} onChange={(e) => { setRevokeLicenseKey(e.target.value); setRevokeStatus(null); }} style={{ padding: "8px 12px", background: theme.inputBackground, border: `1px solid ${theme.inputBorder}`, borderRadius: theme.radiusInput, color: theme.inputText }} />
                     <input type="text" placeholder="Reason" value={revokeReason} onChange={(e) => { setRevokeReason(e.target.value); setRevokeStatus(null); }} style={{ padding: "8px 12px", background: theme.inputBackground, border: `1px solid ${theme.inputBorder}`, borderRadius: theme.radiusInput, color: theme.inputText }} />
                     <input type="text" placeholder='Type REVOKE to confirm' value={revokeConfirm} onChange={(e) => { setRevokeConfirm(e.target.value); setRevokeStatus(null); }} style={{ padding: "8px 12px", width: 180, background: theme.inputBackground, border: `1px solid ${theme.inputBorder}`, borderRadius: theme.radiusInput, color: theme.inputText }} />
                     <button type="button" onClick={revokeLicenseAction} disabled={revokeLoading} style={{ alignSelf: "flex-start", padding: "8px 16px", background: theme.statusError, color: "#fff", border: "none", borderRadius: theme.radiusButton, fontWeight: 600, cursor: "pointer" }}>{revokeLoading ? "Revoking…" : "Revoke"}</button>
@@ -2461,8 +2461,8 @@ export function AdminDashboard({ onClose }: { onClose: () => void }) {
         {tab === "trials" && (
           <>
             <div style={cardStyle}>
-              <h3 style={{ color: theme.accentGold, marginBottom: 12 }}>Create trial key</h3>
-              <p style={{ color: theme.textSecondary, fontSize: 13, marginBottom: 12 }}>Enter the user’s email. A new 14-day trial key is created and ready to use—give the key to the user to paste in the app under Activation.</p>
+              <h3 style={{ color: theme.accentGold, marginBottom: 12 }}>Create trial license</h3>
+              <p style={{ color: theme.textSecondary, fontSize: 13, marginBottom: 12 }}>Enter the user’s email. A new 14-day trial license is created and ready to use—give the license file to the user to paste in the app under Activation.</p>
               <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>
                 <input
                   type="email"
@@ -2473,7 +2473,7 @@ export function AdminDashboard({ onClose }: { onClose: () => void }) {
                   style={{ padding: "10px 12px", minWidth: 220, background: theme.inputBackground, border: `1px solid ${theme.inputBorder}`, borderRadius: theme.radiusInput, color: theme.inputText }}
                 />
                 <button type="button" onClick={createTrialKeyAction} disabled={createTrialLoading} style={{ padding: "10px 16px", background: theme.buttonPrimaryBg, color: theme.buttonPrimaryText, border: "none", borderRadius: theme.radiusButton, fontWeight: 600, cursor: createTrialLoading ? "wait" : "pointer" }}>
-                  {createTrialLoading ? "Creating…" : "Create trial key"}
+                  {createTrialLoading ? "Creating…" : "Create trial license"}
                 </button>
               </div>
               {createTrialError && <p style={{ color: theme.statusError, fontSize: 13, marginBottom: 8 }}>{createTrialError}</p>}
@@ -2489,7 +2489,7 @@ export function AdminDashboard({ onClose }: { onClose: () => void }) {
               )}
             </div>
             <div style={cardStyle}>
-              <h3 style={{ color: theme.accentGold, marginBottom: 12 }}>Create license key</h3>
+              <h3 style={{ color: theme.accentGold, marginBottom: 12 }}>Create paid license</h3>
               <p style={{ color: theme.textSecondary, fontSize: 13, marginBottom: 12 }}>Create a full (lifetime) comp license. Enter the user’s email and a reason; type COMP to confirm. Give the key to the user to paste in the app under Activation.</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 12 }}>
                 <input
@@ -2514,7 +2514,7 @@ export function AdminDashboard({ onClose }: { onClose: () => void }) {
                   style={{ padding: "10px 12px", maxWidth: 160, background: theme.inputBackground, border: `1px solid ${theme.inputBorder}`, borderRadius: theme.radiusInput, color: theme.inputText }}
                 />
                 <button type="button" onClick={createLicenseKeyAction} disabled={createLicenseLoading} style={{ padding: "10px 16px", alignSelf: "flex-start", background: theme.buttonPrimaryBg, color: theme.buttonPrimaryText, border: "none", borderRadius: theme.radiusButton, fontWeight: 600, cursor: createLicenseLoading ? "wait" : "pointer" }}>
-                  {createLicenseLoading ? "Creating…" : "Create license key"}
+                  {createLicenseLoading ? "Creating…" : "Create paid license"}
                 </button>
               </div>
               {createLicenseError && <p style={{ color: theme.statusError, fontSize: 13, marginBottom: 8 }}>{createLicenseError}</p>}

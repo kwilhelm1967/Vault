@@ -46,7 +46,7 @@ export const DownloadInstructions: React.FC<DownloadInstructionsProps> = ({
                 {licenseType === "single" ? "Personal Vault" : "Family Vault"}
               </p>
               <p className="text-slate-300 text-sm mb-2">
-                <strong>License Key:</strong>
+                <strong>License Code:</strong>
               </p>
               <div className="bg-slate-800 p-3 rounded text-blue-400 text-sm select-all font-mono">
                 {licenseKey}
@@ -120,7 +120,7 @@ export const DownloadInstructions: React.FC<DownloadInstructionsProps> = ({
                 <li>1. Download the installer for your operating system</li>
                 <li>2. Run the installer and follow the setup wizard</li>
                 <li>3. Launch Local Password Vault</li>
-                <li>4. Enter your license key when prompted</li>
+                <li>4. Import your license file when prompted</li>
                 <li>5. Create your master password and start securing your accounts</li>
               </ol>
             </div>

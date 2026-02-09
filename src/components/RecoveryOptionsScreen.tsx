@@ -19,7 +19,7 @@ export const RecoveryOptionsScreen: React.FC<RecoveryOptionsScreenProps> = ({
   };
 
   const handleContactSupport = () => {
-    const email = "mailto:support@localpasswordvault.com?subject=License Key Recovery Request";
+    const email = "mailto:support@localpasswordvault.com?subject=License Recovery Request";
 
     if (window.electronAPI) {
       window.electronAPI.openExternal(email);
@@ -38,7 +38,7 @@ export const RecoveryOptionsScreen: React.FC<RecoveryOptionsScreenProps> = ({
               Need Help?
             </h2>
             <p className="text-slate-400">
-              Don't worry, we can help you recover your license key
+              Don't worry, we can help you recover your license
             </p>
           </div>
 
@@ -51,7 +51,7 @@ export const RecoveryOptionsScreen: React.FC<RecoveryOptionsScreenProps> = ({
               <Mail className="w-5 h-5" />
               <span className="text-left">
                 <div className="font-semibold">Resend My Key</div>
-                <div className="text-sm text-blue-200">Get your license key via email</div>
+                <div className="text-sm text-blue-200">Get your license file via email</div>
               </span>
             </button>
 

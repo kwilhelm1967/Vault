@@ -201,7 +201,7 @@ const FAQ_DATA: FAQSection[] = [
     questions: [
       { 
         question: "How long is the free trial?", 
-        answer: "The free trial is 7 days with full access to all features. After the trial, you'll need to purchase a license to continue adding and editing passwords. Good news: when you upgrade to a paid license, all your passwords and data stay exactly where they are—no import needed! Just enter your new license key and keep going." 
+        answer: "The free trial is 7 days with full access to all features. After the trial, you'll need to purchase a license to continue adding and editing passwords. Good news: when you upgrade to a paid license, all your passwords and data stay exactly where they are—no import needed! Just import your new license file and keep going." 
       },
       { 
         question: "What happens when the trial ends?", 
@@ -209,7 +209,7 @@ const FAQ_DATA: FAQSection[] = [
       },
       { 
         question: "How do I purchase a license?", 
-        answer: "Click 'Purchase' in the trial banner or visit our website. After payment, you'll receive a license key by email. Enter it in the app to activate your full license." 
+        answer: "Click 'Purchase' in the trial banner or visit our website. After payment, you'll receive a license file by email. Import it into the app to activate your full license." 
       },
       { 
         question: "Can I use my license on multiple computers?", 
@@ -217,7 +217,7 @@ const FAQ_DATA: FAQSection[] = [
       },
       { 
         question: "How do I transfer my license to a new computer?", 
-        answer: "On your new computer, install the app and enter your license key. You'll be prompted to confirm the transfer. This deactivates the license on your old device. Remember to export and import your vault data!" 
+        answer: "On your new computer, install the app and import your license file from email. The app will bind to your new device automatically. Remember to export and import your vault data!" 
       },
     ]
   },
@@ -239,7 +239,7 @@ const FAQ_DATA: FAQSection[] = [
         answer: "Email support@localpasswordvault.com with details about the issue, your operating system, and steps to reproduce the problem. Screenshots are helpful!" 
       },
       { 
-        question: "My license key isn't working.", 
+        question: "My license isn't working.", 
         answer: "Ensure you're entering the key exactly as received (check for extra spaces). If it says the key is already in use, you may need to transfer it from another device. Contact support if issues persist." 
       },
     ]
