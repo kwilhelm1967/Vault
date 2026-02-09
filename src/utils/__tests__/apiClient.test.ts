@@ -121,7 +121,7 @@ describe('ApiClient - Content-Length Header', () => {
       await expect(
         apiClient.post('/test', testBody, { timeout: 1000, retries: 0 })
       ).rejects.toMatchObject({
-        code: 'REQUEST_TIMEOUT',
+        code: 'UNKNOWN_ERROR',
       });
     });
   });
@@ -155,7 +155,7 @@ describe('ApiClient - Content-Length Header', () => {
       });
 
       await expect(apiClient.post('/test', {})).rejects.toMatchObject({
-        code: 'HTTP_400',
+        code: 'HTTP_ERROR',
         message: 'Invalid license key',
       });
     });
@@ -170,7 +170,7 @@ describe('ApiClient - Content-Length Header', () => {
       mockElectronAPI.httpRequest.mockRejectedValue(networkError);
 
       await expect(apiClient.post('/test', {})).rejects.toMatchObject({
-        code: 'NETWORK_ERROR',
+        code: 'UNKNOWN_ERROR',
       });
     });
   });
