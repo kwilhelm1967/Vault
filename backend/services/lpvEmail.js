@@ -72,39 +72,54 @@ async function sendLpvTrialEmail({ to, trialKey, expiresAt, licenseFileContent }
     // Fallback if template doesn't exist yet — use plain HTML
     html = `
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"></head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8fafc;">
-  <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 16px; padding: 40px 32px; text-align: center; color: white;">
-    <h1 style="margin: 0 0 8px; font-size: 24px;">Local Password Vault</h1>
-    <p style="margin: 0; color: #94a3b8; font-size: 14px;">Your 7-Day Free Trial</p>
-  </div>
-  <div style="background: white; border-radius: 12px; padding: 32px; margin-top: 16px; border: 1px solid #e2e8f0;">
-    <p style="color: #334155; font-size: 15px; line-height: 1.6;">Welcome! Your trial license file is attached to this email.</p>
-    <div style="background: #f0f9ff; border: 2px solid #0ea5e9; border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center;">
-      <p style="margin: 0 0 4px; color: #0369a1; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Your License Key</p>
-      <p style="margin: 0; color: #0c4a6e; font-size: 18px; font-weight: 700; font-family: monospace; letter-spacing: 2px;">${trialKey}</p>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body style="font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #0b1120;">
+  <!-- Header with Logo -->
+  <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 16px 16px 0 0; padding: 40px 32px; text-align: center; border: 1px solid rgba(6, 182, 212, 0.15); border-bottom: none;">
+    <div style="display: inline-block; width: 56px; height: 56px; background: #0f172a; border-radius: 14px; box-shadow: 0 4px 16px rgba(6, 182, 212, 0.2), inset 0 0 0 1px rgba(6, 182, 212, 0.3); margin-bottom: 16px; line-height: 56px; text-align: center;">
+      <img src="https://localpasswordvault.com/android-chrome-192x192.png" alt="LPV" width="32" height="32" style="display: inline-block; vertical-align: middle;" />
     </div>
-    <h3 style="color: #1e293b; margin: 24px 0 12px;">Getting Started:</h3>
-    <ol style="color: #475569; font-size: 14px; line-height: 1.8; padding-left: 20px;">
-      <li>Download the app from <a href="https://localpasswordvault.com/download" style="color: #0ea5e9;">localpasswordvault.com/download</a></li>
-      <li>Install and launch the app</li>
-      <li><strong>Import the attached .license file</strong> when prompted</li>
-    </ol>
-    <p style="color: #64748b; font-size: 13px; margin-top: 20px;">Trial expires: <strong>${expiresFormatted}</strong></p>
-    <p style="color: #64748b; font-size: 13px;">After importing, everything runs locally on your device. No internet required.</p>
-    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
-    <p style="color: #64748b; font-size: 13px; text-align: center;">
-      Ready to keep your passwords secure forever?<br>
-      <a href="https://localpasswordvault.com/pricing" style="color: #0ea5e9; font-weight: 600;">Upgrade to a lifetime license</a>
-    </p>
+    <h1 style="margin: 0 0 6px; font-size: 22px; font-weight: 700; color: #f1f5f9; font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.3px;">Local Password Vault</h1>
+    <p style="margin: 0; color: #06b6d4; font-size: 14px; font-weight: 600; letter-spacing: 0.5px;">Your 7-Day Free Trial</p>
   </div>
-  <p style="color: #94a3b8; font-size: 11px; text-align: center; margin-top: 16px;">
-    Questions? Contact <a href="mailto:support@localpasswordvault.com" style="color: #94a3b8;">support@localpasswordvault.com</a>
+
+  <!-- Body -->
+  <div style="background: #1e293b; border-radius: 0 0 16px 16px; padding: 32px; border: 1px solid rgba(6, 182, 212, 0.15); border-top: 1px solid rgba(255,255,255,0.05);">
+    <p style="color: #cbd5e1; font-size: 15px; line-height: 1.6; margin: 0 0 20px;">Welcome! Your trial license file is attached to this email.</p>
+
+    <!-- License Code Box -->
+    <div style="background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.25); border-radius: 12px; padding: 20px; margin: 0 0 24px; text-align: center;">
+      <p style="margin: 0 0 6px; color: #06b6d4; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600;">Your License Code</p>
+      <p style="margin: 0; color: #f1f5f9; font-size: 20px; font-weight: 700; font-family: 'Space Grotesk', monospace; letter-spacing: 3px;">${trialKey}</p>
+    </div>
+
+    <h3 style="color: #f1f5f9; margin: 0 0 12px; font-size: 15px; font-weight: 600;">Getting Started</h3>
+    <ol style="color: #94a3b8; font-size: 14px; line-height: 2; padding-left: 20px; margin: 0 0 20px;">
+      <li>Download the app from <a href="https://localpasswordvault.com/download" style="color: #06b6d4; text-decoration: none; font-weight: 600;">localpasswordvault.com</a></li>
+      <li>Install and launch the app</li>
+      <li><strong style="color: #cbd5e1;">Import the attached .license file</strong> when prompted</li>
+    </ol>
+
+    <div style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 12px 16px; margin: 0 0 20px;">
+      <p style="color: #64748b; font-size: 13px; margin: 0;">Trial expires: <strong style="color: #94a3b8;">${expiresFormatted}</strong></p>
+      <p style="color: #64748b; font-size: 13px; margin: 6px 0 0;">After importing, everything runs locally. No internet required.</p>
+    </div>
+
+    <div style="border-top: 1px solid rgba(255,255,255,0.06); padding-top: 20px; text-align: center;">
+      <p style="color: #64748b; font-size: 13px; margin: 0 0 12px;">Ready to keep your passwords secure forever?</p>
+      <a href="https://localpasswordvault.com/pricing" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #06b6d4, #0891b2); color: #0f172a; font-weight: 700; font-size: 14px; text-decoration: none; border-radius: 8px;">Upgrade to Lifetime License</a>
+    </div>
+  </div>
+
+  <p style="color: #475569; font-size: 11px; text-align: center; margin-top: 16px;">
+    Questions? <a href="mailto:support@localpasswordvault.com" style="color: #06b6d4;">support@localpasswordvault.com</a>
   </p>
 </body></html>`;
   }
 
-  const text = `Welcome to Local Password Vault!\n\nYour 7-Day Free Trial\n\nYour License Key: ${trialKey}\nExpires: ${expiresFormatted}\n\nGetting Started:\n1. Download the app from https://localpasswordvault.com/download\n2. Install and launch the app\n3. Import the attached .license file when prompted\n\nAfter importing, everything runs locally. No internet required.\n\nUpgrade to lifetime: https://localpasswordvault.com/pricing\nSupport: support@localpasswordvault.com`;
+  const text = `Welcome to Local Password Vault!\n\nYour 7-Day Free Trial\n\nYour License Code: ${trialKey}\nExpires: ${expiresFormatted}\n\nGetting Started:\n1. Download the app from https://localpasswordvault.com/download\n2. Install and launch the app\n3. Import the attached .license file when prompted\n\nAfter importing, everything runs locally. No internet required.\n\nUpgrade to lifetime: https://localpasswordvault.com/pricing\nSupport: support@localpasswordvault.com`;
 
   const sendSmtpEmail = new brevo.SendSmtpEmail();
   sendSmtpEmail.sender = {
