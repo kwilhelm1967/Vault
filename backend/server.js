@@ -26,6 +26,7 @@ const testRouter = require('./routes/test');
 const path = require('path');
 const db = require('./database/db');
 const { getStripeInstance } = require('./services/stripe');
+const { isLpvEmailReady } = require('./services/lpvEmail');
 
 const app = express();
 
@@ -128,6 +129,8 @@ app.use((req, res, next) => {
   next();
 });
 
+// Parse form POST (trial signup) and JSON body
+app.use(express.urlencoded({ extended: true }));
 // Webhook endpoint needs raw body for Stripe signature verification
 app.use((req, res, next) => {
   if (req.originalUrl === '/api/webhooks/stripe') {
@@ -145,9 +148,10 @@ app.get('/health', async (req, res) => {
     checks: {
       database: 'unknown',
       stripe: 'unknown',
+      lpvEmail: 'unknown',
     },
   };
-  
+
   // Check database connectivity
   try {
     await db.customers.findByEmail('health-check@test.local');
@@ -157,7 +161,7 @@ app.get('/health', async (req, res) => {
     health.status = 'degraded';
     health.databaseError = error.message;
   }
-  
+
   // Check Stripe connectivity
   try {
     const stripe = getStripeInstance();
@@ -168,7 +172,14 @@ app.get('/health', async (req, res) => {
     health.status = 'degraded';
     health.stripeError = error.message;
   }
-  
+
+  // LPV trial emails (Brevo) — required for LPV trial signup
+  health.checks.lpvEmail = isLpvEmailReady() ? 'ok' : 'error';
+  if (health.checks.lpvEmail === 'error') {
+    health.status = 'degraded';
+    health.lpvEmailError = 'BREVO_API_KEY not set or LPV email not initialized';
+  }
+
   const statusCode = health.status === 'ok' ? 200 : 503;
   res.status(statusCode).json(health);
 });

@@ -42,9 +42,10 @@ function loadTemplate(templateName, variables = {}) {
 
 /**
  * Send LPV trial email with signed license file attached.
- * 
- * The attached .license file is the customer's proof-of-trial.
- * They import it into the app — no server call needed from the app.
+ *
+ * Model: app is downloaded from the website; license is only in this email (attachment).
+ * Attachment is opaque base64 so the file contains no code or readable structure.
+ * Filename .license is non-executable so gateways are less likely to flag it.
  */
 async function sendLpvTrialEmail({ to, trialKey, expiresAt, licenseFileContent }) {
   if (!apiInstance) {
@@ -113,7 +114,7 @@ async function sendLpvTrialEmail({ to, trialKey, expiresAt, licenseFileContent }
 
     <!-- Download CTA -->
     <div style="text-align: center; margin: 0 0 28px;">
-      <a href="https://localpasswordvault.com/download" style="display: inline-block; padding: 14px 36px; background: #06b6d4; color: #0f172a; font-weight: 700; font-size: 15px; text-decoration: none; border-radius: 8px; letter-spacing: 0.2px;">Download Local Password Vault</a>
+      <a href="https://localpasswordvault.com/trial-success.html" style="display: inline-block; padding: 14px 36px; background: #06b6d4; color: #0f172a; font-weight: 700; font-size: 15px; text-decoration: none; border-radius: 8px; letter-spacing: 0.2px;">Download Local Password Vault</a>
       <p style="margin: 10px 0 0; color: #64748b; font-size: 12px;">Windows &middot; macOS &middot; Linux</p>
     </div>
 
@@ -147,7 +148,7 @@ async function sendLpvTrialEmail({ to, trialKey, expiresAt, licenseFileContent }
 </body></html>`;
   }
 
-  const text = `Local Password Vault\nOffline by design. Your data stays on your device.\n\nWelcome.\n\nYour trial has started.\n7 days of full access.\n\nYour trial license is attached to this email.\n\n1. Open Local Password Vault\n2. Choose "Import License File" or drag the attached file into the app\n\nNo copy or paste required.\n\nDownload: https://localpasswordvault.com/download\nWindows · macOS · Linux\n\nWhat you can do during your trial:\n• Store unlimited passwords securely\n• Strong AES-256 encryption\n• Fully offline. No cloud. No syncing.\n• Local backup and restore\n\nWhen you're ready, upgrade to a lifetime license:\nhttps://localpasswordvault.com/pricing\nOne payment. Yours forever.\n\nQuestions? Just reply to this email. A real person will respond.`;
+  const text = `Local Password Vault\nOffline by design. Your data stays on your device.\n\nWelcome.\n\nYour trial has started.\n7 days of full access.\n\nYour trial license is attached to this email.\n\n1. Open Local Password Vault\n2. Choose "Import License File" or drag the attached file into the app\n\nNo copy or paste required.\n\nDownload: https://localpasswordvault.com/trial-success.html\nWindows · macOS · Linux\n\nWhat you can do during your trial:\n• Store unlimited passwords securely\n• Strong AES-256 encryption\n• Fully offline. No cloud. No syncing.\n• Local backup and restore\n\nWhen you're ready, upgrade to a lifetime license:\nhttps://localpasswordvault.com/pricing\nOne payment. Yours forever.\n\nQuestions? Just reply to this email. A real person will respond.`;
 
   const sendSmtpEmail = new brevo.SendSmtpEmail();
   sendSmtpEmail.sender = {
@@ -185,6 +186,11 @@ async function sendLpvTrialEmail({ to, trialKey, expiresAt, licenseFileContent }
   }
 }
 
+function isLpvEmailReady() {
+  return !!apiInstance;
+}
+
 module.exports = {
   sendLpvTrialEmail,
+  isLpvEmailReady,
 };

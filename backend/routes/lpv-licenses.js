@@ -196,10 +196,10 @@ router.post('/activate', async (req, res) => {
         // New device - check device limit
         const deviceCount = await db.deviceActivations.countByLicense(license.id);
         
-        if (deviceCount.count >= (license.max_devices || 5)) {
+        if (deviceCount.count >= (license.max_devices || 3)) {
           return res.status(409).json({
             status: 'invalid',
-            error: `Maximum devices (${license.max_devices || 5}) reached. Deactivate a device or purchase another license.`
+            error: `Maximum devices (${license.max_devices || 3}) reached. Deactivate a device or purchase another license.`
           });
         }
         
@@ -667,7 +667,7 @@ router.get('/devices/:key', async (req, res) => {
         is_active: device.is_active,
       })),
       device_count: deviceCount.count || 0,
-      max_devices: license.max_devices || 5,
+      max_devices: license.max_devices || 3,
     });
     
   } catch (error) {
@@ -749,7 +749,7 @@ router.post('/devices/:key/deactivate', async (req, res) => {
       success: true,
       message: 'Device deactivated successfully',
       device_count: deviceCount.count || 0,
-      max_devices: license.max_devices || 5,
+      max_devices: license.max_devices || 3,
     });
     
   } catch (error) {
@@ -767,29 +767,54 @@ router.post('/devices/:key/deactivate', async (req, res) => {
 
 /**
  * POST /trial/signup — LPV-SPECIFIC trial signup
- * 
- * This is the LPV version of trial signup. It:
- * 1. Creates the trial record in Supabase (same as shared /api/trial/signup)
- * 2. Generates a signed license file using the LPV signer (ECDSA)
- * 3. Emails the signed .license file as an attachment
- * 
- * The customer imports the .license file into the app — no activation call needed.
- * 
+ *
+ * Model (no workarounds):
+ * - Application: customer downloads the app only from the website (direct links to app installers).
+ * - License: customer receives the .license file only as an email attachment. No license download link.
+ *
+ * This endpoint:
+ * 1. Creates the trial record in Supabase
+ * 2. Generates a signed license file (opaque base64; no code or readable structure in the file)
+ * 3. Emails the .license file as an attachment. Customer imports it into the app.
+ *
  * Mounted at: /api/lpv/license/trial/signup
  */
+const WEBSITE_URL = (process.env.WEBSITE_URL || 'https://localpasswordvault.com').replace(/\/$/, '');
+
+function wantsJson(req) {
+  const accept = req.get('Accept') || '';
+  return accept.includes('application/json');
+}
+
+function redirectTrialError(res, message) {
+  res.redirect(302, WEBSITE_URL + '/trial.html?error=' + encodeURIComponent(message));
+}
+
+function redirectTrialSuccess(res) {
+  res.redirect(302, WEBSITE_URL + '/trial-success.html');
+}
+
+// GET /api/lpv/license/trial/signup → send user to the trial form (avoids 404 when opening URL in browser)
+router.get('/trial/signup', (req, res) => {
+  res.redirect(302, WEBSITE_URL + '/trial.html');
+});
+
 router.post('/trial/signup', async (req, res) => {
   try {
     const { email } = req.body;
     const TRIAL_DURATION_DAYS = 7;
+    const json = wantsJson(req);
 
     if (!email) {
-      return res.status(400).json({ success: false, error: 'Email is required' });
+      if (json) return res.status(400).json({ success: false, error: 'Email is required' });
+      return redirectTrialError(res, 'Email is required');
     }
 
     const normalizedEmail = email.trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(normalizedEmail)) {
-      return res.status(400).json({ success: false, error: 'Invalid email format' });
+      if (json) return res.status(400).json({ success: false, error: 'Invalid email format' });
+      return redirectTrialError(res, 'Invalid email format');
     }
 
     // Check for existing LPV trial
@@ -813,7 +838,7 @@ router.post('/trial/signup', async (req, res) => {
           expires_at: existingTrial.expires_at,
         });
 
-        const licenseFileContent = JSON.stringify(trialFile, null, 2);
+        const licenseFileContent = Buffer.from(JSON.stringify(trialFile), 'utf8').toString('base64');
 
         try {
           await sendLpvTrialEmail({
@@ -826,14 +851,13 @@ router.post('/trial/signup', async (req, res) => {
           logger.emailError('lpv_trial_resend', normalizedEmail, emailError, {
             operation: 'lpv_trial_signup',
           });
+          const msg = 'We could not send the email. Please try again or contact support.';
+          if (json) return res.status(503).json({ success: false, error: msg });
+          return redirectTrialError(res, msg);
         }
 
-        return res.json({
-          success: true,
-          message: 'Trial license resent to your email',
-          licenseCode: existingTrial.trial_key,
-          expiresAt: expiresAt.toISOString(),
-        });
+        if (json) return res.json({ success: true, message: 'Trial license resent to your email', licenseCode: existingTrial.trial_key, expiresAt: expiresAt.toISOString() });
+        return redirectTrialSuccess(res);
       }
       // Expired — fall through to create a new one
     }
@@ -841,11 +865,9 @@ router.post('/trial/signup', async (req, res) => {
     // Prevent trial if customer already has a license
     const existingLicense = await db.licenses.findByEmail(normalizedEmail);
     if (existingLicense && existingLicense.length > 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'You already have a license. Check your email for your .license file.',
-        hasLicense: true,
-      });
+      const msg = 'You already have a license. Check your email for your .license file.';
+      if (json) return res.status(400).json({ success: false, error: msg, hasLicense: true });
+      return redirectTrialError(res, msg);
     }
 
     // Generate trial key and expiration
@@ -863,10 +885,8 @@ router.post('/trial/signup', async (req, res) => {
       });
     } catch (dbError) {
       if (dbError.code === '23505' || dbError.message?.includes('unique')) {
-        return res.status(400).json({
-          success: false,
-          error: 'Trial already exists for this email',
-        });
+        if (json) return res.status(400).json({ success: false, error: 'Trial already exists for this email' });
+        return redirectTrialError(res, 'Trial already exists for this email');
       }
       throw dbError;
     }
@@ -880,9 +900,9 @@ router.post('/trial/signup', async (req, res) => {
       expires_at: expiresAt.toISOString(),
     });
 
-    const licenseFileContent = JSON.stringify(trialFile, null, 2);
+    const licenseFileContent = Buffer.from(JSON.stringify(trialFile), 'utf8').toString('base64');
 
-    // Send email with signed license file attached
+    // Send email with signed license file attached (required — do not return success without sending)
     try {
       await sendLpvTrialEmail({
         to: normalizedEmail,
@@ -899,25 +919,21 @@ router.post('/trial/signup', async (req, res) => {
         operation: 'lpv_trial_signup',
         trialKey,
       });
-      // Don't fail — trial was created successfully
+      const msg = 'We could not send your trial email. Please try again or contact support.';
+      if (json) return res.status(503).json({ success: false, error: msg });
+      return redirectTrialError(res, msg);
     }
 
-    res.json({
-      success: true,
-      message: 'Trial license sent to your email',
-      licenseCode: trialKey,
-      expiresAt: expiresAt.toISOString(),
-    });
+    if (json) return res.json({ success: true, message: 'Trial license sent to your email', licenseCode: trialKey, expiresAt: expiresAt.toISOString() });
+    return redirectTrialSuccess(res);
 
   } catch (error) {
     logger.error('LPV trial signup error', error, {
       email: req.body?.email,
       operation: 'lpv_trial_signup',
     });
-    res.status(500).json({
-      success: false,
-      error: 'Failed to create trial. Please try again.',
-    });
+    if (wantsJson(req)) return res.status(500).json({ success: false, error: 'Failed to create trial. Please try again.' });
+    return redirectTrialError(res, 'Something went wrong. Please try again.');
   }
 });
 

@@ -1,0 +1,6 @@
+In browser: cloud.linode.com → your server → Launch LISH Console. Paste these there (press Enter after each):
+
+cd /var/www/lpv-api/Vault
+git pull origin main
+pm2 restart lpv-api
+pm2 status

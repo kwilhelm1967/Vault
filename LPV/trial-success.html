@@ -9,6 +9,10 @@
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <title>Your Trial is Ready! - Local Password Vault</title>
   <meta name="description" content="Your Local Password Vault trial license is ready. Download the app and start protecting your passwords.">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <!-- LPV trial success - license by email only - no key on page - 2026-02-08 -->
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -58,184 +62,132 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 120px 1.5rem 40px;
+      padding: 70px 1rem 1rem;
       background: linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-darker) 100%);
+      overflow: auto;
     }
 
     .success-container {
-      max-width: 650px;
+      max-width: 920px;
       width: 100%;
     }
 
     .success-card {
       background: var(--bg-card);
-      border-radius: 20px;
-      padding: 24px;
+      border-radius: 16px;
+      padding: 16px;
       border: 1px solid var(--border-subtle);
       text-align: center;
     }
     
     @media (min-width: 768px) {
       .success-card {
-        padding: 28px;
+        padding: 20px;
       }
     }
 
+    .success-heading-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
     .success-icon {
-      width: 56px;
-      height: 56px;
+      width: 36px;
+      height: 36px;
       background: var(--gradient-cyan);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 12px;
-      box-shadow: 0 8px 32px var(--cyan-glow), 0 0 0 1px rgba(6, 182, 212, 0.2);
+      flex-shrink: 0;
+      box-shadow: 0 4px 16px var(--cyan-glow), 0 0 0 1px rgba(6, 182, 212, 0.2);
     }
 
     .success-icon svg {
-      width: 28px;
-      height: 28px;
-      color: var(--cyan-dark);
-      stroke: var(--cyan-dark);
-      stroke-width: 3;
+      width: 20px;
+      height: 20px;
+      color: #fff;
+      stroke: #fff;
+      stroke-width: 3.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     .success-card h1 {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 1.5rem;
+      font-size: 1.35rem;
       font-weight: 700;
-      margin-bottom: 6px;
+      margin: 0;
     }
     
     @media (min-width: 768px) {
       .success-card h1 {
-        font-size: 1.75rem;
-        margin-bottom: 8px;
+        font-size: 1.5rem;
       }
     }
 
     .success-card .subtitle {
       color: var(--text-secondary);
-      margin-bottom: 20px;
-      font-size: 0.95rem;
+      margin-bottom: 12px;
+      font-size: 0.9rem;
     }
 
-    /* Trial Key Section */
-    .trial-key-section {
+    .success-two-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    /* Trial License Section (license file by email) */
+    .trial-license-section {
       background: var(--bg-darker);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 20px;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
       border: 1px solid var(--cyan-dark);
     }
 
-    .trial-key-label {
-      font-size: 0.8rem;
+    .trial-license-label {
+      font-size: 0.7rem;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-bottom: 8px;
+      margin-bottom: 4px;
     }
 
-    .trial-key-display {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      justify-content: center;
-    }
-
-    .trial-key {
-      font-family: 'Space Grotesk', monospace;
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--cyan);
-      letter-spacing: 2px;
-      padding: 10px 16px;
-      background: rgba(6, 182, 212, 0.1);
-      border-radius: 8px;
-      border: 1px dashed var(--cyan-dark);
-    }
-    
-    @media (min-width: 768px) {
-      .trial-key {
-        font-size: 1.35rem;
-      }
-    }
-
-    .copy-btn {
-      padding: 10px 14px;
-      background: var(--gradient-cyan);
-      color: var(--bg-darker);
-      border: none;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    
-    .copy-btn:hover {
-      box-shadow: 0 8px 24px var(--cyan-glow);
-    }
-
-    .copy-btn:hover {
-      transform: scale(1.05);
-    }
-
-    .copy-btn svg {
-      width: 18px;
-      height: 18px;
-    }
-
-    .key-note {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      margin-top: 10px;
-    }
-
-    .key-note svg {
-      width: 14px;
-      height: 14px;
-      color: var(--cyan);
-      stroke: var(--cyan);
-      vertical-align: middle;
-      margin-right: 4px;
-    }
-
-    /* Download Section */
     .download-section {
-      margin-bottom: 20px;
+      margin-bottom: 0;
     }
 
     .download-section h2 {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 1.1rem;
-      margin-bottom: 12px;
+      font-size: 0.95rem;
+      margin-bottom: 8px;
     }
     
     @media (min-width: 768px) {
       .download-section h2 {
-        font-size: 1.2rem;
-        margin-bottom: 14px;
+        font-size: 1rem;
+        margin-bottom: 8px;
       }
     }
 
     .download-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
+      gap: 8px;
     }
 
     .download-btn {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
-      padding: 16px 12px;
+      gap: 4px;
+      padding: 10px 8px;
       background: var(--bg-darker);
       border: 1px solid var(--border-subtle);
       border-radius: 12px;
@@ -251,34 +203,33 @@
     }
 
     .download-btn svg {
-      width: 28px;
-      height: 28px;
+      width: 22px;
+      height: 22px;
       stroke: var(--cyan);
     }
 
     .download-btn .os-name {
       font-weight: 600;
-      font-size: 0.9rem;
+      font-size: 0.8rem;
     }
 
     .download-btn .os-detail {
-      font-size: 0.75rem;
+      font-size: 0.65rem;
       color: var(--text-muted);
     }
 
-    /* Steps Section */
     .steps-section {
       text-align: left;
       background: var(--bg-darker);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 0;
     }
 
     .steps-section h3 {
-      font-size: 0.9rem;
+      font-size: 0.75rem;
       font-weight: 600;
-      margin-bottom: 10px;
+      margin-bottom: 6px;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -287,25 +238,25 @@
     .step-list {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 4px;
     }
 
     .step-item {
       display: flex;
       align-items: flex-start;
-      gap: 12px;
+      gap: 8px;
     }
 
     .step-number {
-      width: 26px;
-      height: 26px;
+      width: 20px;
+      height: 20px;
       background: var(--gradient-cyan);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 700;
-      font-size: 0.8rem;
+      font-size: 0.7rem;
       color: var(--bg-darker);
       flex-shrink: 0;
     }
@@ -316,46 +267,20 @@
 
     .step-content strong {
       display: block;
-      margin-bottom: 3px;
-      font-size: 0.9rem;
+      margin-bottom: 1px;
+      font-size: 0.8rem;
     }
 
     .step-content p {
-      font-size: 0.85rem;
+      font-size: 0.75rem;
       color: var(--text-secondary);
-    }
-
-    /* Upgrade CTA */
-    .upgrade-cta {
-      padding: 14px;
-      background: linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(8, 145, 178, 0.1) 100%);
-      border: 1px solid var(--cyan-dark);
-      border-radius: 12px;
-    }
-
-    .upgrade-cta p {
-      color: var(--text-secondary);
-      margin-bottom: 0;
-      font-size: 0.9rem;
-    }
-
-    .upgrade-cta a {
-      color: var(--cyan);
-      font-weight: 600;
-      text-decoration: none;
-    }
-
-    .upgrade-cta a:hover {
-      text-decoration: underline;
     }
 
     @media (max-width: 768px) {
       .nav-links { display: none; }
       .success-card { padding: 20px; }
+      .success-two-cols { grid-template-columns: 1fr; }
       .download-grid { grid-template-columns: 1fr; }
-      .trial-key-display { flex-direction: column; }
-      .trial-key { font-size: 1.1rem; word-break: break-all; }
-      .copy-btn { width: 100%; justify-content: center; }
     }
   </style>
 </head>
@@ -380,52 +305,46 @@
   <section class="success-page">
     <div class="success-container">
       <div class="success-card animate visible">
-        <div class="success-icon animate delay-1">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-        
-        <h1 class="animate delay-1">You're All Set!</h1>
-        <p class="subtitle animate delay-2">Your 7-day trial is ready. Here's everything you need to get started.</p>
-        
-        <!-- Trial License -->
-        <div class="trial-key-section animate delay-2">
-          <p class="trial-key-label">Your Trial License File</p>
-          <div class="trial-key-display">
-            <span class="trial-key" id="trialKey">TRIAL-XXXX-XXXX-XXXX</span>
-            <button class="copy-btn" onclick="copyKey()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-              Copy
-            </button>
+        <div class="success-heading-row">
+          <div class="success-icon animate visible delay-1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
           </div>
-          <p class="key-note">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-            A license file has been sent to your email. Check your inbox (and spam folder).
-          </p>
+          <h1 class="animate visible delay-1">You're All Set!</h1>
+        </div>
+        <p class="subtitle animate visible delay-2">Your 7-day trial is ready. Here's everything you need to get started.</p>
+
+        <div class="success-two-cols animate visible delay-2">
+          <div>
+        <div class="trial-license-section">
+          <p class="trial-license-label">What’s next</p>
+          <div style="padding: 8px 10px; text-align: center;">
+            <p style="color: #f1f5f9; font-size: 14px; font-weight: 600; margin: 0;">Your license will be sent to you in an email.</p>
+          </div>
         </div>
 
-        <!-- Download Section -->
-        <div class="download-section animate delay-3">
-          <h2>Step 1: Download the App</h2>
+        <div class="download-section animate visible delay-3">
+          <h2>Download the application</h2>
+          <p style="color: var(--text-muted); font-size: 0.75rem; margin: 0 0 8px;">Your license is in the email we sent. Get the installer from GitHub.</p>
           <div class="download-grid">
-            <a href="https://github.com/kwilhelm1967/LocalPasswordVault/releases/download/V1.2.1/Local.Password.Vault.Setup.1.2.0.zip" class="download-btn">
+            <a href="https://github.com/kwilhelm1967/LocalPasswordVault/releases" class="download-btn" rel="noopener noreferrer">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
                 <line x1="8" y1="21" x2="16" y2="21"/>
                 <line x1="12" y1="17" x2="12" y2="21"/>
               </svg>
               <span class="os-name">Windows</span>
-              <span class="os-detail">Windows 10/11</span>
+              <span class="os-detail">.exe installer</span>
             </a>
-            <a href="https://github.com/kwilhelm1967/LocalPasswordVault/releases/download/V1.2.1/Local.Password.Vault-1.2.0-mac.zip" class="download-btn">
+            <a href="https://github.com/kwilhelm1967/LocalPasswordVault/releases" class="download-btn" rel="noopener noreferrer">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/>
                 <path d="M12 2a7.5 7.5 0 0 0 0 20"/>
                 <path d="M12 2a7.5 7.5 0 0 1 0 20"/>
               </svg>
               <span class="os-name">macOS</span>
-              <span class="os-detail">Intel and Apple Silicon</span>
+              <span class="os-detail">.zip</span>
             </a>
-            <a href="https://github.com/kwilhelm1967/LocalPasswordVault/releases/download/V1.2.1/Local.Password.Vault-1.2.0.AppImage" class="download-btn">
+            <a href="https://github.com/kwilhelm1967/LocalPasswordVault/releases" class="download-btn" rel="noopener noreferrer">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <circle cx="12" cy="12" r="10"/>
                 <circle cx="12" cy="12" r="4"/>
@@ -435,13 +354,15 @@
                 <line x1="20" y1="12" x2="22" y2="12"/>
               </svg>
               <span class="os-name">Linux</span>
-              <span class="os-detail">.deb / .AppImage</span>
+              <span class="os-detail">.AppImage</span>
             </a>
           </div>
+          <p style="color: var(--text-muted); font-size: 0.7rem; margin-top: 8px;">All three open the same Releases page. Pick the file for your system (Windows .exe, macOS .zip, or Linux .AppImage).</p>
         </div>
+          </div>
 
-        <!-- Steps -->
-        <div class="steps-section animate delay-3">
+          <div>
+        <div class="steps-section">
           <h3>Quick Setup Guide</h3>
           <div class="step-list">
             <div class="step-item">
@@ -455,7 +376,7 @@
               <span class="step-number">2</span>
               <div class="step-content">
                 <strong>Import Your License</strong>
-                <p>Drag the .license file from your email into the app, or paste the code above.</p>
+                <p>Drag the .license file from your email into the app.</p>
               </div>
             </div>
             <div class="step-item">
@@ -475,54 +396,12 @@
           </div>
         </div>
 
-        <!-- Upgrade CTA -->
-        <div class="upgrade-cta animate delay-3">
-          <p>Loving the trial? <a href="pricing.html">Upgrade anytime</a> for lifetime access.</p>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <script>
-    // Animation observer
-    document.addEventListener('DOMContentLoaded', function() {
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) entry.target.classList.add('visible');
-        });
-      }, { threshold: 0.1 });
-      document.querySelectorAll('.animate').forEach(el => observer.observe(el));
-    });
-    
-    // Generate a demo trial key (in production, this would come from backend)
-    function generateTrialKey() {
-      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-      const segments = [];
-      for (let i = 0; i < 3; i++) {
-        let segment = '';
-        for (let j = 0; j < 4; j++) {
-          segment += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        segments.push(segment);
-      }
-      return 'TRIAL-' + segments.join('-');
-    }
-
-    // Set the trial key on page load
-    document.getElementById('trialKey').textContent = generateTrialKey();
-
-    // Copy key to clipboard
-    function copyKey() {
-      const key = document.getElementById('trialKey').textContent;
-      navigator.clipboard.writeText(key).then(() => {
-        const btn = document.querySelector('.copy-btn');
-        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
-        setTimeout(() => {
-          btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy';
-        }, 2000);
-      });
-    }
-  </script>
 </body>
 </html>
 
