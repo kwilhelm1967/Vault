@@ -1,44 +1,36 @@
-@@ -1,26 +1,38 @@
-# LocalPasswordVault (LPV) backend deploy only - does NOT affect LocalLegacyVault (LLV)
-# Repo: kwilhelm1967/Vault
-# Add GitHub secrets: LPV_DEPLOY_SSH_KEY (private key), LPV_DEPLOY_HOST (e.g. 172.236.111.48)
-# Secrets: LPV_DEPLOY_SSH_KEY (private key), LPV_DEPLOY_HOST
-# Repo → Settings → Secrets and variables → Actions
+# Deploy LPV Backend - LEAN ONLY. No e2e, no Vite, no Playwright, no tests.
+# Single job: SSH to server, run script, done. Secrets: LPV_DEPLOY_SSH_KEY, LPV_DEPLOY_HOST
 
 name: Deploy LPV Backend
 
 on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+  push:
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
-  deploy-lpv:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy LPV backend to server
-      - name: Deploy and verify on production
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.LPV_DEPLOY_HOST }}
-          username: root
-          key: ${{ secrets.LPV_DEPLOY_SSH_KEY }}
-          script: |
-            cd /var/www/lpv-api/Vault
-            git pull origin main
-            pm2 restart lpv-api
-            set -e
-            echo "========== 1) Pull latest =========="
-            cd /var/www/lpv-api/Vault && git pull origin main
-            echo "========== 2) Install backend deps =========="
-            cd /var/www/lpv-api/Vault/backend && npm ci && cd ..
-            echo "========== 3) Restart PM2 =========="
-            pm2 restart lpv-api --update-env && pm2 save
-            pm2 status
-            sleep 3
-            echo "========== 4) Verify POST (must be 302, Location: trial-success.html or trial.html?error=) =========="
-            curl -i -s -X POST "https://api.localpasswordvault.com/api/trial/signup" -H "Content-Type: application/x-www-form-urlencoded" -d "email=test@example.com" | head -25
-            echo "========== 5) Verify GET (must be 302, Location: trial.html?error=) =========="
-            curl -i -s "https://api.localpasswordvault.com/api/trial/signup" | head -25
-            echo "========== 6) Running commit =========="
-            git -C /var/www/lpv-api/Vault rev-parse --short HEAD
+  deploy-lpv:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy and verify on production
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.LPV_DEPLOY_HOST }}
+          username: root
+          key: ${{ secrets.LPV_DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            echo "========== 1) Pull latest =========="
+            cd /var/www/lpv-api/Vault && git pull origin main
+            echo "========== 2) Install backend deps =========="
+            cd /var/www/lpv-api/Vault/backend && npm ci && cd ..
+            echo "========== 3) Restart PM2 =========="
+            pm2 restart lpv-api --update-env && pm2 save
+            pm2 status
+            sleep 3
+            echo "========== 4) Verify POST (expect 302 + Location) =========="
+            curl -i -s -X POST "https://api.localpasswordvault.com/api/trial/signup" -H "Content-Type: application/x-www-form-urlencoded" -d "email=test@example.com" | head -25
+            echo "========== 5) Verify GET (expect 302 + Location) =========="
+            curl -i -s "https://api.localpasswordvault.com/api/trial/signup" | head -25
+            echo "========== 6) Running commit =========="
+            git -C /var/www/lpv-api/Vault rev-parse --short HEAD
