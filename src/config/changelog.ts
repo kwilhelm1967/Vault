@@ -14,11 +14,11 @@ export interface ChangelogEntry {
   }[];
 }
 
-export const APP_VERSION = '1.2.0';
+export const APP_VERSION = '1.2.16';
 
 export const changelog: ChangelogEntry[] = [
   {
-    version: '1.2.0',
+    version: '1.2.16',
     date: 'December 2026',
     highlights: [
       'Password Age Alerts',

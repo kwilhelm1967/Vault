@@ -259,7 +259,7 @@ export const DownloadPage: React.FC = () => {
           {/* Version Info */}
           <div className="flex items-center justify-center gap-4 mb-10">
             <span className="px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: `${colors.steelBlue500}20`, color: colors.steelBlue400 }}>
-              Version 1.2.0
+              Version 1.2.16
             </span>
             <span className="px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}>
               Latest Release

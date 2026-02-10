@@ -98,7 +98,7 @@ function sanitizeConfig(): Environment {
     isProduction: appMode === "production",
     isTest: appMode === "test",
     isTrialVersion: getEnvVar("VITE_TRIAL_MODE", "false") === "true",
-    appVersion: getEnvVar("VITE_APP_VERSION", "1.2.0"),
+    appVersion: getEnvVar("VITE_APP_VERSION", "1.2.16"),
     stripePublishableKey: getEnvVar(
       "VITE_STRIPE_PUBLISHABLE_KEY",
       "pk_test_TYooMQauvdEDq54NiTphI7jx"
@@ -128,7 +128,7 @@ export const features = {
   maxTrialPasswords: environment.isTrialVersion ? 10 : -1,
   maxDevicesPerLicense: {
     personal: 1,
-    family: 5,
+    family: 3,
   },
 };
 

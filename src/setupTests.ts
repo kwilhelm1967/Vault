@@ -16,7 +16,7 @@ global.TextDecoder = TextDecoder as typeof global.TextDecoder;
   DEV: true,
   PROD: false,
   MODE: 'test',
-  VITE_APP_VERSION: '1.2.0',
+  VITE_APP_VERSION: '1.2.16',
   VITE_LICENSE_PUBLIC_KEY: '',
   VITE_USE_STRICT_PERFORMANCE: 'false',
 };

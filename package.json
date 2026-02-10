@@ -1,7 +1,7 @@
 {
   "name": "local-password-vault",
   "private": true,
-  "version": "1.2.0",
+  "version": "1.2.16",
   "main": "electron/main.js",
   "author": {
     "name": "Local Password Vault",

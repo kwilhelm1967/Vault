@@ -4357,7 +4357,7 @@ BREVO (Email)
         {tab === "roadmap" && (
           <>
             <div style={cardStyle}>
-              <h3 style={{ ...sectionTitle, marginBottom: 16 }}>Current Version: 1.2.0</h3>
+              <h3 style={{ ...sectionTitle, marginBottom: 16 }}>Current Version: 1.2.16</h3>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10, marginBottom: 16 }}>
                 {["ECDSA license signing", "File-based activation", "Device fingerprint binding", "Offline-first operation", "AES-256-GCM vault encryption", "7-day trial with signed file", "Stripe checkout", "Brevo email delivery", "Floating panel + button", "Admin dashboard (27+ tabs)", "TOTP 2FA support", "CSV/JSON import/export"].map((f, i) => (
                   <div key={i} style={{ padding: "8px 12px", background: "rgba(16, 185, 129, 0.08)", borderRadius: 8, border: "1px solid rgba(16, 185, 129, 0.2)", fontSize: 12, color: "#10B981" }}>✓ {f}</div>
@@ -4410,7 +4410,7 @@ BREVO (Email)
                 { problem: "Activation says 'signature failed'", solution: "File may be corrupted in transit. Resend the email from admin. If ECDSA key was rotated, old files won't verify — reissue license.", action: "Licenses → Re-issue", tab: "licenses" as TabId },
                 { problem: "Forgot master password", solution: "If they set up a recovery phrase during onboarding, they can use it. Otherwise, vault data cannot be recovered (by design). They can start fresh with their existing license.", action: null, tab: null },
                 { problem: "Want a refund", solution: "Process through Stripe dashboard. Then revoke the license in the Licenses tab to prevent continued use.", action: "Stripe Dashboard", tab: null },
-                { problem: "Family plan — need more devices", solution: "Each family plan comes with 5 license files. Customer imports one per device. Check Licenses tab for their activation count.", action: "Licenses → Device count", tab: "licenses" as TabId },
+                { problem: "Family plan — need more devices", solution: "Each family plan comes with 3 license files. Customer imports one per device. Check Licenses tab for their activation count.", action: "Licenses → Device count", tab: "licenses" as TabId },
                 { problem: "App won't start / crashes", solution: "Check Downloads tab for latest version. Customer can reinstall — their vault.dat file persists in the user data folder. License file re-import re-activates.", action: "Downloads", tab: "downloads" as TabId },
               ].map((item, i) => (
                 <div key={i} style={{ padding: 14, marginBottom: 8, background: "rgba(255,255,255,0.02)", borderRadius: 10, border: `1px solid ${theme.borderSubtle}` }}>
